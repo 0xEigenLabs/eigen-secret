@@ -1,0 +1,10 @@
+node_modules/
+typechain/
+artifacts/
+cache/
+dist/
+.secret
+circuits/update_state_verifier_js/
+circuits/withdraw_signature_verifier_js/
+yarn-error.log
+package-lock.json
