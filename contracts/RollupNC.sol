@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./update_state_verifier.sol";
 import "./withdraw_signature_verifier.sol";
+import "./verifier.sol";
 
 contract IMiMC {
     function MiMCpe7(uint256,uint256) public pure returns(uint256) {}
@@ -41,7 +42,7 @@ contract IERC20 {
     function allowance(address owner, address spender) external view returns (uint256) {}
 }
 
-contract RollupNC {
+contract RollupNC is KeyedVerifier {
 
     IMiMC public mimc;
     IMiMCMerkle public mimcMerkle;
@@ -107,14 +108,15 @@ contract RollupNC {
     }
 
     function updateState(
-            uint[2] memory a,
+            uint[] memory proof,
+            /*uint[2] memory a,
             uint[2][2] memory b,
-            uint[2] memory c,
-            uint[3] memory input
+            uint[2] memory c,*/
+            uint[] memory input
         ) public onlyCoordinator {
         require(currentRoot == input[2], "input does not match current root");
         //validate proof
-        require(updateVerifier.update_verifyProof(a,b,c,input),
+        require(verify_serialized_proof(input, proof),
         "SNARK proof is invalid");
         // update merkle root
         currentRoot = input[0];
