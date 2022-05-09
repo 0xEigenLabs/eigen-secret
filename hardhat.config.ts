@@ -18,7 +18,15 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 });
 
 module.exports = {
-  solidity: '0.8.3',
+  solidity: {
+    version: '0.8.3',
+    settings: {
+      optimizer: {
+      enabled: true,
+      runs: 200
+      }
+    }
+  },
   typechain: {
     outDir: 'typechain',
     target: 'ethers-v5',
@@ -41,5 +49,11 @@ module.exports = {
     gasPriceApi: 'https://api.etherscan.io/api?module=proxy&action=eth_gasPrice',
     coinmarketcap: 'f6673cc5-a673-4e07-8461-f7281a5de7d7',
     onlyCalledMethods: false
+  },
+  hardhat: {
+    throwOnTransactionFailures: true,
+    throwOnCallFailures: true,
+    allowUnlimitedContractSize: true,
+    blockGasLimit: 0x1fffffffffffff,
   }
 }

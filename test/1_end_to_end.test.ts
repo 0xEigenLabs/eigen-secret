@@ -198,22 +198,22 @@ describe("RollupNC", () => {
     })
 
     // ----------------------------------------------------------------------------------
-    let updateProof = require("../circuits/update_state_verifier_js/proof.json")
-    const updateA = [
-        updateProof.pi_a[0], updateProof.pi_a[1]
-    ]
-    const updateB = [
-        [updateProof.pi_b[0][1], updateProof.pi_b[0][0]],
-        [updateProof.pi_b[1][1], updateProof.pi_b[1][0]],
-    ]
-    const updateC = [
-        updateProof.pi_c[0], updateProof.pi_c[1]
-    ]
-    const updateInput = require("../circuits/update_state_verifier_js/public.json")
+    const updateProof = require("../circuits/proof.json")
+    // const updateA = [
+    //     updateProof.pi_a[0], updateProof.pi_a[1]
+    // ]
+    // const updateB = [
+    //     [updateProof.pi_b[0][1], updateProof.pi_b[0][0]],
+    //     [updateProof.pi_b[1][1], updateProof.pi_b[1][0]],
+    // ]
+    // const updateC = [
+    //     updateProof.pi_c[0], updateProof.pi_c[1]
+    // ]
+    const updateInput = require("../circuits/public.json")
 
     it("should accept valid state updates", async () => {
         let validStateUpdate = await rollupNC.updateState(
-            updateA, updateB, updateC, updateInput
+            updateProof, updateInput
         );
         assert(validStateUpdate, "invalid state transition");
         await rollupNC.currentRoot().then(console.log)
