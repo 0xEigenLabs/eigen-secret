@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 import "./update_state_verifier.sol";
 import "./withdraw_signature_verifier.sol";
+import "./zkit_update_state_verifier.sol";
+import "./zkit_withdraw_signature_verifier.sol";
 
 contract IMiMC {
     function MiMCpe7(uint256,uint256) public pure returns(uint256) {}
@@ -48,8 +50,8 @@ contract RollupNC {
     ITokenRegistry public tokenRegistry;
     IERC20 public tokenContract;
 
-    Update_verifier updateVerifier;
-    Withdraw_verifier withdrawVerifier;
+    UpdateStateKeyedVerifier updateVerifier;
+    WithdrawSignatureKeyedVerifier withdrawVerifier;
 
     uint256 public currentRoot;
     address public coordinator;
@@ -97,8 +99,8 @@ contract RollupNC {
         queueNumber = 0;
         depositSubtreeHeight = 0;
         updateNumber = 0;
-        updateVerifier = new Update_verifier();
-        withdrawVerifier = new Withdraw_verifier();
+        updateVerifier = new UpdateStateKeyedVerifier();
+        withdrawVerifier = new WithdrawSignatureKeyedVerifier();
     }
 
     modifier onlyCoordinator(){
@@ -107,14 +109,12 @@ contract RollupNC {
     }
 
     function updateState(
-            uint[2] memory a,
-            uint[2][2] memory b,
-            uint[2] memory c,
-            uint[3] memory input
+            uint[] memory proof,
+            uint[] memory input
         ) public onlyCoordinator {
         require(currentRoot == input[2], "input does not match current root");
         //validate proof
-        require(updateVerifier.update_verifyProof(a,b,c,input),
+        require(updateVerifier.verify_serialized_proof(input, proof),
         "SNARK proof is invalid");
         // update merkle root
         currentRoot = input[0];
@@ -207,9 +207,7 @@ contract RollupNC {
     function withdraw(
         TxInfo memory txInfo,
         address payable recipient,
-        uint[2] memory a,
-        uint[2][2] memory b,
-        uint[2] memory c
+        uint[] memory proof
     ) public{
         require(txInfo.token_type_from > 0, "invalid tokenType");
         require(updates[txInfo.txRoot] > 0, "txRoot does not exist");
@@ -234,12 +232,13 @@ contract RollupNC {
         msgArray[0] = txInfo.nonce;
         address tmp = recipient;
         msgArray[1] = uint256(uint160(tmp));
+
+        uint[] memory input = new uint[](3);
+        input[0] = txInfo.pubkeyX;
+        input[1] = txInfo.pubkeyY;
+        input[2] = mimcMerkle.multiHashMiMC(msgArray);
         
-        require(withdrawVerifier.withdraw_verifyProof(
-            a, b, c,
-            [txInfo.pubkeyX, txInfo.pubkeyY, mimcMerkle.multiHashMiMC(msgArray)]
-            ),
-            "eddsa signature is not valid");
+        require(withdrawVerifier.verify_serialized_proof(input, proof), "eddsa signature is not valid");
 
         // transfer token on tokenContract
         if (txInfo.token_type_from == 1){
