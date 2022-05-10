@@ -3,7 +3,7 @@ set -e
 
 CIRCUIT=withdraw_signature_verifier
 CIRCUIT_DIR=$(cd $(dirname $0);cd ../circuits;pwd)
-ZKIT=which zkit
+ZKIT=`which zkit`
 WORKSPACE=/tmp/zkit_zkzru_withdraw_signature
 rm -rf $WORKSPACE && mkdir -p $WORKSPACE
 

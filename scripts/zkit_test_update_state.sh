@@ -3,7 +3,7 @@ set -e
 
 CIRCUIT=update_state_verifier
 CIRCUIT_DIR=$(cd $(dirname $0);cd ../circuits;pwd)
-ZKIT=which zkit
+ZKIT=`which zkit`
 WORKSPACE=/tmp/zkit_zkzru_update_state
 rm -rf $WORKSPACE && mkdir -p $WORKSPACE
 
