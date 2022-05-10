@@ -3,12 +3,15 @@ set -e
 
 CIRCUIT=withdraw_signature_verifier
 CIRCUIT_DIR=$(cd $(dirname $0);cd ../circuits;pwd)
-# change ZKIT with your own position
-ZKIT="xxx"
+ZKIT=which zkit
 WORKSPACE=/tmp/zkit_zkzru_withdraw_signature
 rm -rf $WORKSPACE && mkdir -p $WORKSPACE
 
-SRS=/home/ubuntu/Downloads/setup_2^20.key
+POWER=20
+SRS=${CIRCUIT_DIR}/../keys/setup_2^${POWER}.key
+if [ ! -f $SRS ]; then
+   curl https://universal-setup.ams3.digitaloceanspaces.com/setup_2^${POWER}.key -o $SRS
+fi
 
 cd $CIRCUIT_DIR
 
@@ -32,4 +35,4 @@ ${ZKIT} generate_verifier -v $WORKSPACE/vk.bin -s ../contracts/zkit_withdraw_sig
 
 mv -f proof.json public.json ./withdraw_signature_verifier_js
 
-node ../scripts/bump_withdraw_signature_solidity.js
+sed -i 's/contract KeyedVerifier/contract WithdrawSignatureKeyedVerifier/g' ../contracts/zkit_withdraw_signature_verifier.sol

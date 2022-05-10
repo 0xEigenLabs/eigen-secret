@@ -3,12 +3,15 @@ set -e
 
 CIRCUIT=update_state_verifier
 CIRCUIT_DIR=$(cd $(dirname $0);cd ../circuits;pwd)
-#CUR_DIR=$(cd $(dirname $0);pwd)
-ZKIT="/home/ubuntu/workspace/ieigen/EigenZKit/target/release/zkit"
+ZKIT=which zkit
 WORKSPACE=/tmp/zkit_zkzru_update_state
 rm -rf $WORKSPACE && mkdir -p $WORKSPACE
 
-SRS=/home/ubuntu/Downloads/setup_2^20.key
+POWER=20
+SRS=${CIRCUIT_DIR}/../keys/setup_2^${POWER}.key
+if [ ! -f $SRS ]; then
+   curl https://universal-setup.ams3.digitaloceanspaces.com/setup_2^${POWER}.key -o $SRS
+fi
 
 cd $CIRCUIT_DIR
 
@@ -32,7 +35,4 @@ ${ZKIT} generate_verifier -v $WORKSPACE/vk.bin -s ../contracts/zkit_update_state
 
 mv -f proof.json public.json ./update_state_verifier_js
 
-node ../scripts/bump_update_state_solidity.js
-
-#echo "7. run verifier test"
-#cd $CUR_DIR/zkit_zkzru_update_state && yarn test
+sed -i 's/contract KeyedVerifier/contract UpdateStateKeyedVerifier/g' ../contracts/zkit_update_state_verifier.sol
