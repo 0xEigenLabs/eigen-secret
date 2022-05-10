@@ -12,3 +12,10 @@ Apart from the TX Tree and Account Tree, we extend the operations on the leaf no
 
 ## Spec
 The new spec isn't open-source yet. the old Rollup Spec can be found [here](./docs/README.old.md).
+
+
+## Test
+1. Use the generate_xxx_verifier.js to generate the corresponding input.json.  
+2. Clone [EigenZKit](https://github.com/ieigen/EigenZKit/), run `cargo build --release` to get generated binary program in target/release/zkit and then set it in $PATH with name zkit.  
+3. Use the zkit_test_xxx.sh to generate the corresponding smart contract.  
+4. Run `yarn test`.  
