@@ -110,9 +110,6 @@ contract RollupNC {
 
     function updateState(
             uint[] memory proof,
-            /*uint[2] memory a,
-            uint[2][2] memory b,
-            uint[2] memory c,*/
             uint[] memory input
         ) public onlyCoordinator {
         require(currentRoot == input[2], "input does not match current root");
@@ -211,10 +208,6 @@ contract RollupNC {
         TxInfo memory txInfo,
         address payable recipient,
         uint[] memory proof
-        /*
-        uint[2] memory a,
-        uint[2][2] memory b,
-        uint[2] memory c */
     ) public{
         require(txInfo.token_type_from > 0, "invalid tokenType");
         require(updates[txInfo.txRoot] > 0, "txRoot does not exist");
