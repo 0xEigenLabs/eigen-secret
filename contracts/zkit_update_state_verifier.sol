@@ -4,7 +4,7 @@ pragma solidity >=0.5.0 <0.9.0;
 
 import "./plonk4verifier.sol";
 
-contract KeyedVerifier is Plonk4VerifierWithAccessToDNext {
+contract UpdateStateKeyedVerifier is Plonk4VerifierWithAccessToDNext {
     uint256 constant SERIALIZED_PROOF_LENGTH = 33;
 
     function get_verification_key() internal pure returns(VerificationKey memory vk) {

@@ -4,61 +4,61 @@ pragma solidity >=0.5.0 <0.9.0;
 
 import "./plonk4verifier.sol";
 
-contract KeyedVerifier is Plonk4VerifierWithAccessToDNext {
+contract WithdrawSignatureKeyedVerifier is Plonk4VerifierWithAccessToDNext {
     uint256 constant SERIALIZED_PROOF_LENGTH = 33;
 
     function get_verification_key() internal pure returns(VerificationKey memory vk) {
-        vk.domain_size = 262144;
+        vk.domain_size = 16384;
         vk.num_inputs = 3;
-        vk.omega = PairingsBn254.new_fr(0x0f60c8fe0414cb9379b2d39267945f6bd60d06a05216231b26a9fcf88ddbfebe);
+        vk.omega = PairingsBn254.new_fr(0x2337acd19f40bf2b2aa212849e9a0c07d626d9ca335d73a09119dbe6eaab3cac);
         vk.selector_commitments[0] = PairingsBn254.new_g1(
-            0x00bf9ee4fe76343d572d83824d087abfd5c009ea4e2ec18a0b15689e23de228e,
-            0x072b38c714c6a6dc99a5de1e3bcd07e4585d03aacae46d7f517c41aa7d388254
+            0x231c1e51add4d5f6bd1cd66949a0c826d0da068a8aa450c4b910af2723c31a51,
+            0x27028417323b54c6276a2d96c053172af54b1f0519ad2bb5db2b784f059dd0bb
         );
         vk.selector_commitments[1] = PairingsBn254.new_g1(
-            0x196d3b870e9b2f118d7a2daa71dbcc9e36c9b2c8ca424dd889d11c8e865791d2,
-            0x086f8800506137e242582616ad49b004f71deaac6079d0f9f6b177ceabacd242
+            0x11da099ae1a4985ae32a03fdbb97c2a1cb01ef699cc2d50215c0444737cb4964,
+            0x0ddf4c9185e6120ccb58d6e9f379bab948845872394839c501ee56c7afd64e59
         );
         vk.selector_commitments[2] = PairingsBn254.new_g1(
-            0x1b61bbaf13f8ae43e844fdfdc4cea21415f17890dd77db65d98fbb63c213e29c,
-            0x2eb9178d48734844491e6ac52428d295a55bcfe45f9ede853a52797f13126515
+            0x20e65148062f6f99ec3f867ec4ee244c089f5335ef71f783af103ff98f63bae7,
+            0x2b5c4a2c9a672fbc2ff0c6506d4dd536bd306840f49cc90e3b138aebbcffc9c4
         );
         vk.selector_commitments[3] = PairingsBn254.new_g1(
-            0x1cd1638c246b75df5f093f1af29ced6aace416d32382a6cdff26c3f0f86b09d1,
-            0x027a3cf8cf72d860f10fcd678c720af83835e6009cb29558fe70411d04487833
+            0x1a2a6887029420c5a7a27152c1b3fb8808047ae0591870b560df431fbd8b242d,
+            0x1c6be97981fb344af0d9fa3b80cc1cdc25960ec939bbe66b95dfe7f75fdd4e25
         );
         vk.selector_commitments[4] = PairingsBn254.new_g1(
-            0x2f5d69a89e0a7c72c7c8e71f0589f3bc7b423b6a0ec411e062fdd7ca8ebe881c,
-            0x1b9caec9b3f57271adc6c2ebe31683639c564a9439f9977b607a9d457060c049
+            0x19db1bfa3bd755d28ac423de59511ba280b979a59070db6fb4f4fd1b64ffbd91,
+            0x0b7fb2519d15410ce76f202e832f5bbdc4f069df9d54ffdfab309fcdb70370e7
         );
         vk.selector_commitments[5] = PairingsBn254.new_g1(
-            0x1b67dfc8e88ad534dbc1f806bf62a2541472bda740ea703cb0774c5357cac7e6,
-            0x2329b35a8e6dad0227d4bed45fbb999ab93639c328a6e8f9701a0593cf3730e1
+            0x2c96cfe2874240ba834079924a6dbf2dfb7ea98e199c501a5f14345e0aeef690,
+            0x25c13e38aaa3c2c0b30772dbf2a4fdc289a221deb2762f11435a68739561b02e
         );
         
         // we only have access to value of the d(x) witness polynomial on the next
         // trace step, so we only need one element here and deal with it in other places
         // by having this in mind
         vk.next_step_selector_commitments[0] = PairingsBn254.new_g1(
-            0x2ca42360bb1c8c01182a69958b09bac9777064eb485e008f5b1e66212f65d90f,
-            0x113c6f85ff8d31c1964bb1c1e1337247cbc849e97c973aa2048a8d2967ae80d0
+            0x018200c21af09ae5e1f5f35422117b0d012ff224ff1e306a9cf53ac682f6c14d,
+            0x2fef6bfafbb8e8bb8a6ee8683ac696fe419ce86fad734b9aea5392b8053c1ce0
         );
         
          vk.permutation_commitments[0] = PairingsBn254.new_g1(
-            0x1b4e86c28bc11a69ab07fbf5f1091d63ca19d549554ebe24aff2d49776036297,
-            0x00bd279b0d9297be21bc98d3dced0c758086a85d366b17dfca3cb941ac99f549
+            0x227173afa7b62aa1eae6e82370a8eda93726625493aff7205b53f717b21a7620,
+            0x012fdfa0436e59f249829ba253a3ee732b7cf5ef9f94356831882bd4b6a4fa53
         );
         vk.permutation_commitments[1] = PairingsBn254.new_g1(
-            0x2df519f68d6187ba16b77743bfe97ce36c479b036072ab0b6aeec2b40145c936,
-            0x1e514ce77c7a46e7b8911b0ccad8dea37c775d98e063f11d416fafae668ef9c3
+            0x17024ade5e72f4121bace0e1b1fc5ce57800ad1928a8bc4005e819f839336793,
+            0x06772d03ee37f2d02a2f8ffb1f24f22f3b883814e1f2ab778b60e919598940ae
         );
         vk.permutation_commitments[2] = PairingsBn254.new_g1(
-            0x11edb612f9cfa63c40a106c96fc7212bb8963a55e93b7f8a81fd11c6cfc273b0,
-            0x28e292ab2d64ecd501c86abfa0dbd37fdd8381b60c10b0abf9ab9f2d249e0b60
+            0x217e239e463927fa95a98a3b20f73df26241c6d25db3ee9246a9dface4b3f5da,
+            0x1e26c860a1b896c46b20267953400d0a0c65db9019299630f75f5f0de561c0d7
         );
         vk.permutation_commitments[3] = PairingsBn254.new_g1(
-            0x04658037b8ea493af7504bb3695373d7d37b6f4e76b13e641fb5f33bde3a6749,
-            0x0a0d763cfd35cd363cd96c75293f89d5d8efe86f70c8ac4d61645a73a6023e76
+            0x1df7f13fe81d055d2790ff1c1eb09a97ba9c647cd18414da5d394e470ae1dbe3,
+            0x18a5740ebc4dbafbaa5a284e9dc343d9adb4371cae6ced1d561b94316ed0d04c
         );
         
         vk.permutation_non_residues[0] = PairingsBn254.new_fr(
