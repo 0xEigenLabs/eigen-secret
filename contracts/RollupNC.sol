@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-//import "./update_state_verifier.sol";
-//import "./withdraw_signature_verifier.sol";
 import "./zkit_update_state_verifier.sol";
 import "./zkit_withdraw_signature_verifier.sol";
 
