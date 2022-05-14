@@ -17,3 +17,5 @@ circuits/log_substitution.json
 yarn-error.log
 package-lock.json
 yarn.lock
+*.key
+*.sol.bak

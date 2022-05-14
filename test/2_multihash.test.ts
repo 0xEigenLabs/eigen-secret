@@ -43,7 +43,7 @@ describe("Test Multihash", () => {
         expect(mimcjs.F.toString(mh1)).to.eq(mh11.toString());
 
         let size = 100;
-        for (var i = 0; i < 10; i ++) {
+        for (var i = 0; i < 4; i ++) {
             arr = Array(size).fill(1).map(v => Math.floor(Math.random() * 0xffffffff))
             mh1 = mimcjs.multiHash(arr)
             mh11 = await miMCMerkle.multiHashMiMC(arr);
