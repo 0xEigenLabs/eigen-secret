@@ -15,7 +15,6 @@ The new spec isn't open-source yet. the old Rollup Spec can be found [here](./do
 
 
 ## Test
-1. Use the generate_xxx_verifier.js to generate the corresponding input.json.  
-2. Clone [EigenZKit](https://github.com/ieigen/EigenZKit/), run `cargo build --release` to get generated binary program in target/release/zkit and then set it in $PATH with name zkit.  
-3. Use the zkit_test_xxx.sh to generate the corresponding smart contract.  
-4. Run `yarn test`.  
+1. Clone [EigenZKit](https://github.com/ieigen/EigenZKit/), run `cargo build --release` to build `zkit` and expose it to $PATH
+2. Use the `zkit_test_xxx.sh` to generate the corresponding verifier;
+3. Run `yarn test`.
