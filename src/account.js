@@ -1,16 +1,18 @@
 const buildMimc7 = require("circomlibjs").buildMimc7;
 const buildEddsa = require("circomlibjs").buildEddsa;
+const pc = require("@ieigen/anonmisc/lib/pedersen_babyJubjub.ts");
 
 module.exports = class Account {
   constructor(
     _index = 0, _pubkeyX = 0, _pubkeyY = 0,
-    _balance = 0, _nonce = 0, _tokenType  = 0,
+    _balanceCommX = 0, _balanceCommY = 0, _nonce = 0, _tokenType  = 0,
     _prvkey = 0
   ) {
     this.index = _index;
     this.pubkeyX = _pubkeyX;
     this.pubkeyY = _pubkeyY;
-    this.balance = _balance;
+    this.balanceCommX = _balanceCommX;
+    this.balanceCommY = _balanceCommY;
     this.nonce = _nonce;
     this.tokenType = _tokenType;
 
@@ -27,11 +29,13 @@ module.exports = class Account {
   }
 
   hashAccount(){
+    let F = this.mimcjs.F
     let input = [
       // this.index.toString(),
       this.pubkeyX,
       this.pubkeyY,
-      this.balance,
+      F.toString(this.balanceCommX),
+      F.toString(this.balanceCommY),
       this.nonce,
       this.tokenType
     ]
@@ -39,15 +43,19 @@ module.exports = class Account {
     return accountHash
   }
 
-  debitAndIncreaseNonce(amount){
-    this.balance = this.balance - amount;
+  async debitAndIncreaseNonce(amountCommX, amountCommY){
+    let res = await pc.sub([this.balanceCommX, this.balanceCommY], [amountCommX, amountCommY]);
+    this.balanceCommX = res[0]
+    this.balanceCommY = res[1]
     this.nonce++;
     this.hash = this.hashAccount()
   }
 
-  credit(amount){
+  async credit(amountCommX, amountCommY){
     if (this.index > 0){ // do not credit zero leaf
-      this.balance = this.balance + amount;
+      let res = await pc.add([this.balanceCommX, this.balanceCommY], [amountCommX, amountCommY])
+      this.balanceCommX = res[0]
+      this.balanceCommY = res[1]
       this.hash = this.hashAccount()
     }
   }

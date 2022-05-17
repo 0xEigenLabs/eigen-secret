@@ -17,9 +17,12 @@ module.exports = class Tree{
         // get position of affected inner nodes
         const depth = merkle_path.length;
         const proofPos = treeHelper.proofPos(idx, depth);
+        console.log("proofPos:", proofPos)
         const affectedPos = treeHelper.getAffectedPos(proofPos);
+        console.log("affectedPos:", affectedPos)
         // get new values of affected inner nodes and update them
         const affectedInnerNodes = treeHelper.innerNodesFromLeafAndPath(leaf, idx, merkle_path);
+        console.log("affectedInnerNodes:", affectedInnerNodes)
 
         // update affected inner nodes
         for (var i = 1; i < depth + 1; i++){
@@ -53,6 +56,8 @@ module.exports = class Tree{
 
     verifyProof(leafHash, idx, proof){
         const computed_root = treeHelper.rootFromLeafAndPath((leafHash), idx, (proof))
+        console.log("this.root:", this.root)
+        console.log("computed_root:", computed_root)
         return stringifyBigInts(this.root) == stringifyBigInts(computed_root);
     }
 
