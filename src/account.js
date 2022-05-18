@@ -1,5 +1,4 @@
 const buildMimc7 = require("circomlibjs").buildMimc7;
-const buildEddsa = require("circomlibjs").buildEddsa;
 
 module.exports = class Account {
   constructor(
@@ -22,7 +21,6 @@ module.exports = class Account {
 
   async initialize() {
     this.mimcjs = await buildMimc7()
-    //this.eddsa = await buildEddsa()
     this.hash = this.hashAccount()
   }
 

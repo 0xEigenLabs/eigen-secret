@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-pragma solidity >=0.5.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 library PairingsBn254 {
     uint256 constant q_mod = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
@@ -319,7 +319,8 @@ contract Plonk4VerifierWithAccessToDNext {
         uint256 domain_size;
         uint256 num_inputs;
         PairingsBn254.Fr omega;
-        PairingsBn254.G1Point[STATE_WIDTH+2] selector_commitments; // STATE_WIDTH for witness + multiplication + constant
+        // STATE_WIDTH for witness + multiplication + constant
+        PairingsBn254.G1Point[STATE_WIDTH+2] selector_commitments; 
         PairingsBn254.G1Point[ACCESSIBLE_STATE_POLYS_ON_NEXT_STEP] next_step_selector_commitments;
         PairingsBn254.G1Point[STATE_WIDTH] permutation_commitments;
         PairingsBn254.Fr[STATE_WIDTH-1] permutation_non_residues;
