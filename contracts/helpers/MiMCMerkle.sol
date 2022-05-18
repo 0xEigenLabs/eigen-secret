@@ -34,8 +34,6 @@ contract MiMCMerkle{
 
         uint256[] memory root = new uint256[](_proof.length);
 
-        uint r = IV;
-
         // the following codes is used for the old multiHashMiMC
         // // if leaf is left sibling
         // if (_position[0] == 0){
