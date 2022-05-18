@@ -1,4 +1,3 @@
-const {utils} = require("ffjavascript");
 const buildMimc7 = require("circomlibjs").buildMimc7;
 
 module.exports = async function getCircuitInput(stateTransition){
@@ -27,6 +26,8 @@ module.exports = async function getCircuitInput(stateTransition){
     var tokenTypeTo = new Array(2 ** depth);
 
     intermediateRoots[0] = F.toString(currentState);
+
+    var delta;
 
     for (var i = 0 ; i < deltas.length; i ++){
 
@@ -63,7 +64,7 @@ module.exports = async function getCircuitInput(stateTransition){
     var R8y = new Array(2 ** depth);
     var S = new Array(2 ** depth);
 
-    for (var i = 0; i < txs.length; i++){
+    for (i = 0; i < txs.length; i++){
 
         const tx = txs[i];
 

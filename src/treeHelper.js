@@ -84,8 +84,8 @@ module.exports = {
   },
 
   proofPos: function(leafIdx, treeDepth){
-    proofPos = new Array(treeDepth);
-    proofBinaryPos = module.exports.idxToBinaryPos(leafIdx, treeDepth);
+    var proofPos = new Array(treeDepth);
+    var proofBinaryPos = module.exports.idxToBinaryPos(leafIdx, treeDepth);
 
     if (leafIdx % 2 == 0){
       proofPos[0] = leafIdx + 1;
@@ -125,7 +125,7 @@ module.exports = {
 
   binaryPosToIdx: function(binaryPos){
     var idx = 0;
-    for (i = 0; i < binaryPos.length; i++){
+    for (var i = 0; i < binaryPos.length; i++){
       idx = idx + binaryPos[i]*(2**i)
     }
     return idx;
@@ -133,8 +133,8 @@ module.exports = {
 
   idxToBinaryPos: function(idx, binLength){
 
-    binString = idx.toString(2);
-    binPos = Array(binLength).fill(0)
+    var binString = idx.toString(2);
+    var binPos = Array(binLength).fill(0)
     for (var j = 0; j < binString.length; j++){
       binPos[j] = Number(binString.charAt(binString.length - j - 1));
     }
@@ -143,7 +143,7 @@ module.exports = {
 
   pairwiseHash: function(array){
     if (array.length % 2 == 0){
-      arrayHash = []
+      var arrayHash = []
       for (var i = 0; i < array.length; i = i + 2){
         arrayHash.push(mimcjs.multiHash(
           [(array[i]), (array[i+1])]
