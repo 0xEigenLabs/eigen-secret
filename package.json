@@ -18,7 +18,8 @@
     "circomlib": "^2.0.2",
     "circomlibjs": "^0.1.1",
     "sequelize": "^6.15.0",
-    "snarkjs": "^0.4.16"
+    "snarkjs": "^0.4.16",
+    "solhint": "^3.3.7"
   },
   "devDependencies": {
     "@eslint/create-config": "^0.1.2",

@@ -319,7 +319,8 @@ contract Plonk4VerifierWithAccessToDNext {
         uint256 domain_size;
         uint256 num_inputs;
         PairingsBn254.Fr omega;
-        PairingsBn254.G1Point[STATE_WIDTH+2] selector_commitments; // STATE_WIDTH for witness + multiplication + constant
+        // STATE_WIDTH for witness + multiplication + constant
+        PairingsBn254.G1Point[STATE_WIDTH+2] selector_commitments; 
         PairingsBn254.G1Point[ACCESSIBLE_STATE_POLYS_ON_NEXT_STEP] next_step_selector_commitments;
         PairingsBn254.G1Point[STATE_WIDTH] permutation_commitments;
         PairingsBn254.Fr[STATE_WIDTH-1] permutation_non_residues;
