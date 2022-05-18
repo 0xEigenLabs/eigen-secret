@@ -1,6 +1,6 @@
 const treeHelper = require("./treeHelper.js");
 const {utils} = require("ffjavascript");
-const {stringifyBigInts, unstringifyBigInts} = utils;
+const {stringifyBigInts} = utils;
 
 module.exports = class Tree{
 
