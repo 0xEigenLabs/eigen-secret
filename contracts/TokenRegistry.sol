@@ -46,7 +46,7 @@ contract TokenRegistry {
     function approveToken(
         address tokenContract
     ) public fromRollupNC {
-        require(pendingTokens[tokenContract], 'Token was not registered');
+        require(pendingTokens[tokenContract], "Token was not registered");
         numTokens++;
         registeredTokens[numTokens] = tokenContract; // tokenType => token contract address
     }

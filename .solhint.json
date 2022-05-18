@@ -1,0 +1,12 @@
+{
+  "extends": "solhint:default",
+  "plugins": [],
+  "rules": {
+      "avoid-suicide": "error",
+      "avoid-sha3": "warn",
+      "quotes": ["error", "double"],
+      "reason-string": ["warn", {
+          "maxLength": 100
+      }]
+  }
+}
