@@ -33,8 +33,7 @@ module.exports = class Account {
       this.nonce,
       this.tokenType
     ]
-    const accountHash = this.mimcjs.multiHash(input)
-    return accountHash
+    return this.mimcjs.multiHash(input)
   }
 
   debitAndIncreaseNonce(amount){
