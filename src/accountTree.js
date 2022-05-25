@@ -33,7 +33,8 @@ module.exports = class AccountTree extends Tree{
             paths2txRootPos[i] = txProofPos;
 
             // process transaction
-            deltas[i] = this.processTx(tx);
+            console.log("processing tx:", i)
+            deltas[i] = await this.processTx(tx);
         }
 
         return {
@@ -45,23 +46,30 @@ module.exports = class AccountTree extends Tree{
         }
     }
 
-    processTx(tx){
+    async processTx(tx){
+        let mimcjs = await buildMimc7()
+        let F = mimcjs.F
         const sender = this.findAccountByPubkey(tx.fromX, tx.fromY);
         const indexFrom = sender.index;
-        const balanceFrom = sender.balance;
+        const balanceCommXFrom = F.toString(sender.balanceCommX);
+        const balanceCommYFrom = F.toString(sender.balanceCommY);
 
         const receiver = this.findAccountByPubkey(tx.toX, tx.toY);
         const indexTo = receiver.index;
-        const balanceTo = receiver.balance;
+        const balanceCommXTo = F.toString(receiver.balanceCommX);
+        const balanceCommYTo = F.toString(receiver.balanceCommY);
         const nonceTo = receiver.nonce;
         const tokenTypeTo = receiver.tokenType;
 
         const [senderProof, senderProofPos] = this.getAccountProof(sender);
+        console.log("sender checking")
+        console.log("sender Proof:", senderProof)
+        console.log("senderProofPos", senderProofPos)
         this.checkAccountExistence(sender, senderProof);
         tx.checkSignature();
         this.checkTokenTypes(tx);
 
-        sender.debitAndIncreaseNonce(tx.amount);
+        sender.debitAndIncreaseNonce(tx.amountCommX, tx.amountCommY);
         this.leafNodes[sender.index] = sender.hash;
 
         this.updateInnerNodes(sender.hash, sender.index, senderProof);
@@ -69,10 +77,12 @@ module.exports = class AccountTree extends Tree{
         const rootFromNewSender = this.root;
 
         const [receiverProof, receiverProofPos] = this.getAccountProof(receiver);
-
+        console.log("receiver check")
+        console.log("receiver Proof:", receiverProof)
+        console.log("receiverProofPos", receiverProofPos)
         this.checkAccountExistence(receiver, receiverProof);
 
-        receiver.credit(tx.amount);
+        receiver.credit(tx.amountCommX, tx.amountCommY);
         this.leafNodes[receiver.index] = receiver.hash;
         this.updateInnerNodes(receiver.hash, receiver.index, receiverProof);
         this.root = this.innerNodes[0][0]
@@ -86,9 +96,11 @@ module.exports = class AccountTree extends Tree{
             receiverProofPos: receiverProofPos,
             rootFromNewReceiver: rootFromNewReceiver,
             indexFrom: indexFrom,
-            balanceFrom: balanceFrom,
+            balanceCommXFrom: balanceCommXFrom,
+            balanceCommYFrom: balanceCommYFrom,
             indexTo: indexTo,
-            balanceTo: balanceTo,
+            balanceCommXTo: balanceCommXTo,
+            balanceCommYTo: balanceCommYTo,
             nonceTo: nonceTo,
             tokenTypeTo: tokenTypeTo
         }

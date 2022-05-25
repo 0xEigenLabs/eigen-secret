@@ -10,6 +10,7 @@ include "./helpers/balance_existence_check.circom";
 include "./helpers/balance_leaf.circom";
 include "./helpers/get_merkle_root.circom";
 include "./helpers/if_gadgets.circom";
+include "./helpers/pedersen_comm.circom";
 
 
 template Main(n, m) {
@@ -53,16 +54,19 @@ template Main(n, m) {
     signal input toX[2**m]; // receiver address x coordinate
     signal input toY[2**m]; // receiver address y coordinate
     signal input nonceFrom[2**m]; // sender account nonce
-    signal input amount[2**m]; // amount being transferred
+    signal input amountCommX[2**m]; // amount Commitment x
+    signal input amountCommY[2**m]; // amount Commitment y
     signal input tokenTypeFrom[2**m]; // sender token type
     signal input R8x[2**m]; // sender signature
     signal input R8y[2**m]; // sender signature
     signal input S[2**m]; // sender signature
 
     // additional account info (not included in tx)
-    signal input balanceFrom[2**m]; // sender token balance
+    signal input balanceCommXFrom[2**m]; // sender token balance commitment x
+    signal input balanceCommYFrom[2**m]; // sender token balance commitment y
 
-    signal input balanceTo[2**m]; // receiver token balance
+    signal input balanceCommXTo[2**m]; // receiver token balance commitment x
+    signal input balanceCommYTo[2**m]; // receiver token balance commitment y
     signal input nonceTo[2**m]; // receiver account nonce
     signal input tokenTypeTo[2**m]; // receiver token type
 
@@ -84,12 +88,15 @@ template Main(n, m) {
     component receiverExistence[2**m];
     component newReceiver[2**m];
     component allLow[2**m];
-    component ifThenElse[2**m];
+    component ifThenElse1[2**m];
+    component ifThenElse2[2**m];
     component computedRootFromNewReceiver[2**m];
-    component greater[2**m];
-    component greaterSender[2**m];
-    component greaterReceiver[2**m];
+    // component greater[2**m];
+    // component greaterSender[2**m];
+    // component greaterReceiver[2**m];
     component nonceEquals[2**m];
+    component subBalanceComm[2**m];
+    component addBalanceComm[2**m];
 
     currentState === intermediateRoots[0];
 
@@ -102,7 +109,8 @@ template Main(n, m) {
         txExistence[i].toX <== toX[i];
         txExistence[i].toY <== toY[i];
         txExistence[i].nonce <== nonceFrom[i];
-        txExistence[i].amount <== amount[i];
+        txExistence[i].amountCommX <== amountCommX[i];
+        txExistence[i].amountCommY <== amountCommY[i];
         txExistence[i].tokenType <== tokenTypeFrom[i];
 
         txExistence[i].txRoot <== txRoot;
@@ -120,7 +128,8 @@ template Main(n, m) {
         senderExistence[i] = BalanceExistence(n);
         senderExistence[i].x <== fromX[i];
         senderExistence[i].y <== fromY[i];
-        senderExistence[i].balance <== balanceFrom[i];
+        senderExistence[i].balanceCommX <== balanceCommXFrom[i];
+        senderExistence[i].balanceCommY <== balanceCommYFrom[i];
         senderExistence[i].nonce <== nonceFrom[i];
         senderExistence[i].tokenType <== tokenTypeFrom[i];
 
@@ -134,20 +143,20 @@ template Main(n, m) {
         //balanceFrom[i] - amount[i] <= balanceFrom[i];
         //balanceTo[i] + amount[i] >= balanceTo[i];
         // SETP3: balance range proof
-        greater[i] = GreaterEqThan(252);
-        greater[i].in[0] <== balanceFrom[i] - amount[i];
-        greater[i].in[1] <== 0;
-        1 === greater[i].out;
+        // greater[i] = GreaterEqThan(252);
+        // greater[i].in[0] <== balanceFrom[i] - amount[i];
+        // greater[i].in[1] <== 0;
+        // 1 === greater[i].out;
 
-        greaterSender[i] = GreaterEqThan(252);
-        greaterSender[i].in[0] <== balanceFrom[i];
-        greaterSender[i].in[1] <== balanceFrom[i] - amount[i];
-        1 === greaterSender[i].out;
+        // greaterSender[i] = GreaterEqThan(252);
+        // greaterSender[i].in[0] <== balanceFrom[i];
+        // greaterSender[i].in[1] <== balanceFrom[i] - amount[i];
+        // 1 === greaterSender[i].out;
 
-        greaterReceiver[i] = GreaterEqThan(252);
-        greaterReceiver[i].in[0] <== balanceTo[i] + amount[i];
-        greaterReceiver[i].in[1] <== balanceTo[i];
-        1 === greaterReceiver[i].out;
+        // greaterReceiver[i] = GreaterEqThan(252);
+        // greaterReceiver[i].in[0] <== balanceTo[i] + amount[i];
+        // greaterReceiver[i].in[1] <== balanceTo[i];
+        // 1 === greaterReceiver[i].out;
 
         //nonceFrom[i] != NONCE_MAX_VALUE;
         nonceEquals[i] = IsEqual();
@@ -163,11 +172,20 @@ template Main(n, m) {
         ifBothHighForceEqual[i].b <== tokenTypeFrom[i];
         //-----END CHECK TOKEN TYPES-----//  
 
+        // sender sub balance commitment
+        subBalanceComm[i] = SubCommitment();
+        subBalanceComm[i].comm1x = balanceCommXFrom[i];
+        subBalanceComm[i].comm1y = balanceCommYFrom[i];
+        subBalanceComm[i].comm2x = amountCommX[i];
+        subBalanceComm[i].comm2y = amountCommY[i];
+
+
         // subtract amount from sender balance; increase sender nonce 
         newSender[i] = BalanceLeaf();
         newSender[i].x <== fromX[i];
         newSender[i].y <== fromY[i];
-        newSender[i].balance <== balanceFrom[i] - amount[i];
+        newSender[i].balanceCommX <== subBalanceComm[i].xout;
+        newSender[i].balanceCommY <== subBalanceComm[i].yout;
         newSender[i].nonce <== nonceFrom[i] + 1;
         newSender[i].tokenType <== tokenTypeFrom[i];
 
@@ -189,7 +207,8 @@ template Main(n, m) {
         receiverExistence[i] = BalanceExistence(n);
         receiverExistence[i].x <== toX[i];
         receiverExistence[i].y <== toY[i];
-        receiverExistence[i].balance <== balanceTo[i];
+        receiverExistence[i].balanceCommX <== balanceCommXTo[i];
+        receiverExistence[i].balanceCommY <== balanceCommYTo[i];
         receiverExistence[i].nonce <== nonceTo[i];
         receiverExistence[i].tokenType <== tokenTypeTo[i];
 
@@ -210,12 +229,18 @@ template Main(n, m) {
         allLow[i].in[0] <== toX[i];
         allLow[i].in[1] <== toY[i];
 
-        ifThenElse[i] = IfAThenBElseC();
-        ifThenElse[i].aCond <== allLow[i].out;
-        ifThenElse[i].bBranch <== balanceTo[i];
-        ifThenElse[i].cBranch <== balanceTo[i] + amount[i];  
+        ifThenElse1[i] = IfAThenBElseC();
+        ifThenElse1[i].aCond <== allLow[i].out;
+        ifThenElse1[i].bBranch <== balanceCommXTo[i];
+        ifThenElse1[i].cBranch <== balanceCommXTo[i] + amountCommX[i];  
 
-        newReceiver[i].balance <== ifThenElse[i].out; 
+        ifThenElse2[i] = IfAThenBElseC();
+        ifThenElse2[i].aCond <== allLow[i].out;
+        ifThenElse2[i].bBranch <== balanceCommYTo[i];
+        ifThenElse2[i].cBranch <== balanceCommYTo[i] + amountCommY[i];  
+
+        newReceiver[i].balanceCommX <== ifThenElse1[i].out; 
+        newReceiver[i].balanceCommY <== ifThenElse2[i].out;
         newReceiver[i].nonce <== nonceTo[i];
         newReceiver[i].tokenType <== tokenTypeTo[i];
 

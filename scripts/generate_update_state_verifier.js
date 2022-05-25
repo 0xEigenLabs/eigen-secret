@@ -10,6 +10,7 @@ const Transaction = require("../src/transaction");
 const TxTree = require("../src/txTree");
 const treeHelper = require("../src/treeHelper");
 const getCircuitInput = require("../src/circuitInput");
+const pc = require("@ieigen/anonmisc/lib/pedersen_babyJubjub.ts");
 
 BigInt.prototype.toJSON = function() {
   return this.toString()
@@ -61,17 +62,35 @@ const main = async() => {
   const coordinatorPubkey = generatePubkey(coordinatorPrvkey);
   const coordinator = new Account(
     1, coordinatorPubkey[0], coordinatorPubkey[1],
-    0, 0, 0, coordinatorPrvkey
+    0, 0, 0, 0, coordinatorPrvkey
   );
   await coordinator.initialize()
 
   accounts.push(coordinator);
-
+  
+ 
   // generate A, B, C, D, E, F accounts
 
   const numAccounts = 6
   const tokenTypes = [2, 1, 2, 1, 2, 1];
+
+  // generate balance commitment
   const balances = [1000, 20, 200, 100, 500, 20];
+  var balanceCommX = []
+  var balanceCommY = []
+  var r
+  var comm
+  let H = await pc.generateH()
+  for (var i = 0; i < numAccounts; i++){
+    r = await pc.generateRandom()
+    comm = await pc.commitTo(H, r, balances[i])
+    balanceCommX.push(comm[0])
+    balanceCommY.push(comm[1])
+  }
+  console.log("balanceComm:")
+  console.log(balanceCommX)
+  console.log(balanceCommY)
+  
   const nonces = [0, 0, 0, 0, 0, 0];
 
   for (var i = 0; i < numAccounts; i++){
@@ -81,7 +100,8 @@ const main = async() => {
       i + 2, // index
       pubkey[0], // pubkey x coordinate
       pubkey[1], // pubkey y coordinate
-      balances[i], // balance
+      balanceCommX[i], // balance commitment x
+      balanceCommY[i], // balance commitment Y
       nonces[i], // nonce
       tokenTypes[i], // tokenType,
       prvkey
@@ -160,8 +180,18 @@ const main = async() => {
 
   fromAccountsIdx = [2, 4, 3, 1]
   toAccountsIdx = [4, 0, 5, 0]
-
+  
+  // generate amount commitment
   const amounts = [500, 200, 10, 0]
+  var amountCommX = []
+  var amountCommY = []
+  for (var i = 0; i < 4; i++){
+    r = await pc.generateRandom()
+    comm = await pc.commitTo(H, r, amounts[i])
+    amountCommX.push(comm[0])
+    amountCommY.push(comm[1])
+  }
+
   const txTokenTypes = [2, 2, 1, 0]
   const txNonces = [0, 0, 0, 0]
 
@@ -177,7 +207,8 @@ const main = async() => {
       toAccount.pubkeyX,
       toAccount.pubkeyY,
       txNonces[i],
-      amounts[i],
+      amountCommX[i],
+      amountCommY[i],
       txTokenTypes[i]
     );
     await tx.initialize()
