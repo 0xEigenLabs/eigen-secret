@@ -5,12 +5,12 @@ include "../node_modules/circomlib/circuits/eddsamimc.circom";
 include "../node_modules/circomlib/circuits/bitify.circom";
 include "../node_modules/circomlib/circuits/comparators.circom";
 
+include "./helpers/get_merkle_root.circom";
+include "./helpers/if_gadgets.circom";
 include "./helpers/tx_existence_check.circom";
 include "./helpers/balance_existence_check.circom";
 include "./helpers/balance_leaf.circom";
-include "./helpers/get_merkle_root.circom";
-include "./helpers/if_gadgets.circom";
-include "./helpers/pedersen_comm.circom";
+include "./helpers/cerc20.circom";
 
 
 template Main(n, m) {
@@ -54,19 +54,18 @@ template Main(n, m) {
     signal input toX[2**m]; // receiver address x coordinate
     signal input toY[2**m]; // receiver address y coordinate
     signal input nonceFrom[2**m]; // sender account nonce
-    signal input amountCommX[2**m]; // amount Commitment x
-    signal input amountCommY[2**m]; // amount Commitment y
+    signal input amountCommX[2**m]; // amount Commitment X
+    signal input amountCommY[2**m]; // amount Commitment Y
     signal input tokenTypeFrom[2**m]; // sender token type
     signal input R8x[2**m]; // sender signature
     signal input R8y[2**m]; // sender signature
     signal input S[2**m]; // sender signature
 
     // additional account info (not included in tx)
-    signal input balanceCommXFrom[2**m]; // sender token balance commitment x
-    signal input balanceCommYFrom[2**m]; // sender token balance commitment y
-
-    signal input balanceCommXTo[2**m]; // receiver token balance commitment x
-    signal input balanceCommYTo[2**m]; // receiver token balance commitment y
+    signal input balanceCommXFrom[2**m]; // sender token balance commitment X
+    signal input balanceCommYFrom[2**m]; // sender token balance commitment Y
+    signal input balanceCommXTo[2**m]; // receiver token balance commitment X
+    signal input balanceCommYTo[2**m]; // receiver token balance commitment Y
     signal input nonceTo[2**m]; // receiver account nonce
     signal input tokenTypeTo[2**m]; // receiver token type
 
@@ -98,10 +97,15 @@ template Main(n, m) {
     component subBalanceComm[2**m];
     component addBalanceComm[2**m];
 
+    component CERC20TokenFrom[2**m];
+    component CERC20TokenTo[2**m];
+
     currentState === intermediateRoots[0];
 
     for (var i = 0; i < 2**m; i++) {
         // transactions existence and signature check
+        log(i);
+        log(111);
         txExistence[i] = TxExistence(m);
         txExistence[i].fromX <== fromX[i];
         txExistence[i].fromY <== fromY[i];
@@ -109,8 +113,8 @@ template Main(n, m) {
         txExistence[i].toX <== toX[i];
         txExistence[i].toY <== toY[i];
         txExistence[i].nonce <== nonceFrom[i];
-        txExistence[i].amountCommX <== amountCommX[i];
-        txExistence[i].amountCommY <== amountCommY[i];
+        txExistence[i].amountComm[0] <== amountCommX[i];
+        txExistence[i].amountComm[1] <== amountCommY[i];
         txExistence[i].tokenType <== tokenTypeFrom[i];
 
         txExistence[i].txRoot <== txRoot;
@@ -124,12 +128,20 @@ template Main(n, m) {
         txExistence[i].R8y <== R8y[i];
         txExistence[i].S <== S[i];
 
+        // CERC20Token sender
+        CERC20TokenFrom[i] = CERC20TokenFrom();
+        CERC20TokenFrom[i].currentBalance[0] <== balanceCommXFrom[i];
+        CERC20TokenFrom[i].currentBalance[1] <== balanceCommYFrom[i];
+        CERC20TokenFrom[i].amount[0] <== amountCommX[i];
+        CERC20TokenFrom[i].amount[1] <== amountCommY[i];
+
         // sender existence check
+        log(222);
         senderExistence[i] = BalanceExistence(n);
         senderExistence[i].x <== fromX[i];
         senderExistence[i].y <== fromY[i];
-        senderExistence[i].balanceCommX <== balanceCommXFrom[i];
-        senderExistence[i].balanceCommY <== balanceCommYFrom[i];
+        senderExistence[i].balanceComm[0] <== balanceCommXFrom[i];
+        senderExistence[i].balanceComm[1] <== balanceCommYFrom[i];
         senderExistence[i].nonce <== nonceFrom[i];
         senderExistence[i].tokenType <== tokenTypeFrom[i];
 
@@ -138,25 +150,6 @@ template Main(n, m) {
             senderExistence[i].paths2rootPos[j] <== paths2rootFromPos[i][j];
             senderExistence[i].paths2root[j] <== paths2rootFrom[i][j];
         }
-
-        // balance checks
-        //balanceFrom[i] - amount[i] <= balanceFrom[i];
-        //balanceTo[i] + amount[i] >= balanceTo[i];
-        // SETP3: balance range proof
-        // greater[i] = GreaterEqThan(252);
-        // greater[i].in[0] <== balanceFrom[i] - amount[i];
-        // greater[i].in[1] <== 0;
-        // 1 === greater[i].out;
-
-        // greaterSender[i] = GreaterEqThan(252);
-        // greaterSender[i].in[0] <== balanceFrom[i];
-        // greaterSender[i].in[1] <== balanceFrom[i] - amount[i];
-        // 1 === greaterSender[i].out;
-
-        // greaterReceiver[i] = GreaterEqThan(252);
-        // greaterReceiver[i].in[0] <== balanceTo[i] + amount[i];
-        // greaterReceiver[i].in[1] <== balanceTo[i];
-        // 1 === greaterReceiver[i].out;
 
         //nonceFrom[i] != NONCE_MAX_VALUE;
         nonceEquals[i] = IsEqual();
@@ -172,20 +165,15 @@ template Main(n, m) {
         ifBothHighForceEqual[i].b <== tokenTypeFrom[i];
         //-----END CHECK TOKEN TYPES-----//  
 
-        // sender sub balance commitment
-        subBalanceComm[i] = SubCommitment();
-        subBalanceComm[i].comm1x = balanceCommXFrom[i];
-        subBalanceComm[i].comm1y = balanceCommYFrom[i];
-        subBalanceComm[i].comm2x = amountCommX[i];
-        subBalanceComm[i].comm2y = amountCommY[i];
-
 
         // subtract amount from sender balance; increase sender nonce 
         newSender[i] = BalanceLeaf();
         newSender[i].x <== fromX[i];
         newSender[i].y <== fromY[i];
-        newSender[i].balanceCommX <== subBalanceComm[i].xout;
-        newSender[i].balanceCommY <== subBalanceComm[i].yout;
+        newSender[i].balanceComm[0] <== CERC20TokenFrom[i].newBalance[0];
+        newSender[i].balanceComm[1] <== CERC20TokenFrom[i].newBalance[1];
+        log(CERC20TokenFrom[i].newBalance[0]);
+        log(CERC20TokenFrom[i].newBalance[1]);
         newSender[i].nonce <== nonceFrom[i] + 1;
         newSender[i].tokenType <== tokenTypeFrom[i];
 
@@ -202,13 +190,22 @@ template Main(n, m) {
         computedRootFromNewSender[i].out === intermediateRoots[2*i  + 1];
         //-----END SENDER IN TREE 2 AFTER DEDUCTING CHECK-----//
 
+        // CERC20Token receiver
+        CERC20TokenTo[i] = CERC20TokenTo();
+        CERC20TokenTo[i].currentBalance[0] <== balanceCommXTo[i];
+        CERC20TokenTo[i].currentBalance[1] <== balanceCommYTo[i];
+        CERC20TokenTo[i].amount[0] <== amountCommX[i];
+        CERC20TokenTo[i].amount[1] <== amountCommY[i];
 
         // receiver existence check in intermediate root from new sender
+        log(333);
         receiverExistence[i] = BalanceExistence(n);
         receiverExistence[i].x <== toX[i];
         receiverExistence[i].y <== toY[i];
-        receiverExistence[i].balanceCommX <== balanceCommXTo[i];
-        receiverExistence[i].balanceCommY <== balanceCommYTo[i];
+        receiverExistence[i].balanceComm[0] <== balanceCommXTo[i];
+        receiverExistence[i].balanceComm[1] <== balanceCommYTo[i];
+        // log(balanceCommXTo[i]);
+        // log(balanceCommYTo[i]);
         receiverExistence[i].nonce <== nonceTo[i];
         receiverExistence[i].tokenType <== tokenTypeTo[i];
 
@@ -216,7 +213,10 @@ template Main(n, m) {
         for (var j = 0; j < n; j++){
             receiverExistence[i].paths2rootPos[j] <== paths2rootToPos[i][j] ;
             receiverExistence[i].paths2root[j] <== paths2rootTo[i][j];
+            // log(paths2rootToPos[i][j]);
+            // log(paths2rootTo[i][j]);
         }
+        log(444);
 
         //-----CHECK RECEIVER IN TREE 3 AFTER INCREMENTING-----//
         newReceiver[i] = BalanceLeaf();
@@ -232,15 +232,15 @@ template Main(n, m) {
         ifThenElse1[i] = IfAThenBElseC();
         ifThenElse1[i].aCond <== allLow[i].out;
         ifThenElse1[i].bBranch <== balanceCommXTo[i];
-        ifThenElse1[i].cBranch <== balanceCommXTo[i] + amountCommX[i];  
+        ifThenElse1[i].cBranch <== CERC20TokenTo[i].newBalance[0];  
 
         ifThenElse2[i] = IfAThenBElseC();
         ifThenElse2[i].aCond <== allLow[i].out;
         ifThenElse2[i].bBranch <== balanceCommYTo[i];
-        ifThenElse2[i].cBranch <== balanceCommYTo[i] + amountCommY[i];  
+        ifThenElse2[i].cBranch <== CERC20TokenTo[i].newBalance[1];  
 
-        newReceiver[i].balanceCommX <== ifThenElse1[i].out; 
-        newReceiver[i].balanceCommY <== ifThenElse2[i].out;
+        newReceiver[i].balanceComm[0] <== ifThenElse1[i].out; 
+        newReceiver[i].balanceComm[1] <== ifThenElse2[i].out;
         newReceiver[i].nonce <== nonceTo[i];
         newReceiver[i].tokenType <== tokenTypeTo[i];
 

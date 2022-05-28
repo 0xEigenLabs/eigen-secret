@@ -12,7 +12,7 @@ template TxExistence(k){
     signal input toX;
     signal input toY;
     signal input nonce;
-    signal input amount;
+    signal input amountComm[2];
     signal input tokenType;
 
     signal input txRoot;
@@ -30,7 +30,8 @@ template TxExistence(k){
     txLeaf.toX <== toX;
     txLeaf.toY <== toY;
     txLeaf.nonce <== nonce;
-    txLeaf.amount <== amount;
+    txLeaf.amountComm[0] <== amountComm[0];
+    txLeaf.amountComm[1] <== amountComm[1];
     txLeaf.tokenType <== tokenType;
 
     component txExistence = LeafExistence(k);
@@ -51,4 +52,3 @@ template TxExistence(k){
     verifier.S <== S;
     verifier.M <== txLeaf.out;
 }
-

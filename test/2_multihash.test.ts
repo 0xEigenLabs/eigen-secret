@@ -9,7 +9,7 @@ import { expect } from "chai";
     Here we want to test the smart contract's deposit functionality.
 */
 
-describe("Test Multihash", () => {
+describe.skip("Test Multihash", () => {
     let accounts;
     let rollupNC;
     let tokenRegistry;

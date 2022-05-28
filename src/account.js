@@ -33,8 +33,8 @@ module.exports = class Account {
       // this.index.toString(),
       this.pubkeyX,
       this.pubkeyY,
-      F.toString(this.balanceCommX),
-      F.toString(this.balanceCommY),
+      this.balanceCommX,
+      this.balanceCommY,
       this.nonce,
       this.tokenType
     ]
@@ -42,9 +42,11 @@ module.exports = class Account {
   }
 
   async debitAndIncreaseNonce(amountCommX, amountCommY){
-    let res = await pc.sub([this.balanceCommX, this.balanceCommY], [amountCommX, amountCommY]);
-    this.balanceCommX = res[0]
-    this.balanceCommY = res[1]
+    if (!(amountCommX == 0 && amountCommY == 0)) {
+      let res = await pc.sub([this.balanceCommX, this.balanceCommY], [amountCommX, amountCommY]);
+      this.balanceCommX = res[0]
+      this.balanceCommY = res[1]
+    }
     this.nonce++;
     this.hash = this.hashAccount()
   }

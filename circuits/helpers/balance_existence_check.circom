@@ -6,7 +6,7 @@ template BalanceExistence(k){
 
     signal input x;
     signal input y;
-    signal input balance;
+    signal input balanceComm[2];
     signal input nonce;
     signal input tokenType;
 
@@ -17,7 +17,8 @@ template BalanceExistence(k){
     component balanceLeaf = BalanceLeaf();
     balanceLeaf.x <== x;
     balanceLeaf.y <== y;
-    balanceLeaf.balance <== balance;
+    balanceLeaf.balanceComm[0] <== balanceComm[0];
+    balanceLeaf.balanceComm[1] <== balanceComm[1];
     balanceLeaf.nonce <== nonce; 
     balanceLeaf.tokenType <== tokenType;
 

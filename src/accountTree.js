@@ -51,25 +51,36 @@ module.exports = class AccountTree extends Tree{
         let F = mimcjs.F
         const sender = this.findAccountByPubkey(tx.fromX, tx.fromY);
         const indexFrom = sender.index;
-        const balanceCommXFrom = F.toString(sender.balanceCommX);
-        const balanceCommYFrom = F.toString(sender.balanceCommY);
+        const balanceCommXFrom = sender.balanceCommX == 0? 0 : F.toString(sender.balanceCommX);
+        const balanceCommYFrom = sender.balanceCommY == 0? 0 : F.toString(sender.balanceCommY);
 
         const receiver = this.findAccountByPubkey(tx.toX, tx.toY);
         const indexTo = receiver.index;
-        const balanceCommXTo = F.toString(receiver.balanceCommX);
-        const balanceCommYTo = F.toString(receiver.balanceCommY);
+        console.log("index:", indexTo);
+        const balanceCommXTo = receiver.balanceCommX == 0? 0 : F.toString(receiver.balanceCommX);
+        const balanceCommYTo = receiver.balanceCommY == 0? 0 : F.toString(receiver.balanceCommY);
+        console.log(receiver.balanceCommX);
+        console.log(receiver.balanceCommY);
+        console.log("receiver balance comm x:", balanceCommXTo);
+        console.log("receiver balance comm y:", balanceCommYTo);
         const nonceTo = receiver.nonce;
         const tokenTypeTo = receiver.tokenType;
 
         const [senderProof, senderProofPos] = this.getAccountProof(sender);
-        console.log("sender checking")
-        console.log("sender Proof:", senderProof)
-        console.log("senderProofPos", senderProofPos)
+        // console.log("sender checking")
+        // console.log("sender Proof:", senderProof)
+        // console.log("senderProofPos", senderProofPos)
         this.checkAccountExistence(sender, senderProof);
         tx.checkSignature();
         this.checkTokenTypes(tx);
 
-        sender.debitAndIncreaseNonce(tx.amountCommX, tx.amountCommY);
+        console.log("before debit");
+        console.log(sender.balanceCommX);
+        console.log(sender.balanceCommY);
+        await sender.debitAndIncreaseNonce(tx.amountCommX, tx.amountCommY);
+        console.log("after debit");
+        console.log(sender.balanceCommX);
+        console.log(sender.balanceCommY);
         this.leafNodes[sender.index] = sender.hash;
 
         this.updateInnerNodes(sender.hash, sender.index, senderProof);
@@ -77,12 +88,12 @@ module.exports = class AccountTree extends Tree{
         const rootFromNewSender = this.root;
 
         const [receiverProof, receiverProofPos] = this.getAccountProof(receiver);
-        console.log("receiver check")
-        console.log("receiver Proof:", receiverProof)
-        console.log("receiverProofPos", receiverProofPos)
+        // console.log("receiver check")
+        // console.log("receiver Proof:", receiverProof)
+        // console.log("receiverProofPos", receiverProofPos)
         this.checkAccountExistence(receiver, receiverProof);
 
-        receiver.credit(tx.amountCommX, tx.amountCommY);
+        await receiver.credit(tx.amountCommX, tx.amountCommY);
         this.leafNodes[receiver.index] = receiver.hash;
         this.updateInnerNodes(receiver.hash, receiver.index, receiverProof);
         this.root = this.innerNodes[0][0]

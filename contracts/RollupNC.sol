@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./zkit_update_state_verifier.sol";
 import "./zkit_withdraw_signature_verifier.sol";
+import "hardhat/console.sol";
 
 contract IMiMC {
     function MiMCpe7(uint256,uint256) public pure returns(uint256) {}
@@ -72,7 +73,8 @@ contract RollupNC {
         uint toX;
         uint toY;
         uint nonce;
-        uint amount;
+        uint amountCommX;
+        uint amountCommY;
         uint token_type_from;
         uint txRoot;
         uint[] position;
@@ -125,6 +127,8 @@ contract RollupNC {
     function deposit(
         uint[2] memory pubkey,
         uint amount,
+        uint amountCommX,
+        uint amountCommY,
         uint tokenType
     ) public payable {
       if ( tokenType == 0 ) {
@@ -150,12 +154,13 @@ contract RollupNC {
             );
         }
 
-        uint[] memory depositArray = new uint[](5);
+        uint[] memory depositArray = new uint[](6);
         depositArray[0] = pubkey[0];
         depositArray[1] = pubkey[1];
-        depositArray[2] = amount;
-        depositArray[3] = 0;
-        depositArray[4] = tokenType;
+        depositArray[2] = amountCommX;
+        depositArray[3] = amountCommY;
+        depositArray[4] = 0;
+        depositArray[5] = tokenType;
 
         uint depositHash = mimcMerkle.multiHashMiMC(
             depositArray
@@ -191,6 +196,7 @@ contract RollupNC {
         uint[] memory subtreePosition,
         uint[] memory subtreeProof
     ) public onlyCoordinator returns(uint256){
+        // console.log(pendingDeposits[0]);
         uint emptySubtreeRoot = mimcMerkle.zeroCache(subtreeDepth); //empty subtree of height 2
         require(currentRoot == mimcMerkle.getRootFromProof(
             emptySubtreeRoot, subtreePosition, subtreeProof),
@@ -205,19 +211,21 @@ contract RollupNC {
     function withdraw(
         TxInfo memory txInfo,
         address payable recipient,
-        uint[] memory proof
+        uint[] memory proof, 
+        uint amount
     ) public{
         require(txInfo.token_type_from > 0, "invalid tokenType");
         require(updates[txInfo.txRoot] > 0, "txRoot does not exist");
-        uint[] memory txArray = new uint[](8);
+        uint[] memory txArray = new uint[](9);
         txArray[0] = txInfo.pubkeyX;
         txArray[1] = txInfo.pubkeyY;
         txArray[2] = txInfo.index;
         txArray[3] = txInfo.toX;
         txArray[4] = txInfo.toY;
         txArray[5] = txInfo.nonce;
-        txArray[6] = txInfo.amount;
-        txArray[7] = txInfo.token_type_from;
+        txArray[6] = txInfo.amountCommX;
+        txArray[7] = txInfo.amountCommY;
+        txArray[8] = txInfo.token_type_from;
         
         uint txLeaf = mimcMerkle.multiHashMiMC(txArray);
         require(txInfo.txRoot == mimcMerkle.getRootFromProof(
@@ -241,13 +249,13 @@ contract RollupNC {
         // transfer token on tokenContract
         if (txInfo.token_type_from == 1){
             // ETH
-            recipient.transfer(txInfo.amount);
+            recipient.transfer(amount);
         } else {
             // ERC20
             address tokenContractAddress = tokenRegistry.registeredTokens(txInfo.token_type_from);
             tokenContract = IERC20(tokenContractAddress);
             require(
-                tokenContract.transfer(recipient, txInfo.amount),
+                tokenContract.transfer(recipient, amount),
                 "transfer failed"
             );
         }

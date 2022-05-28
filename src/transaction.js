@@ -5,7 +5,7 @@ module.exports = class Transaction  {
   constructor(
     _fromX, _fromY, _fromIndex,
     _toX, _toY,
-    _nonce, _amount, _tokenType,
+    _nonce, _amountCommX, _amountCommY, _tokenType,
     _R8x, _R8y, _S
   ) {
     this.fromX = _fromX;
@@ -14,7 +14,8 @@ module.exports = class Transaction  {
     this.toX = _toX;
     this.toY = _toY;
     this.nonce = _nonce;
-    this.amount = _amount
+    this.amountCommX = _amountCommX;
+    this.amountCommY = _amountCommY;
     this.tokenType = _tokenType;
 
     this.mimcjs = undefined
@@ -42,7 +43,8 @@ module.exports = class Transaction  {
       this.toX == 0? 0 : F.toString(this.toX),
       this.toY == 0? 0 : F.toString(this.toY),
       this.nonce,
-      this.amount,
+      F.toString(this.amountCommX),
+      F.toString(this.amountCommY),
       this.tokenType
     ];
     const txHash = this.mimcjs.multiHash(input)

@@ -19,9 +19,11 @@ module.exports = async function getCircuitInput(stateTransition){
     var paths2rootTo = new Array(2 ** depth);
     var paths2rootToPos = new Array(2 ** depth);
 
-    var balanceFrom = new Array(2 ** depth);
+    var balanceCommXFrom = new Array(2 ** depth);
+    var balanceCommYFrom = new Array(2 ** depth);
 
-    var balanceTo = new Array(2 ** depth);
+    var balanceCommXTo = new Array(2 ** depth);
+    var balanceCommYTo = new Array(2 ** depth);
     var nonceTo = new Array(2 ** depth);
     var tokenTypeTo = new Array(2 ** depth);
 
@@ -43,9 +45,11 @@ module.exports = async function getCircuitInput(stateTransition){
 
         intermediateRoots[2*i + 2] = F.toString(delta.rootFromNewReceiver);
 
-        balanceFrom[i] = delta.balanceFrom;
+        balanceCommXFrom[i] = delta.balanceCommXFrom;
+        balanceCommYFrom[i] = delta.balanceCommYFrom;
 
-        balanceTo[i] = delta.balanceTo;
+        balanceCommXTo[i] = delta.balanceCommXTo;
+        balanceCommYTo[i] = delta.balanceCommYTo;
         nonceTo[i] = delta.nonceTo;
         tokenTypeTo[i] = delta.tokenTypeTo;
 
@@ -58,7 +62,8 @@ module.exports = async function getCircuitInput(stateTransition){
     var toX = new Array(2 ** depth);
     var toY = new Array(2 ** depth);
     var nonceFrom = new Array(2 ** depth);
-    var amount = new Array(2 ** depth);
+    var amountCommX = new Array(2 ** depth);
+    var amountCommY = new Array(2 ** depth);
     var tokenTypeFrom = new Array(2 ** depth);
     var R8x = new Array(2 ** depth);
     var R8y = new Array(2 ** depth);
@@ -75,7 +80,8 @@ module.exports = async function getCircuitInput(stateTransition){
         toX[i] = tx.toX == 0? 0 : F.toString(tx.toX);
         toY[i] = tx.toY == 0? 0 : F.toString(tx.toY);
         nonceFrom[i] = tx.nonce;
-        amount[i] = tx.amount;
+        amountCommX[i] = F.toString(tx.amountCommX);
+        amountCommY[i] = F.toString(tx.amountCommY);
         tokenTypeFrom[i] = tx.tokenType;
 
         R8x[i] = F.toString(tx.R8x);
@@ -100,13 +106,16 @@ module.exports = async function getCircuitInput(stateTransition){
         toX: (toX),
         toY: (toY),
         nonceFrom: nonceFrom,
-        amount: amount,
+        amountCommX: amountCommX,
+        amountCommY: amountCommY,
         tokenTypeFrom: tokenTypeFrom,
         R8x: (R8x),
         R8y: (R8y),
         S: (S),
-        balanceFrom: balanceFrom,
-        balanceTo: balanceTo,
+        balanceCommXFrom: balanceCommXFrom,
+        balanceCommYFrom: balanceCommYFrom,
+        balanceCommXTo: balanceCommXTo,
+        balanceCommYTo: balanceCommYTo,
         nonceTo: nonceTo,
         tokenTypeTo: tokenTypeTo
     }
