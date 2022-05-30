@@ -13,10 +13,10 @@ template CERC20TokenFrom() {
 
     component changer = SubPedersenComm();
 
-    changer.comm1[0] <== currentBalance[0];
-    changer.comm1[1] <== currentBalance[1];
-    changer.comm2[0] <== amount[0];
-    changer.comm2[1] <== amount[1];
+    changer.balanceComm[0] <== currentBalance[0];
+    changer.balanceComm[1] <== currentBalance[1];
+    changer.amountComm[0] <== amount[0];
+    changer.amountComm[1] <== amount[1];
 
     // range check TODO
     // pedersenAdd.r < r;
@@ -40,10 +40,10 @@ template CERC20TokenTo() {
 
     component changer = AddPedersenComm();
 
-    changer.comm1[0] <== currentBalance[0];
-    changer.comm1[1] <== currentBalance[1];
-    changer.comm2[0] <== amount[0];
-    changer.comm2[1] <== amount[1];
+    changer.balanceComm[0] <== currentBalance[0];
+    changer.balanceComm[1] <== currentBalance[1];
+    changer.amountComm[0] <== amount[0];
+    changer.amountComm[1] <== amount[1];
 
     // range check TODO
     // pedersenAdd.r < r;
