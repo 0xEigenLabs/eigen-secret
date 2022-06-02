@@ -70,7 +70,8 @@ template Main(n, m) {
     // // new balance tree Merkle root
     signal output out;
 
-    var NONCE_MAX_VALUE = 100;
+    // set NONCE_MAX_VALUE=2^32=4294967296, should be enough according to https://eips.ethereum.org/EIPS/eip-2681
+    var NONCE_MAX_VALUE = 4294967296;
 
     // constant zero address
 
