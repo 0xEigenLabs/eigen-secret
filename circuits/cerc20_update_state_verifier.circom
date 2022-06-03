@@ -5,12 +5,14 @@ include "../node_modules/circomlib/circuits/eddsamimc.circom";
 include "../node_modules/circomlib/circuits/bitify.circom";
 include "../node_modules/circomlib/circuits/comparators.circom";
 
-include "./helpers/tx_existence_check.circom";
-include "./helpers/balance_existence_check.circom";
-include "./helpers/balance_leaf.circom";
 include "./helpers/get_merkle_root.circom";
 include "./helpers/if_gadgets.circom";
-include "./helpers/erc20.circom";
+
+include "./helpers_privacy_version/tx_existence_check.circom";
+include "./helpers/balance_existence_check.circom";
+include "./helpers_privacy_version/balance_leaf.circom";
+
+include "./helpers_privacy_version/cerc20.circom";
 
 
 template Main(n, m) {
@@ -54,23 +56,21 @@ template Main(n, m) {
     signal input toX[2**m]; // receiver address x coordinate
     signal input toY[2**m]; // receiver address y coordinate
     signal input nonceFrom[2**m]; // sender account nonce
-    signal input amount[2**m]; // amount being transferred
+    signal input amountComm[2**m][2]; // amount Commitment 
     signal input tokenTypeFrom[2**m]; // sender token type
     signal input R8x[2**m]; // sender signature
     signal input R8y[2**m]; // sender signature
     signal input S[2**m]; // sender signature
 
     // additional account info (not included in tx)
-    signal input balanceFrom[2**m]; // sender token balance
-
-    signal input balanceTo[2**m]; // receiver token balance
+    signal input balanceCommFrom[2**m][2]; // sender token balance commitment
+    signal input balanceCommTo[2**m][2]; // receiver token balance commitment
     signal input nonceTo[2**m]; // receiver account nonce
     signal input tokenTypeTo[2**m]; // receiver token type
 
     // // new balance tree Merkle root
     signal output out;
 
-    // set NONCE_MAX_VALUE=2^32=4294967296, should be enough according to https://eips.ethereum.org/EIPS/eip-2681
     var NONCE_MAX_VALUE = 4294967296;
 
     // constant zero address
@@ -86,15 +86,18 @@ template Main(n, m) {
     component receiverExistence[2**m];
     component newReceiver[2**m];
     component allLow[2**m];
-    component ifThenElse[2**m];
+    component ifThenElse1[2**m];
+    component ifThenElse2[2**m];
     component computedRootFromNewReceiver[2**m];
-    component greater[2**m];
-    component greaterSender[2**m];
-    component greaterReceiver[2**m];
+    // component greater[2**m];
+    // component greaterSender[2**m];
+    // component greaterReceiver[2**m];
     component nonceEquals[2**m];
+    component subBalanceComm[2**m];
+    component addBalanceComm[2**m];
 
-    component ERC20TokenFrom[2**m];
-    component ERC20TokenTo[2**m];
+    component CERC20TokenFrom[2**m];
+    component CERC20TokenTo[2**m];
 
     currentState === intermediateRoots[0];
 
@@ -107,7 +110,8 @@ template Main(n, m) {
         txExistence[i].toX <== toX[i];
         txExistence[i].toY <== toY[i];
         txExistence[i].nonce <== nonceFrom[i];
-        txExistence[i].amount <== amount[i];
+        txExistence[i].amountComm[0] <== amountComm[i][0];
+        txExistence[i].amountComm[1] <== amountComm[i][1];
         txExistence[i].tokenType <== tokenTypeFrom[i];
 
         txExistence[i].txRoot <== txRoot;
@@ -121,17 +125,20 @@ template Main(n, m) {
         txExistence[i].R8y <== R8y[i];
         txExistence[i].S <== S[i];
 
-        // ERC20Token sender
-        ERC20TokenFrom[i] = ERC20Token();
-        ERC20TokenFrom[i].currentBalance <== balanceFrom[i];
-        ERC20TokenFrom[i].isFrom <== 1;
-        ERC20TokenFrom[i].amount <== amount[i];
-        
+        // CERC20Token sender
+        CERC20TokenFrom[i] = CERC20Token();
+        CERC20TokenFrom[i].currentBalance[0] <== balanceCommFrom[i][0];
+        CERC20TokenFrom[i].currentBalance[1] <== balanceCommFrom[i][1];
+        CERC20TokenFrom[i].isFrom <== 1;
+        CERC20TokenFrom[i].amount[0] <== amountComm[i][0];
+        CERC20TokenFrom[i].amount[1] <== amountComm[i][1];
+
         // sender existence check
         senderExistence[i] = BalanceExistence(n);
         senderExistence[i].x <== fromX[i];
         senderExistence[i].y <== fromY[i];
-        senderExistence[i].balance <== balanceFrom[i];
+        senderExistence[i].balanceComm[0] <== balanceCommFrom[i][0];
+        senderExistence[i].balanceComm[1] <== balanceCommFrom[i][1];
         senderExistence[i].nonce <== nonceFrom[i];
         senderExistence[i].tokenType <== tokenTypeFrom[i];
 
@@ -145,23 +152,20 @@ template Main(n, m) {
         //balanceFrom[i] - amount[i] <= balanceFrom[i];
         //balanceTo[i] + amount[i] >= balanceTo[i];
         // SETP3: balance range proof
-        // we check the following range proof in the erc20token circuit
-        /*
-        greater[i] = GreaterEqThan(252);
-        greater[i].in[0] <== balanceFrom[i] - amount[i];
-        greater[i].in[1] <== 0;
-        1 === greater[i].out;
+        // greater[i] = GreaterEqThan(252);
+        // greater[i].in[0] <== balanceFrom[i] - amount[i];
+        // greater[i].in[1] <== 0;
+        // 1 === greater[i].out;
 
-        greaterSender[i] = GreaterEqThan(252);
-        greaterSender[i].in[0] <== balanceFrom[i];
-        greaterSender[i].in[1] <== balanceFrom[i] - amount[i];
-        1 === greaterSender[i].out;
+        // greaterSender[i] = GreaterEqThan(252);
+        // greaterSender[i].in[0] <== balanceFrom[i];
+        // greaterSender[i].in[1] <== balanceFrom[i] - amount[i];
+        // 1 === greaterSender[i].out;
 
-        greaterReceiver[i] = GreaterEqThan(252);
-        greaterReceiver[i].in[0] <== balanceTo[i] + amount[i];
-        greaterReceiver[i].in[1] <== balanceTo[i];
-        1 === greaterReceiver[i].out;
-        */
+        // greaterReceiver[i] = GreaterEqThan(252);
+        // greaterReceiver[i].in[0] <== balanceTo[i] + amount[i];
+        // greaterReceiver[i].in[1] <== balanceTo[i];
+        // 1 === greaterReceiver[i].out;
 
         //nonceFrom[i] != NONCE_MAX_VALUE;
         nonceEquals[i] = IsEqual();
@@ -177,11 +181,20 @@ template Main(n, m) {
         ifBothHighForceEqual[i].b <== tokenTypeFrom[i];
         //-----END CHECK TOKEN TYPES-----//  
 
+        // sender sub balance commitment
+        // subBalanceComm[i] = SubCommitment();
+        // subBalanceComm[i].comm1x = balanceCommXFrom[i];
+        // subBalanceComm[i].comm1y = balanceCommYFrom[i];
+        // subBalanceComm[i].comm2x = amountCommX[i];
+        // subBalanceComm[i].comm2y = amountCommY[i];
+
+
         // subtract amount from sender balance; increase sender nonce 
         newSender[i] = BalanceLeaf();
         newSender[i].x <== fromX[i];
         newSender[i].y <== fromY[i];
-        newSender[i].balance <== ERC20TokenFrom[i].newBalance; // balanceFrom[i] - amount[i]
+        newSender[i].balanceComm[0] <== CERC20TokenFrom[i].newBalance[0];
+        newSender[i].balanceComm[1] <== CERC20TokenFrom[i].newBalance[1];
         newSender[i].nonce <== nonceFrom[i] + 1;
         newSender[i].tokenType <== tokenTypeFrom[i];
 
@@ -198,17 +211,20 @@ template Main(n, m) {
         computedRootFromNewSender[i].out === intermediateRoots[2*i  + 1];
         //-----END SENDER IN TREE 2 AFTER DEDUCTING CHECK-----//
 
-        // ERC20Token receiver
-        ERC20TokenTo[i] = ERC20Token();
-        ERC20TokenTo[i].currentBalance <== balanceTo[i];
-        ERC20TokenTo[i].isFrom <== 0;
-        ERC20TokenTo[i].amount <== amount[i];
-        
+        // CERC20Token receiver
+        CERC20TokenTo[i] = CERC20Token();
+        CERC20TokenTo[i].currentBalance[0] <== balanceCommTo[i][0];
+        CERC20TokenTo[i].currentBalance[1] <== balanceCommTo[i][1];
+        CERC20TokenTo[i].isFrom <== 1;
+        CERC20TokenTo[i].amount[0] <== amountComm[i][0];
+        CERC20TokenTo[i].amount[1] <== amountComm[i][1];
+
         // receiver existence check in intermediate root from new sender
         receiverExistence[i] = BalanceExistence(n);
         receiverExistence[i].x <== toX[i];
         receiverExistence[i].y <== toY[i];
-        receiverExistence[i].balance <== balanceTo[i];
+        receiverExistence[i].balanceComm[0] <== balanceCommTo[i][0];
+        receiverExistence[i].balanceComm[1] <== balanceCommTo[i][1];
         receiverExistence[i].nonce <== nonceTo[i];
         receiverExistence[i].tokenType <== tokenTypeTo[i];
 
@@ -229,12 +245,18 @@ template Main(n, m) {
         allLow[i].in[0] <== toX[i];
         allLow[i].in[1] <== toY[i];
 
-        ifThenElse[i] = IfAThenBElseC();
-        ifThenElse[i].aCond <== allLow[i].out;
-        ifThenElse[i].bBranch <== balanceTo[i];
-        ifThenElse[i].cBranch <== ERC20TokenTo[i].newBalance; // balanceTo[i] + amount[i]
+        ifThenElse1[i] = IfAThenBElseC();
+        ifThenElse1[i].aCond <== allLow[i].out;
+        ifThenElse1[i].bBranch <== balanceCommTo[i][0];
+        ifThenElse1[i].cBranch <== CERC20TokenTo[i].newBalance[0];  
 
-        newReceiver[i].balance <== ifThenElse[i].out; 
+        ifThenElse2[i] = IfAThenBElseC();
+        ifThenElse2[i].aCond <== allLow[i].out;
+        ifThenElse2[i].bBranch <== balanceCommTo[i][1];
+        ifThenElse2[i].cBranch <== CERC20TokenTo[i].newBalance[1];  
+
+        newReceiver[i].balanceComm[0] <== ifThenElse1[i].out; 
+        newReceiver[i].balanceComm[1] <== ifThenElse2[i].out;
         newReceiver[i].nonce <== nonceTo[i];
         newReceiver[i].tokenType <== tokenTypeTo[i];
 

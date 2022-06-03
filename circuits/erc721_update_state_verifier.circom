@@ -5,17 +5,19 @@ include "../node_modules/circomlib/circuits/eddsamimc.circom";
 include "../node_modules/circomlib/circuits/bitify.circom";
 include "../node_modules/circomlib/circuits/comparators.circom";
 
-include "./helpers/tx_existence_check.circom";
-include "./helpers/balance_existence_check.circom";
-include "./helpers/balance_leaf.circom";
+include "./helpers/erc721_tx_existence_check.circom";
+include "./helpers/erc721_balance_existence_check.circom";
+include "./helpers/erc721_balance_leaf.circom";
 include "./helpers/get_merkle_root.circom";
 include "./helpers/if_gadgets.circom";
-include "./helpers/erc20.circom";
+include "./helpers/erc721.circom";
 
 
-template Main(n, m) {
+template Main(n, m, x, y) {
     // n is depth of balance tree
     // m is depth of transactions tree
+    // x is the amount of the sender's ERC721 tokens
+    // y is the amount of the receiver's ERC721 tokens
     // for each proof, update 2**m transactions
 
     // Merkle root of transactions tree
@@ -54,23 +56,18 @@ template Main(n, m) {
     signal input toX[2**m]; // receiver address x coordinate
     signal input toY[2**m]; // receiver address y coordinate
     signal input nonceFrom[2**m]; // sender account nonce
-    signal input amount[2**m]; // amount being transferred
-    signal input tokenTypeFrom[2**m]; // sender token type
+    signal input transferTokenID[2**m]; // token being transferred
     signal input R8x[2**m]; // sender signature
     signal input R8y[2**m]; // sender signature
     signal input S[2**m]; // sender signature
 
-    // additional account info (not included in tx)
-    signal input balanceFrom[2**m]; // sender token balance
-
-    signal input balanceTo[2**m]; // receiver token balance
+    signal input tokenIDsFrom[2**m][x]; // sender ERC721 tokenID list
+    signal input tokenIDsTo[2**m][y]; // receiver ERC721 tokenID list
     signal input nonceTo[2**m]; // receiver account nonce
-    signal input tokenTypeTo[2**m]; // receiver token type
 
     // // new balance tree Merkle root
     signal output out;
 
-    // set NONCE_MAX_VALUE=2^32=4294967296, should be enough according to https://eips.ethereum.org/EIPS/eip-2681
     var NONCE_MAX_VALUE = 4294967296;
 
     // constant zero address
@@ -93,22 +90,21 @@ template Main(n, m) {
     component greaterReceiver[2**m];
     component nonceEquals[2**m];
 
-    component ERC20TokenFrom[2**m];
-    component ERC20TokenTo[2**m];
+    component ERC721TokenFrom[2**m];
+    component ERC721TokenTo[2**m];
 
     currentState === intermediateRoots[0];
 
     for (var i = 0; i < 2**m; i++) {
         // transactions existence and signature check
-        txExistence[i] = TxExistence(m);
+        txExistence[i] = ERC721TxExistence(m);
         txExistence[i].fromX <== fromX[i];
         txExistence[i].fromY <== fromY[i];
         txExistence[i].fromIndex <== fromIndex[i];
         txExistence[i].toX <== toX[i];
         txExistence[i].toY <== toY[i];
         txExistence[i].nonce <== nonceFrom[i];
-        txExistence[i].amount <== amount[i];
-        txExistence[i].tokenType <== tokenTypeFrom[i];
+        txExistence[i].transferTokenID <== transferTokenID[i];
 
         txExistence[i].txRoot <== txRoot;
 
@@ -121,19 +117,21 @@ template Main(n, m) {
         txExistence[i].R8y <== R8y[i];
         txExistence[i].S <== S[i];
 
-        // ERC20Token sender
-        ERC20TokenFrom[i] = ERC20Token();
-        ERC20TokenFrom[i].currentBalance <== balanceFrom[i];
-        ERC20TokenFrom[i].isFrom <== 1;
-        ERC20TokenFrom[i].amount <== amount[i];
+        // ERC721Token sender
+        ERC721TokenFrom[i] = SenderERC721Token(x);
+        for (var j = 0; j < x; j++) {
+            ERC721TokenFrom[i].currentTokenIDs[j] <== tokenIDsFrom[i][j];
+        }
+        ERC721TokenFrom[i].transferTokenID <== transferTokenID[i];
         
         // sender existence check
-        senderExistence[i] = BalanceExistence(n);
+        senderExistence[i] = ERC721BalanceExistence(n, x);
         senderExistence[i].x <== fromX[i];
         senderExistence[i].y <== fromY[i];
-        senderExistence[i].balance <== balanceFrom[i];
+        for (var j = 0; j < x; j++) {
+            senderExistence[i].tokenIDs[j] <== tokenIDsFrom[i][j];
+        }
         senderExistence[i].nonce <== nonceFrom[i];
-        senderExistence[i].tokenType <== tokenTypeFrom[i];
 
         senderExistence[i].balanceRoot <== intermediateRoots[2*i];
         for (var j = 0; j < n; j++){
@@ -141,49 +139,20 @@ template Main(n, m) {
             senderExistence[i].paths2root[j] <== paths2rootFrom[i][j];
         }
 
-        // balance checks
-        //balanceFrom[i] - amount[i] <= balanceFrom[i];
-        //balanceTo[i] + amount[i] >= balanceTo[i];
-        // SETP3: balance range proof
-        // we check the following range proof in the erc20token circuit
-        /*
-        greater[i] = GreaterEqThan(252);
-        greater[i].in[0] <== balanceFrom[i] - amount[i];
-        greater[i].in[1] <== 0;
-        1 === greater[i].out;
-
-        greaterSender[i] = GreaterEqThan(252);
-        greaterSender[i].in[0] <== balanceFrom[i];
-        greaterSender[i].in[1] <== balanceFrom[i] - amount[i];
-        1 === greaterSender[i].out;
-
-        greaterReceiver[i] = GreaterEqThan(252);
-        greaterReceiver[i].in[0] <== balanceTo[i] + amount[i];
-        greaterReceiver[i].in[1] <== balanceTo[i];
-        1 === greaterReceiver[i].out;
-        */
-
         //nonceFrom[i] != NONCE_MAX_VALUE;
         nonceEquals[i] = IsEqual();
         nonceEquals[i].in[0] <== nonceFrom[i];
         nonceEquals[i].in[1] <== NONCE_MAX_VALUE;
-        nonceEquals[i].out === 0;
+        nonceEquals[i].out === 0; 
 
-        //-----CHECK TOKEN TYPES === IF NON-WITHDRAWS-----//
-        ifBothHighForceEqual[i] = IfBothHighForceEqual();
-        ifBothHighForceEqual[i].check1 <== toX[i];
-        ifBothHighForceEqual[i].check2 <== toY[i];
-        ifBothHighForceEqual[i].a <== tokenTypeTo[i];
-        ifBothHighForceEqual[i].b <== tokenTypeFrom[i];
-        //-----END CHECK TOKEN TYPES-----//  
-
-        // subtract amount from sender balance; increase sender nonce 
-        newSender[i] = BalanceLeaf();
+        // subtract transferTokenID from sender tokenIDs; increase sender nonce 
+        newSender[i] = ERC721BalanceLeaf(x-1);
         newSender[i].x <== fromX[i];
         newSender[i].y <== fromY[i];
-        newSender[i].balance <== ERC20TokenFrom[i].newBalance; // balanceFrom[i] - amount[i]
+        for (var j = 0; j < x-1; j++) {
+            newSender[i].tokenIDs[j] <== ERC721TokenFrom[i].newTokenIDs[j];
+        }
         newSender[i].nonce <== nonceFrom[i] + 1;
-        newSender[i].tokenType <== tokenTypeFrom[i];
 
         // get intermediate root from new sender leaf
         computedRootFromNewSender[i] = GetMerkleRoot(n);
@@ -198,19 +167,21 @@ template Main(n, m) {
         computedRootFromNewSender[i].out === intermediateRoots[2*i  + 1];
         //-----END SENDER IN TREE 2 AFTER DEDUCTING CHECK-----//
 
-        // ERC20Token receiver
-        ERC20TokenTo[i] = ERC20Token();
-        ERC20TokenTo[i].currentBalance <== balanceTo[i];
-        ERC20TokenTo[i].isFrom <== 0;
-        ERC20TokenTo[i].amount <== amount[i];
+        // ERC721Token receiver
+        ERC721TokenTo[i] = ReceiverERC721Token(y);
+        for (var j = 0; j < y; j++) {
+            ERC721TokenFrom[i].currentTokenIDs[j] <== tokenIDsTo[i][j];
+        }
+        ERC721TokenFrom[i].transferTokenID <== transferTokenID[i];
         
         // receiver existence check in intermediate root from new sender
-        receiverExistence[i] = BalanceExistence(n);
+        receiverExistence[i] = ERC721BalanceExistence(n, y);
         receiverExistence[i].x <== toX[i];
         receiverExistence[i].y <== toY[i];
-        receiverExistence[i].balance <== balanceTo[i];
+        for (var j = 0; j < y; j++) {
+            receiverExistence[i].tokenIDs[j] <== tokenIDsFrom[i][j];
+        }
         receiverExistence[i].nonce <== nonceTo[i];
-        receiverExistence[i].tokenType <== tokenTypeTo[i];
 
         receiverExistence[i].balanceRoot <== intermediateRoots[2*i + 1];
         for (var j = 0; j < n; j++){
@@ -219,25 +190,30 @@ template Main(n, m) {
         }
 
         //-----CHECK RECEIVER IN TREE 3 AFTER INCREMENTING-----//
-        newReceiver[i] = BalanceLeaf();
-        newReceiver[i].x <== toX[i];
-        newReceiver[i].y <== toY[i];
 
         // if receiver is zero address, do not change balance
-        // otherwise add amount to receiver balance
+        // otherwise add transferTokenID to receiver tokenIDs
         allLow[i] = AllLow(2);
         allLow[i].in[0] <== toX[i];
         allLow[i].in[1] <== toY[i];
 
-        ifThenElse[i] = IfAThenBElseC();
-        ifThenElse[i].aCond <== allLow[i].out;
-        ifThenElse[i].bBranch <== balanceTo[i];
-        ifThenElse[i].cBranch <== ERC20TokenTo[i].newBalance; // balanceTo[i] + amount[i]
-
-        newReceiver[i].balance <== ifThenElse[i].out; 
-        newReceiver[i].nonce <== nonceTo[i];
-        newReceiver[i].tokenType <== tokenTypeTo[i];
-
+        if (allLow.out == 1) {
+            newReceiver[i] = ERC721BalanceLeaf(y);
+            newReceiver[i].x <== toX[i];
+            newReceiver[i].y <== toY[i];
+            for (var j = 0; j < y; j++) {
+                newReceiver[i].tokenIDs[j] <== tokenIDsTo[i][j];
+            }
+            newReceiver[i].nonce <== nonceTo[i];
+        } else {
+            newReceiver[i] = ERC721BalanceLeaf(y+1);
+            newReceiver[i].x <== toX[i];
+            newReceiver[i].y <== toY[i];
+            for (var j = 0; j < y+1; j++) {
+                newReceiver[i].tokenIDs[j] <== ERC721TokenTo[i].newTokenIDs[j];
+            }
+            newReceiver[i].nonce <== nonceTo[i];
+        }
 
         // get intermediate root from new receiver leaf
         computedRootFromNewReceiver[i] = GetMerkleRoot(n);
@@ -254,4 +230,5 @@ template Main(n, m) {
     out <== computedRootFromNewReceiver[2**m - 1].out;
 }
 
+// TODO: how to pass the dynamic x, y to Main circuit?
 component main { public [txRoot, currentState] } = Main(4, 2);
