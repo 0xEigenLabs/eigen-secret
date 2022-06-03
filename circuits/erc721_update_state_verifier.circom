@@ -68,7 +68,7 @@ template Main(n, m, x, y) {
     // // new balance tree Merkle root
     signal output out;
 
-    var NONCE_MAX_VALUE = 100;
+    var NONCE_MAX_VALUE = 4294967296;
 
     // constant zero address
 
