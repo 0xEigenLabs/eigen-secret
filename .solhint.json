@@ -5,7 +5,7 @@
       "avoid-suicide": "error",
       "avoid-sha3": "warn",
       "quotes": ["error", "double"],
-      "compiler-version": ["error", "^0.8.0"],
+      "compiler-version": ["error", ">=0.5.0 <0.9.0"],
       "reason-string": ["warn", {
           "maxLength": 100
       }]
