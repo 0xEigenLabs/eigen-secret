@@ -39,3 +39,4 @@ ${ZKIT} generate_verifier -v $WORKSPACE/vk.bin -s ${CIRCUIT_DIR}/../contracts/ce
 mv -f proof.json public.json ./cerc20_update_state_verifier_js
 
 sed -i.bak 's/contract KeyedVerifier/contract UpdateStateKeyedVerifier/g; s/>=0.5.0 <0.9.0/^0.8.0/g' ${CIRCUIT_DIR}/../contracts/cerc20_zkit_update_state_verifier.sol
+sed -i 's/>=0.5.0 <0.9.0/^0.8.0/g' ${CIRCUIT_DIR}/../contracts/plonkit.sol
