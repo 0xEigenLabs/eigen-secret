@@ -8,11 +8,11 @@ include "../node_modules/circomlib/circuits/comparators.circom";
 include "./helpers/get_merkle_root.circom";
 include "./helpers/if_gadgets.circom";
 
-include "./helpers_privacy_version/tx_existence_check.circom";
+include "./helpers/cerc20_tx_existence_check.circom";
 include "./helpers/balance_existence_check.circom";
-include "./helpers_privacy_version/balance_leaf.circom";
+include "./helpers/cerc20_balance_leaf.circom";
 
-include "./helpers_privacy_version/cerc20.circom";
+include "./helpers/cerc20.circom";
 
 
 template Main(n, m) {
