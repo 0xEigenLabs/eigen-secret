@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "./cerc20_zkit_update_state_verifier.sol";
 import "./zkit_withdraw_signature_verifier.sol";
-import "hardhat/console.sol";
 
 contract IMiMC {
     function MiMCpe7(uint256,uint256) public pure returns(uint256) {}
@@ -196,7 +195,6 @@ contract CERC20RollupNC {
         uint[] memory subtreePosition,
         uint[] memory subtreeProof
     ) public onlyCoordinator returns(uint256){
-        console.log(pendingDeposits[0]);
         uint emptySubtreeRoot = mimcMerkle.cerc20ZeroCache(subtreeDepth); //empty subtree of height 2
         require(currentRoot == mimcMerkle.getRootFromProof(
             emptySubtreeRoot, subtreePosition, subtreeProof),

@@ -212,8 +212,7 @@ describe("CERC20RollupNC", () => {
             first4Hash,
             '16580474105437433399820305371359442442925783187705352117189664556047228178620'
         ]
-
-        console.log(second4HashProof[0])
+        
         let processDeposit2 = await rollupNC.connect(accounts[0]).processDeposits(
             2,
             second4HashPosition,
