@@ -19,6 +19,7 @@ echo "1. Compile the circuit"
 ${ZKIT} compile -i $CIRCUIT.circom --O2=full -o $WORKSPACE
 node ${CIRCUIT_DIR}/../scripts/cerc20_generate_update_state_verifier.js
 mv ${CIRCUIT_DIR}/input.json ${CIRCUIT_DIR}/cerc20_update_state_verifier_js/
+mv ${CIRCUIT_DIR}/testInfo.json ${CIRCUIT_DIR}/cerc20_update_state_verifier_js/
 
 echo "2. Generate witness"
 node ${WORKSPACE}/${CIRCUIT}_js/generate_witness.js ${WORKSPACE}/${CIRCUIT}_js/$CIRCUIT.wasm $CIRCUIT_DIR/cerc20_update_state_verifier_js/input.json $WORKSPACE/witness.wtns
@@ -37,4 +38,4 @@ ${ZKIT} generate_verifier -v $WORKSPACE/vk.bin -s ${CIRCUIT_DIR}/../contracts/ce
 
 mv -f proof.json public.json ./cerc20_update_state_verifier_js
 
-sed -i 's/contract KeyedVerifier/contract UpdateStateKeyedVerifier/g' ${CIRCUIT_DIR}/../contracts/cerc20_zkit_update_state_verifier.sol
+sed -i.bak 's/contract KeyedVerifier/contract UpdateStateKeyedVerifier/g; s/>=0.5.0 <0.9.0/^0.8.0/g' ${CIRCUIT_DIR}/../contracts/cerc20_zkit_update_state_verifier.sol

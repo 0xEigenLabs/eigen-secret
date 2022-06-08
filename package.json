@@ -15,6 +15,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
+    "@ieigen/anonmisc": "^0.0.7",
     "@openzeppelin/contracts": "^4.6.0",
     "bignumber.js": "^9.0.2",
     "circomlib": "^2.0.2",
