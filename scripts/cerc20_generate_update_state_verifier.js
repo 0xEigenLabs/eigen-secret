@@ -4,12 +4,12 @@ const buildMimc7 = require("circomlibjs").buildMimc7;
 const buildBabyJub = require("circomlibjs").buildBabyJub;
 const fs = require("fs");
 const Tree = require("../src/tree.js");
-const Account = require("../src/account.js");
-const AccountTree = require("../src/accountTree");
-const Transaction = require("../src/transaction");
+const Account = require("../src/cerc20Account.js");
+const AccountTree = require("../src/cerc20AccountTree");
+const Transaction = require("../src/cerc20Transaction");
 const TxTree = require("../src/txTree");
 const treeHelper = require("../src/treeHelper");
-const getCircuitInput = require("../src/circuitInput");
+const getCircuitInput = require("../src/cerc20CircuitInput");
 const pc = require("@ieigen/anonmisc/lib/pedersen_babyJubjub.ts");
 
 BigInt.prototype.toJSON = function() {
@@ -82,16 +82,13 @@ const main = async() => {
   var r
   var comm
   let H = await pc.generateH()
-  console.log("balance commitment:")
   for (var i = 0; i < numAccounts; i++){
-    console.log("i:", i)
     r = await pc.generateRandom()
     comm = await pc.commitTo(H, r, balances[i])
     balanceCommX.push(comm[0])
     balanceCommY.push(comm[1])
-    console.log(F.toString(comm[0]))
-    console.log(F.toString(comm[1]))
   }
+
   
   const nonces = [0, 0, 0, 0, 0, 0];
 
@@ -200,9 +197,22 @@ const main = async() => {
     } 
   }
 
-  console.log("amount 200 commitment:")
-  console.log(F.toString(amountCommX[1]))
-  console.log(F.toString(amountCommY[1]))
+  const testInfo = {
+    "balanceCommA": [F.toString(balanceCommX[0]), F.toString(balanceCommY[0])],
+    "balanceCommB": [F.toString(balanceCommX[1]), F.toString(balanceCommY[1])],
+    "balanceCommC": [F.toString(balanceCommX[2]), F.toString(balanceCommY[2])],
+    "balanceCommD": [F.toString(balanceCommX[3]), F.toString(balanceCommY[3])],
+    "balanceCommE": [F.toString(balanceCommX[4]), F.toString(balanceCommY[4])],
+    "balanceCommF": [F.toString(balanceCommX[5]), F.toString(balanceCommY[5])],
+    "amountCommX": F.toString(amountCommX[1]),
+    "amountCommY": F.toString(amountCommY[1])
+  }
+
+  fs.writeFileSync(
+    "testInfo.json",
+    JSON.stringify(testInfo),
+    "utf-8"
+  );
 
   const txTokenTypes = [2, 2, 1, 0]
   const txNonces = [0, 0, 0, 0]

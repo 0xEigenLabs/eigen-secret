@@ -5,10 +5,6 @@ const assert = require('assert');
 const cls = require("circomlibjs");
 import { expect } from "chai";
 
-/*
-    Here we want to test the smart contract's deposit functionality.
-*/
-
 describe("Test Multihash", () => {
     let accounts;
     let rollupNC;

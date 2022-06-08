@@ -195,7 +195,6 @@ contract CERC20RollupNC {
         uint[] memory subtreePosition,
         uint[] memory subtreeProof
     ) public onlyCoordinator returns(uint256){
-        // console.log(pendingDeposits[0]);
         uint emptySubtreeRoot = mimcMerkle.cerc20ZeroCache(subtreeDepth); //empty subtree of height 2
         require(currentRoot == mimcMerkle.getRootFromProof(
             emptySubtreeRoot, subtreePosition, subtreeProof),
