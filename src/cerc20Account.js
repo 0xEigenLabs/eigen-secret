@@ -2,7 +2,7 @@ const buildMimc7 = require("circomlibjs").buildMimc7;
 const buildEddsa = require("circomlibjs").buildEddsa;
 const pc = require("@ieigen/anonmisc/lib/pedersen_babyJubjub.ts");
 
-module.exports = class Account {
+module.exports = class CERC20Account {
   constructor(
     _index = 0, _pubkeyX = 0, _pubkeyY = 0,
     _balanceCommX = 0, _balanceCommY = 0, _nonce = 0, _tokenType  = 0,

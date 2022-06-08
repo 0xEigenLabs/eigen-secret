@@ -33,7 +33,6 @@ module.exports = class AccountTree extends Tree{
             paths2txRootPos[i] = txProofPos;
 
             // process transaction
-            console.log("processing tx:", i)
             deltas[i] = await this.processTx(tx);
         }
 
@@ -56,31 +55,17 @@ module.exports = class AccountTree extends Tree{
 
         const receiver = this.findAccountByPubkey(tx.toX, tx.toY);
         const indexTo = receiver.index;
-        console.log("index:", indexTo);
         const balanceCommXTo = receiver.balanceCommX == 0? 0 : F.toString(receiver.balanceCommX);
         const balanceCommYTo = receiver.balanceCommY == 0? 0 : F.toString(receiver.balanceCommY);
-        console.log(receiver.balanceCommX);
-        console.log(receiver.balanceCommY);
-        console.log("receiver balance comm x:", balanceCommXTo);
-        console.log("receiver balance comm y:", balanceCommYTo);
         const nonceTo = receiver.nonce;
         const tokenTypeTo = receiver.tokenType;
 
         const [senderProof, senderProofPos] = this.getAccountProof(sender);
-        // console.log("sender checking")
-        // console.log("sender Proof:", senderProof)
-        // console.log("senderProofPos", senderProofPos)
         this.checkAccountExistence(sender, senderProof);
         tx.checkSignature();
         this.checkTokenTypes(tx);
 
-        console.log("before debit");
-        console.log(sender.balanceCommX);
-        console.log(sender.balanceCommY);
         await sender.debitAndIncreaseNonce(tx.amountCommX, tx.amountCommY);
-        console.log("after debit");
-        console.log(sender.balanceCommX);
-        console.log(sender.balanceCommY);
         this.leafNodes[sender.index] = sender.hash;
 
         this.updateInnerNodes(sender.hash, sender.index, senderProof);
@@ -88,9 +73,6 @@ module.exports = class AccountTree extends Tree{
         const rootFromNewSender = this.root;
 
         const [receiverProof, receiverProofPos] = this.getAccountProof(receiver);
-        // console.log("receiver check")
-        // console.log("receiver Proof:", receiverProof)
-        // console.log("receiverProofPos", receiverProofPos)
         this.checkAccountExistence(receiver, receiverProof);
 
         await receiver.credit(tx.amountCommX, tx.amountCommY);

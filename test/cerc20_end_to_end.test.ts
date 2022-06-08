@@ -3,9 +3,7 @@ import { ContractFactory, BigNumber} from "ethers";
 const hre = require('hardhat')
 const assert = require('assert');
 const cls = require("circomlibjs");
-// var RollupNC = artifacts.require("RollupNC");
-// var TokenRegistry = artifacts.require("TokenRegistry")
-// var TestToken = artifacts.require("TestToken")
+const fs = require("fs");
 
 /*
     Here we want to test the smart contract's deposit functionality.
@@ -18,6 +16,13 @@ describe("CERC20RollupNC", () => {
     let testToken;
     let mimc;
     let miMCMerkle;
+    // Should run test in ZKZRU dir.
+    let rawdata = fs.readFileSync("./circuits/cerc20_update_state_verifier_js/testInfo.json");
+    let testInfo = JSON.parse(rawdata);
+    let rawdata1 = fs.readFileSync("./circuits/cerc20_update_state_verifier_js/input.json");
+    let input = JSON.parse(rawdata1);
+    let mimcjs;
+    let first4Hash;
 
     before(async function () {
         accounts = await hre.ethers.getSigners()
@@ -45,6 +50,8 @@ describe("CERC20RollupNC", () => {
         factory = await ethers.getContractFactory("TestToken");
         testToken = await factory.connect(accounts[3]).deploy()
         await testToken.deployed()
+
+        mimcjs = await cls.buildMimc7();
     });
 
     // ----------------------------------------------------------------------------------
@@ -55,8 +62,6 @@ describe("CERC20RollupNC", () => {
     });
 
     // ----------------------------------------------------------------------------------
-
-
     // const tokenContractAddr = "0xaD6D458402F60fD3Bd25163575031ACDce07538D"
 
     it("should register token", async () => {
@@ -94,38 +99,20 @@ describe("CERC20RollupNC", () => {
         '17184842423611758403179882610130949267222244268337186431253958700190046948852',
         '14002865450927633564331372044902774664732662568242033105218094241542484073498'
     ]
+
     // balance = [1000, 20, 200, 100, 500, 20] 
-    // the followting commitment are pedersen commitment to the balance
-    // see the log of generate_update_state_verifier.js
-    const balanceCommA = [
-        '5215105629706376708922878512632466223806033711666926955695294143162007327123',
-        '16567402936052379644958396574386279074272063527227982023835273985814042297529'
-    ]
+    // The following commitments are pedersen commitments to the balance
+    const balanceCommA = testInfo.balanceCommA
 
-    const balanceCommB = [
-        '1865330133187128029206928252820498246222779100788023450241938871486215630222',
-        '6174494639574274793003315896449994651807395242345196006683980020239003133398'
-    ]
+    const balanceCommB = testInfo.balanceCommB
 
-    const balanceCommC = [
-        '1810383034909362125784730897165563287099872033575479550055496709691766462827',
-        '8142529248032188225183026471517148911240509999741611606264723552670300863038'
-    ]
+    const balanceCommC = testInfo.balanceCommC
 
-    const balanceCommD = [
-        '15418067460412916094061055567245842040105654178817609238474285712116939609623',
-        '11870480574984646311399909734846160851219855411400932040214559410667322786034'
-    ]
+    const balanceCommD = testInfo.balanceCommD
 
-    const balanceCommE = [
-        '3720608061666222463308653064246011655718073266305072596737303987109273717585',
-        '20910974885934693226688636290732633161999480197244674029192729660775776833003'
-    ]
+    const balanceCommE = testInfo.balanceCommE
 
-    const balanceCommF = [
-        '16186236698373799410917322445784978186833714999331376970515835987754585796425',
-        '20470655806294812289805945250878350722667605757256666513086532052615320355005'
-    ]
+    const balanceCommF = testInfo.balanceCommF
 
     it("should make first batch of deposits", async () => {
         // zero leaf
@@ -146,14 +133,20 @@ describe("CERC20RollupNC", () => {
 
         await rollupNC.currentRoot().then(console.log)
 
+        // First4Hash is the pendingDeposits[0] after the first four time deposits. Simulate the calculation process of contract.
+        let hash1 = mimcjs.multiHash([0, 0, 0, 0, 0, 0]);
+        let hash2 = mimcjs.multiHash([pubkeyCoordinator[0], pubkeyCoordinator[1], 0, 0, 0, 0]);
+        let hash3 = mimcjs.multiHash([pubkeyA[0], pubkeyA[1], balanceCommA[0], balanceCommA[1], 0, 2]);
+        let hash4 = mimcjs.multiHash([pubkeyB[0], pubkeyB[1], balanceCommB[0], balanceCommB[1], 0, 1]);
+        let hash12 = mimcjs.multiHash([mimcjs.F.toString(hash1), mimcjs.F.toString(hash2)]);
+        let hash34 = mimcjs.multiHash([mimcjs.F.toString(hash3), mimcjs.F.toString(hash4)])
+        first4Hash = mimcjs.F.toString(mimcjs.multiHash([mimcjs.F.toString(hash12), mimcjs.F.toString(hash34)]))
 	});
 
     // ----------------------------------------------------------------------------------
 
-    // first4Hash is the pendingDeposits[0] after the first four time deposits. See the log in processDeposits of RollupNC.sol
-    const first4Hash = '14721064885583928011024709563508870737724445503891441892572143793523988368989';
-    const first4HashPosition = [0, 0]
     // find first4HashProof in zeroCache
+    const first4HashPosition = [0, 0]
     const first4HashProof = [
         '19642209756261147487299395139138750018042610884404237622752434560230554958919',
         '16580474105437433399820305371359442442925783187705352117189664556047228178620'
@@ -210,16 +203,16 @@ describe("CERC20RollupNC", () => {
 
     });
 
-
     // ----------------------------------------------------------------------------------
-
-    let second4HashPosition = [1, 0]
-    let second4HashProof = [
-        first4Hash,
-        '16580474105437433399820305371359442442925783187705352117189664556047228178620'
-    ]
-
+    
     it("should process second batch of deposits", async () => {
+        let second4HashPosition = [1, 0]
+        // first4Hash is the pendingDeposits[0] after the first four time deposits.
+        let second4HashProof = [
+            first4Hash,
+            '16580474105437433399820305371359442442925783187705352117189664556047228178620'
+        ]
+        
         let processDeposit2 = await rollupNC.connect(accounts[0]).processDeposits(
             2,
             second4HashPosition,
@@ -251,22 +244,15 @@ describe("CERC20RollupNC", () => {
     const index = 4;
     const nonce = 0;
     const amount = 200;
-    const amountCommX = '9341183806046945975899794600644556318856212299778937256033928972578582119309';
-    const amountCommY =  '17915237297382614290694052048803643555455091130530898329619979119852738104259';
+    const amountCommX = testInfo.amountCommX;
+    const amountCommY = testInfo.amountCommY;
     const token_type_from = 2;
     const position = [1, 0]
     // txRoot in input.json
-    const txRoot = "18835546343272708796504637647870507671383537498155645919921294787859131196665"
+    const txRoot = input.txRoot;
     const recipient = "0xC33Bdb8051D6d2002c0D80A1Dd23A1c9d9FC26E4"
-
     let withdraw_proof = require("../circuits/withdraw_signature_verifier_js/proof.json")
-
-    // you can get this proof from input.json generated by generate_update_state_verifier.js
-    // just remember the proof corresponds to position above
-    const proof = [
-        "410255835942095132970547052518360670137748072550713764369963378005296489294",
-        "1497808344369112330930159795119053617968639878945060375430051974506530259712"
-    ]
+    const proof = input.paths2txRoot[1];
 
     it("should accept valid withdrawals", async () => {
         const txInfo = {
