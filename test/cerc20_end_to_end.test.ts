@@ -16,9 +16,10 @@ describe("CERC20RollupNC", () => {
     let testToken;
     let mimc;
     let miMCMerkle;
-    let rawdata = fs.readFileSync("../circuits/cerc20_update_state_verifier_js/testInfo.json");
+    // Should run test in ZKZRU dir.
+    let rawdata = fs.readFileSync("./circuits/cerc20_update_state_verifier_js/testInfo.json");
     let testInfo = JSON.parse(rawdata);
-    let rawdata1 = fs.readFileSync("../circuits/cerc20_update_state_verifier_js/input.json");
+    let rawdata1 = fs.readFileSync("./circuits/cerc20_update_state_verifier_js/input.json");
     let input = JSON.parse(rawdata1);
     let mimcjs;
     let first4Hash;
