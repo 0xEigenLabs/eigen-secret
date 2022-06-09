@@ -20,7 +20,7 @@ template ERC20Token() {
     ifThenElse2.bBranch <== 0;
     ifThenElse2.cBranch <== currentBalance; 
 
-    component gt = GreaterEqThan(256);
+    component gt = GreaterEqThan(252);
     gt.in[0] <== ifThenElse1.out;
     gt.in[1] <== ifThenElse2.out;
     gt.out === 1;
