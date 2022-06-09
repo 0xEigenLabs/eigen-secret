@@ -1,22 +1,35 @@
 pragma circom 2.0.0;
+include "../../node_modules/circomlib/circuits/comparators.circom";
+include "./if_gadgets.circom";
 
 template ERC20Token() {
     signal input currentBalance;
-
     // 1 sender, 0, receiver
     signal input isFrom;
-
-    // should be 0 if just check existance
     signal input amount;
-
     signal output newBalance;
 
     // range check  
-    isFrom * (currentBalance - amount) + (1 - isFrom) * (currentBalance + amount) >= currentBalance;
-    // If isFrom == 1, the second equation will be 0 >= currentBalance, which is wrong
-    // isFrom * (currentBalance - amount) >= 0;
-    // (1 - isFrom) * (currentBalance + amount) >= currentBalance;
+    component ifThenElse1 = IfAThenBElseC();
+    ifThenElse1.aCond <== isFrom;
+    ifThenElse1.bBranch <== currentBalance - amount;
+    ifThenElse1.cBranch <== currentBalance + amount; 
+
+    component ifThenElse2 = IfAThenBElseC();
+    ifThenElse2.aCond <== isFrom;
+    ifThenElse2.bBranch <== 0;
+    ifThenElse2.cBranch <== currentBalance; 
+
+    component gt = GreaterEqThan(256);
+    gt.in[0] <== ifThenElse1.out;
+    gt.in[1] <== ifThenElse2.out;
+    gt.out === 1;
 
     // update balance
-    newBalance <== (currentBalance - amount) * isFrom + (currentBalance + amount) * (1 - isFrom);
+    component ifThenElse3 = IfAThenBElseC();
+    ifThenElse3.aCond <== isFrom;
+    ifThenElse3.bBranch <== currentBalance - amount;
+    ifThenElse3.cBranch <== currentBalance + amount; 
+
+    newBalance <== ifThenElse3.out;
 }
