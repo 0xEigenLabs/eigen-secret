@@ -37,4 +37,4 @@ ${ZKIT} generate_verifier -v $WORKSPACE/vk.bin -s ${CIRCUIT_DIR}/../contracts/zk
 
 mv -f proof.json public.json ./update_state_verifier_js
 
-sed -i 's/contract KeyedVerifier/contract UpdateStateKeyedVerifier/g' ${CIRCUIT_DIR}/../contracts/zkit_update_state_verifier.sol
+sed -i.bak 's/contract KeyedVerifier/contract UpdateStateKeyedVerifier/g' ${CIRCUIT_DIR}/../contracts/zkit_update_state_verifier.sol
