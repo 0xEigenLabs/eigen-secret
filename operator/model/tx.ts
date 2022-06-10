@@ -9,6 +9,7 @@
 
 import { Sequelize, DataTypes } from "sequelize";
 import consola from "consola";
+import { parse } from "dotenv";
 
 const sequelize = new Sequelize({
   dialect: "sqlite",
@@ -40,9 +41,19 @@ const l2txdb = sequelize.define("tx_st", {
       allowNull: false,
   },
 
-  signature: {
-      type: DataTypes.STRING,
-      allowNull: false,
+  r8x: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  r8y: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  s: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
 
   receiverPubkey: {
@@ -84,6 +95,12 @@ const l2txdb = sequelize.define("tx_st", {
       allowNull: false,
       type: DataTypes.STRING,
   },
+
+
+  status: {
+    allowNull: false,
+    type: DataTypes.INTEGER,
+  }
 });
 
 sequelize
@@ -118,8 +135,8 @@ sequelize
     consola.log("Unable to connect to the database:", err);
   });
 
-const add = function (network_id, senderPubkey, receiverPubkey, index, amount, nonce, tokenTypeFrom, txRoot, position, proof) {
-  return l2txdb.create({
+const add = async function (network_id, senderPubkey, receiverPubkey, index, amount, nonce, tokenTypeFrom, txRoot, position, proof) {
+  let res = await l2txdb.create({
     network_id,
     senderPubkey,
     receiverPubkey,
@@ -131,13 +148,16 @@ const add = function (network_id, senderPubkey, receiverPubkey, index, amount, n
     position,
     proof
   });
+  return res;
 };
 
-const findOne = function (filter_dict) {
-  return l2txdb.findOne({ where: filter_dict });
+const findOne = async function (filter_dict) {
+  let res = await l2txdb.findOne({ where: filter_dict });
+  return res;
 };
-const findAll = function (dict) {
-  return l2txdb.findAll({ where: dict });
+const findAll = async function (dict) {
+  let res =  l2txdb.findAll({ where: dict });
+  return res;
 };
 
 export { add, findOne, findAll };
