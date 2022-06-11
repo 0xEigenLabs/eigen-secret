@@ -18,11 +18,13 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 
 dotenvConfig({path: resolve(__dirname, "./.env")});
 
+import { gConfig } from "./config";
+
 const ZKIT = process.env.ZKIT || process.exit(-1)
-const CIRCUIT_PATH = global.gConfig.circuit_path
-const UPDATE_STATE_CIRCUIT_NAME = global.gConfig.update_state_circuit_name
-const numLeaves = 2**global.gConfig.account_depth;
-const TXS_PER_SNARK = global.gConfig.txs_per_snark;
+const CIRCUIT_PATH = gConfig.circuit_path
+const UPDATE_STATE_CIRCUIT_NAME = gConfig.update_state_circuit_name
+const numLeaves = 2**gConfig.account_depth;
+const TXS_PER_SNARK = gConfig.txs_per_snark;
 
 function run(cmd: string, ) {
     exec(cmd, (err, stdout, stderr) => {
