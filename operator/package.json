@@ -1,5 +1,5 @@
 {
-  "name": "ZKZRU",
+  "name": "ZKZRU-Prover",
   "version": "0.0.1",
   "description": "An implementation of [ZK-ZKRollup](https://github.com/ieigen/ZKZRU) in which the relayer **does not** publish transaction data to the main chain, but only publishes the new Merkle root at every update. This provides gas savings but not data availability guarantees: we assume the operator will always provide data to users so they can update their leaf.",
   "scripts": {
@@ -7,9 +7,7 @@
     "lint_sol": "./node_modules/.bin/solhint 'contracts/**/*.sol'",
     "lint": "yarn lint_js & yarn lint_sol",
     "clean": "rm -rf build dist typechain cache artifacts",
-    "compile": "hardhat compile",
-    "build": "yarn clean && yarn && ./node_modules/.bin/tsc",
-    "test": "yarn build && yarn compile && npx hardhat test"
+    "build": "yarn clean && yarn && ./node_modules/.bin/tsc"
   },
   "author": "EigenLabs",
   "license": "Apache-2.0",
