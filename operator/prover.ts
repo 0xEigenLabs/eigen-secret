@@ -16,12 +16,7 @@ const buildMimc7 = require("circomlibjs").buildMimc7;
 const buildBabyJub = require("circomlibjs").buildBabyJub;
 const buildEddsa = require("circomlibjs").buildEddsa;
 
-import * as txdb from "./model/tx";
-import * as accountdb from "./model/account";
-import * as tokendb from "./model/token";
-
 dotenvConfig({path: resolve(__dirname, "./.env")});
-
 
 const ZKIT = process.env.ZKIT || process.exit(-1)
 const CIRCUIT_PATH = global.gConfig.circuit_path
@@ -67,7 +62,7 @@ const parsePublicKey = (uncompressKey) => {
     return {"address": address, "x": x, "y": y}
 }
 
-const generateInput = async () => {
+const generateInput = async (accArray, txArrary) => {
     await treeHelper.initialize()
     let eddsa = await buildEddsa();
     let mimcjs = await buildMimc7();
@@ -77,10 +72,10 @@ const generateInput = async () => {
     let zeroAccount = new Account();
     await zeroAccount.initialize();
     // 1. construct account tree
-    const accountsInDB = await accountdb.findAll({})
+    //const accountsInDB = await accountdb.findAll({})
     let accounts = new Array()
-    for (var i = 0; i < accountsInDB.length; i ++) {
-        const acc = accountsInDB[i]
+    for (var i = 0; i < accArray.length; i ++) {
+        const acc = accArray[i]
         const pk = parsePublicKey(acc["pubkey"])
         const account = new Account(
             acc["index"],
@@ -96,6 +91,7 @@ const generateInput = async () => {
     }
     const paddedAccounts = treeHelper.padArray(accounts, zeroAccount, numLeaves);
     const accountTree = new AccountTree(paddedAccounts)
+    /*
     // 2. retrieve all tx
     let results = await txdb.findAll({
         where: {status: 0},
@@ -107,9 +103,10 @@ const generateInput = async () => {
         await results[i].update({status: 1});
         await results[i].save()
     }
+    */
     var txs= Array(TXS_PER_SNARK);
-    for (var i=0; i < results.length; i++) {
-        var res = results[i]
+    for (var i=0; i < txArrary.length; i++) {
+        var res = txArrary[i]
         var senderPK = parsePublicKey(res["senderPubkey"])
         var receiverPK = parsePublicKey(res["receiverPubkey"])
         var tx = new Transaction(
@@ -144,10 +141,9 @@ const generateInput = async () => {
     return path;
 }
 
-
-async function prove() {
+export async function prove(accArray, txArrary) {
     // generate input
-    const inputPath = await generateInput();
+    const inputPath = await generateInput(accArray, txArrary);
     const outputPath = "./test/witness/" + Date.now() + ".wtns";
 
     // generate witness
