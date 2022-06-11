@@ -2,15 +2,13 @@
     "development": {
       "txs_per_snark": 4,
       "tx_depth": 2,
-      "account_depth": 32,
-      "update_state_circuit_name": "update_state_verifier",
-      "circuit_path": "xxx"
+      "account_depth": 8,
+      "update_state_circuit_name": "update_state_verifier"
     },
     "production": {
       "txs_per_snark": 4,
       "tx_depth": 2,
-      "account_depth": 32,
-      "update_state_circuit_name": "update_state_verifier",
-      "circuit_path": "xxx"
+      "account_depth": 8,
+      "update_state_circuit_name": "update_state_verifier"
     }
 }  
