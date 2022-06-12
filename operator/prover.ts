@@ -27,15 +27,14 @@ const UPDATE_STATE_CIRCUIT_NAME = gConfig.update_state_circuit_name
 const numLeaves = 2**gConfig.account_depth;
 const TXS_PER_SNARK = gConfig.txs_per_snark;
 
-function run(cmd: string, ) {
-    exec(cmd, {shell: '/usr/bin/zsh'}, (error, stdout, stderr) => {
-        if (error) {
-            console.error(error);
-            return;
-        }
-        console.log(stdout);
-        console.log(stderr);
-    });
+function run(cmd) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) return reject(error)
+      if (stderr) return reject(stderr)
+      resolve(stdout)
+    })
+  })
 }
 
 const generateWitness = async(inputPath, outputPath, circuitName) => {
@@ -69,7 +68,7 @@ const parsePublicKey = (uncompressKey) => {
     return {"address": address, "x": x, "y": y}
 }
 
-const generateInput = async (accArray, txArray) => {
+const generateInput = async (accArray, txArray, currTime) => {
     await treeHelper.initialize()
     let eddsa = await buildEddsa();
     let mimcjs = await buildMimc7();
@@ -140,7 +139,8 @@ const generateInput = async (accArray, txArray) => {
     const stateTransaction = await accountTree.processTxArray(txTree);
     const inputs = await getCircuitInput(stateTransaction);
 
-    const path = TEST_PATH + "inputs/" + Date.now() + ".json";
+    //TODO use path.join
+    const path = TEST_PATH + "inputs/" + currTime + ".json";
 
     writeFileSync(
         path,
@@ -153,9 +153,11 @@ const generateInput = async (accArray, txArray) => {
 export async function prove(accArray, txArrary) {
     // generate input
     console.log(111)
-    const inputPath = await generateInput(accArray, txArrary);
+    const currTime = Date.now()
+    const inputPath = await generateInput(accArray, txArrary, currTime);
     console.log(222)
-    const outputPath = TEST_PATH + "witness/" + Date.now() + ".wtns";
+    //TODO use path.join
+    const outputPath = TEST_PATH + "witness/" + currTime + ".wtns";
     console.log(outputPath)
 
     // generate witness
@@ -165,23 +167,26 @@ export async function prove(accArray, txArrary) {
 
     // use cmd to export verification key
     let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
-    let vk = TEST_PATH + "vk/" + Date.now() + "_vk.bin";
+    //TODO use path.join
+    let vk = TEST_PATH + "vk/" + currTime + "_vk.bin";
+    //TODO use path.join
     const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + "update_state_verifier_js/"  + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + vk;
     console.log(cmd1)
-    run(cmd1);
-    console.log(555)
+    let result = await run(cmd1);
+    console.log(result)
 
     // use cmd to generate proof
-    let proof = TEST_PATH + "proof/" + Date.now() + "_proof.bin";
+    let proof = TEST_PATH + "proof/" + currTime + "_proof.bin";
     const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + "update_state_verifier_js/" + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof;
     console.log(cmd2)
-    run(cmd2);
-    console.log(666)
+    result = await run(cmd2);
+    console.log(result)
     return {vk, proof};
 }
 
-export function verify(vk, proof) {
+export async function verify(vk, proof) {
     const cmd = ZKIT + " verify -p " + proof + " -v " + vk;
     console.log(cmd)
-    run(cmd);
+    const result = await run(cmd);
+    console.log(result)
 }
