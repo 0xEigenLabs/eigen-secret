@@ -107,6 +107,6 @@ describe("Prover generates proof and verify", () => {
 
         let {vk, proof} = await prove(accArray, txArray);
 
-        verify(vk, proof);
+        await verify(vk, proof);
     });
 });
