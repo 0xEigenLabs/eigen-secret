@@ -140,7 +140,7 @@ const generateInput = async (accArray, txArray) => {
     const stateTransaction = await accountTree.processTxArray(txTree);
     const inputs = await getCircuitInput(stateTransaction);
 
-    const path = "./test/inputs/" + Date.now() + ".json";
+    const path = TEST_PATH + "inputs/" + Date.now() + ".json";
 
     writeFileSync(
         path,
@@ -155,7 +155,7 @@ export async function prove(accArray, txArrary) {
     console.log(111)
     const inputPath = await generateInput(accArray, txArrary);
     console.log(222)
-    const outputPath = "./test/witness/" + Date.now() + ".wtns";
+    const outputPath = TEST_PATH + "witness/" + Date.now() + ".wtns";
     console.log(outputPath)
     const WORKSPACE = "/tmp/zkit_zkzru_update_state/";
 
