@@ -10,8 +10,6 @@ import {prove, verify} from "../operator/prover";
 import { gConfig } from "../operator/config";
 import treeHelper from "../src/treeHelper";
 
-import {Blob} from "buffer";
-
 const ACCOUNT_DEPTH = gConfig.account_depth;
 const TXS_PER_SNARK = gConfig.txs_per_snark;
 const NUM_LEAVES = 2 ** ACCOUNT_DEPTH;
@@ -23,41 +21,9 @@ function generatePrvkey(i){
 
 
 describe("Prover generates proof and verify", () => {
-    // let accounts;
-    // let rollupNC;
-    // let tokenRegistry;
-    // let testToken;
-    // let mimc;
-    // let miMCMerkle;
     let eddsa;
 
     before(async function () {
-        // accounts = await hre.ethers.getSigners()
-
-        // const SEED = "mimc";
-        // let abi = cls.mimc7Contract.abi
-        // let createCode = cls.mimc7Contract.createCode
-        // let factory = new ContractFactory(
-        //     abi, createCode(SEED, 91), accounts[0]
-        // )
-        // mimc = await factory.deploy()
-
-        // factory = await ethers.getContractFactory("MiMCMerkle");
-        // miMCMerkle = await factory.deploy(mimc.address)
-        // await miMCMerkle.deployed()
-
-        // factory = await ethers.getContractFactory("TokenRegistry");
-        // tokenRegistry = await factory.deploy(accounts[0].address)
-        // await tokenRegistry.deployed()
-
-        // factory = await ethers.getContractFactory("RollupNC");
-        // rollupNC = await factory.deploy(mimc.address, miMCMerkle.address, tokenRegistry.address)
-        // await rollupNC.deployed()
-
-        // factory = await ethers.getContractFactory("TestToken");
-        // testToken = await factory.connect(accounts[3]).deploy()
-        // await testToken.deployed()
-
         eddsa = await cls.buildEddsa();
     });
 
@@ -106,8 +72,6 @@ describe("Prover generates proof and verify", () => {
             accArray.push(account);
         }
 
-        // const paddedAccounts = treeHelper.padArray(accArray, zeroAccount, NUM_LEAVES)
-        console.log("hi there there")
         // generate 4 txs
         let fromAccountsIdx = [2, 4, 3, 1]
         let toAccountsIdx = [4, 0, 5, 0]
