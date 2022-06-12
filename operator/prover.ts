@@ -157,7 +157,6 @@ export async function prove(accArray, txArrary) {
     console.log(222)
     const outputPath = TEST_PATH + "witness/" + Date.now() + ".wtns";
     console.log(outputPath)
-    const WORKSPACE = "/tmp/zkit_zkzru_update_state/";
 
     // generate witness
     console.log(333)
@@ -167,14 +166,14 @@ export async function prove(accArray, txArrary) {
     // use cmd to export verification key
     let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
     let vk = TEST_PATH + "vk/" + Date.now() + "_vk.bin";
-    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + WORKSPACE + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + vk;
+    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + "update_state_verifier_js/"  + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + vk;
     console.log(cmd1)
     run(cmd1);
     console.log(555)
 
     // use cmd to generate proof
     let proof = TEST_PATH + "proof/" + Date.now() + "_proof.bin";
-    const cmd2 = ZKIT + " prove -c " + WORKSPACE + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof;
+    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + "update_state_verifier_js/" + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof;
     console.log(cmd2)
     run(cmd2);
     console.log(666)
