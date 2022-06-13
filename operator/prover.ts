@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import consola from "consola";
 const path = require("path");
 const exec = require('child_process').exec;
-const { readFileSync, writeFileSync } = require("fs");
+const { mkdirSync, existsSync, readFileSync, writeFileSync } = require("fs");
 const getCircuitInput = require("../src/circuitInput");
 const Transaction = require("../src/transaction");
 const AccountTree = require("../src/accountTree");
@@ -68,7 +68,7 @@ const parsePublicKey = (uncompressKey) => {
     return {"address": address, "x": x, "y": y}
 }
 
-const generateInput = async (accArray, txArray, currTime) => {
+const generateInput = async (accArray, txArray, curTime) => {
     await treeHelper.initialize()
     let eddsa = await buildEddsa();
     let mimcjs = await buildMimc7();
@@ -139,8 +139,7 @@ const generateInput = async (accArray, txArray, currTime) => {
     const stateTransaction = await accountTree.processTxArray(txTree);
     const inputs = await getCircuitInput(stateTransaction);
 
-    //TODO use path.join
-    const path = TEST_PATH + "inputs/" + currTime + ".json";
+    const path = join(TEST_PATH, "inputs", curTime + ".json")
 
     writeFileSync(
         path,
@@ -150,33 +149,36 @@ const generateInput = async (accArray, txArray, currTime) => {
     return path;
 }
 
+const join = (base, ...pathes) => {
+    let filename = path.join(base, ...pathes)
+
+    const finalPath = path.dirname(filename)
+    if (!existsSync(finalPath)) {
+        mkdirSync(finalPath)
+    }
+    return filename
+}
+
 export async function prove(accArray, txArrary) {
     // generate input
-    console.log(111)
-    const currTime = Date.now()
-    const inputPath = await generateInput(accArray, txArrary, currTime);
-    console.log(222)
-    //TODO use path.join
-    const outputPath = TEST_PATH + "witness/" + currTime + ".wtns";
+    const curTime = Date.now().toString()
+    const inputPath = await generateInput(accArray, txArrary, curTime);
+    const outputPath = join(TEST_PATH, "witness", curTime+".wtns")
     console.log(outputPath)
 
     // generate witness
-    console.log(333)
     await generateWitness(inputPath, outputPath, "update_state_verifier")
-    console.log(444)
 
     // use cmd to export verification key
     let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
-    //TODO use path.join
-    let vk = TEST_PATH + "vk/" + currTime + "_vk.bin";
-    //TODO use path.join
+    const vk = join(TEST_PATH, "vk", curTime+"_vk.bin")
     const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + "update_state_verifier_js/"  + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + vk;
     console.log(cmd1)
     let result = await run(cmd1);
     console.log(result)
 
     // use cmd to generate proof
-    let proof = TEST_PATH + "proof/" + currTime + "_proof.bin";
+    let proof = join(TEST_PATH, "proof", curTime+"_proof,bin")
     const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + "update_state_verifier_js/" + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof;
     console.log(cmd2)
     result = await run(cmd2);
