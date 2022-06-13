@@ -21,6 +21,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: nightly
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
@@ -35,6 +38,8 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Compile contract
         run: npx hardhat compile
+      - name: Build EigenZKit
+        run: git clone https://github.com/ieigen/EigenZKit.git && cd EigenZKit && cargo build --release
       - name: Start hardhat node
         run: nohup npx hardhat node & 
       - name: Start test
