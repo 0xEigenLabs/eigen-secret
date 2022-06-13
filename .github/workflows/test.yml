@@ -9,6 +9,11 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  CIRCUIT_PATH: ${{ github.workspace }}/circuits/
+  TEST_PATH: ${{ github.workspace }}/test/
+  NODE_ENV: development
+
 jobs:
   build-test:
 
@@ -40,6 +45,8 @@ jobs:
         run: npx hardhat compile
       - name: Build EigenZKit
         run: git clone https://github.com/ieigen/EigenZKit.git && cd EigenZKit && cargo build --release
+        env: 
+          ZKIT: ${{ github.workspace }}/EigenZKit/target/release/zkit
       - name: Start hardhat node
         run: nohup npx hardhat node & 
       - name: Start test
