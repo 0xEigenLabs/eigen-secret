@@ -6,6 +6,12 @@ dist/
 .secret
 .env
 
+test/inputs/
+test/proof/
+test/public/
+test/vk/
+test/witness/
+
 circuits/update_state_verifier_js/*
 !circuits/update_state_verifier_js/proof.json
 !circuits/update_state_verifier_js/public.json

@@ -52,7 +52,6 @@ const generateWitness = async(inputPath, outputPath, circuitName) => {
         0
     );
 
-    //const buff= await wc.calculateWTNSBin(input,0);
     writeFileSync(outputPath, witnessBuffer, "utf-8");
 }
 
@@ -70,83 +69,29 @@ const parsePublicKey = (uncompressKey) => {
 
 const generateInput = async (accArray, txArray, curTime) => {
     await treeHelper.initialize()
-    let eddsa = await buildEddsa();
     let mimcjs = await buildMimc7();
 
     let F = mimcjs.F;
 
     let zeroAccount = new Account();
     await zeroAccount.initialize();
-    // 1. construct account tree
-    //const accountsInDB = await accountdb.findAll({})
-    // let accounts = new Array()
-    // for (var i = 0; i < accArray.length; i ++) {
-    //     const acc = accArray[i]
-    //     const pk = parsePublicKey(acc["pubkey"])
-    //     const account = new Account(
-    //         acc["index"],
-    //         pk["x"],
-    //         pk["y"],
-    //         acc["balance"],
-    //         acc["nonce"],
-    //         acc["tokenType"],
-    //         undefined, //private key
-    //     )
-    //     await account.initialize()
-    //     accounts.push(account)
-    // }
-    //const paddedAccounts = treeHelper.padArray(accounts, zeroAccount, numLeaves);
+    
     const paddedAccounts = treeHelper.padArray(accArray, zeroAccount, numLeaves);
     const accountTree = new AccountTree(paddedAccounts)
-    /*
-    // 2. retrieve all tx
-    let results = await txdb.findAll({
-        where: {status: 0},
-        limit: TXS_PER_SNARK,
-        order: [['nonce', 'ASC']]
-    });
-    // update status
-    for (var i=0; i < results.length; i++) {
-        await results[i].update({status: 1});
-        await results[i].save()
-    }
-    */
-    // var txs= Array(TXS_PER_SNARK);
-    // for (var i=0; i < txArrary.length; i++) {
-    //     var res = txArrary[i]
-    //     var senderPK = parsePublicKey(res["senderPubkey"])
-    //     var receiverPK = parsePublicKey(res["receiverPubkey"])
-    //     var tx = new Transaction(
-    //         senderPK["x"],
-    //         senderPK["y"],
-    //         res["index"],
-    //         receiverPK["x"],
-    //         receiverPK["y"],
-    //         res["nonce"],
-    //         res["amount"],
-    //         res["tokenType"],
-    //         res["r8x"],
-    //         res["r8y"],
-    //         res["s"]
-    //     )
-    //     await tx.initialize();
-    //     tx.hashTx();
-    //     txs[i] = tx;
-    // }
-
-    // const txTree = new TxTree(txs)
+    
     const txTree = new TxTree(txArray)
     const stateTransaction = await accountTree.processTxArray(txTree);
+    const txRoot = F.toString(stateTransaction.txTree.root)
     const inputs = await getCircuitInput(stateTransaction);
 
-    const path = join(TEST_PATH, "inputs", curTime + ".json")
+    const inputPath = join(TEST_PATH, "inputs", curTime + ".json")
 
     writeFileSync(
-        path,
+        inputPath,
         JSON.stringify(inputs),
         "utf-8"
     );
-    return path;
+    return {inputPath, txRoot};
 }
 
 const join = (base, ...pathes) => {
@@ -162,9 +107,8 @@ const join = (base, ...pathes) => {
 export async function prove(accArray, txArrary) {
     // generate input
     const curTime = Date.now().toString()
-    const inputPath = await generateInput(accArray, txArrary, curTime);
+    const {inputPath, txRoot} = await generateInput(accArray, txArrary, curTime);
     const outputPath = join(TEST_PATH, "witness", curTime+".wtns")
-    console.log(outputPath)
 
     // generate witness
     await generateWitness(inputPath, outputPath, "update_state_verifier")
@@ -178,17 +122,19 @@ export async function prove(accArray, txArrary) {
     console.log(result)
 
     // use cmd to generate proof
-    let proof = join(TEST_PATH, "proof", curTime+"_proof,bin")
-    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + "update_state_verifier_js/" + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof;
+    let proof = join(TEST_PATH, "proof", curTime+"_proof.bin")
+    let publicJson = join(TEST_PATH, "public", curTime+"_public.json")
+    let proofJson = join(TEST_PATH, "proof", curTime+"_proof.json")
+    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + "update_state_verifier_js/" + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof + " -j " + proofJson + " -p " + publicJson;
     console.log(cmd2)
     result = await run(cmd2);
     console.log(result)
-    return {vk, proof};
+    return {vk, proof, proofJson, publicJson, txRoot};
 }
 
 export async function verify(vk, proof) {
     const cmd = ZKIT + " verify -p " + proof + " -v " + vk;
     console.log(cmd)
     const result = await run(cmd);
-    console.log(result)
+    return result.toString().startsWith('Proof is valid');
 }

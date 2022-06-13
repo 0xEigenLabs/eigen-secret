@@ -105,8 +105,9 @@ describe("Prover generates proof and verify", () => {
             txArray[i] = tx;
         }
 
-        let {vk, proof} = await prove(accArray, txArray);
+        let {vk, proof, proofJson, publicJson, txRoot} = await prove(accArray, txArray);
 
-        await verify(vk, proof);
+        let isValid = await verify(vk, proof);
+        assert(isValid, "invalid proof")
     });
 });
