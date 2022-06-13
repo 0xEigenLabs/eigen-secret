@@ -25,6 +25,8 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+      - name: set ENV
+        run: export CIRCUIT_PATH=env.CIRCUIT_PATH && export TEST_PATH=env.TEST_PATH && export NODE_ENV=env.NODE_ENV
       - uses: actions/checkout@v2
       - uses: taiki-e/github-actions/install-rust@main
         with:
@@ -47,6 +49,8 @@ jobs:
         run: git clone https://github.com/ieigen/EigenZKit.git && cd EigenZKit && cargo build --release
         env: 
           ZKIT: ${{ github.workspace }}/EigenZKit/target/release/zkit
+      - name: set ZKIT
+        run: export ZKIT=env.ZKIT
       - name: Start hardhat node
         run: nohup npx hardhat node & 
       - name: Start test
