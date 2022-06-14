@@ -23,9 +23,9 @@ import { gConfig } from "./config";
 const ZKIT = process.env.ZKIT || process.exit(-1)
 const CIRCUIT_PATH = process.env.CIRCUIT_PATH || process.exit(-1)
 const TEST_PATH = process.env.TEST_PATH || process.exit(-1)
-const UPDATE_STATE_CIRCUIT_NAME = gConfig.update_state_circuit_name
-const numLeaves = 2**gConfig.account_depth;
-const TXS_PER_SNARK = gConfig.txs_per_snark;
+const UPDATE_STATE_CIRCUIT_NAME = "update_state_verifier"
+const numLeaves = 2**2;
+const TXS_PER_SNARK = 4;
 
 function run(cmd) {
   return new Promise((resolve, reject) => {

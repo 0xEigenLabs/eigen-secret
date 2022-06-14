@@ -10,8 +10,8 @@ import {prove, verify} from "../operator/prover";
 import { gConfig } from "../operator/config";
 import treeHelper from "../src/treeHelper";
 
-const ACCOUNT_DEPTH = gConfig.account_depth;
-const TXS_PER_SNARK = gConfig.txs_per_snark;
+const ACCOUNT_DEPTH = 8;
+const TXS_PER_SNARK = 4;
 const NUM_LEAVES = 2 ** ACCOUNT_DEPTH;
 
 function generatePrvkey(i){
