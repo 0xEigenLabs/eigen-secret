@@ -104,6 +104,52 @@ const join = (base, ...pathes) => {
     return filename
 }
 
+export async function transfer(accountInDB, txInDB) {
+    let accArray = new Array()
+    for (var i = 0; i < accountInDB.length; i ++) {
+        const acc = accountInDB[i]
+        const pk = parsePublicKey(acc["pubkey"])
+        const account = new Account(
+            acc["index"],
+            pk["x"],
+            pk["y"],
+            acc["balance"],
+            acc["nonce"],
+            acc["tokenType"],
+            undefined, //private key, need to get from KMS.
+        )
+        await account.initialize()
+        accArray.push(account)
+    }
+
+    if (txInDB.length != TXS_PER_SNARK) {
+        throw new Error("Invalid tx batch length:" + txInDB.length)
+    }
+    var txArray= Array(TXS_PER_SNARK);
+    for (var i=0; i < txInDB.length; i++) {
+        var res = txInDB[i]
+        var senderPK = parsePublicKey(res["senderPubkey"])
+        var receiverPK = parsePublicKey(res["receiverPubkey"])
+        var tx = new Transaction(
+            senderPK["x"],
+            senderPK["y"],
+            res["index"],
+            receiverPK["x"],
+            receiverPK["y"],
+            res["nonce"],
+            res["amount"],
+            res["tokenType"],
+            res["r8x"],
+            res["r8y"],
+            res["s"]
+        )
+        await tx.initialize();
+        tx.hashTx();
+        txArray[i] = tx;
+    }
+    return {accArray, txArray}
+}
+
 export async function prove(accArray, txArrary) {
     // generate input
     const curTime = Date.now().toString()
