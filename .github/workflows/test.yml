@@ -38,10 +38,12 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Compile contract
         run: npx hardhat compile
+      - name: Download universal key
+        run: curl https://universal-setup.ams3.digitaloceanspaces.com/setup_2^20.key -o ${{ github.workspace }}/circuits/setup_2^20.key
       - name: Build EigenZKit
         run: git clone https://github.com/ieigen/EigenZKit.git && cd EigenZKit && cargo build --release
       - name: Generate .env
-        run: touch .env && echo "ZKIT=${{ github.workspace }}/EigenZKit/target/release/zkit\nCIRCUIT_PATH=${{ github.workspace }}/circuits/\nTEST_PATH=${{ github.workspace }}/test/\nNODE_ENV=development" > .env && cat .env
+        run: touch .env && echo -e "ZKIT=${{ github.workspace }}/EigenZKit/target/release/zkit\nCIRCUIT_PATH=${{ github.workspace }}/circuits/\nTEST_PATH=${{ github.workspace }}/test/\nNODE_ENV=development" > .env && cat .env
       - name: Start hardhat node
         run: nohup npx hardhat node & 
       - name: Start test
