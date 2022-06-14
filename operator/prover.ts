@@ -18,13 +18,12 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 
 dotenvConfig({path: resolve(__dirname, "./.env")});
 
-import { gConfig } from "./config";
-
 const ZKIT = process.env.ZKIT || process.exit(-1)
 const CIRCUIT_PATH = process.env.CIRCUIT_PATH || process.exit(-1)
 const TEST_PATH = process.env.TEST_PATH || process.exit(-1)
 const UPDATE_STATE_CIRCUIT_NAME = "update_state_verifier"
-const numLeaves = 2**2;
+const ACCOUNT_DEPTH = 8
+const numLeaves = 2**ACCOUNT_DEPTH;
 const TXS_PER_SNARK = 4;
 
 function run(cmd) {
@@ -104,7 +103,7 @@ const join = (base, ...pathes) => {
     return filename
 }
 
-export async function transfer(accountInDB, txInDB) {
+export async function parseDBData(accountInDB, txInDB) {
     let accArray = new Array()
     for (var i = 0; i < accountInDB.length; i ++) {
         const acc = accountInDB[i]
