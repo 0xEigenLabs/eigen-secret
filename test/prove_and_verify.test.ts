@@ -7,7 +7,6 @@ const Account = require("../src/account.js");
 const Transaction = require("../src/transaction.js");
 
 import {prove, verify} from "../operator/prover";
-import { gConfig } from "../operator/config";
 import treeHelper from "../src/treeHelper";
 
 const ACCOUNT_DEPTH = 8;
