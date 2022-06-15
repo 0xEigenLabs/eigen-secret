@@ -2,6 +2,12 @@
   "name": "@ieigen/zkzru",
   "version": "0.0.1",
   "description": "An implementation of [ZK-ZKRollup](https://github.com/ieigen/ZKZRU) in which the relayer **does not** publish transaction data to the main chain, but only publishes the new Merkle root at every update. This provides gas savings but not data availability guarantees: we assume the operator will always provide data to users so they can update their leaf.",
+  "keywords": [
+    "zkp",
+    "privacy",
+    "anonymity",
+    "blockchain"
+  ],
   "scripts": {
     "lint_js": "./node_modules/.bin/eslint src --ext .js",
     "lint_sol": "./node_modules/.bin/solhint 'contracts/**/*.sol'",
@@ -13,6 +19,10 @@
   },
   "author": "EigenLabs",
   "license": "Apache-2.0",
+  "files": [
+    "operator",
+    "src"
+  ],
   "dependencies": {
     "@ieigen/anonmisc": "^0.0.7",
     "@openzeppelin/contracts": "^4.6.0",
