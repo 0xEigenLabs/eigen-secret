@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import consola from "consola";
 const path = require("path");
 const exec = require('child_process').exec;
-const { readFileSync, writeFileSync } = require("fs");
+const { mkdirSync, existsSync, readFileSync, writeFileSync } = require("fs");
 const getCircuitInput = require("../src/circuitInput");
 const Transaction = require("../src/transaction");
 const AccountTree = require("../src/accountTree");
@@ -18,22 +18,22 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 
 dotenvConfig({path: resolve(__dirname, "./.env")});
 
-import { gConfig } from "./config";
-
 const ZKIT = process.env.ZKIT || process.exit(-1)
-const CIRCUIT_PATH = gConfig.circuit_path
-const UPDATE_STATE_CIRCUIT_NAME = gConfig.update_state_circuit_name
-const numLeaves = 2**gConfig.account_depth;
-const TXS_PER_SNARK = gConfig.txs_per_snark;
+const CIRCUIT_PATH = process.env.CIRCUIT_PATH || process.exit(-1)
+const TEST_PATH = process.env.TEST_PATH || process.exit(-1)
+const UPDATE_STATE_CIRCUIT_NAME = "update_state_verifier"
+const ACCOUNT_DEPTH = 8
+const numLeaves = 2**ACCOUNT_DEPTH;
+const TXS_PER_SNARK = 4;
 
-function run(cmd: string, ) {
-    exec(cmd, (err, stdout, stderr) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        console.log(stdout);
-    });
+function run(cmd) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) return reject(error)
+      if (stderr) return reject(stderr)
+      resolve(stdout)
+    })
+  })
 }
 
 const generateWitness = async(inputPath, outputPath, circuitName) => {
@@ -42,14 +42,16 @@ const generateWitness = async(inputPath, outputPath, circuitName) => {
     let requirePath = path.join(CIRCUIT_PATH, circuitName + "_js", "witness_calculator")
     const wc = require(requirePath);
 
+    const buffer = readFileSync(wasm);
+    const witnesssCalculator = await wc(buffer);
+
     const input = JSON.parse(readFileSync(inputPath, "utf8"));
-    const witnessBuffer = await wc.calculateWTNSBin(
+    const witnessBuffer = await witnesssCalculator.calculateWTNSBin(
         input,
         0
     );
 
-    const buff= await wc.calculateWTNSBin(input,0);
-    writeFileSync(outputPath, buff, "utf-8");
+    writeFileSync(outputPath, witnessBuffer, "utf-8");
 }
 
 const parsePublicKey = (uncompressKey) => {
@@ -64,20 +66,47 @@ const parsePublicKey = (uncompressKey) => {
     return {"address": address, "x": x, "y": y}
 }
 
-const generateInput = async (accArray, txArrary) => {
+const generateInput = async (accArray, txArray, curTime) => {
     await treeHelper.initialize()
-    let eddsa = await buildEddsa();
     let mimcjs = await buildMimc7();
 
     let F = mimcjs.F;
 
     let zeroAccount = new Account();
     await zeroAccount.initialize();
-    // 1. construct account tree
-    //const accountsInDB = await accountdb.findAll({})
-    let accounts = new Array()
-    for (var i = 0; i < accArray.length; i ++) {
-        const acc = accArray[i]
+    
+    const paddedAccounts = treeHelper.padArray(accArray, zeroAccount, numLeaves);
+    const accountTree = new AccountTree(paddedAccounts)
+    
+    const txTree = new TxTree(txArray)
+    const stateTransaction = await accountTree.processTxArray(txTree);
+    const txRoot = F.toString(stateTransaction.txTree.root)
+    const inputs = await getCircuitInput(stateTransaction);
+
+    const inputPath = join(TEST_PATH, "inputs", curTime + ".json")
+
+    writeFileSync(
+        inputPath,
+        JSON.stringify(inputs),
+        "utf-8"
+    );
+    return {inputPath, txRoot};
+}
+
+const join = (base, ...pathes) => {
+    let filename = path.join(base, ...pathes)
+
+    const finalPath = path.dirname(filename)
+    if (!existsSync(finalPath)) {
+        mkdirSync(finalPath)
+    }
+    return filename
+}
+
+export async function parseDBData(accountInDB, txInDB) {
+    let accArray = new Array()
+    for (var i = 0; i < accountInDB.length; i ++) {
+        const acc = accountInDB[i]
         const pk = parsePublicKey(acc["pubkey"])
         const account = new Account(
             acc["index"],
@@ -86,29 +115,18 @@ const generateInput = async (accArray, txArrary) => {
             acc["balance"],
             acc["nonce"],
             acc["tokenType"],
-            undefined, //private key
+            undefined, //private key, need to get from KMS.
         )
         await account.initialize()
-        accounts.push(account)
+        accArray.push(account)
     }
-    const paddedAccounts = treeHelper.padArray(accounts, zeroAccount, numLeaves);
-    const accountTree = new AccountTree(paddedAccounts)
-    /*
-    // 2. retrieve all tx
-    let results = await txdb.findAll({
-        where: {status: 0},
-        limit: TXS_PER_SNARK,
-        order: [['nonce', 'ASC']]
-    });
-    // update status
-    for (var i=0; i < results.length; i++) {
-        await results[i].update({status: 1});
-        await results[i].save()
+
+    if (txInDB.length != TXS_PER_SNARK) {
+        throw new Error("Invalid tx batch length:" + txInDB.length)
     }
-    */
-    var txs= Array(TXS_PER_SNARK);
-    for (var i=0; i < txArrary.length; i++) {
-        var res = txArrary[i]
+    var txArray= Array(TXS_PER_SNARK);
+    for (var i=0; i < txInDB.length; i++) {
+        var res = txInDB[i]
         var senderPK = parsePublicKey(res["senderPubkey"])
         var receiverPK = parsePublicKey(res["receiverPubkey"])
         var tx = new Transaction(
@@ -126,37 +144,42 @@ const generateInput = async (accArray, txArrary) => {
         )
         await tx.initialize();
         tx.hashTx();
-        txs[i] = tx;
+        txArray[i] = tx;
     }
-
-    const txTree = new TxTree(txs)
-    const stateTransaction = await accountTree.processTxArray(txTree);
-    const inputs = await getCircuitInput(stateTransaction);
-
-    const path = "./test/inputs/" + Date.now() + ".json";
-
-    writeFileSync(
-        path,
-        JSON.stringify(inputs),
-        "utf-8"
-    );
-    return path;
+    return {accArray, txArray}
 }
 
 export async function prove(accArray, txArrary) {
     // generate input
-    const inputPath = await generateInput(accArray, txArrary);
-    const outputPath = "./test/witness/" + Date.now() + ".wtns";
+    const curTime = Date.now().toString()
+    const {inputPath, txRoot} = await generateInput(accArray, txArrary, curTime);
+    const outputPath = join(TEST_PATH, "witness", curTime+".wtns")
 
     // generate witness
     await generateWitness(inputPath, outputPath, "update_state_verifier")
 
     // use cmd to export verification key
     let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
-    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + CIRCUIT_PATH + "vk.bin";
-    run(cmd1);
+    const vk = join(TEST_PATH, "vk", curTime+"_vk.bin")
+    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + "update_state_verifier_js/"  + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + vk;
+    console.log(cmd1)
+    let result = await run(cmd1);
+    console.log(result)
 
     // use cmd to generate proof
-    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + CIRCUIT_PATH + "proof.bin";
-    run(cmd2);
+    let proof = join(TEST_PATH, "proof", curTime+"_proof.bin")
+    let publicJson = join(TEST_PATH, "public", curTime+"_public.json")
+    let proofJson = join(TEST_PATH, "proof", curTime+"_proof.json")
+    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + "update_state_verifier_js/" + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof + " -j " + proofJson + " -p " + publicJson;
+    console.log(cmd2)
+    result = await run(cmd2);
+    console.log(result)
+    return {vk, proof, proofJson, publicJson, txRoot};
+}
+
+export async function verify(vk, proof) {
+    const cmd = ZKIT + " verify -p " + proof + " -v " + vk;
+    console.log(cmd)
+    const result = await run(cmd);
+    return result.toString().startsWith('Proof is valid');
 }
