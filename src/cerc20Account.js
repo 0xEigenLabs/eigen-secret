@@ -1,5 +1,4 @@
 const buildMimc7 = require("circomlibjs").buildMimc7;
-const buildEddsa = require("circomlibjs").buildEddsa;
 const pc = require("@ieigen/anonmisc/lib/pedersen_babyJubjub.ts");
 
 module.exports = class CERC20Account {
@@ -28,7 +27,6 @@ module.exports = class CERC20Account {
   }
 
   hashAccount(){
-    let F = this.mimcjs.F
     let input = [
       // this.index.toString(),
       this.pubkeyX,
