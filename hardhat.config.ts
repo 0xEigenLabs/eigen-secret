@@ -1,6 +1,5 @@
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat"
-import "@nomiclabs/hardhat-truffle5";
 import { task, HardhatUserConfig } from "hardhat/config";
 import { resolve } from "path";
 
