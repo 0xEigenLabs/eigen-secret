@@ -38,6 +38,7 @@
     "chai": "^4.2.0",
     "dotenv": "^16.0.1",
     "eslint": "^8.17.0",
+    "eslint-config-google": "^0.14.0",
     "ethereum-waffle": "^3.0.0",
     "ethers": "^5.6.8",
     "hardhat": "^2.9.9",
