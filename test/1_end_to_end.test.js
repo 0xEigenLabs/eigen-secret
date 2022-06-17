@@ -1,5 +1,4 @@
-const {waffle, ethers} = require("hardhat");
-import { ContractFactory, BigNumber} from "ethers";
+const {BigNumber, ContractFactory} = require("ethers");
 const hre = require('hardhat')
 const assert = require('assert');
 const cls = require("circomlibjs");
@@ -70,7 +69,7 @@ describe("RollupNC", () => {
         let approveToken = await rollupNC.connect(accounts[0]).approveToken(testToken.address, { from: accounts[0].address })
         assert(approveToken, "token registration failed");
 	});
-	
+
     // ----------------------------------------------------------------------------------
     it("should approve RollupNC on TestToken", async () => {
         let approveToken = await testToken.connect(accounts[3]).approve(

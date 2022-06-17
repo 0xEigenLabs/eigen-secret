@@ -48,9 +48,4 @@ module.exports = class Account {
       this.hash = this.hashAccount()
     }
   }
-
 }
-
-
-
-
