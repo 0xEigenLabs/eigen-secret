@@ -1,9 +1,10 @@
-const {waffle, ethers} = require("hardhat");
-import { ContractFactory, BigNumber} from "ethers";
+//const {waffle, ethers} = require("hardhat");
+//import { ContractFactory, BigNumber} from "ethers";
+const { BigNumber, ContractFactory } = require("ethers");
 const hre = require('hardhat')
 const assert = require('assert');
 const cls = require("circomlibjs");
-import { expect } from "chai";
+const { expect } = require("chai");
 
 describe("Test Multihash", () => {
     let accounts;

@@ -1,9 +1,9 @@
-import fs from 'fs'
-import Account from '../src/account'
-import Tree from '../src/tree'
+const fs = require("fs")
+const { Account } = require("../src/account");
+const { Tree } = require('../src/tree')
 
 const ACCOUNT_DEPTH = 8;
-/* 
+/*
    generate empty nodes for an accounts tree of depth 8
  */
 

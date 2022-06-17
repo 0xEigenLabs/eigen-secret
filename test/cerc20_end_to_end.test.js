@@ -1,5 +1,5 @@
-const {waffle, ethers} = require("hardhat");
-import { ContractFactory, BigNumber} from "ethers";
+//const {waffle, ethers} = require("hardhat");
+const { ContractFactory, BigNumber} = require("ethers");
 const hre = require('hardhat')
 const assert = require('assert');
 const cls = require("circomlibjs");
@@ -75,7 +75,7 @@ describe("CERC20RollupNC", () => {
         let approveToken = await rollupNC.connect(accounts[0]).approveToken(testToken.address, { from: accounts[0].address })
         assert(approveToken, "token registration failed");
 	});
-	
+
     // ----------------------------------------------------------------------------------
     it("should approve RollupNC on TestToken", async () => {
         let approveToken = await testToken.connect(accounts[3]).approve(
@@ -100,7 +100,7 @@ describe("CERC20RollupNC", () => {
         '14002865450927633564331372044902774664732662568242033105218094241542484073498'
     ]
 
-    // balance = [1000, 20, 200, 100, 500, 20] 
+    // balance = [1000, 20, 200, 100, 500, 20]
     // The following commitments are pedersen commitments to the balance
     const balanceCommA = testInfo.balanceCommA
 
@@ -204,7 +204,7 @@ describe("CERC20RollupNC", () => {
     });
 
     // ----------------------------------------------------------------------------------
-    
+
     it("should process second batch of deposits", async () => {
         let second4HashPosition = [1, 0]
         // first4Hash is the pendingDeposits[0] after the first four time deposits.
@@ -212,7 +212,7 @@ describe("CERC20RollupNC", () => {
             first4Hash,
             '16580474105437433399820305371359442442925783187705352117189664556047228178620'
         ]
-        
+
         let processDeposit2 = await rollupNC.connect(accounts[0]).processDeposits(
             2,
             second4HashPosition,
@@ -271,7 +271,7 @@ describe("CERC20RollupNC", () => {
         }
         let validWithdraw = await rollupNC.connect(accounts[3]).withdraw(
             txInfo, recipient,
-            withdraw_proof, amount, 
+            withdraw_proof, amount,
             {from: accounts[3].address}
         );
         assert(validWithdraw, "invalid withdraw");

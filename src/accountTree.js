@@ -3,7 +3,7 @@ const Transaction = require("./transaction.js")
 
 const buildMimc7 = require("circomlibjs").buildMimc7;
 
-module.exports = class AccountTree extends Tree{
+module.exports = class AccountTree extends Tree {
     constructor(
         _accounts
     ){

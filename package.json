@@ -14,46 +14,34 @@
     "lint": "yarn lint_js & yarn lint_sol",
     "clean": "rm -rf build dist typechain cache artifacts",
     "compile": "hardhat compile",
-    "build": "yarn clean && yarn && ./node_modules/.bin/tsc",
+    "build": "yarn clean && yarn",
     "test": "yarn build && yarn compile && npx hardhat test"
   },
   "author": "EigenLabs",
   "license": "Apache-2.0",
   "files": [
-    "dist/*.js",
-    "dist/**/*.js"
+    "src/*.js",
+    "operator/*.js"
   ],
-  "main": "dist/index.js",
+  "main": "index.js",
   "dependencies": {
     "@ieigen/anonmisc": "^0.0.7",
-    "@openzeppelin/contracts": "^4.6.0",
-    "bignumber.js": "^9.0.2",
-    "circomlib": "^2.0.2",
     "circomlibjs": "^0.1.1",
     "consola": "^2.15.3",
-    "sequelize": "^6.15.0",
-    "snarkjs": "^0.4.16",
+    "ffjavascript": "^0.2.55",
+    "snarkjs": "^0.4.22",
     "solhint": "^3.3.7"
   },
   "devDependencies": {
-    "@eslint/create-config": "^0.1.2",
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.0.6",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@nomiclabs/hardhat-web3": "^2.0.0",
-    "@typechain/ethers-v5": "^7.0.1",
-    "@typechain/hardhat": "^4.0.0",
-    "@types/mocha": "^9.1.0",
-    "@typescript-eslint/eslint-plugin": "^5.25.0",
-    "@typescript-eslint/parser": "^5.25.0",
     "chai": "^4.2.0",
-    "dotenv": "^16.0.0",
-    "eslint": "^8.9.0",
+    "dotenv": "^16.0.1",
+    "eslint": "^8.17.0",
     "ethereum-waffle": "^3.0.0",
-    "ethers": "^5.0.0",
-    "hardhat": "^2.5.0",
-    "ts-node": "^10.4.0",
-    "typechain": "^5.0.0",
-    "typescript": "^4.5.5",
-    "typescript-eslint-parser": "^22.0.0"
+    "ethers": "^5.6.8",
+    "hardhat": "^2.9.9",
+    "mocha": "^10.0.0",
+    "typechain": "^8.1.0"
   }
 }

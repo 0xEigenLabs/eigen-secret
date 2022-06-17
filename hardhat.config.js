@@ -1,10 +1,12 @@
-import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat"
-import { task, HardhatUserConfig } from "hardhat/config";
-import { resolve } from "path";
+require("@nomiclabs/hardhat-waffle");
+//import "@typechain/hardhat"
+//import { task, HardhatUserConfig } from "hardhat/config";
+//import { resolve } from "path";
 
-import { config as dotenvConfig } from "dotenv";
-dotenvConfig({ path: resolve(__dirname, "./.env") });
+const dotenv = require('dotenv')
+dotenv.config()
+
+//dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html

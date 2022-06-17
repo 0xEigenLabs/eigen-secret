@@ -1,7 +1,6 @@
-import { resolve } from "path";
-import { config as dotenvConfig } from "dotenv";
-import { ethers } from 'ethers';
-import consola from "consola";
+require('dotenv').config()
+const { utils } = require('ethers');
+const consola = require('consola')
 const path = require("path");
 const exec = require('child_process').exec;
 const { mkdirSync, existsSync, readFileSync, writeFileSync } = require("fs");
@@ -15,8 +14,6 @@ const TxTree = require("../src/txTree");
 const buildMimc7 = require("circomlibjs").buildMimc7;
 const buildBabyJub = require("circomlibjs").buildBabyJub;
 const buildEddsa = require("circomlibjs").buildEddsa;
-
-dotenvConfig({path: resolve(__dirname, "./.env")});
 
 const ZKIT = process.env.ZKIT || process.exit(-1)
 const CIRCUIT_PATH = process.env.CIRCUIT_PATH || process.exit(-1)
@@ -36,7 +33,8 @@ function run(cmd) {
   })
 }
 
-const generateWitness = async(inputPath, outputPath, circuitName) => {
+module.exports = {
+  async generateWitness (inputPath, outputPath, circuitName) {
     let wasm = path.join(CIRCUIT_PATH, circuitName+"_js",  circuitName+".wasm");
     let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
     let requirePath = path.join(CIRCUIT_PATH, circuitName + "_js", "witness_calculator")
@@ -47,26 +45,26 @@ const generateWitness = async(inputPath, outputPath, circuitName) => {
 
     const input = JSON.parse(readFileSync(inputPath, "utf8"));
     const witnessBuffer = await witnesssCalculator.calculateWTNSBin(
-        input,
-        0
+      input,
+      0
     );
 
     writeFileSync(outputPath, witnessBuffer, "utf-8");
-}
+  },
 
-const parsePublicKey = (uncompressKey) => {
+  parsePublicKey(uncompressKey) {
     if (!uncompressKey.startWith("04")) {
-        throw new Error("Invalid public key:" + uncompressKey)
+      throw new Error("Invalid public key:" + uncompressKey)
     }
-    const address = ethers.utils.computeAddress(uncompressKey)
+    const address = utils.computeAddress(uncompressKey)
     const xy = uncompressKey.substr(2)
     const x = xy.substr(0, 32)
     const y = xy.substr(32)
 
     return {"address": address, "x": x, "y": y}
-}
+  },
 
-const generateInput = async (accArray, txArray, curTime) => {
+  async generateInput (accArray, txArray, curTime) {
     await treeHelper.initialize()
     let mimcjs = await buildMimc7();
 
@@ -74,10 +72,10 @@ const generateInput = async (accArray, txArray, curTime) => {
 
     let zeroAccount = new Account();
     await zeroAccount.initialize();
-    
+
     const paddedAccounts = treeHelper.padArray(accArray, zeroAccount, numLeaves);
     const accountTree = new AccountTree(paddedAccounts)
-    
+
     const txTree = new TxTree(txArray)
     const stateTransaction = await accountTree.processTxArray(txTree);
     const txRoot = F.toString(stateTransaction.txTree.root)
@@ -86,70 +84,70 @@ const generateInput = async (accArray, txArray, curTime) => {
     const inputPath = join(TEST_PATH, "inputs", curTime + ".json")
 
     writeFileSync(
-        inputPath,
-        JSON.stringify(inputs),
-        "utf-8"
+      inputPath,
+      JSON.stringify(inputs),
+      "utf-8"
     );
     return {inputPath, txRoot};
-}
+  },
 
-const join = (base, ...pathes) => {
+  join (base, ...pathes) {
     let filename = path.join(base, ...pathes)
 
     const finalPath = path.dirname(filename)
     if (!existsSync(finalPath)) {
-        mkdirSync(finalPath)
+      mkdirSync(finalPath)
     }
     return filename
-}
+  },
 
-export async function parseDBData(accountInDB, txInDB) {
+  async parseDBData(accountInDB, txInDB) {
     let accArray = new Array()
     for (var i = 0; i < accountInDB.length; i ++) {
-        const acc = accountInDB[i]
-        const pk = parsePublicKey(acc["pubkey"])
-        const account = new Account(
-            acc["index"],
-            pk["x"],
-            pk["y"],
-            acc["balance"],
-            acc["nonce"],
-            acc["tokenType"],
-            undefined, //private key, need to get from KMS.
-        )
-        await account.initialize()
-        accArray.push(account)
+      const acc = accountInDB[i]
+      const pk = parsePublicKey(acc["pubkey"])
+      const account = new Account(
+        acc["index"],
+        pk["x"],
+        pk["y"],
+        acc["balance"],
+        acc["nonce"],
+        acc["tokenType"],
+        undefined, //private key, need to get from KMS.
+      )
+      await account.initialize()
+      accArray.push(account)
     }
 
     if (txInDB.length != TXS_PER_SNARK) {
-        throw new Error("Invalid tx batch length:" + txInDB.length)
+      throw new Error("Invalid tx batch length:" + txInDB.length)
     }
     var txArray= Array(TXS_PER_SNARK);
     for (var i=0; i < txInDB.length; i++) {
-        var res = txInDB[i]
-        var senderPK = parsePublicKey(res["senderPubkey"])
-        var receiverPK = parsePublicKey(res["receiverPubkey"])
-        var tx = new Transaction(
-            senderPK["x"],
-            senderPK["y"],
-            res["index"],
-            receiverPK["x"],
-            receiverPK["y"],
-            res["nonce"],
-            res["amount"],
-            res["tokenType"],
-            res["r8x"],
-            res["r8y"],
-            res["s"]
-        )
-        await tx.initialize();
-        tx.hashTx();
-        txArray[i] = tx;
+      var res = txInDB[i]
+      var senderPK = parsePublicKey(res["senderPubkey"])
+      var receiverPK = parsePublicKey(res["receiverPubkey"])
+      var tx = new Transaction(
+        senderPK["x"],
+        senderPK["y"],
+        res["index"],
+        receiverPK["x"],
+        receiverPK["y"],
+        res["nonce"],
+        res["amount"],
+        res["tokenType"],
+        res["r8x"],
+        res["r8y"],
+        res["s"]
+      )
+      await tx.initialize();
+      tx.hashTx();
+      txArray[i] = tx;
     }
     return {accArray, txArray}
-}
+  },
 
-export async function prove(accArray, txArrary) {
+  async prove(accArray, txArrary) {
     // generate input
     const curTime = Date.now().toString()
     const {inputPath, txRoot} = await generateInput(accArray, txArrary, curTime);
@@ -175,11 +173,12 @@ export async function prove(accArray, txArrary) {
     result = await run(cmd2);
     console.log(result)
     return {vk, proof, proofJson, publicJson, txRoot};
-}
+  },
 
-export async function verify(vk, proof) {
+  async verify(vk, proof) {
     const cmd = ZKIT + " verify -p " + proof + " -v " + vk;
     console.log(cmd)
     const result = await run(cmd);
     return result.toString().startsWith('Proof is valid');
+  }
 }

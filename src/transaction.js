@@ -1,7 +1,7 @@
 const buildMimc7 = require("circomlibjs").buildMimc7;
 const buildEddsa = require("circomlibjs").buildEddsa;
 
-module.exports = class Transaction  {
+module.exports = class Transaction {
   constructor(
     _fromX, _fromY, _fromIndex,
     _toX, _toY,
