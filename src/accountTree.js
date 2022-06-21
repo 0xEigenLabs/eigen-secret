@@ -3,6 +3,9 @@ const Transaction = require("./transaction.js")
 
 const buildMimc7 = require("circomlibjs").buildMimc7;
 
+const toHexString = (bytes) =>
+  bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+
 module.exports = class AccountTree extends Tree {
     constructor(
         _accounts
@@ -33,6 +36,7 @@ module.exports = class AccountTree extends Tree {
             paths2txRootPos[i] = txProofPos;
 
             // process transaction
+            console.log("Debug: processing tx:", i);
             deltas[i] = this.processTx(tx);
         }
 
@@ -121,8 +125,12 @@ module.exports = class AccountTree extends Tree {
     }
 
     findAccountByPubkey(pubkeyX, pubkeyY){
-        const account = this.accounts.filter(
-            acct => (acct.pubkeyX == pubkeyX && acct.pubkeyY == pubkeyY)
+        if (pubkeyX == 0 && pubkeyY == 0) {
+            return this.accounts[0]
+        }
+        // use slice to skip zeroAccount
+        const account = this.accounts.slice(1).filter(
+            acct => (acct.pubkeyX != 0 && acct.pubkeyY != 0 && toHexString(acct.pubkeyX) == toHexString(pubkeyX) && toHexString(acct.pubkeyY) == toHexString(pubkeyY))
         )[0];
         return account
     }
