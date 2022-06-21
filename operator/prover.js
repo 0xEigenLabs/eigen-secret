@@ -1,6 +1,5 @@
 require('dotenv').config()
 const { utils } = require('ethers');
-const consola = require('consola')
 const path = require("path");
 const exec = require('child_process').exec;
 const { mkdirSync, existsSync, readFileSync, writeFileSync } = require("fs");
@@ -14,6 +13,8 @@ const TxTree = require("../src/txTree");
 const buildMimc7 = require("circomlibjs").buildMimc7;
 const buildBabyJub = require("circomlibjs").buildBabyJub;
 const buildEddsa = require("circomlibjs").buildEddsa;
+const ff = require("ffjavascript");
+const unstringifyBigInts = ff.utils.unstringifyBigInts
 
 const ZKIT = process.env.ZKIT || process.exit(-1)
 const CIRCUIT_PATH = process.env.CIRCUIT_PATH || process.exit(-1)
@@ -22,6 +23,12 @@ const UPDATE_STATE_CIRCUIT_NAME = "update_state_verifier"
 const ACCOUNT_DEPTH = 8
 const numLeaves = 2**ACCOUNT_DEPTH;
 const TXS_PER_SNARK = 4;
+
+const fromHexString = (hexString) =>
+  Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
+
+const toHexString = (bytes) =>
+  bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 
 function run(cmd) {
   return new Promise((resolve, reject) => {
@@ -33,88 +40,96 @@ function run(cmd) {
   })
 }
 
+function parsePublicKey(uncompressKey) {
+  uncompressKeyStr = uncompressKey.toString()
+  if (!uncompressKeyStr.startsWith("0x04")) {
+    throw new Error("Invalid public key:" + uncompressKey)
+  }
+  const address = utils.computeAddress(uncompressKeyStr)
+  const xy = uncompressKey.substr(4)
+  const x = xy.substr(0, 64)
+  const y = xy.substr(64)
+
+  return {"address": address, "x": x, "y": y}
+}
+
+
+async function generateWitness (inputPath, outputPath, circuitName) {
+  let wasm = path.join(CIRCUIT_PATH, circuitName+"_js",  circuitName+".wasm");
+  let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
+  let requirePath = path.join(CIRCUIT_PATH, circuitName + "_js", "witness_calculator")
+  const wc = require(requirePath);
+
+  const buffer = readFileSync(wasm);
+  const witnesssCalculator = await wc(buffer);
+
+  const input = JSON.parse(readFileSync(inputPath, "utf8"));
+  const witnessBuffer = await witnesssCalculator.calculateWTNSBin(
+    input,
+    0
+  );
+
+  writeFileSync(outputPath, witnessBuffer, "utf-8");
+}
+
+async function generateInput (accArray, txArray, curTime) {
+  await treeHelper.initialize()
+  let mimcjs = await buildMimc7();
+
+  let F = mimcjs.F;
+
+  let zeroAccount = new Account();
+  await zeroAccount.initialize();
+
+  const paddedAccounts = treeHelper.padArray(accArray, zeroAccount, numLeaves);
+  const accountTree = new AccountTree(paddedAccounts)
+
+  const txTree = new TxTree(txArray)
+  const stateTransaction = await accountTree.processTxArray(txTree);
+  const txRoot = F.toString(stateTransaction.txTree.root)
+  const inputs = await getCircuitInput(stateTransaction);
+
+  const inputPath = join(TEST_PATH, "inputs", curTime + ".json")
+
+  writeFileSync(
+    inputPath,
+    JSON.stringify(inputs),
+    "utf-8"
+  );
+  return {inputPath, txRoot};
+}
+
+function join (base, ...pathes) {
+  let filename = path.join(base, ...pathes)
+
+  const finalPath = path.dirname(filename)
+  if (!existsSync(finalPath)) {
+    mkdirSync(finalPath)
+  }
+  return filename
+}
+
+
 module.exports = {
-  async generateWitness (inputPath, outputPath, circuitName) {
-    let wasm = path.join(CIRCUIT_PATH, circuitName+"_js",  circuitName+".wasm");
-    let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
-    let requirePath = path.join(CIRCUIT_PATH, circuitName + "_js", "witness_calculator")
-    const wc = require(requirePath);
-
-    const buffer = readFileSync(wasm);
-    const witnesssCalculator = await wc(buffer);
-
-    const input = JSON.parse(readFileSync(inputPath, "utf8"));
-    const witnessBuffer = await witnesssCalculator.calculateWTNSBin(
-      input,
-      0
-    );
-
-    writeFileSync(outputPath, witnessBuffer, "utf-8");
-  },
-
-  parsePublicKey(uncompressKey) {
-    if (!uncompressKey.startWith("04")) {
-      throw new Error("Invalid public key:" + uncompressKey)
-    }
-    const address = utils.computeAddress(uncompressKey)
-    const xy = uncompressKey.substr(2)
-    const x = xy.substr(0, 32)
-    const y = xy.substr(32)
-
-    return {"address": address, "x": x, "y": y}
-  },
-
-  async generateInput (accArray, txArray, curTime) {
-    await treeHelper.initialize()
-    let mimcjs = await buildMimc7();
-
-    let F = mimcjs.F;
-
-    let zeroAccount = new Account();
-    await zeroAccount.initialize();
-
-    const paddedAccounts = treeHelper.padArray(accArray, zeroAccount, numLeaves);
-    const accountTree = new AccountTree(paddedAccounts)
-
-    const txTree = new TxTree(txArray)
-    const stateTransaction = await accountTree.processTxArray(txTree);
-    const txRoot = F.toString(stateTransaction.txTree.root)
-    const inputs = await getCircuitInput(stateTransaction);
-
-    const inputPath = join(TEST_PATH, "inputs", curTime + ".json")
-
-    writeFileSync(
-      inputPath,
-      JSON.stringify(inputs),
-      "utf-8"
-    );
-    return {inputPath, txRoot};
-  },
-
-  join (base, ...pathes) {
-    let filename = path.join(base, ...pathes)
-
-    const finalPath = path.dirname(filename)
-    if (!existsSync(finalPath)) {
-      mkdirSync(finalPath)
-    }
-    return filename
-  },
-
+  
   async parseDBData(accountInDB, txInDB) {
     let accArray = new Array()
     for (var i = 0; i < accountInDB.length; i ++) {
       const acc = accountInDB[i]
-      const pk = parsePublicKey(acc["pubkey"])
-      const account = new Account(
-        acc["index"],
-        pk["x"],
-        pk["y"],
-        acc["balance"],
-        acc["nonce"],
-        acc["tokenType"],
-        undefined, //private key, need to get from KMS.
-      )
+      let account;
+      if (acc["pubkey"] == "0") {
+        account = new Account();
+      } else {
+        const pk = parsePublicKey(acc["pubkey"])
+        account = new Account(
+          acc["index"],
+          fromHexString(pk["x"]),
+          fromHexString(pk["y"]),
+          parseInt(acc["balance"]),
+          acc["nonce"],
+          acc["tokenType"],
+        )
+      }
       await account.initialize()
       accArray.push(account)
     }
@@ -125,23 +140,42 @@ module.exports = {
     var txArray= Array(TXS_PER_SNARK);
     for (var i=0; i < txInDB.length; i++) {
       var res = txInDB[i]
+      var tx;
       var senderPK = parsePublicKey(res["senderPubkey"])
-      var receiverPK = parsePublicKey(res["receiverPubkey"])
-      var tx = new Transaction(
-        senderPK["x"],
-        senderPK["y"],
-        res["index"],
-        receiverPK["x"],
-        receiverPK["y"],
-        res["nonce"],
-        res["amount"],
-        res["tokenType"],
-        res["r8x"],
-        res["r8y"],
-        res["s"]
-      )
+      if (res["receiverPubkey"] == "0") {
+        tx = new Transaction(
+          fromHexString(senderPK["x"]),
+          fromHexString(senderPK["y"]),
+          res["from_index"],
+          0,
+          0,
+          res["nonce"],
+          parseInt(res["amount"]),
+          res["tokenTypeFrom"],
+          fromHexString(res["r8x"]),
+          fromHexString(res["r8y"]),
+          unstringifyBigInts(res["s"])
+        )
+      } else {
+        var receiverPK = parsePublicKey(res["receiverPubkey"])
+        tx = new Transaction(
+          fromHexString(senderPK["x"]),
+          fromHexString(senderPK["y"]),
+          res["from_index"],
+          fromHexString(receiverPK["x"]),
+          fromHexString(receiverPK["y"]),
+          res["nonce"],
+          parseInt(res["amount"]),
+          res["tokenTypeFrom"],
+          fromHexString(res["r8x"]),
+          fromHexString(res["r8y"]),
+          unstringifyBigInts(res["s"])
+        )
+      }
+      
       await tx.initialize();
       tx.hashTx();
+
       txArray[i] = tx;
     }
     return {accArray, txArray}
@@ -172,7 +206,8 @@ module.exports = {
     console.log(cmd2)
     result = await run(cmd2);
     console.log(result)
-    return {vk, proof, proofJson, publicJson, txRoot};
+    let inputJson = inputPath
+    return {vk, proof, inputJson, proofJson, publicJson, txRoot};
   },
 
   async verify(vk, proof) {
