@@ -1,12 +1,12 @@
 const buildMimc7 = require("circomlibjs").buildMimc7;
 const buildEddsa = require("circomlibjs").buildEddsa;
 
-module.exports = class Transaction  {
+module.exports = class Transaction {
   constructor(
-    _fromX, _fromY, _fromIndex,
-    _toX, _toY,
-    _nonce, _amountCommX, _amountCommY, _tokenType,
-    _R8x, _R8y, _S
+      _fromX, _fromY, _fromIndex,
+      _toX, _toY,
+      _nonce, _amountCommX, _amountCommY, _tokenType,
+      _R8x, _R8y, _S
   ) {
     this.fromX = _fromX;
     this.fromY = _fromY;
@@ -33,15 +33,15 @@ module.exports = class Transaction  {
     this.hash = this.hashTx();
   }
 
-  hashTx(){
+  hashTx() {
     // hash unsigned transaction
     let F = this.mimcjs.F
     const input = [
       F.toString(this.fromX),
       F.toString(this.fromY),
       this.fromIndex,
-      this.toX == 0? 0 : F.toString(this.toX),
-      this.toY == 0? 0 : F.toString(this.toY),
+      this.toX == 0 ? 0 : F.toString(this.toX),
+      this.toY == 0 ? 0 : F.toString(this.toY),
       this.nonce,
       F.toString(this.amountCommX),
       F.toString(this.amountCommY),
@@ -52,7 +52,7 @@ module.exports = class Transaction  {
     return txHash
   }
 
-  signTxHash(prvkey){
+  signTxHash(prvkey) {
     const signature = this.eddsa.signMiMC(prvkey, this.hash);
     this.R8x = signature.R8[0];
     this.R8y = signature.R8[1];
@@ -60,16 +60,16 @@ module.exports = class Transaction  {
     return signature
   }
 
-  checkSignature(){
+  checkSignature() {
     const signature = {
       R8: [this.R8x, this.R8y],
       S: this.S
     }
     const signed = this.eddsa.verifyMiMC(
-      this.hash, signature, [this.fromX, this.fromY]
+        this.hash, signature, [this.fromX, this.fromY]
     )
-    if (!signed){
-      throw "transaction was not signed by sender"
+    if (!signed) {
+      throw new Error("transaction was not signed by sender")
     }
   }
 }
