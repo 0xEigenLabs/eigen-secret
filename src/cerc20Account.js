@@ -3,9 +3,9 @@ const pc = require("@ieigen/anonmisc/lib/pedersen_babyJubjub.ts");
 
 module.exports = class CERC20Account {
   constructor(
-    _index = 0, _pubkeyX = 0, _pubkeyY = 0,
-    _balanceCommX = 0, _balanceCommY = 0, _nonce = 0, _tokenType  = 0,
-    _prvkey = 0
+      _index = 0, _pubkeyX = 0, _pubkeyY = 0,
+      _balanceCommX = 0, _balanceCommY = 0, _nonce = 0, _tokenType = 0,
+      _prvkey = 0
   ) {
     this.index = _index;
     this.pubkeyX = _pubkeyX;
@@ -26,7 +26,7 @@ module.exports = class CERC20Account {
     this.hash = this.hashAccount()
   }
 
-  hashAccount(){
+  hashAccount() {
     let input = [
       // this.index.toString(),
       this.pubkeyX,
@@ -39,7 +39,7 @@ module.exports = class CERC20Account {
     return this.mimcjs.multiHash(input)
   }
 
-  async debitAndIncreaseNonce(amountCommX, amountCommY){
+  async debitAndIncreaseNonce(amountCommX, amountCommY) {
     if (!(amountCommX == 0 && amountCommY == 0)) {
       let res = await pc.sub([this.balanceCommX, this.balanceCommY], [amountCommX, amountCommY]);
       this.balanceCommX = res[0]
@@ -49,13 +49,12 @@ module.exports = class CERC20Account {
     this.hash = this.hashAccount()
   }
 
-  async credit(amountCommX, amountCommY){
-    if (this.index > 0){ // do not credit zero leaf
+  async credit(amountCommX, amountCommY) {
+    if (this.index > 0) { // do not credit zero leaf
       let res = await pc.add([this.balanceCommX, this.balanceCommY], [amountCommX, amountCommY])
       this.balanceCommX = res[0]
       this.balanceCommY = res[1]
       this.hash = this.hashAccount()
     }
   }
-
 }
