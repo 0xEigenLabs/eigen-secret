@@ -1,22 +1,19 @@
 const buildMimc7 = require("circomlibjs").buildMimc7;
-//const bigInt = require('big-integer');
 
-var mimcjs
+let mimcjs
 module.exports = {
   async initialize() {
     mimcjs = await buildMimc7()
   },
 
-  rootFromLeafAndPath(leaf, idx, merkle_path){
-    if (merkle_path.length > 0){
+  rootFromLeafAndPath(leaf, idx, merkle_path) {
+    if (merkle_path.length > 0) {
       const depth = merkle_path.length;
       const merkle_path_pos = module.exports.idxToBinaryPos(idx, depth)
-      var root = new Array(depth);
-      var left
-      var right
+      let root = new Array(depth);
+      let left
+      let right
 
-      //left = bigInt(leaf) - bigInt(merkle_path_pos[0])*(bigInt(leaf) - bigInt(merkle_path[0]));
-      //right = bigInt(merkle_path[0]) - bigInt(merkle_path_pos[0])*(bigInt(merkle_path[0]) - bigInt(leaf));
       if (merkle_path_pos[0] == 0) {
         left = (leaf);
         right = (merkle_path[0]);
@@ -25,15 +22,13 @@ module.exports = {
         right = (leaf);
       }
       root[0] = mimcjs.multiHash([left, right]);
-      for (var i = 1; i < depth; i++) {
-        //left = root[i-1] - bigInt(merkle_path_pos[i])*(root[i-1] - bigInt(merkle_path[i]));
-        //right = bigInt(merkle_path[i]) - bigInt(merkle_path_pos[i])*(bigInt(merkle_path[i]) - root[i-1]);
+      for (let i = 1; i < depth; i++) {
         if (merkle_path_pos[i] == 0) {
-          left = (root[i-1]);
-          right = (merkle_path[i]);
+          left = (root[i - 1]);
+          right = (merkle_path[i])
         } else {
           left = (merkle_path[i])
-          right = (root[i-1]);
+          right = (root[i - 1]);
         }
         root[i] = mimcjs.multiHash([left, right]);
       }
@@ -41,18 +36,15 @@ module.exports = {
     } else {
       return leaf
     }
-
   },
 
-  innerNodesFromLeafAndPath(leaf, idx, merkle_path){
-    if (merkle_path.length > 0){
+  innerNodesFromLeafAndPath(leaf, idx, merkle_path) {
+    if (merkle_path.length > 0) {
       const depth = merkle_path.length;
       const merkle_path_pos = module.exports.idxToBinaryPos(idx, depth)
-      var innerNodes = new Array(depth);
-      //left = bigInt(leaf) - bigInt(merkle_path_pos[0])*(bigInt(leaf) - bigInt(merkle_path[0]));
-      //right = bigInt(merkle_path[0]) - bigInt(merkle_path_pos[0])*(bigInt(merkle_path[0]) - bigInt(leaf));
-      var left
-      var right
+      let innerNodes = new Array(depth);
+      let left
+      let right
 
       if (merkle_path_pos[0] == 0) {
         left = (leaf);
@@ -63,16 +55,13 @@ module.exports = {
       }
 
       innerNodes[0] = mimcjs.multiHash([left, right]);
-      for (var i = 1; i < depth; i++) {
-        //left = innerNodes[i-1] - bigInt(merkle_path_pos[i])*(innerNodes[i-1] - bigInt(merkle_path[i]));
-        //right = bigInt(merkle_path[i]) - bigInt(merkle_path_pos[i])*(bigInt(merkle_path[i]) - innerNodes[i-1]);
-
+      for (let i = 1; i < depth; i++) {
         if (merkle_path_pos[i] == 0) {
-          left = (innerNodes[i-1]);
+          left = (innerNodes[i - 1]);
           right = (merkle_path[i]);
         } else {
           left = (merkle_path[i])
-          right = (innerNodes[i-1]);
+          right = (innerNodes[i - 1]);
         }
         innerNodes[i] = mimcjs.multiHash([left, right]);
       }
@@ -80,37 +69,36 @@ module.exports = {
     } else {
       return leaf
     }
-
   },
 
-  proofPos: function(leafIdx, treeDepth){
-    var proofPos = new Array(treeDepth);
-    var proofBinaryPos = module.exports.idxToBinaryPos(leafIdx, treeDepth);
+  proofPos: function(leafIdx, treeDepth) {
+    let proofPos = new Array(treeDepth);
+    let proofBinaryPos = module.exports.idxToBinaryPos(leafIdx, treeDepth);
 
-    if (leafIdx % 2 == 0){
+    if (leafIdx % 2 == 0) {
       proofPos[0] = leafIdx + 1;
     } else {
       proofPos[0] = leafIdx - 1;
     }
 
-    for (var i = 1; i < treeDepth; i++){
-      if (proofBinaryPos[i] == 1){
+    for (let i = 1; i < treeDepth; i++) {
+      if (proofBinaryPos[i] == 1) {
         proofPos[i] = Math.floor(proofPos[i - 1] / 2) - 1;
       } else {
         proofPos[i] = Math.floor(proofPos[i - 1] / 2) + 1;
       }
     }
 
-    return(proofPos)
+    return (proofPos)
   },
 
-  getAffectedPos: function(proofPos){
-    var affectedPos = new Array(proofPos.length);
+  getAffectedPos: function(proofPos) {
+    let affectedPos = new Array(proofPos.length);
 
     // skip the first node in the proof since it is not affected
-    for (var i = 1; i < proofPos.length; i++){
+    for (let i = 1; i < proofPos.length; i++) {
       // if proof node has odd index (i.e. is the right sibling)
-      if (proofPos[i] & 1){
+      if (proofPos[i] & 1) {
         affectedPos[i - 1] = proofPos[i] - 1; // affected node is left sibling
         // if proof node has even index (i.e. is the left sibling)
       } else {
@@ -123,55 +111,53 @@ module.exports = {
     return affectedPos;
   },
 
-  binaryPosToIdx: function(binaryPos){
-    var idx = 0;
-    for (var i = 0; i < binaryPos.length; i++){
-      idx = idx + binaryPos[i]*(2**i)
+  binaryPosToIdx: function(binaryPos) {
+    let idx = 0;
+    for (let i = 0; i < binaryPos.length; i++) {
+      idx = idx + binaryPos[i] * (2 ** i)
     }
     return idx;
   },
 
-  idxToBinaryPos: function(idx, binLength){
-
-    var binString = idx.toString(2);
-    var binPos = Array(binLength).fill(0)
-    for (var j = 0; j < binString.length; j++){
+  idxToBinaryPos: function(idx, binLength) {
+    let binString = idx.toString(2);
+    let binPos = Array(binLength).fill(0)
+    for (let j = 0; j < binString.length; j++) {
       binPos[j] = Number(binString.charAt(binString.length - j - 1));
     }
     return binPos;
   },
 
-  pairwiseHash: function(array){
-    if (array.length % 2 == 0){
-      var arrayHash = []
-      for (var i = 0; i < array.length; i = i + 2){
+  pairwiseHash: function(array) {
+    if (array.length % 2 == 0) {
+      let arrayHash = []
+      for (let i = 0; i < array.length; i = i + 2) {
         arrayHash.push(mimcjs.multiHash(
-          [(array[i]), (array[i+1])]
+            [(array[i]), (array[i + 1])]
         ))
       }
       return arrayHash
     } else {
-      console.log('array must have even number of elements')
+      console.log("array must have even number of elements")
     }
   },
 
-  getBase2Log: function(y){
+  getBase2Log: function(y) {
     return Math.log(y) / Math.log(2);
   },
 
   // fill an array with a fillerLength copies of a value
-  padArray: function(leafArray, padValue, length){
-    if (Array.isArray(leafArray)){
-      var arrayClone = leafArray.slice(0)
+  padArray: function(leafArray, padValue, length) {
+    if (Array.isArray(leafArray)) {
+      let arrayClone = leafArray.slice(0)
       const nearestPowerOfTwo = Math.ceil(module.exports.getBase2Log(leafArray.length))
-      const diff = length - leafArray.length || 2**nearestPowerOfTwo - leafArray.length
-      for (var i = 0; i < diff; i++){
+      const diff = length - leafArray.length || 2 ** nearestPowerOfTwo - leafArray.length
+      for (let i = 0; i < diff; i++) {
         arrayClone.push(padValue)
       }
       return arrayClone
     } else {
       console.log("please enter pubKeys as an array")
     }
-  },
-
+  }
 }
