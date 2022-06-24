@@ -6,7 +6,7 @@ require("@nomiclabs/hardhat-waffle");
 const dotenv = require('dotenv')
 dotenv.config()
 
-//dotenvConfig({ path: resolve(__dirname, "./.env") });
+dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -35,6 +35,30 @@ module.exports = {
   },
   mocha: {
     timeout: 10000000,
+  },
+  networks: {
+    dev: {
+      url: process.env['RPC'] || process.exit(-1),
+      accounts: [process.env.DEVNET_PRIVKEY],
+      gas: 2100000,
+      gasPrice: 3000000000
+    },
+    metis: {
+      url: "https://stardust.metis.io/?owner=588",
+      accounts: [process.env.DEVNET_PRIVKEY]
+    },
+    tbsc: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      accounts: [process.env.DEVNET_PRIVKEY]
+    }, 
+    eig: {
+      url: "https://node.ieigen.com",
+      accounts: [process.env.DEVNET_PRIVKEY]
+    }, 
+    tpolygon: {
+      url: "https://rpc-mumbai.maticvigil.com/",
+      accounts: [process.env.DEVNET_PRIVKEY]
+    }
   },
   etherscan: {
     // Your API key for Etherscan
