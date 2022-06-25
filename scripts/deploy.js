@@ -32,6 +32,14 @@ async function main() {
   testToken = await factory.connect(accounts[0]).deploy()
   await testToken.deployed()
   console.log("testToken address:", testToken.address)
+  
+  let setRollupNC = await tokenRegistry.connect(accounts[0]).setRollupNC(rollupNC.address);
+
+  let registerToken = await rollupNC.connect(accounts[0]).registerToken(testToken.address);
+
+  let approveToken = await rollupNC.connect(accounts[0]).approveToken(testToken.address);
+
+  let approve = await testToken.connect(accounts[0]).approve(rollupNC.address, 1700);
 }
 
 main()
