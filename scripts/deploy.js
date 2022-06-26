@@ -40,6 +40,18 @@ async function main() {
   let approveToken = await rollupNC.connect(accounts[0]).approveToken(testToken.address);
 
   let approve = await testToken.connect(accounts[0]).approve(rollupNC.address, 1700);
+
+  // zero leaf
+  let deposit0 = await rollupNC.connect(accounts[0]).deposit([0, 0], 0, 0, { from: accounts[0].address })
+  assert(deposit0, "deposit0 failed");
+
+  // operator account
+  const pubkeyCoordinator = [
+    '1891156797631087029347893674931101305929404954783323547727418062433377377293',
+    '14780632341277755899330141855966417738975199657954509255716508264496764475094'
+  ]
+  let deposit1 = await rollupNC.connect(accounts[0]).deposit(pubkeyCoordinator, 0, 0, { from: accounts[0].address })
+  assert(deposit1, "deposit1 failed");
 }
 
 main()
