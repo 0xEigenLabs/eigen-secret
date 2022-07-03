@@ -31,6 +31,11 @@ const fromHexString = (hexString) =>
 const toHexString = (bytes) =>
   bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 
+function toJson(data) {
+    return JSON.stringify(data, (_, v) => typeof v === 'bigint' ? `${v}n` : v)
+        .replace(/"(-?\d+)n"/g, (_, a) => a);
+}
+
 function run(cmd) {
   return new Promise((resolve, reject) => {
     exec(cmd, (error, stdout, stderr) => {
@@ -113,12 +118,13 @@ async function generateWithdrawSignatureInput(pubkey, r8x, r8y, sig, msg, curTim
     S: sig,
     M: msg
   }
+  console.log("inputs:",inputs)
 
   const inputPath = join(TEST_PATH, "withdraw_signature_inputs", curTime + ".json")
 
   writeFileSync(
     inputPath,
-    JSON.stringify(inputs),
+    toJson(inputs),
     "utf-8"
   );
 

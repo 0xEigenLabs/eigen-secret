@@ -13,6 +13,9 @@ circuits/update_state_verifier_js/*
 
 circuits/withdraw_signature_verifier_js/*
 !circuits/withdraw_signature_verifier_js/proof.json
+!circuits/withdraw_signature_verifier_js/withdraw_signature_verifier.r1cs
+!circuits/withdraw_signature_verifier_js/withdraw_signature_verifier.wasm
+!circuits/withdraw_signature_verifier_js/witness_calculator.js
 
 circuits/ir_log/
 circuits/log_substitution.json
