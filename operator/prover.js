@@ -130,7 +130,7 @@ function join (base, ...pathes) {
 
   const finalPath = path.dirname(filename)
   if (!existsSync(finalPath)) {
-    mkdirSync(finalPath)
+    mkdirSync(finalPath, true)
   }
   return filename
 }
