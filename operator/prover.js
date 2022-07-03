@@ -20,7 +20,7 @@ const ZKIT = process.env.ZKIT || process.exit(-1)
 const CIRCUIT_PATH = process.env.CIRCUIT_PATH || process.exit(-1)
 const TEST_PATH = process.env.TEST_PATH || process.exit(-1)
 const UPDATE_STATE_CIRCUIT_NAME = "update_state_verifier"
-const ACCOUNT_DEPTH = 8
+const ACCOUNT_DEPTH = 4 // FIXME: We set account depth to 4 in the zkzru demo. Should set in .env later.
 const numLeaves = 2**ACCOUNT_DEPTH;
 const TXS_PER_SNARK = 4;
 
@@ -96,6 +96,8 @@ async function generateInput (accArray, txArray, curTime) {
     JSON.stringify(inputs),
     "utf-8"
   );
+  console.log("Generate input.json successfully in:", inputPath)
+
   return {inputPath, txRoot};
 }
 
@@ -170,7 +172,7 @@ module.exports = {
           fromHexString(res["r8x"]),
           fromHexString(res["r8y"]),
           unstringifyBigInts(res["s"])
-        )
+        )  
       }
       
       await tx.initialize();
