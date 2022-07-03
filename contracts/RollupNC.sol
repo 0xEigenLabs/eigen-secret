@@ -62,7 +62,7 @@ contract RollupNC {
     uint256 public TX_DEPTH = 2;
 
     // (queueNumber => [pubkey_x, pubkey_y, balance, nonce, token_type])
-    mapping(uint256 => uint256) public __deposits; //leaf idx => leafHash
+    //mapping(uint256 => uint256) public deposits; //leaf idx => leafHash
     mapping(uint256 => uint256) public updates; //txRoot => update idx
 
     struct TxInfo {
