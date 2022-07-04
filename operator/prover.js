@@ -219,7 +219,7 @@ module.exports = {
     // use cmd to export verification key
     let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
     const vk = join(TEST_PATH, "vk", curTime+"_vk.bin")
-    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + "update_state_verifier_js/"  + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + vk;
+    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + vk;
     console.log(cmd1)
     let result = await run(cmd1);
     console.log(result)
@@ -228,7 +228,7 @@ module.exports = {
     let proof = join(TEST_PATH, "proof", curTime+"_proof.bin")
     let publicJson = join(TEST_PATH, "public", curTime+"_public.json")
     let proofJson = join(TEST_PATH, "proof", curTime+"_proof.json")
-    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + "update_state_verifier_js/" + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof + " -j " + proofJson + " -p " + publicJson;
+    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof + " -j " + proofJson + " -p " + publicJson;
     console.log(cmd2)
     result = await run(cmd2);
     console.log(result)
@@ -255,7 +255,7 @@ module.exports = {
     // use cmd to export verification key
     let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
     const vk = join(TEST_PATH, "withdraw_signature_vk", curTime+"_vk.bin")
-    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + "withdraw_signature_verifier_js/"  + WITHDRAW_SIGNATURE_CIRCUIT_NAME + ".r1cs -v " + vk;
+    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + WITHDRAW_SIGNATURE_CIRCUIT_NAME + ".r1cs -v " + vk;
     console.log(cmd1)
     let result = await run(cmd1);
     console.log(result)
@@ -264,7 +264,7 @@ module.exports = {
     let proof = join(TEST_PATH, "withdraw_signature_proof", curTime+"_proof.bin")
     let publicJson = join(TEST_PATH, "withdraw_signature_public", curTime+"_public.json")
     let proofJson = join(TEST_PATH, "withdraw_signature_proof", curTime+"_proof.json")
-    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + "withdraw_signature_verifier_js/" + WITHDRAW_SIGNATURE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof + " -j " + proofJson + " -p " + publicJson;
+    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + WITHDRAW_SIGNATURE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof + " -j " + proofJson + " -p " + publicJson;
     console.log(cmd2)
     result = await run(cmd2);
     console.log(result)
