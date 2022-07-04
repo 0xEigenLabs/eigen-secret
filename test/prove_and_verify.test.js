@@ -115,37 +115,29 @@ describe("Prover generates proof and verify", () => {
     });
 
     it("withdraw signature", async () => {
-        console.log("==================================================")
         // mock the account and transaction data
         // generate 8 accounts
         mimcjs = await cls.buildMimc7();
         babyJub = await cls.buildBabyjub();
         //let F = eddsa.babyJub.F;
         let F = mimcjs.F
-      
+
         var prvKey = Buffer.from("4".padStart(64,'0'), "hex");
-        //const prvKey = fromHexString("0001020304050607080900010203040506070809000102030405060708090002");
+        // const prvKey = fromHexString("0001020304050607080900010203040506070809000102030405060708090002");
       
         var pubKey = eddsa.prv2pub(prvKey);
-        console.log("pubkey:",pubKey)
       
         var nonce = 0;
         //var txRoot = bigInt('14053325031894235002744541221369412510941171790893507881802249870625790656164')
-        var recipient ='0xC33Bdb8051D6d2002c0D80A1Dd23A1c9d9FC26E4';
+        var recipient = BigInt('0xC33Bdb8051D6d2002c0D80A1Dd23A1c9d9FC26E4');
         var m = mimcjs.multiHash([nonce, recipient])
         //const msgBuf = fromHexString("000102030405060708090000");
         //const msg = eddsa.babyJub.F.e(Scalar.fromRprLE(msgBuf, 0));
         const msg = F.e(m);
       
         var signature = eddsa.signMiMC(prvKey, msg);
-        console.log("signature",signature)
 
-        const r8x=signature.R8[0]
-        const r8y=signature.R8[1]
-
-        const uncompressedKey = '0x' + '04' + toHexString(pubKey[0]) + toHexString(pubKey[1])
-        //let {vk, proof, inputJson, proofJson, publicJson, txRoot} = await prove(accArray, txArray);
-        let {vk, proof, proofJson} = await proveWithdrawSignature(uncompressedKey, r8x, r8y, signature, msg)
+        let {vk, proof, proofJson} = await proveWithdrawSignature(pubKey, signature, msg)
 
         let isValid = await verifyWithdrawSignature(vk, proof);
         assert(isValid, "invalid proof")

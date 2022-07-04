@@ -31,11 +31,6 @@ const fromHexString = (hexString) =>
 const toHexString = (bytes) =>
   bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 
-function toJson(data) {
-    return JSON.stringify(data, (_, v) => typeof v === 'bigint' ? `${v}n` : v)
-        .replace(/"(-?\d+)n"/g, (_, a) => a);
-}
-
 function run(cmd) {
   return new Promise((resolve, reject) => {
     exec(cmd, (error, stdout, stderr) => {
@@ -107,24 +102,25 @@ async function generateInput (accArray, txArray, curTime) {
   return {inputPath, txRoot};
 }
 
-async function generateWithdrawSignatureInput(pubkey, r8x, r8y, sig, msg, curTime) {
-  const res = parsePublicKey(pubkey)
-
+async function generateWithdrawSignatureInput(pubkey, sig, msg, curTime) {
+  //const res = parsePublicKey(pubkey)
+  let mimcjs = await buildMimc7();
+  let F = mimcjs.F;
+  
   const inputs = {
-    Ax: res["x"],
-    Ay: res["y"],
-    R8x: r8x,
-    R8y: r8y,
-    S: sig,
-    M: msg
+    Ax: F.toString(pubkey[0]),
+    Ay: F.toString(pubkey[1]),
+    R8x: F.toString(sig.R8[0]),
+    R8y: F.toString(sig.R8[1]),
+    S: sig.S.toString(),
+    M: F.toString(msg)
   }
-  console.log("inputs:",inputs)
 
   const inputPath = join(TEST_PATH, "withdraw_signature_inputs", curTime + ".json")
 
   writeFileSync(
     inputPath,
-    toJson(inputs),
+    JSON.stringify(inputs),
     "utf-8"
   );
 
@@ -249,10 +245,10 @@ module.exports = {
     return result.toString().startsWith('Proof is valid');
   },
 
-  async proveWithdrawSignature(pubkey, r8x, r8y, sig, msg) {
+  async proveWithdrawSignature(pubkey, signature, msg) {
     // generate input
     const curTime = Date.now().toString()
-    const inputPath = await generateWithdrawSignatureInput(pubkey, r8x, r8y, sig, msg, curTime);
+    const inputPath = await generateWithdrawSignatureInput(pubkey, signature, msg, curTime);
     const outputPath = join(TEST_PATH, "withdraw_signature_witness", curTime+".wtns")
 
     // generate witness

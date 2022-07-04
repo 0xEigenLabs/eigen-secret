@@ -2,7 +2,7 @@
 
 pragma solidity >=0.5.0 <0.9.0;
 
-import "./plonkit.sol";
+import "./plonk4verifier.sol";
 
 contract WithdrawSignatureKeyedVerifier is Plonk4VerifierWithAccessToDNext {
     uint256 constant SERIALIZED_PROOF_LENGTH = 33;
