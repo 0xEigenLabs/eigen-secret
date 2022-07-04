@@ -1,6 +1,6 @@
 {
   "name": "@ieigen/zkzru",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "An implementation of [ZK-ZKRollup](https://github.com/ieigen/ZKZRU) in which the relayer **does not** publish transaction data to the main chain, but only publishes the new Merkle root at every update. This provides gas savings but not data availability guarantees: we assume the operator will always provide data to users so they can update their leaf.",
   "keywords": [
     "zkp",
@@ -28,7 +28,8 @@
   ],
   "main": "index.js",
   "dependencies": {
-    "@ieigen/anonmisc": "0.0.8",
+    "@ieigen/anonmisc": "^0.0.8",
+    "@ieigen/zkzru": "^0.0.9",
     "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.1",
     "consola": "^2.15.3",
@@ -37,7 +38,6 @@
     "solhint": "^3.3.7"
   },
   "devDependencies": {
-    "@ieigen/zkzru": "^0.0.8",
     "@nomiclabs/hardhat-ethers": "^2.0.6",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@types/jest": "^28.1.3",

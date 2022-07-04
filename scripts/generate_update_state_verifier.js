@@ -15,7 +15,7 @@ const {
   getCircuitInput
 } = require("@ieigen/zkzru");
 
-
+console.log('module---->',module)
 /*
 const Tree = require("../src/tree.js");
 const Account = require("../src/account.js");
