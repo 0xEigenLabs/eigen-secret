@@ -21,6 +21,7 @@
   "license": "Apache-2.0",
   "files": [
     "src/*.js",
+    "scripts/*.js",
     "circuits/*.circom",
     "circuits/*/*.circom",
     "operator/*.js"
