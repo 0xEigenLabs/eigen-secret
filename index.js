@@ -5,4 +5,5 @@ exports.Account = require("./src/account");
 exports.Transaction = require("./src/transaction");
 exports.Tree = require("./src/tree");
 exports.AccountTree = require("./src/accountTree");
-exports.TxTree = require("./src/txTree")
+exports.TxTree = require("./src/txTree");
+exports.getCircuitInput = require("./src/circuitInput");
