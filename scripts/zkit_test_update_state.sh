@@ -18,7 +18,7 @@ cd $CIRCUIT_DIR
 echo "1. Compile the circuit"
 ${ZKIT} compile -i $CIRCUIT.circom --O2=full -o $WORKSPACE
 node ${CIRCUIT_DIR}/../scripts/generate_update_state_verifier.js
-mv ${CIRCUIT_DIR}/input.json ${CIRCUIT_DIR}/update_state_verifier_js/
+mv ${CIRCUIT_DIR}/input.json ${WORKSPACE}/update_state_verifier_js/
 
 echo "2. Generate witness"
 node ${WORKSPACE}/${CIRCUIT}_js/generate_witness.js ${WORKSPACE}/${CIRCUIT}_js/$CIRCUIT.wasm $CIRCUIT_DIR/update_state_verifier_js/input.json $WORKSPACE/witness.wtns

@@ -16,9 +16,9 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 const ff = require("ffjavascript");
 const unstringifyBigInts = ff.utils.unstringifyBigInts
 
-const ZKIT = process.env.ZKIT || process.exit(-1)
-const CIRCUIT_PATH = process.env.CIRCUIT_PATH || process.exit(-1)
-const TEST_PATH = process.env.TEST_PATH || process.exit(-1)
+const ZKIT = process.env.ZKIT || "zkit"
+const CIRCUIT_PATH = process.env.CIRCUIT_PATH || ""
+const TEST_PATH = process.env.TEST_PATH || ""
 const UPDATE_STATE_CIRCUIT_NAME = "update_state_verifier"
 const ACCOUNT_DEPTH = 4 // FIXME: We set account depth to 4 in the zkzru demo. Should set in .env later.
 const WITHDRAW_SIGNATURE_CIRCUIT_NAME = 'withdraw_signature_verifier'
@@ -121,7 +121,7 @@ async function generateWithdrawSignatureInput(pubkey, r8x, r8y, sig, msg, curTim
     JSON.stringify(inputs),
     "utf-8"
   );
-  
+
   return inputPath;
 }
 
@@ -137,7 +137,7 @@ function join (base, ...pathes) {
 
 
 module.exports = {
-  
+
   async parseDBData(accountInDB, txInDB) {
     let accArray = new Array()
     for (var i = 0; i < accountInDB.length; i ++) {
@@ -196,9 +196,9 @@ module.exports = {
           fromHexString(res["r8x"]),
           fromHexString(res["r8y"]),
           unstringifyBigInts(res["s"])
-        )  
+        )
       }
-      
+
       await tx.initialize();
       tx.hashTx();
 
