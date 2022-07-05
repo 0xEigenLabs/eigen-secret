@@ -110,7 +110,7 @@ describe("Prover generates proof and verify", () => {
         assert(isValid, "invalid proof")
     });
 
-    it("withdraw signature", async () => {
+    it("should generate withdraw proof and verify", async () => {
         // mock the account and transaction data
         // generate 8 accounts
         mimcjs = await cls.buildMimc7();
