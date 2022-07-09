@@ -18,7 +18,7 @@ cd $CIRCUIT_DIR
 echo "1. Compile the circuit"
 ${ZKIT} compile -i $CIRCUIT.circom --O2=full -o $WORKSPACE
 node ${CIRCUIT_DIR}/../scripts/generate_withdraw_signature_verifier.js
-mv ${CIRCUIT_DIR}/input.json ${CIRCUIT_DIR}/withdraw_signature_verifier_js/
+mv ${CIRCUIT_DIR}/input.json ${WORKSPACE}/withdraw_signature_verifier_js/
 
 echo "2. Generate witness"
 node ${WORKSPACE}/${CIRCUIT}_js/generate_witness.js ${WORKSPACE}/${CIRCUIT}_js/$CIRCUIT.wasm $CIRCUIT_DIR/withdraw_signature_verifier_js/input.json $WORKSPACE/witness.wtns

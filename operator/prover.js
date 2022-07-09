@@ -16,11 +16,12 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 const ff = require("ffjavascript");
 const unstringifyBigInts = ff.utils.unstringifyBigInts
 
-const ZKIT = process.env.ZKIT || process.exit(-1)
-const CIRCUIT_PATH = process.env.CIRCUIT_PATH || process.exit(-1)
-const TEST_PATH = process.env.TEST_PATH || process.exit(-1)
+const ZKIT = process.env.ZKIT || "zkit"
+const CIRCUIT_PATH = process.env.CIRCUIT_PATH || ""
+const TEST_PATH = process.env.TEST_PATH || ""
 const UPDATE_STATE_CIRCUIT_NAME = "update_state_verifier"
-const ACCOUNT_DEPTH = 8
+const ACCOUNT_DEPTH = 4 // FIXME: We set account depth to 4 in the zkzru demo. Should set in .env later.
+const WITHDRAW_SIGNATURE_CIRCUIT_NAME = 'withdraw_signature_verifier'
 const numLeaves = 2**ACCOUNT_DEPTH;
 const TXS_PER_SNARK = 4;
 
@@ -96,7 +97,32 @@ async function generateInput (accArray, txArray, curTime) {
     JSON.stringify(inputs),
     "utf-8"
   );
+  console.log("Generate input.json successfully in:", inputPath)
+
   return {inputPath, txRoot};
+}
+
+async function generateWithdrawSignatureInput(pubkey, sig, msg, curTime) {
+  let mimcjs = await buildMimc7();
+  let F = mimcjs.F;
+  const inputs = {
+    Ax: F.toString(pubkey[0]),
+    Ay: F.toString(pubkey[1]),
+    R8x: F.toString(sig.R8[0]),
+    R8y: F.toString(sig.R8[1]),
+    S: sig.S.toString(),
+    M: F.toString(msg)
+  }
+
+  const inputPath = join(TEST_PATH, "withdraw_signature_inputs", curTime + ".json")
+
+  writeFileSync(
+    inputPath,
+    JSON.stringify(inputs),
+    "utf-8"
+  );
+
+  return inputPath;
 }
 
 function join (base, ...pathes) {
@@ -104,14 +130,14 @@ function join (base, ...pathes) {
 
   const finalPath = path.dirname(filename)
   if (!existsSync(finalPath)) {
-    mkdirSync(finalPath)
+    mkdirSync(finalPath, true)
   }
   return filename
 }
 
 
 module.exports = {
-  
+
   async parseDBData(accountInDB, txInDB) {
     let accArray = new Array()
     for (var i = 0; i < accountInDB.length; i ++) {
@@ -172,7 +198,7 @@ module.exports = {
           unstringifyBigInts(res["s"])
         )
       }
-      
+
       await tx.initialize();
       tx.hashTx();
 
@@ -193,7 +219,7 @@ module.exports = {
     // use cmd to export verification key
     let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
     const vk = join(TEST_PATH, "vk", curTime+"_vk.bin")
-    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + "update_state_verifier_js/"  + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + vk;
+    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -v " + vk;
     console.log(cmd1)
     let result = await run(cmd1);
     console.log(result)
@@ -202,7 +228,7 @@ module.exports = {
     let proof = join(TEST_PATH, "proof", curTime+"_proof.bin")
     let publicJson = join(TEST_PATH, "public", curTime+"_public.json")
     let proofJson = join(TEST_PATH, "proof", curTime+"_proof.json")
-    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + "update_state_verifier_js/" + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof + " -j " + proofJson + " -p " + publicJson;
+    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + UPDATE_STATE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof + " -j " + proofJson + " -p " + publicJson;
     console.log(cmd2)
     result = await run(cmd2);
     console.log(result)
@@ -215,5 +241,40 @@ module.exports = {
     console.log(cmd)
     const result = await run(cmd);
     return result.toString().startsWith('Proof is valid');
-  }
+  },
+
+  async proveWithdrawSignature(pubkey, sig, msg) {
+    // generate input
+    const curTime = Date.now().toString()
+    const inputPath = await generateWithdrawSignatureInput(pubkey, sig, msg, curTime);
+    const outputPath = join(TEST_PATH, "withdraw_signature_witness", curTime+".wtns")
+
+    // generate witness
+    await generateWitness(inputPath, outputPath, "withdraw_signature_verifier")
+
+    // use cmd to export verification key
+    let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
+    const vk = join(TEST_PATH, "withdraw_signature_vk", curTime+"_vk.bin")
+    const cmd1 = ZKIT + " export_verification_key -s " + zkey + " -c " + CIRCUIT_PATH + WITHDRAW_SIGNATURE_CIRCUIT_NAME + ".r1cs -v " + vk;
+    console.log(cmd1)
+    let result = await run(cmd1);
+    console.log(result)
+
+    // use cmd to generate proof
+    let proof = join(TEST_PATH, "withdraw_signature_proof", curTime+"_proof.bin")
+    let publicJson = join(TEST_PATH, "withdraw_signature_public", curTime+"_public.json")
+    let proofJson = join(TEST_PATH, "withdraw_signature_proof", curTime+"_proof.json")
+    const cmd2 = ZKIT + " prove -c " + CIRCUIT_PATH + WITHDRAW_SIGNATURE_CIRCUIT_NAME + ".r1cs -w " + outputPath + " -s " + zkey + " -b " + proof + " -j " + proofJson + " -p " + publicJson;
+    console.log(cmd2)
+    result = await run(cmd2);
+    console.log(result)
+    return {vk, proof, proofJson};
+  },
+
+  async verifyWithdrawSignature(vk, proof) {
+    const cmd = ZKIT + " verify -p " + proof + " -v " + vk;
+    console.log(cmd)
+    const result = await run(cmd);
+    return result.toString().startsWith('Proof is valid');
+  },
 }

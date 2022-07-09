@@ -1,8 +1,22 @@
-const 
+const
 buildEddsa = require("circomlibjs").buildEddsa;
 const buildMimc7 = require("circomlibjs").buildMimc7;
 const buildBabyJub = require("circomlibjs").buildBabyJub;
 const fs = require("fs");
+
+const {
+  Tree,
+  Account,
+  AccountTree,
+  Transaction,
+  TxTree,
+  prover,
+  treeHelper,
+  getCircuitInput
+} = require("@ieigen/zkzru");
+
+console.log('module---->',module)
+/*
 const Tree = require("../src/tree.js");
 const Account = require("../src/account.js");
 const AccountTree = require("../src/accountTree");
@@ -10,6 +24,7 @@ const Transaction = require("../src/transaction");
 const TxTree = require("../src/txTree");
 const treeHelper = require("../src/treeHelper");
 const getCircuitInput = require("../src/circuitInput");
+*/
 
 BigInt.prototype.toJSON = function() {
   return this.toString()
