@@ -102,16 +102,16 @@ async function generateInput (accArray, txArray, curTime) {
   return {inputPath, txRoot};
 }
 
-async function generateWithdrawSignatureInput(pubkey, r8x, r8y, sig, msg, curTime) {
-  const res = parsePublicKey(pubkey)
-
+async function generateWithdrawSignatureInput(pubkey, sig, msg, curTime) {
+  let mimcjs = await buildMimc7();
+  let F = mimcjs.F;
   const inputs = {
-    Ax: res["x"],
-    Ay: res["y"],
-    R8x: r8x,
-    R8y: r8y,
-    S: sig,
-    M: msg
+    Ax: F.toString(pubkey[0]),
+    Ay: F.toString(pubkey[1]),
+    R8x: F.toString(sig.R8[0]),
+    R8y: F.toString(sig.R8[1]),
+    S: sig.S.toString(),
+    M: F.toString(msg)
   }
 
   const inputPath = join(TEST_PATH, "withdraw_signature_inputs", curTime + ".json")
@@ -243,10 +243,10 @@ module.exports = {
     return result.toString().startsWith('Proof is valid');
   },
 
-  async proveWithdrawSignature(pubkey, r8x, r8y, sig, msg) {
+  async proveWithdrawSignature(pubkey, sig, msg) {
     // generate input
     const curTime = Date.now().toString()
-    const inputPath = await generateWithdrawSignatureInput(pubkey, r8x, r8y, sig, msg, curTime);
+    const inputPath = await generateWithdrawSignatureInput(pubkey, sig, msg, curTime);
     const outputPath = join(TEST_PATH, "withdraw_signature_witness", curTime+".wtns")
 
     // generate witness
