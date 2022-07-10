@@ -1,6 +1,6 @@
 {
   "name": "@ieigen/zkzru",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "An implementation of [ZK-ZKRollup](https://github.com/ieigen/ZKZRU) in which the relayer **does not** publish transaction data to the main chain, but only publishes the new Merkle root at every update. This provides gas savings but not data availability guarantees: we assume the operator will always provide data to users so they can update their leaf.",
   "keywords": [
     "zkp",
