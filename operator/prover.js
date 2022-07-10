@@ -148,7 +148,7 @@ module.exports = {
       } else {
         const pk = parsePublicKey(acc["pubkey"])
         account = new Account(
-          acc["index"],
+          acc["account_index"],
           fromHexString(pk["x"]),
           fromHexString(pk["y"]),
           parseInt(acc["balance"]),
