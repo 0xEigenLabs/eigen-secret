@@ -151,7 +151,7 @@ module.exports = {
           acc["account_index"],
           fromHexString(pk["x"]),
           fromHexString(pk["y"]),
-          parseInt(acc["balance"]),
+          acc["balance"],
           acc["nonce"],
           acc["tokenType"],
         )
