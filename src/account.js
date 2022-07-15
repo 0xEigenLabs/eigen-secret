@@ -9,7 +9,7 @@ module.exports = class Account {
     this.index = _index;
     this.pubkeyX = _pubkeyX;
     this.pubkeyY = _pubkeyY;
-    this.balance = _balance;
+    this.balance = BigInt(_balance);
     this.nonce = _nonce;
     this.tokenType = _tokenType;
 
@@ -29,7 +29,7 @@ module.exports = class Account {
       // this.index.toString(),
       this.pubkeyX,
       this.pubkeyY,
-      this.balance,
+      this.balance.toString(),
       this.nonce,
       this.tokenType
     ]
