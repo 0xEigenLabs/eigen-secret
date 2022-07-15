@@ -39,9 +39,9 @@ module.exports = async function getCircuitInput(stateTransition) {
 
     intermediateRoots[2 * i + 2] = F.toString(delta.rootFromNewReceiver);
 
-    balanceFrom[i] = delta.balanceFrom;
+    balanceFrom[i] = delta.balanceFrom.toString();
 
-    balanceTo[i] = delta.balanceTo;
+    balanceTo[i] = delta.balanceTo.toString();
     nonceTo[i] = delta.nonceTo;
     tokenTypeTo[i] = delta.tokenTypeTo;
   }
@@ -69,7 +69,7 @@ module.exports = async function getCircuitInput(stateTransition) {
     toX[i] = tx.toX == 0 ? 0 : F.toString(tx.toX);
     toY[i] = tx.toY == 0 ? 0 : F.toString(tx.toY);
     nonceFrom[i] = tx.nonce;
-    amount[i] = tx.amount;
+    amount[i] = tx.amount.toString();
     tokenTypeFrom[i] = tx.tokenType;
 
     R8x[i] = F.toString(tx.R8x);
