@@ -14,7 +14,7 @@ module.exports = class Transaction {
     this.toX = _toX;
     this.toY = _toY;
     this.nonce = _nonce;
-    this.amount = _amount
+    this.amount = BigInt(_amount);
     this.tokenType = _tokenType;
 
     this.mimcjs = undefined
@@ -42,7 +42,7 @@ module.exports = class Transaction {
       this.toX == 0 ? 0 : F.toString(this.toX),
       this.toY == 0 ? 0 : F.toString(this.toY),
       this.nonce,
-      this.amount,
+      this.amount.toString(),
       this.tokenType
     ];
     const txHash = this.mimcjs.multiHash(input)
