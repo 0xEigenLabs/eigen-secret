@@ -107,34 +107,8 @@ describe("RollupNC", () => {
         let deposit0 = await rollupNC.connect(accounts[0]).deposit([0, 0], 0, 0, { from: accounts[0].address })
         assert(deposit0, "deposit0 failed");
 
-        leafNode1 = await rollupNC.pendingDeposits(0)
-        console.log(leafNode1)
         await rollupNC.currentRoot().then(console.log)
 	  });
-
-    it("should process first deposit", async () => {
-        let processDeposit
-        let position = [
-          0, 0, 0, 0
-        ]
-        let proof = [
-          '18822210974461572787084328874970506324337552386873748437313431894257875892527',
-          '13709419133780021201613586010693342878534544523459755321806052948713273869912',
-          '10979797660762940206903140898034771814264102460382043487394926534432430816033',
-          '4067275915489912528025923491934308489645306370025757488413758815967311850978',
-        ]
-        try {
-            processDeposit = await rollupNC.connect(accounts[0]).processDeposits(
-                position,
-                proof,
-                { from: accounts[0].address }
-            )
-        } catch (error){
-            console.log('processDeposits revert reason', error)
-        }
-        assert(processDeposit, "processDeposit failed")
-        await rollupNC.currentRoot().then(console.log)
-    })
 
     it("should make second deposit", async () => {
         // operator account
@@ -144,94 +118,56 @@ describe("RollupNC", () => {
         await rollupNC.currentRoot().then(console.log)
     });
 
-    it("should process second deposit", async () => {
-        let processDeposit
-        let position = [
-          1, 0, 0, 0
-        ]
-        let proof = [
-          leafNode1,
-          '13709419133780021201613586010693342878534544523459755321806052948713273869912',
-          '10979797660762940206903140898034771814264102460382043487394926534432430816033',
-          '4067275915489912528025923491934308489645306370025757488413758815967311850978',
-        ]
-        try {
-            processDeposit = await rollupNC.connect(accounts[0]).processDeposits(
-                position,
-                proof,
-                { from: accounts[0].address }
-            )
-        } catch (error){
-            console.log('processDeposits revert reason', error)
-        }
-        assert(processDeposit, "processDeposit failed")
-        await rollupNC.currentRoot().then(console.log)
-    })
-
     it("should make third deposit", async () => {
         // Alice account
         let deposit2 = await rollupNC.connect(accounts[3]).deposit(pubkeyA, 1000, 2, { from: accounts[3].address })
         assert(deposit2, "deposit2 failed");
 
-        leafNode3 = await rollupNC.pendingDeposits(0)
         await rollupNC.currentRoot().then(console.log)
     });
 
-    it("should process third deposit", async () => {
-        let processDeposit
-        let position = [
-          0, 1, 0, 0
-        ]
-        let proof = [
+    it("should process 1-3 deposits", async () => {
+      let position = [
+        [0, 0, 0, 0],
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],   
+      ]
+      let proof =[
+        [
+          '18822210974461572787084328874970506324337552386873748437313431894257875892527',
+          '13709419133780021201613586010693342878534544523459755321806052948713273869912',
+          '10979797660762940206903140898034771814264102460382043487394926534432430816033',
+          '4067275915489912528025923491934308489645306370025757488413758815967311850978',
+        ],
+        [
+          leafNode1,
+          '13709419133780021201613586010693342878534544523459755321806052948713273869912',
+          '10979797660762940206903140898034771814264102460382043487394926534432430816033',
+          '4067275915489912528025923491934308489645306370025757488413758815967311850978',
+        ],
+        [
           '18822210974461572787084328874970506324337552386873748437313431894257875892527',
           first2Hash,
           '10979797660762940206903140898034771814264102460382043487394926534432430816033',
           '4067275915489912528025923491934308489645306370025757488413758815967311850978',
-        ]
-        try {
-            processDeposit = await rollupNC.connect(accounts[0]).processDeposits(
-                position,
-                proof,
-                { from: accounts[0].address }
-            )
-        } catch (error){
-            console.log('processDeposits revert reason', error)
-        }
-        assert(processDeposit, "processDeposit failed")
-        await rollupNC.currentRoot().then(console.log)
+        ],
+      ]
+      let processDeposit = await rollupNC.connect(accounts[0]).processDepositsQueue(
+          position,
+          proof,
+          { from: accounts[0].address }
+      )
+      assert(processDeposit, "processDepositsQueue failed")
+      await rollupNC.currentRoot().then(console.log)
     })
 
     it("should make forth deposit", async () => {
-        // Bob account
-        let deposit3 = await rollupNC.connect(accounts[2]).deposit(pubkeyB, 20, 1, { value: 20, from: accounts[2].address })
-        assert(deposit3, "deposit3 failed");
+      // Bob account
+      let deposit3 = await rollupNC.connect(accounts[2]).deposit(pubkeyB, 20, 1, { value: 20, from: accounts[2].address })
+      assert(deposit3, "deposit3 failed");
 
-        await rollupNC.currentRoot().then(console.log)
+      await rollupNC.currentRoot().then(console.log)
     });
-
-    it("should process forth deposit", async () => {
-        let processDeposit
-        let position = [
-          1, 1, 0, 0
-        ]
-        let proof= [
-          leafNode3,
-          first2Hash,
-          '10979797660762940206903140898034771814264102460382043487394926534432430816033',
-          '4067275915489912528025923491934308489645306370025757488413758815967311850978',
-        ]
-        try {
-            processDeposit = await rollupNC.connect(accounts[0]).processDeposits(
-                position,
-                proof,
-                { from: accounts[0].address }
-            )
-        } catch (error){
-            console.log('processDeposits revert reason', error)
-        }
-        assert(processDeposit, "processDeposit failed")
-        await rollupNC.currentRoot().then(console.log)
-    })
 
     // ----------------------------------------------------------------------------------
 
@@ -256,28 +192,9 @@ describe("RollupNC", () => {
         let deposit4 = await rollupNC.connect(accounts[3]).deposit(pubkeyC, 200, 2, { from: accounts[3].address })
         assert(deposit4, "deposit4 failed");
 
-        leafNode5 = await rollupNC.pendingDeposits(0)
         await rollupNC.currentRoot().then(console.log)
     });
 
-    it("should process fifth deposit", async () => {
-      let position = [
-        0, 0, 1, 0
-      ]
-      let proof = [
-        '18822210974461572787084328874970506324337552386873748437313431894257875892527',
-        '13709419133780021201613586010693342878534544523459755321806052948713273869912',
-        first4Hash,
-        '4067275915489912528025923491934308489645306370025757488413758815967311850978'
-      ]
-      let processDeposit = await rollupNC.connect(accounts[0]).processDeposits(
-          position,
-          proof,
-          { from: accounts[0].address }
-      )
-      assert(processDeposit, "processDeposit failed")
-      await rollupNC.currentRoot().then(console.log)
-    })
 
     it("should make sixth deposit", async () => {
         let deposit5 = await rollupNC.connect(accounts[4]).deposit(pubkeyD, 100, 1, { value: 100, from: accounts[4].address })
@@ -285,51 +202,13 @@ describe("RollupNC", () => {
         await rollupNC.currentRoot().then(console.log)
     });
 
-    it("should process sixth deposit", async () => {
-      let position = [
-        1, 0, 1, 0
-      ]
-      let proof = [
-        leafNode5,
-        '13709419133780021201613586010693342878534544523459755321806052948713273869912',
-        first4Hash,
-        '4067275915489912528025923491934308489645306370025757488413758815967311850978'
-      ]
-      let processDeposit = await rollupNC.connect(accounts[0]).processDeposits(
-          position,
-          proof,
-          { from: accounts[0].address }
-      )
-      assert(processDeposit, "processDeposit failed")
-      await rollupNC.currentRoot().then(console.log)
-    })
 
     it("should make seventh deposit", async () => {
         let deposit6 = await rollupNC.connect(accounts[3]).deposit(pubkeyE, 500, 2, { from: accounts[3].address })
         assert(deposit6, "deposit6 failed");
 
-        leafNode7 = await rollupNC.pendingDeposits(0)
         await rollupNC.currentRoot().then(console.log)
     });
-
-    it("should process seventh deposit", async () => {
-      let position = [
-        0, 1, 1, 0
-      ]
-      let proof = [
-        '18822210974461572787084328874970506324337552386873748437313431894257875892527',
-        third2Hash,
-        first4Hash,
-        '4067275915489912528025923491934308489645306370025757488413758815967311850978'
-      ]
-      let processDeposit = await rollupNC.connect(accounts[0]).processDeposits(
-          position,
-          proof,
-          { from: accounts[0].address }
-      )
-      assert(processDeposit, "processDeposit failed")
-      await rollupNC.currentRoot().then(console.log)
-    })
 
     it("should make eighth deposit", async () => {
         let deposit7 = await rollupNC.connect(accounts[6]).deposit(pubkeyF, 20, 1, { value: 20, from: accounts[6].address })
@@ -337,22 +216,52 @@ describe("RollupNC", () => {
         await rollupNC.currentRoot().then(console.log)
     });
 
-    it("should process eighth deposit", async () => {
-      let position = [
-        1, 1, 1, 0
+    it("should process 4-8 eight deposits", async () => {
+      let position = [ 
+        [1, 1, 0, 0], 
+        [0, 0, 1, 0], 
+        [1, 0, 1, 0], 
+        [0, 1, 1, 0],
+        [1, 1, 1, 0] 
       ]
-      let proof = [
-        leafNode7,
-        third2Hash,
-        first4Hash,
-        '4067275915489912528025923491934308489645306370025757488413758815967311850978'
+      let proof =[
+        [
+          leafNode3,
+          first2Hash,
+          '10979797660762940206903140898034771814264102460382043487394926534432430816033',
+          '4067275915489912528025923491934308489645306370025757488413758815967311850978',
+        ],
+        [
+          '18822210974461572787084328874970506324337552386873748437313431894257875892527',
+          '13709419133780021201613586010693342878534544523459755321806052948713273869912',
+          first4Hash,
+          '4067275915489912528025923491934308489645306370025757488413758815967311850978'
+        ],
+        [
+          leafNode5,
+          '13709419133780021201613586010693342878534544523459755321806052948713273869912',
+          first4Hash,
+          '4067275915489912528025923491934308489645306370025757488413758815967311850978'
+        ],
+        [
+          '18822210974461572787084328874970506324337552386873748437313431894257875892527',
+          third2Hash,
+          first4Hash,
+          '4067275915489912528025923491934308489645306370025757488413758815967311850978'
+        ],
+        [
+          leafNode7,
+          third2Hash,
+          first4Hash,
+          '4067275915489912528025923491934308489645306370025757488413758815967311850978'
+        ]
       ]
-      let processDeposit = await rollupNC.connect(accounts[0]).processDeposits(
+      let processDeposit = await rollupNC.connect(accounts[0]).processDepositsQueue(
           position,
           proof,
           { from: accounts[0].address }
       )
-      assert(processDeposit, "processDeposit failed")
+      assert(processDeposit, "processDepositsQueue failed")
       await rollupNC.currentRoot().then(console.log)
     })
 
