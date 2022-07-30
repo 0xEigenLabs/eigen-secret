@@ -163,7 +163,6 @@ contract RollupNCV2 {
             depositArray
         );
 
-        console.log(depositHash);
         pendingDeposits.push(depositHash);
         emit RequestDeposit(pubkey, amount, tokenType);
         queueNumber++;
@@ -177,7 +176,6 @@ contract RollupNCV2 {
         uint[] memory proof
     ) public onlyCoordinator returns(uint256){
         uint emptyLeafNode = mimcMerkle.zeroCache(0);
-        console.log(mimcMerkle.getRootFromProof(emptyLeafNode, position, proof));
         require(currentRoot == mimcMerkle.getRootFromProof(
             emptyLeafNode, position, proof),
             "specified subtree is not empty");
@@ -185,6 +183,24 @@ contract RollupNCV2 {
             pendingDeposits[0], position, proof);
         removeDeposit(0);
         queueNumber--;
+        return currentRoot;
+    }
+
+    // process all pending deposits at once
+    function processDepositsQueue(
+        uint[][] memory position,
+        uint[][] memory proof
+    ) public onlyCoordinator returns(uint256){
+        for (uint i = 0; i < queueNumber; i++) {
+            uint emptyLeafNode = mimcMerkle.zeroCache(0);
+            require(currentRoot == mimcMerkle.getRootFromProof(
+              emptyLeafNode, position[i], proof[i]),
+              "specified node is not empty");
+            currentRoot = mimcMerkle.getRootFromProof(pendingDeposits[i], position[i], proof[i]);
+        } 
+
+        delete pendingDeposits;
+        queueNumber = 0;
         return currentRoot;
     }
 
