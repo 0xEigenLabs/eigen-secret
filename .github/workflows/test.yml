@@ -20,10 +20,15 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+<<<<<<< HEAD
       - uses: actions/checkout@master
       - uses: taiki-e/github-actions/install-rust@main
+=======
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+>>>>>>> 0a33add (Update test.yml)
         with:
-          toolchain: nightly
+            toolchain: nightly
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@master
         with:
