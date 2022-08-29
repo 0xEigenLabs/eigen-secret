@@ -153,7 +153,7 @@ module.exports = {
           fromHexString(pk["y"]),
           BigInt(acc["balance"]),
           acc["nonce"],
-          acc["tokenType"],
+          acc["token_type"],
         )
       }
       await account.initialize()
@@ -167,8 +167,8 @@ module.exports = {
     for (var i=0; i < txInDB.length; i++) {
       var res = txInDB[i]
       var tx;
-      var senderPK = parsePublicKey(res["senderPubkey"])
-      if (res["receiverPubkey"] == "0") {
+      var senderPK = parsePublicKey(res["sender_pubkey"])
+      if (res["receiver_pubkey"] == "0") {
         tx = new Transaction(
           fromHexString(senderPK["x"]),
           fromHexString(senderPK["y"]),
@@ -177,13 +177,13 @@ module.exports = {
           0,
           res["nonce"],
           BigInt(res["amount"]),
-          res["tokenTypeFrom"],
+          res["token_type_from"],
           fromHexString(res["r8x"]),
           fromHexString(res["r8y"]),
           unstringifyBigInts(res["s"])
         )
       } else {
-        var receiverPK = parsePublicKey(res["receiverPubkey"])
+        var receiverPK = parsePublicKey(res["receiver_pubkey"])
         tx = new Transaction(
           fromHexString(senderPK["x"]),
           fromHexString(senderPK["y"]),
@@ -192,7 +192,7 @@ module.exports = {
           fromHexString(receiverPK["y"]),
           res["nonce"],
           BigInt(res["amount"]),
-          res["tokenTypeFrom"],
+          res["token_type_from"],
           fromHexString(res["r8x"]),
           fromHexString(res["r8y"]),
           unstringifyBigInts(res["s"])
