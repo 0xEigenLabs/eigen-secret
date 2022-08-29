@@ -21,9 +21,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: taiki-e/github-actions/install-rust@main
+      - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+            toolchain: nightly
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
