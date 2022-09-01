@@ -29,6 +29,7 @@
   "main": "index.js",
   "dependencies": {
     "@ieigen/anonmisc": "^0.0.8",
+    "@ieigen/plonkjs-node": "^0.0.1",
     "@ieigen/zkzru": "^0.0.16",
     "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.1",

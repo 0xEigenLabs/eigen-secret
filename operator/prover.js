@@ -1,6 +1,7 @@
 require('dotenv').config()
 const { utils } = require('ethers');
 const path = require("path");
+const fs = require("fs");
 const exec = require('child_process').exec;
 const { mkdirSync, existsSync, readFileSync, writeFileSync } = require("fs");
 const getCircuitInput = require("../src/circuitInput");
@@ -16,6 +17,7 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 const ff = require("ffjavascript");
 const unstringifyBigInts = ff.utils.unstringifyBigInts
 
+const prover = require('@ieigen/plonkjs-node')
 const ZKIT = process.env.ZKIT || "zkit"
 const CIRCUIT_PATH = process.env.CIRCUIT_PATH || ""
 const TEST_PATH = process.env.TEST_PATH || ""
@@ -216,6 +218,41 @@ module.exports = {
     // generate witness
     await generateWitness(inputPath, outputPath, "update_state_verifier")
 
+    let circuit_file = path.join(CIRCUIT_PATH, "update_state_verifier.r1cs");
+    let circuit_file_content = fs.readFileSync(circuit_file);
+    let wtns_content = fs.readFileSync(outputPath);
+    let srs_monomial_form = path.join(CIRCUIT_PATH, "setup_2^20.key");
+    let srs_monomial_form_content = fs.readFileSync(srs_monomial_form);
+    let proof_js = prover.prove(
+      circuit_file_content.toJSON().data,
+      wtns_content.toJSON().data,
+      srs_monomial_form_content.toJSON().data,
+      "keccak"
+    );
+
+    // generate verify key
+    let vk_js = prover.export_verification_key(
+        srs_monomial_form_content.toJSON().data,
+        circuit_file_content.toJSON().data
+    );
+    let vk = vk_js.vk_bin
+    let proof = proof_js.proof_bin
+    let proofJson = proof_js.proof_json
+    let publicJson = proof_js.public_json
+    let inputJson = inputPath
+    return {vk, proof, inputJson, proofJson, publicJson, txRoot}   
+  },
+
+  /*
+  async prove(accArray, txArrary) {
+    // generate input
+    const curTime = Date.now().toString()
+    const {inputPath, txRoot} = await generateInput(accArray, txArrary, curTime);
+    const outputPath = join(TEST_PATH, "witness", curTime+".wtns")
+
+    // generate witness
+    await generateWitness(inputPath, outputPath, "update_state_verifier")
+
     // use cmd to export verification key
     let zkey = path.join(CIRCUIT_PATH, "setup_2^20.key");
     const vk = join(TEST_PATH, "vk", curTime+"_vk.bin")
@@ -235,14 +272,60 @@ module.exports = {
     let inputJson = inputPath
     return {vk, proof, inputJson, proofJson, publicJson, txRoot};
   },
+  */
 
+  async verify(vk, proof) {
+    // verify
+    let verify_ok = prover.verify(
+        Array.from(vk),
+        Array.from(proof),
+        "keccak"
+    )
+    return verify_ok
+  },
+
+  /*
   async verify(vk, proof) {
     const cmd = ZKIT + " verify -p " + proof + " -v " + vk;
     console.log(cmd)
     const result = await run(cmd);
     return result.toString().startsWith('Proof is valid');
   },
+  */
 
+  async proveWithdrawSignature(pubkey, sig, msg) {
+    // generate input
+    const curTime = Date.now().toString()
+    const inputPath = await generateWithdrawSignatureInput(pubkey, sig, msg, curTime);
+    const outputPath = join(TEST_PATH, "withdraw_signature_witness", curTime+".wtns")
+
+    // generate witness
+    await generateWitness(inputPath, outputPath, "withdraw_signature_verifier")
+
+    let circuit_file = path.join(CIRCUIT_PATH, "withdraw_signature_verifier.r1cs");
+    let circuit_file_content = fs.readFileSync(circuit_file);
+    let wtns_content = fs.readFileSync(outputPath);
+    let srs_monomial_form = path.join(CIRCUIT_PATH, "setup_2^20.key");
+    let srs_monomial_form_content = fs.readFileSync(srs_monomial_form);
+    let proof_js = prover.prove(
+      circuit_file_content.toJSON().data,
+      wtns_content.toJSON().data,
+      srs_monomial_form_content.toJSON().data,
+      "keccak"
+    );
+
+    // generate verify key
+    let vk_js = prover.export_verification_key(
+        srs_monomial_form_content.toJSON().data,
+        circuit_file_content.toJSON().data
+    );
+    let vk = vk_js.vk_bin
+    let proof = proof_js.proof_bin
+    let proofJson = proof_js.proof_json
+    return {vk, proof, proofJson}   
+  },
+
+  /*
   async proveWithdrawSignature(pubkey, sig, msg) {
     // generate input
     const curTime = Date.now().toString()
@@ -270,11 +353,24 @@ module.exports = {
     console.log(result)
     return {vk, proof, proofJson};
   },
+  */
 
+  async verifyWithdrawSignature(vk, proof) {
+    // verify
+    let verify_ok = prover.verify(
+        Array.from(vk),
+        Array.from(proof),
+        "keccak"
+    )
+    return verify_ok
+  },
+
+  /*
   async verifyWithdrawSignature(vk, proof) {
     const cmd = ZKIT + " verify -p " + proof + " -v " + vk;
     console.log(cmd)
     const result = await run(cmd);
     return result.toString().startsWith('Proof is valid');
   },
+  */
 }
