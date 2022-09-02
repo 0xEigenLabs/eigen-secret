@@ -33,7 +33,7 @@
   "dependencies": {
     "@ieigen/anonmisc": "^0.0.8",
     "@ieigen/zkzru": "^0.0.16",
-    "@ieigen/plonkjs-node": "0.0.1",
+    "@ieigen/plonkjs-node": "^0.0.2",
     "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.1",
     "consola": "^2.15.3",
