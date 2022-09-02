@@ -1,6 +1,5 @@
 const {waffle, ethers} = require("hardhat");
 //import { ContractFactory, BigNumber} from "ethers";
-const hre = require('hardhat')
 const assert = require('assert');
 const cls = require("circomlibjs");
 const Account = require("../src/account.js");
@@ -54,7 +53,7 @@ describe("Prover generates proof and verify", () => {
             let pubkey = eddsa.prv2pub(prvkey);
             return pubkey;
         }
-        
+
         for (var i = 0; i < numAccounts; i++) {
             var prvkey = generatePrvkey(i + 2);
             var pubkey = generatePubkey(prvkey);
@@ -120,9 +119,9 @@ describe("Prover generates proof and verify", () => {
 
         var prvKey = Buffer.from("4".padStart(64,'0'), "hex");
         // const prvKey = fromHexString("0001020304050607080900010203040506070809000102030405060708090002");
-      
+
         var pubKey = eddsa.prv2pub(prvKey);
-      
+
         var nonce = 0;
         //var txRoot = bigInt('14053325031894235002744541221369412510941171790893507881802249870625790656164')
         var recipient = BigInt('0xC33Bdb8051D6d2002c0D80A1Dd23A1c9d9FC26E4');
@@ -130,7 +129,7 @@ describe("Prover generates proof and verify", () => {
         //const msgBuf = fromHexString("000102030405060708090000");
         //const msg = eddsa.babyJub.F.e(Scalar.fromRprLE(msgBuf, 0));
         const msg = F.e(m);
-      
+
         var signature = eddsa.signMiMC(prvKey, msg);
 
         let {vk, proof, proofJson} = await proveWithdrawSignature(pubKey, signature, msg)

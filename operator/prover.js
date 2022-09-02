@@ -17,7 +17,7 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 const ff = require("ffjavascript");
 const unstringifyBigInts = ff.utils.unstringifyBigInts
 
-const prover = require('@ieigen/plonkjs-node')
+const {prover} = require('@ieigen/plonkjs-node')
 const ZKIT = process.env.ZKIT || "zkit"
 const CIRCUIT_PATH = process.env.CIRCUIT_PATH || ""
 const TEST_PATH = process.env.TEST_PATH || ""
@@ -240,7 +240,7 @@ module.exports = {
     let proofJson = proof_js.proof_json
     let publicJson = proof_js.public_json
     let inputJson = inputPath
-    return {vk, proof, inputJson, proofJson, publicJson, txRoot}   
+    return {vk, proof, inputJson, proofJson, publicJson, txRoot}
   },
 
   /*
@@ -322,7 +322,7 @@ module.exports = {
     let vk = vk_js.vk_bin
     let proof = proof_js.proof_bin
     let proofJson = proof_js.proof_json
-    return {vk, proof, proofJson}   
+    return {vk, proof, proofJson}
   },
 
   /*
