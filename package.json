@@ -24,18 +24,20 @@
     "scripts/*.js",
     "circuits/*.circom",
     "circuits/*/*.circom",
-    "operator/*.js"
+    "operator/*.js",
+    "client/*.js",
+    "index.js",
+    "circuits/setup_2^15.key"
   ],
   "main": "index.js",
   "dependencies": {
     "@ieigen/anonmisc": "^0.0.8",
-    "@ieigen/plonkjs-node": "^0.0.1",
     "@ieigen/zkzru": "^0.0.16",
+    "@ieigen/plonkjs-node": "0.0.1",
     "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.1",
     "consola": "^2.15.3",
     "ffjavascript": "^0.2.55",
-    "snarkjs": "^0.4.22",
     "solhint": "^3.3.7"
   },
   "devDependencies": {

@@ -7,3 +7,5 @@ exports.Tree = require("./src/tree");
 exports.AccountTree = require("./src/accountTree");
 exports.TxTree = require("./src/txTree");
 exports.getCircuitInput = require("./src/circuitInput");
+exports.ZKTX = require("./client/tx.js");
+exports.TwistedElGamal = require("./client/tx.js");
