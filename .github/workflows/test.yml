@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [16.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -45,4 +45,4 @@ jobs:
       - name: Generate circuits
         run: bash -x scripts/zkit_zktx.sh
       - name: Start test
-        run: yarn test
+        run: yarn test --network localhost
