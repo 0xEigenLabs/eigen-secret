@@ -23,10 +23,10 @@ async function main() {
   await tokenRegistry.deployed()
   console.log("tokenRegistry address:", tokenRegistry.address)
 
-  factory = await ethers.getContractFactory("RollupNC");
+  factory = await ethers.getContractFactory("RollupNCV2");
   rollupNC = await factory.deploy(mimc.address, miMCMerkle.address, tokenRegistry.address)
   await rollupNC.deployed()
-  console.log("rollupNC address:", rollupNC.address)
+  console.log("rollupNCV2 address:", rollupNC.address)
 
   factory = await ethers.getContractFactory("TestToken");
   testToken = await factory.connect(accounts[0]).deploy()
@@ -40,18 +40,6 @@ async function main() {
   let approveToken = await rollupNC.connect(accounts[0]).approveToken(testToken.address);
 
   let approve = await testToken.connect(accounts[0]).approve(rollupNC.address, 1700);
-
-  // zero leaf
-  let deposit0 = await rollupNC.connect(accounts[0]).deposit([0, 0], 0, 0, { from: accounts[0].address })
-  assert(deposit0, "deposit0 failed");
-
-  // operator account
-  const pubkeyCoordinator = [
-    '11272163730179884137553846264063981893256467337839744581177763041069534786542',
-    '15087857856636020541068595983556500961641122088946557767189421497078430055442'
-  ]
-  let deposit1 = await rollupNC.connect(accounts[0]).deposit(pubkeyCoordinator, 0, 0, { from: accounts[0].address })
-  assert(deposit1, "deposit1 failed");
 }
 
 main()

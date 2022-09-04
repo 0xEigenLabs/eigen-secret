@@ -33,6 +33,30 @@ module.exports = {
     target: 'ethers-v5',
     alwaysGenerateOverloads: false // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
   },
+  networks: {
+    dev: {
+      url: process.env['RPC'] || process.exit(-1),
+      accounts: [process.env.DEVNET_PRIVKEY],
+      gas: 2100000,
+      gasPrice: 3000000000
+    },
+    metis: {
+      url: "https://stardust.metis.io/?owner=588",
+      accounts: [process.env.DEVNET_PRIVKEY]
+    },
+    tbsc: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      accounts: [process.env.DEVNET_PRIVKEY]
+    }, 
+    eig: {
+      url: "https://node.ieigen.com",
+      accounts: [process.env.DEVNET_PRIVKEY]
+    }, 
+    tpolygon: {
+      url: "https://rpc-mumbai.maticvigil.com/",
+      accounts: [process.env.DEVNET_PRIVKEY]
+    }
+  },
   mocha: {
     timeout: 10000000,
   },
