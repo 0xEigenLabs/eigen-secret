@@ -40,9 +40,6 @@ module.exports = {
     tbsc: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
     },
-    eig: {
-      url: "https://node.ieigen.com",
-    },
     tpolygon: {
       url: "https://rpc-mumbai.maticvigil.com/",
     }
