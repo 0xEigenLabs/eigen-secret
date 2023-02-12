@@ -5,6 +5,27 @@ include "../node_modules/circomlib/circuits/smt/smtprocessor.circom";
 include "./state_tree.circom";
 include "../third-party/circom-ecdsa/circuits/ecdsa.circom";
 
+template Hasher() {
+    signal input nc_1;
+    signal input nc_2;
+    signal input output_note_nc_1[2];
+    signal input output_note_nc_2[2];
+    signal input output_owner;
+    signal output out;
+
+    component hash = Poseidon(7, 6, 8, 57);
+
+    hash.inputs[0] <== nc_1;
+    hash.inputs[1] <== nc_2;
+    hash.inputs[2] <== output_note_nc_1[0];
+    hash.inputs[3] <== output_note_nc_1[1];
+    hash.inputs[4] <== output_note_nc_2[0];
+    hash.inputs[5] <== output_note_nc_2[1];
+    hash.inputs[6] <== output_owner;
+
+    hash.out ==> out;
+}
+
 template JoinSplit(nLevel) {
     //constant
     var TYPE_DEPOSIT = 1;
@@ -47,8 +68,7 @@ template JoinSplit(nLevel) {
     signal input siblings_ac[nLevel];
     signal input note_num;
     signal input nk; // (account private key)
-    signal input signature[3]; // ecdsa signature
-    signal input migrate;
+    signal input signature[2]; // ecdsa signature
 
     component is_deposit = IsEqual();
     is_deposit.in[0] <== proof_id;
@@ -125,7 +145,20 @@ template JoinSplit(nLevel) {
     pri2pub.privkey <== nk;
     pri2pub.pubkey === account_note_npk;
 
-    //TODO check signature
+    //check signature
+    component hasher = Hasher();
+    hasher.nc_1 <== nc[0].out;
+    hasher.nc_2 <== nc[1].out;
+    hasher.output_note_nc_1[0] <== output_nc_1_x;
+    hasher.output_note_nc_1[1] <== output_nc_1_y;
+    hasher.output_note_nc_2[0] <== output_nc_2_x;
+    hasher.output_note_nc_2[1] <== output_nc_2_y;
+    component sig_verifier = ECDSAVerifyNoPubkeyCheck(64, 4);
+    sig_verifier.r <== signature[0];
+    sig_verifier.s <== signature[1];
+    sig_verifier.msghash <== hasher,out;
+    sig_verifier.pubkey <== account_note_npk;
+    sig_verifier.result === 1;
 
     // check value
     //case 1: note_num < 1 && input_note_1.value == 0
