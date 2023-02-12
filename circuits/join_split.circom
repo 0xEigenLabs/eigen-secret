@@ -72,11 +72,11 @@ template JoinSplit(nLevel) {
 
     component is_deposit = IsEqual();
     is_deposit.in[0] <== proof_id;
-    is_deposit.in[0] <== TYPE_DEPOSIT;
+    is_deposit.in[1] <== TYPE_DEPOSIT;
 
     var is_withdraw = IsEqual();
     is_withdraw.in[0] <== proof_id;
-    is_withdraw.in[0] <== TYPE_WITHDRAW;
+    is_withdraw.in[1] <== TYPE_WITHDRAW;
 
     var public_input = public_input * is_deposit.out;
     var public_output = public_input * is_withdraw.out;
