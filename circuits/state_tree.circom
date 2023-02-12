@@ -8,7 +8,6 @@ template Membership(nLevels){
     signal input siblings[nLevels];
 
     var i;
-
     // VERIFY INCLUSION
     component smtverifier = SMTVerifier(nLevels);
     smtverifier.enabled <== 1;
@@ -21,7 +20,7 @@ template Membership(nLevels){
     smtverifier.isOld0 <== 0;
     smtverifier.key <== key;
     smtverifier.value <== value;
-    smtverifier.fnc <== 0;   
+    smtverifier.fnc <== 0;
 }
 
 template NonMembershipUpdate(nLevels) {
