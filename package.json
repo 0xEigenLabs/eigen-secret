@@ -11,11 +11,11 @@
   "scripts": {
     "lint_js": "./node_modules/.bin/eslint src --ext .js",
     "lint_sol": "./node_modules/.bin/solhint 'contracts/**/*.sol'",
-    "lint": "yarn lint_js & yarn lint_sol",
+    "lint": "npm run lint_js & npm run lint_sol",
     "clean": "rm -rf build dist typechain cache artifacts",
     "compile": "hardhat compile",
-    "build": "yarn clean && yarn",
-    "test": "yarn build && yarn compile && npx hardhat test"
+    "build": "npm run clean && npm i",
+    "test": "npm run build && npm run compile && npx hardhat test"
   },
   "author": "EigenLabs",
   "files": [
@@ -31,27 +31,31 @@
   "main": "index.js",
   "dependencies": {
     "@ieigen/anonmisc": "^0.0.8",
-    "circomlib": "^2.0.5",
     "circom_runtime": "^0.1.18",
+    "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.6",
     "consola": "^2.15.3",
     "ffjavascript": "^0.2.55",
     "solhint": "^3.3.7"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.6",
-    "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@types/jest": "^28.1.3",
-    "@typescript-eslint/eslint-plugin": "^5.29.0",
-    "chai": "^4.2.0",
-    "dotenv": "^16.0.1",
-    "eslint": "^8.17.0",
-    "eslint-config-google": "^0.14.0",
-    "ethereum-waffle": "^3.0.0",
-    "ethers": "^5.6.8",
-    "hardhat": "^2.12.7",
-    "mocha": "^10.0.0",
+    "@eslint/create-config": "^0.1.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.5",
+    "@typechain/ethers-v5": "^10.2.0",
+    "@typechain/hardhat": "^6.1.5",
+    "@types/chai": "^4.3.4",
+    "@types/mocha": "^9.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
     "circom_tester": "^0.0.18",
-    "typechain": "^8.1.0"
+    "dotenv": "^16.0.0",
+    "eslint": "^8.17.0",
+    "ethereum-waffle": "^4.0.9",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.12.7",
+    "ts-node": "^10.4.0",
+    "typechain": "^8.1.1",
+    "typescript": "^4.5.5"
   }
 }
