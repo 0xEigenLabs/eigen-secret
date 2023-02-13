@@ -9,26 +9,15 @@
     "blockchain"
   ],
   "scripts": {
-    "lint_js": "./node_modules/.bin/eslint src --ext .js",
     "lint_sol": "./node_modules/.bin/solhint 'contracts/**/*.sol'",
-    "lint": "npm run lint_js & npm run lint_sol",
-    "clean": "rm -rf build dist typechain cache artifacts",
+    "lint": "npm run lint_ts & npm run lint_sol",
     "compile": "hardhat compile",
-    "build": "npm run clean && npm i",
-    "test": "npm run build && npm run compile && npx hardhat test"
+    "test": "npm run build && npm run compile && npx hardhat test",
+    "lint_ts": "./node_modules/.bin/eslint src --ext .ts",
+    "clean": "rm -rf build dist typechain cache artifacts",
+    "build": "npm run clean && npm i && ./node_modules/.bin/tsc"
   },
   "author": "EigenLabs",
-  "files": [
-    "src/*.js",
-    "scripts/*.js",
-    "circuits/*.circom",
-    "circuits/*/*.circom",
-    "operator/*.js",
-    "client/*.js",
-    "index.js",
-    "circuits/setup_2^15.key"
-  ],
-  "main": "index.js",
   "dependencies": {
     "@ieigen/anonmisc": "^0.0.8",
     "circom_runtime": "^0.1.18",
@@ -36,10 +25,12 @@
     "circomlibjs": "^0.1.6",
     "consola": "^2.15.3",
     "ffjavascript": "^0.2.55",
+    "snarkjs": "^0.6.1",
     "solhint": "^3.3.7"
   },
   "devDependencies": {
     "@eslint/create-config": "^0.1.2",
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.2",
     "@nomiclabs/hardhat-waffle": "^2.0.5",
     "@typechain/ethers-v5": "^10.2.0",
