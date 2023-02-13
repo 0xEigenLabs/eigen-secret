@@ -1,3 +1,5 @@
+pragma circom 2.0.1;
+
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
 template NoteCompressor() {

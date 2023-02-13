@@ -2,7 +2,6 @@ import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { print } from "../src/demo";
 
 describe("Lock", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -21,7 +20,6 @@ describe("Lock", function () {
     const Lock = await ethers.getContractFactory("Lock");
     const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
 
-    print(10);
     return { lock, unlockTime, lockedAmount, owner, otherAccount };
   }
 
