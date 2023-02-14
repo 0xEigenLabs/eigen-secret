@@ -1,1 +1,1 @@
-pragma circom 2.0.1;
+pragma circom 2.0.0;
