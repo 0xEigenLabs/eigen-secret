@@ -1,24 +1,34 @@
 pragma circom 2.0.0;
 
 include "../node_modules/circomlib/circuits/poseidon.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/mux1.circom";
 
 template AccountNoteCompressor() {
-    signal input npk[2];
-    signal input spk[2];
+    signal input npk[2][4];
+    signal input spk[2][4];
     signal input account_id;
     signal output out;
 
-    component hash = Poseidon(5);
-
-    hash.inputs[0] <== npk[0];
-    hash.inputs[1] <== npk[1];
-    hash.inputs[2] <== spk[0];
-    hash.inputs[3] <== spk[1];
-    hash.inputs[4] <== account_id;
+    component hash = Poseidon(9);
+    for (var i = 0; i < 2; i ++) {
+        var low = npk[i][0] * (2**64) + npk[i][1];
+        var high = npk[i][2] * (2**64) + npk[i][3];
+        hash.inputs[i*2] <== low;
+        hash.inputs[i*2+1] <== high;
+    }
+    for (var i = 0; i < 2; i ++) {
+        var low = spk[i][0] * (2**64) + spk[i][1];
+        var high = spk[i][2] * (2**64) + spk[i][3];
+        hash.inputs[4 + i*2] <== low;
+        hash.inputs[4 + i*2+1] <== high;
+    }
+    hash.inputs[8] <== account_id;
 
     hash.out ==> out;
 }
 
+/*
 template AccountNote(nLevel) {
     //constant
     var TYPE_CREATE = 1;
@@ -27,11 +37,15 @@ template AccountNote(nLevel) {
 
     var NOTE_VALUE_BIT_LENGTH = 2**252;
     var NUM_ASSETS_BIT_LENGTH = 1000;
+    var gibberish = 0x1234;
+
+    // public input
+    siganl input migrate;
 
     // public input
     signal input proof_id;
-    signal input public_input; // alias: acccount_pubkey_x
-    signal input public_ouput; // alias: acccount_pubkey_y
+    signal input public_input; // alias: account_public_key_x
+    signal input public_ouput; // alias: account_public_key_y
     signal input public_asset_id; // alias: account_id
     signal input output_nc_1_x;
     signal input output_nc_1_y;
@@ -65,21 +79,38 @@ template AccountNote(nLevel) {
 
     var alias_hash = public_asset_id >> 32; // account_id.slice(0, 28);
     var nonce = public_asset_id & 0xFFFFFFFF  ;//account_id.slice(28, 4)
-    output_nonce = migrate + nonce
-    output_account_id = alias_hash + (output_nonce * 2^224)
-    assert_account_exists = nonce != 0
-    signer = nonce == 0 ? account_public_key : signing_public_key
+    var output_nonce = migrate + nonce
+    var output_account_id = alias_hash + (output_nonce * (2**224))
+
+    component nonce_is_zero = IsEqual();
+    nonce_is_zero.in[0] <== nonce;
+    nonce_is_zero.in[1] <== 0;
+    var assert_account_exists = nonce_is_zero.out;
+
+    component mux_signer = Mux1();
+    mux_signer.in[0] <== account_public_key;
+    mux_signer.in[1] <== signing_public_key;
+    mux_signer.s <== nonce_is_zero.out;
+    var signer = mux_signer.out;
+
+    component msg_compressor = Poseidon(4);
     message = Poseidon(account_public_key, account_id, spending_public_key_1.x, spending_public_key_2.x)
     account_note_data = Poseidon(account_id, account_public_key.x, signer.x)
-    is_nullifier_fake = migrate == 0
+
+    component migrate_is_zero = IsEqual();
+    migrate_is_zero.in[0] <== migrate;
+    migrate_is_zero.in[1] <== 0;
+    var is_nullifier_fake = migrate_is_zero.out;
 
     output_note_1_x/y = Poseidon(output_account_id, account_public_key.x, account_public_key.y, spending_public_key_1.x, spending_public_key_1.y)
     output_note_2_x/y = Poseidon(output_account_id, account_public_key.x, account_public_key.y, spending_public_key_2.x, spending_public_key_2.y)
-    nullifier_1 = Poseidon(proof_id + (is_nullifier_fake * 2^250), account_id, !migrate * gibberish)
+    nullifier_1 = Poseidon(proof_id + (is_nullifier_fake * (2**250)), account_id, !migrate * gibberish)
     nullifier_2 = Poseidon(proof_id + (1 * 2^250), gibberish)
 
     //constraints
-    migrate == 1 || migrate == 0
-    verify_signature(message, signer, signature) == 1
-    membership_check(account_note_data, account_note_index, account_note_path, data_tree_root) == assert_account_exists
+    //migrate == 1 || migrate == 0
+    (migrate - 1) * migrate === 0;
+    // TODO: verify_signature(message, signer, signature) == 1
+    // TODO: membership_check(account_note_data, account_note_index, account_note_path, data_tree_root) == assert_account_exists
 }
+*/
