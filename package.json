@@ -1,7 +1,7 @@
 {
-  "name": "@ieigen/zkzru",
-  "version": "0.0.16",
-  "description": "An implementation of [ZK-ZKRollup](https://github.com/ieigen/ZKZRU) in which the relayer **does not** publish transaction data to the main chain, but only publishes the new Merkle root at every update. This provides gas savings but not data availability guarantees: we assume the operator will always provide data to users so they can update their leaf.",
+  "name": "@ieigen/zkpay",
+  "version": "0.0.1",
+  "description": "zk payment",
   "keywords": [
     "zkp",
     "privacy",
@@ -15,13 +15,13 @@
     "test": "npm run build && npm run compile && npx hardhat test",
     "lint_ts": "./node_modules/.bin/eslint src --ext .ts",
     "clean": "rm -rf build dist typechain cache artifacts",
-    "build": "npm run clean && npm i && ./node_modules/.bin/tsc"
+    "build": "./node_modules/.bin/tsc"
   },
   "author": "EigenLabs",
   "dependencies": {
     "@ieigen/anonmisc": "^0.0.8",
     "circom_runtime": "^0.1.18",
-    "circomlib": "^2.0.5",
+    "circomlib": "^2.0.2",
     "circomlibjs": "^0.1.6",
     "consola": "^2.15.3",
     "ffjavascript": "^0.2.55",
@@ -42,11 +42,14 @@
     "circom_tester": "^0.0.18",
     "dotenv": "^16.0.0",
     "eslint": "^8.17.0",
+    "eslint-config-google": "^0.14.0",
     "ethereum-waffle": "^4.0.9",
-    "ethers": "^5.7.2",
-    "hardhat": "^2.12.7",
+    "temp": "^0.9.4",
+    "tmp-promise": "^3.0.3",
     "ts-node": "^10.4.0",
     "typechain": "^8.1.1",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "@noble/secp256k1": "1.3.4",
+    "@types/expect": "^24.3.0"
   }
 }

@@ -1,3 +1,4 @@
+pragma circom 2.0.0;
 include "../node_modules/circomlib/circuits/smt/smtprocessor.circom";
 include "../node_modules/circomlib/circuits/smt/smtverifier.circom";
 
@@ -33,10 +34,12 @@ template NonMembershipUpdate(nLevels) {
     signal input newKey;
     signal input newValue;
 
+    assert(nLevels > 2);
     // VERIFY Exclusion
     component smtverifier = SMTVerifier(nLevels);
     smtverifier.enabled <== 1;
-    smtverifier.root <== root;
+    smtverifier.root <== oldRoot;
+    var i;
     for (i=0; i<nLevels;i++) {
         smtverifier.siblings[i] <== siblings[i];
     }
@@ -45,11 +48,11 @@ template NonMembershipUpdate(nLevels) {
     smtverifier.isOld0 <== isOld0;
     smtverifier.key <== newKey;
     smtverifier.value <== 0;
-    smtverifier.fnc <== 1; 
+    smtverifier.fnc <== 1;
 
     // insert 
     component processor = SMTProcessor(nLevels);
-    processor.oldRoot <== oldStRoot;
+    processor.oldRoot <== oldRoot;
     for (i=0; i<nLevels; i++) {
         processor.siblings[i] <== siblings[i];
     }

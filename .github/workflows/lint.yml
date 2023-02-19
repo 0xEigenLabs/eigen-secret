@@ -1,9 +1,9 @@
 name: Lint sol&js
 on:
   push:
-    branches: [ main ]
+    branches: [ zkpay_dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ zkpay_dev ]
 
 jobs:  
   lint_contract:
@@ -19,8 +19,8 @@ jobs:
         - run: yarn install --frozen-lockfile
         - name: Lint Check
           run: yarn lint_sol
-  lint_javascript:
-      name: Lint javascript
+  lint_ts:
+      name: Lint typescript
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v2
@@ -31,4 +31,4 @@ jobs:
             node-version: 16.x
         - run: yarn install --frozen-lockfile
         - name: Lint Check
-          run: yarn lint_js
+          run: yarn lint_ts

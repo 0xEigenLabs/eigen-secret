@@ -1,3 +1,4 @@
+pragma circom 2.0.0;
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
 template NoteCompressor() {
@@ -8,7 +9,7 @@ template NoteCompressor() {
     signal input asset_id;
     signal output out;
 
-    component hash = Poseidon(5, 6, 8, 57);
+    component hash = Poseidon(5);
 
     hash.inputs[0] <== val;
     hash.inputs[1] <== secret;
@@ -18,3 +19,4 @@ template NoteCompressor() {
 
     hash.out ==> out;
 }
+
