@@ -32,11 +32,13 @@ jobs:
         run: curl https://universal-setup.ams3.digitaloceanspaces.com/setup_2^20.key -o ${{ github.workspace }}/circuits/setup_2^20.key
       - name: Download EigenZKit
         run: wget https://github.com/ieigen/EigenZKit/releases/download/v0.0.1/zkit-x86_64-unknown-linux-gnu.tar.gz && tar -zxvf zkit-x86_64-unknown-linux-gnu.tar.gz -C  /usr/local/bin
+      - name: Download Circom
+        run: wget https://github.com/iden3/circom/releases/download/v2.1.0/circom-linux-amd64 && chmod u+x circom-linux-amd64 && mv circom-linux-amd64 /usr/local/bin/circom
       - name: Generate .env
         run: touch .env && echo -e "ZKIT=/usr/local/bin/zkit\nCIRCUIT_PATH=${{ github.workspace }}/circuits/\nTEST_PATH=${{ github.workspace }}/test/\nNODE_ENV=development" > .env && cat .env
       - name: Start hardhat node
         run: nohup npx hardhat node &
       - name: Generate circuits
-        run: echo "tests" #bash -x scripts/zkit_zktx.sh
+        run: git submodule update --init #bash -x scripts/zkit_zktx.sh
       - name: Start test
         run: npm run test

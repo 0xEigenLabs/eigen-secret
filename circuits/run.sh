@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-circuit_name=$1
+circuit_name=main
 POWER=19
 CUR_DIR=$(cd $(dirname $0);pwd)
 base_dir=${CUR_DIR}/${circuit_name}_js
@@ -18,7 +18,7 @@ node ../../scripts/generate_zkpay.js
 node generate_witness.js ${circuit_name}.wasm input.json witness.wtns
 
 if [ ! -f "${CUR_DIR}/circuit_final.zkey" ]; then
-    $snarkjs powersoftau new bls12-381 ${POWER} pot${POWER}_0000.ptau -v
+    $snarkjs powersoftau new bn128 ${POWER} pot${POWER}_0000.ptau -v
     $snarkjs powersoftau contribute pot${POWER}_0000.ptau pot${POWER}_0001.ptau --name="First contribution" -v
 
     #Prapare phase 2

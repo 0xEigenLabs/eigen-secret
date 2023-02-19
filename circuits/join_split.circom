@@ -10,6 +10,28 @@ include "account_note.circom";
 include "nullifier_function.circom";
 include "note_compressor.circom";
 
+template Digest(k) {
+    assert(k < 7);
+    signal input nc_1;
+    signal input nc_2;
+    signal input output_note_nc_1[2];
+    signal input output_note_nc_2[2];
+    signal input output_owner;
+    signal output out[k];
+
+    component hash = PoseidonEx(7, k);
+    hash.initialState <== 0;
+    hash.inputs[0] <== nc_1;
+    hash.inputs[1] <== nc_2;
+    hash.inputs[2] <== output_note_nc_1[0];
+    hash.inputs[3] <== output_note_nc_1[1];
+    hash.inputs[4] <== output_note_nc_2[0];
+    hash.inputs[5] <== output_note_nc_2[1];
+    hash.inputs[6] <== output_owner;
+
+    out <== hash.out;
+}
+
 template JoinSplit(nLevel) {
     //constant
     var TYPE_DEPOSIT = 1;
@@ -47,12 +69,11 @@ template JoinSplit(nLevel) {
     signal input output_note_asset_id[2];
     signal input output_note_nonce[2];
     signal input account_note_account_id;
-    signal input account_note_npk[2][4]; // (npk=account public key)
-    signal input account_note_spk[2][4]; // (spk=spending public key)
+    signal input account_note_npk[2][4]; // (npk=account public key, ECDSA)
+    signal input account_note_spk[2]; // (spk=spending public key, EdDSA)
     signal input siblings_ac[nLevel];
     signal input note_num;
-    signal input nk[4]; // (account private key)
-    signal input msghash[4];
+    signal input nk[4]; // (nk = account private key, ECDSA)
     signal input signature[2][4]; // ecdsa signature
 
     component is_deposit = IsEqual();
@@ -132,10 +153,19 @@ template JoinSplit(nLevel) {
     pri2pub.pubkey === account_note_npk;
 
     //check signature
+    component msghash = Digest(4);
+    msghash.nc_1 <== nc[0].out;
+    msghash.nc_2 <== nc[1].out;
+    msghash.output_note_nc_1[0] <== output_nc_1_x;
+    msghash.output_note_nc_1[1] <== output_nc_1_y;
+    msghash.output_note_nc_2[0] <== output_nc_2_x;
+    msghash.output_note_nc_2[1] <== output_nc_2_y;
+    msghash.output_owner <== output_owner;
+
     component sig_verifier = ECDSAVerifyNoPubkeyCheck(64, 4);
     sig_verifier.r <== signature[0];
     sig_verifier.s <== signature[1];
-    sig_verifier.msghash <== msghash;
+    sig_verifier.msghash <== msghash.out;
     sig_verifier.pubkey <== account_note_npk;
     sig_verifier.result === 1;
 
@@ -183,5 +213,3 @@ template JoinSplit(nLevel) {
     and.b <== asset_id_eq.out;
     and.out === 1;
 }
-
-//component main = JoinSplit(3);

@@ -39,7 +39,7 @@
     "@types/mocha": "^9.1.0",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
-    "circom_tester": "^0.0.18",
+    "circom_tester": "^0.0.19",
     "dotenv": "^16.0.0",
     "eslint": "^8.17.0",
     "eslint-config-google": "^0.14.0",

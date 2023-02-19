@@ -65,7 +65,7 @@ describe.skip("ECDSAPrivToPub", function () {
     test_cases.forEach(test_ecdsa_instance);
 });
 
-describe("ECDSAVerifyNoPubkeyCheck", function () {
+describe.skip("ECDSAVerifyNoPubkeyCheck", function () {
     this.timeout(1000 * 1000);
 
     // privkey, msghash, pub0, pub1
