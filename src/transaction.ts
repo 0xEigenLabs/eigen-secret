@@ -2,7 +2,9 @@ const crypto = require('crypto');
 const { buildBabyJub, buildEddsa } = require("circomlibjs");
 const { Scalar } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
-import {Note} from "./note";
+const { Buffer } = require("buffer");
+import { Note } from "./note";
+import { SigningKey, AccountOrNullifierKey, EigenAddress } from "./account";
 
 export class Transaction {
     readonly PROOF_ID_TYPE_DEPOSIT = 1;
@@ -14,7 +16,7 @@ export class Transaction {
     secret: bigint = 0n;
     receiver: bigint[] = new Array<bigint>(2);
 
-    public constructor() {}
+    public constructor() { }
 
     async crateSharedSecret(senderPvk: bigint): Promise<Buffer> {
         let eddsa = await buildEddsa();
@@ -24,8 +26,8 @@ export class Transaction {
         return sharedKey;
     }
 
-    async crateTx(senderPvk: bigint, receiver: any, val: bigint, signature: any) {
+    async createTx(sender: AccountOrNullifierKey, receiver: EigenAddress, val: bigint, signature: string) {
         // crate note
-        let secret = await this.crateSharedSecret(senderPvk);
+        let secret = await this.crateSharedSecret(BigInt(sender.prvKey));
     }
 }

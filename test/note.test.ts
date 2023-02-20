@@ -29,6 +29,6 @@ describe("Test NoteCompressor", function () {
             1n, 2n, 222223n, 11114n, 5n, pubKey,
         );
         let wtns = await utils.executeCircuit(circuit, note.toCircuitInput());
-        await circuit.assertOut(wtns, {out: await note.compress()});
+        await circuit.assertOut(wtns, { out: await note.compress() });
     })
 });

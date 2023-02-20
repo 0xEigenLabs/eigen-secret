@@ -20,20 +20,20 @@ export class Note {
         this.ownerY = pubKey[1];
     }
 
-    toCircuitInput():any {
+    toCircuitInput(): any {
         return {
             val: this.val,
             secret: this.secret,
             account_id: this.accountId,
             nonce: this.nonce,
-            asset_id: this.assetId,
+            asset_id: this.assetId
         }
     }
 
-    async compress():Promise<bigint> {
+    async compress(): Promise<bigint> {
         let poseidon = await buildPoseidon();
         let res = poseidon([
-            this.val, this.secret, this.accountId, this.nonce, this.assetId,
+            this.val, this.secret, this.accountId, this.nonce, this.assetId
         ]);
         return poseidon.F.toObject(res);
     }
@@ -47,7 +47,7 @@ export class Note {
             val: this.val,
             secret: this.secret,
             ownerX: this.ownerX,
-            ownerY: this.ownerY,
+            ownerY: this.ownerY
         });
         return aes.encrypt(data)
     }
@@ -57,7 +57,7 @@ export class Note {
         let jsonData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
         let data = JSON.parse(jsonData);
         return new Note(
-            data.nonce, 
+            data.nonce,
             data.assetId,
             data.accountId,
             data.val,
