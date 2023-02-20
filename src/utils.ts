@@ -1,8 +1,8 @@
-import {Buffer} from "buffer";
+import { Buffer } from "buffer";
 
 export function arrayChunk(array: Array<number>, chunkSize: number): any {
   return Array(Math.ceil(array.length / chunkSize)).map((_, index) => index * chunkSize)
-      .map((begin) => array.slice(begin, begin + chunkSize));
+    .map((begin) => array.slice(begin, begin + chunkSize));
 }
 
 export function bits2NumBE(n: number, in1: any) {
@@ -15,14 +15,14 @@ export function bits2NumBE(n: number, in1: any) {
   return lc1
 }
 
-export function bigIntArray2Bits(arr: Array<bigint>, intSize: number = 16): number[] {
+export function bigintArray2Bits(arr: Array<bigint>, intSize: number = 16): number[] {
   let result: string[] = [];
   return result.concat(...arr.map((n) => n.toString(2).padStart(intSize, "").split("")))
-      .map((bit: string) => bit == "1" ? 1 : 0);
+    .map((bit: string) => bit == "1" ? 1 : 0);
 }
 
 export function bigIntArray2Buffer(arr: Array<bigint>, intSize: number = 16): any {
-  return bitArray2Buffer(bigIntArray2Bits(arr, intSize));
+  return bitArray2Buffer(bigintArray2Bits(arr, intSize));
 }
 
 export function bitArray2Buffer(a: Array<number>) {
@@ -35,12 +35,12 @@ export function getWitnessValue(witness: any, symbols: any, varName: string) {
 
 export function getWitnessMap(witness: any, symbols: Map<string, any>, arrName: string): any {
   return Object.entries(symbols).filter(([index, symbol]) => index.startsWith(arrName))
-      .map(([index, symbol]) => Object.assign({}, symbol, {"name": index, "value": witness[symbol["varIdx"]]}));
+    .map(([index, symbol]) => Object.assign({}, symbol, { "name": index, "value": witness[symbol["varIdx"]] }));
 }
 
 export function getWitnessArray(witness: any, symbols: Map<string, any>, arrName: string): any {
   return Object.entries(symbols).filter(([index, symbol]) => index.startsWith(`${arrName}[`))
-      .map(([index, symbol]) => witness[symbol["varIdx"]]);
+    .map(([index, symbol]) => witness[symbol["varIdx"]]);
 }
 
 export function getWitnessBuffer(witness: any, symbols: Map<string, any>, arrName: string, varSize: number = 1) {
@@ -64,8 +64,8 @@ export function bits2Bignum(bits: [number], nWidth: number) {
 }
 
 export async function executeCircuit(
-    circuit: any,
-    inputs: any
+  circuit: any,
+  inputs: any
 ) {
   const witness = await circuit.calculateWitness(inputs, true)
   await circuit.checkConstraints(witness)

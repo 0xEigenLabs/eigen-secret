@@ -70,7 +70,7 @@ template JoinSplit(nLevel) {
     signal input output_note_nonce[2];
     signal input account_note_account_id;
     signal input account_note_npk[2][4]; // (npk=account public key, ECDSA)
-    signal input account_note_spk[2]; // (spk=spending public key, EdDSA)
+    signal input account_note_spk[2]; // (spk=view public key, EdDSA)
     signal input siblings_ac[nLevel];
     signal input note_num;
     signal input nk[4]; // (nk = account private key, ECDSA)
