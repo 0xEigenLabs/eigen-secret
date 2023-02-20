@@ -21,11 +21,11 @@ export class StateTreeCircuitInput {
         this.oldRoot = tree.F.toObject(res.oldRoot);
         this.newRoot = tree.F.toObject(tree.root);
         this.siblings = siblings;
-        this.oldKey = res.isOld0 ? 0 : tree.F.toObject(res.oldKey),
-        this.oldValue = res.isOld0 ? 0 : tree.F.toObject(res.oldValue),
-        this.isOld0 = res.isOld0 ? 1 : 0,
-        this.newKey = tree.F.toObject(key),
-        this.newValue = tree.F.toObject(value)
+        this.oldKey = res.isOld0 ? 0 : tree.F.toObject(res.oldKey);
+        this.oldValue = res.isOld0 ? 0 : tree.F.toObject(res.oldValue);
+        this.isOld0 = res.isOld0 ? 1 : 0;
+        this.newKey = tree.F.toObject(key);
+        this.newValue = tree.F.toObject(value);
     }
 
     toNonMembershipUpdateInput(trere: any): any {
@@ -46,7 +46,7 @@ export class StateTree {
     tree: any;
     F: any;
 
-    constructor() {}
+    constructor() { }
     async init() {
         this.tree = await newMemEmptyTrie();
         this.F = this.tree.F;
@@ -61,28 +61,28 @@ export class StateTree {
         let res = await this.tree.find(key);
         assert(res.found === true);
         let siblings = res.siblings;
-        for (let i = 0; i < siblings.length; i ++) siblings[i] = this.tree.F.toObject(siblings[i]);
+        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
         while (siblings.length < N_LEVEL) siblings.push(0);
         return new StateTreeCircuitInput(this.tree, [0, 0], res, siblings, _key, res.foundValue)
     }
 
-    async insert( _key: any, _value: any): Promise<StateTreeCircuitInput> {
+    async insert(_key: any, _value: any): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const value = this.tree.F.e(_value)
-        const res = await this.tree.insert(key,value);
+        const res = await this.tree.insert(key, value);
         let siblings = res.siblings;
-        for (let i=0; i<siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
-        while (siblings.length<N_LEVEL) siblings.push(0);
+        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
+        while (siblings.length < N_LEVEL) siblings.push(0);
 
         return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, _key, _value);
     }
 
-    async delete(_key: any) : Promise<StateTreeCircuitInput>{
+    async delete(_key: any): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const res = await this.tree.delete(key);
         let siblings = res.siblings;
-        for (let i=0; i<siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
-        while (siblings.length<N_LEVEL) siblings.push(0);
+        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
+        while (siblings.length < N_LEVEL) siblings.push(0);
         return new StateTreeCircuitInput(this.tree, [1, 1], res, siblings, res.delKey, res.delValue);
     }
 
@@ -91,8 +91,8 @@ export class StateTree {
         const newValue = this.tree.F.e(_newValue);
         const res = await this.tree.update(key, newValue);
         let siblings = res.siblings;
-        for (let i=0; i<siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
-        while (siblings.length<N_LEVEL) siblings.push(0);
+        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
+        while (siblings.length < N_LEVEL) siblings.push(0);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
     }
 }
