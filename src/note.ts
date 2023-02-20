@@ -7,8 +7,8 @@ export class Note {
     accountId: bigint = 0n;
     val: bigint = 0n;
     secret: bigint = 0n;
-    owner_x: bigint = 0n;
-    owner_y: bigint = 0n;
+    ownerX: bigint = 0n;
+    ownerY: bigint = 0n;
 
     constructor(nonce: bigint, assetId: bigint, accountId: bigint, val: bigint, secret: bigint, pubKey: bigint[]) {
         this.nonce = nonce;
@@ -16,8 +16,8 @@ export class Note {
         this.accountId = accountId;
         this.val = val;
         this.secret = secret;
-        this.owner_x = pubKey[0];
-        this.owner_y = pubKey[1];
+        this.ownerX = pubKey[0];
+        this.ownerY = pubKey[1];
     }
 
     toCircuitInput():any {
@@ -38,23 +38,32 @@ export class Note {
         return poseidon.F.toObject(res);
     }
 
-    async encrypt(key: any): any {
+    encrypt(key: any): any {
         let aes = new Aes256gcm(key);
         let data = JSON.stringify({
-            nonce: this.nonce;
-            assetId: this.assetId;
-            accountId: this.accountId;
-            val: this.val;
-            secret: this.secret;
-            owner_x: this.owner_x;
-            owner_y: this.owner_y;
+            nonce: this.nonce,
+            assetId: this.assetId,
+            accountId: this.accountId,
+            val: this.val,
+            secret: this.secret,
+            ownerX: this.ownerX,
+            ownerY: this.ownerY,
         });
         return aes.encrypt(data)
     }
 
-    async decrypt(key: any, cipherData) {
+    decrypt(key: any, cipherData: any): Note {
         let aes = new Aes256gcm(key);
-        let data = aes.decrypt(cipherData);
+        let jsonData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
+        let data = JSON.parse(jsonData);
+        return new Note(
+            data.nonce, 
+            data.assetId,
+            data.accountId,
+            data.val,
+            data.secret,
+            data.pubKey
+        );
     }
 }
 
