@@ -1,6 +1,4 @@
 import { assert } from "chai";
-const F1Field = require("ffjavascript").F1Field;
-const Scalar = require("ffjavascript").Scalar;
 
 const { newMemEmptyTrie } = require("circomlibjs");
 
@@ -37,7 +35,7 @@ export class StateTreeCircuitInput {
             oldValue: this.oldValue,
             isOld0: this.isOld0,
             newKey: this.newKey,
-            newValue: this.newValue,
+            newValue: this.newValue
         };
     }
 }

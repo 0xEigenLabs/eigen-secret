@@ -9,7 +9,7 @@ export async function genTempMain(template_file: string, template_name: string,
     publics: string = "", params: any = [], _opt: any, tester: any = circom_wasm) {
   temp.track();
 
-  const temp_circuit = await temp.open({prefix: template_name, suffix: ".circom"});
+  const temp_circuit = await temp.open({ prefix: template_name, suffix: ".circom" });
   const include_path = path.relative(temp_circuit.path, template_file);
   const params_string = JSON.stringify(params).slice(1, -1);
 

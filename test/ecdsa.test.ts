@@ -17,7 +17,7 @@ describe.skip("ECDSAPrivToPub", function () {
     before(async function () {
         let third = path.join(__dirname, "../third-party");
         let circom_ecdsa = path.join(third, "circom-ecdsa", "circuits", "ecdsa.circom");
-        circuit = await test.genTempMain(circom_ecdsa, "ECDSAPrivToPub", "privkey", [64, 4], {"include": third});
+        circuit = await test.genTempMain(circom_ecdsa, "ECDSAPrivToPub", "privkey", [64, 4], { "include": third });
         await circuit.loadSymbols();
     });
 
@@ -74,14 +74,14 @@ describe.skip("ECDSAVerifyNoPubkeyCheck", function () {
     for (var idx = 0; idx < privkeys.length; idx++) {
         var pubkey: Point = Point.fromPrivateKey(privkeys[idx]);
         var msghash_bigint: bigint = 1234n;
-            test_cases.push([privkeys[idx], msghash_bigint, pubkey.x, pubkey.y]);
+        test_cases.push([privkeys[idx], msghash_bigint, pubkey.x, pubkey.y]);
     }
 
     let circuit: any;
     before(async function () {
         let third = path.join(__dirname, "../third-party");
         let circom_ecdsa = path.join(third, "circom-ecdsa", "circuits", "ecdsa.circom");
-        circuit = await test.genTempMain(circom_ecdsa, "ECDSAVerifyNoPubkeyCheck", "r, s, msghash, pubkey", [64, 4], {"include": third});
+        circuit = await test.genTempMain(circom_ecdsa, "ECDSAVerifyNoPubkeyCheck", "r, s, msghash, pubkey", [64, 4], { "include": third });
         await circuit.loadSymbols();
     });
 
@@ -93,13 +93,13 @@ describe.skip("ECDSAVerifyNoPubkeyCheck", function () {
 
         var msghash: Uint8Array = utils.bigint2Uint8Array(msghash_bigint);
 
-        it('Testing correct sig: privkey: ' + privkey + ' msghash: ' + msghash_bigint + ' pub0: ' + pub0 + ' pub1: ' + pub1, async function() {
+        it('Testing correct sig: privkey: ' + privkey + ' msghash: ' + msghash_bigint + ' pub0: ' + pub0 + ' pub1: ' + pub1, async function () {
             // in compact format: r (big-endian), 32-bytes + s (big-endian), 32-bytes
-            var sig: Uint8Array = await sign(msghash, utils.bigint2Uint8Array(privkey), {canonical: true, der: false})
+            var sig: Uint8Array = await sign(msghash, utils.bigint2Uint8Array(privkey), { canonical: true, der: false })
             var r: Uint8Array = sig.slice(0, 32);
             var r_bigint: bigint = utils.uint8Array2Bigint(r);
             var s: Uint8Array = sig.slice(32, 64);
-            var s_bigint:bigint = utils.uint8Array2Bigint(s);
+            var s_bigint: bigint = utils.uint8Array2Bigint(s);
 
             var priv_array: bigint[] = utils.bigint2Array(64, 4, privkey);
             var r_array: bigint[] = utils.bigint2Array(64, 4, r_bigint);
@@ -111,21 +111,23 @@ describe.skip("ECDSAVerifyNoPubkeyCheck", function () {
 
             console.log('r', r_bigint);
             console.log('s', s_bigint);
-            let witness = await circuit.calculateWitness({"r": r_array,
-                                                          "s": s_array,
-                                                          "msghash": msghash_array,
-                                                          "pubkey": [pub0_array, pub1_array]});
+            let witness = await circuit.calculateWitness({
+                "r": r_array,
+                "s": s_array,
+                "msghash": msghash_array,
+                "pubkey": [pub0_array, pub1_array]
+            });
             expect(witness[1]).to.equal(res);
             await circuit.checkConstraints(witness);
         });
 
-        it('Testing incorrect sig: privkey: ' + privkey + ' msghash: ' + msghash_bigint + ' pub0: ' + pub0 + ' pub1: ' + pub1, async function() {
+        it('Testing incorrect sig: privkey: ' + privkey + ' msghash: ' + msghash_bigint + ' pub0: ' + pub0 + ' pub1: ' + pub1, async function () {
             // in compact format: r (big-endian), 32-bytes + s (big-endian), 32-bytes
-            var sig: Uint8Array = await sign(msghash, utils.bigint2Uint8Array(privkey), {canonical: true, der: false})
+            var sig: Uint8Array = await sign(msghash, utils.bigint2Uint8Array(privkey), { canonical: true, der: false })
             var r: Uint8Array = sig.slice(0, 32);
             var r_bigint: bigint = utils.uint8Array2Bigint(r);
             var s: Uint8Array = sig.slice(32, 64);
-            var s_bigint:bigint = utils.uint8Array2Bigint(s);
+            var s_bigint: bigint = utils.uint8Array2Bigint(s);
 
             var priv_array: bigint[] = utils.bigint2Array(64, 4, privkey);
             var r_array: bigint[] = utils.bigint2Array(64, 4, r_bigint + 1n);
@@ -137,10 +139,12 @@ describe.skip("ECDSAVerifyNoPubkeyCheck", function () {
 
             console.log('r', r_bigint + 1n);
             console.log('s', s_bigint);
-            let witness = await circuit.calculateWitness({"r": r_array,
-                                                          "s": s_array,
-                                                          "msghash": msghash_array,
-                                                          "pubkey": [pub0_array, pub1_array]});
+            let witness = await circuit.calculateWitness({
+                "r": r_array,
+                "s": s_array,
+                "msghash": msghash_array,
+                "pubkey": [pub0_array, pub1_array]
+            });
             expect(witness[1]).to.equal(res);
             await circuit.checkConstraints(witness);
         });
