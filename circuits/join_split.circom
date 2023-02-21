@@ -16,10 +16,11 @@ template Digest(k) {
     signal input nc_2;
     signal input output_note_nc_1[2];
     signal input output_note_nc_2[2];
-    signal input output_owner;
+    signal input public_owner;
+    signal input public_value;
     signal output out[k];
 
-    component hash = PoseidonEx(7, k);
+    component hash = PoseidonEx(8, k);
     hash.initialState <== 0;
     hash.inputs[0] <== nc_1;
     hash.inputs[1] <== nc_2;
@@ -27,7 +28,8 @@ template Digest(k) {
     hash.inputs[3] <== output_note_nc_1[1];
     hash.inputs[4] <== output_note_nc_2[0];
     hash.inputs[5] <== output_note_nc_2[1];
-    hash.inputs[6] <== output_owner;
+    hash.inputs[6] <== public_value;
+    hash.inputs[7] <== public_owner;
 
     out <== hash.out;
 }
@@ -43,17 +45,16 @@ template JoinSplit(nLevel) {
 
     // public input
     signal input proof_id;
-    signal input public_input;
-    signal input public_output;
+    signal input public_value;
+    signal input public_owner;
     signal input public_asset_id;
+    signal input num_input_notes;
     signal input output_nc_1_x; //(nc is short for note commitment)
     signal input output_nc_1_y;
     signal input output_nc_2_x;
     signal input output_nc_2_y;
     signal input nullifier_1;
     signal input nullifier_2;
-    signal input input_owner;
-    signal input output_owner;
     signal input data_tree_root;
 
     //private input
@@ -72,7 +73,6 @@ template JoinSplit(nLevel) {
     signal input account_note_npk[2][4]; // (npk=account public key, ECDSA)
     signal input account_note_spk[2]; // (spk=view public key, EdDSA)
     signal input siblings_ac[nLevel];
-    signal input note_num;
     signal input nk[4]; // (nk = account private key, ECDSA)
     signal input signature[2][4]; // ecdsa signature
 
@@ -84,8 +84,8 @@ template JoinSplit(nLevel) {
     is_withdraw.in[0] <== proof_id;
     is_withdraw.in[1] <== TYPE_WITHDRAW;
 
-    var public_input_ = public_input * is_deposit.out;
-    var public_output_ = public_output * is_withdraw.out;
+    var public_input_ = public_value * is_deposit.out;
+    var public_output_ = public_value * is_withdraw.out;
 
     //range check
     component is_same_asset[2];
@@ -119,7 +119,7 @@ template JoinSplit(nLevel) {
 
         ms[i] = Membership(nLevel);
         ms[i].key <== nc[i].out;
-        ms[i].value <== note_num;
+        ms[i].value <== num_input_notes;
         ms[i].root <== data_tree_root;
         for (var j = 0; j < nLevel; j++) {
             ms[i].siblings[j] <== siblings[i][j];
@@ -160,7 +160,8 @@ template JoinSplit(nLevel) {
     msghash.output_note_nc_1[1] <== output_nc_1_y;
     msghash.output_note_nc_2[0] <== output_nc_2_x;
     msghash.output_note_nc_2[1] <== output_nc_2_y;
-    msghash.output_owner <== output_owner;
+    msghash.public_value <== public_value;
+    msghash.public_owner <== public_owner;
 
     component sig_verifier = ECDSAVerifyNoPubkeyCheck(64, 4);
     sig_verifier.r <== signature[0];
@@ -170,23 +171,26 @@ template JoinSplit(nLevel) {
     sig_verifier.result === 1;
 
     // check value
-    //case 1: note_num < 1 && input_note_1.value == 0
+    //case 1: num_input_notes < 1 && input_note_1.value == 0
     component note_num_less[2];
     note_num_less[0] = LessThan(252);
-    note_num_less[0].in[0] <== note_num;
+    note_num_less[0].in[0] <== num_input_notes;
     note_num_less[0].in[1] <== 1;
     note_num_less[0].out * input_note_val[0] === 0;
 
-    //case 2: note_num < 2 && input_note_2.value == 0
+    //case 2: num_input_notes < 2 && input_note_2.value == 0
     note_num_less[1] = LessThan(252);
-    note_num_less[1].in[0] <== note_num;
+    note_num_less[1].in[0] <== num_input_notes;
     note_num_less[1].in[1] <== 2;
     note_num_less[1].out * input_note_val[1] === 0;
 
     // transfer balance check
     var total_in_value = public_input_ + input_note_val[0] + input_note_val[1];
-    var total_out_value = public_output + output_note_val[0] + output_note_val[1];
-    total_in_value === total_out_value;
+    var total_out_value = public_output_ + output_note_val[0] + output_note_val[1];
+    component balanceEqual = IsEqual();
+    balanceEqual.in[0] <== total_in_value;
+    balanceEqual.in[1] <== total_out_value;
+    1 === balanceEqual.out;
 
     // asset type check
     input_note_asset_id[0] === input_note_asset_id[1];
