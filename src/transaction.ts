@@ -27,7 +27,8 @@ export class Transaction {
     }
 
     async createTx(sender: AccountOrNullifierKey, receiver: EigenAddress, val: bigint, signature: string) {
-        // crate note
-        let secret = await this.crateSharedSecret(BigInt(sender.prvKey));
+        // find all the UTXO from database
+
+        let secret = await this.crateSharedSecret(sender.prvKey);
     }
 }
