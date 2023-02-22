@@ -50,10 +50,8 @@ template JoinSplit(nLevel) {
     signal input public_value;
     signal input public_owner;
     signal input num_input_notes;
-    signal input output_nc_1_x; //(nc is short for note commitment)
-    signal input output_nc_1_y;
-    signal input output_nc_2_x;
-    signal input output_nc_2_y;
+    signal input output_nc_1[2]; //(nc is short for note commitment)
+    signal input output_nc_2[2];
     signal input nullifier_1;
     signal input nullifier_2;
     signal input data_tree_root;
@@ -207,10 +205,8 @@ template JoinSplit(nLevel) {
     component msghash = Digest(4);
     msghash.nc_1 <== nc[0].out;
     msghash.nc_2 <== nc[1].out;
-    msghash.output_note_nc_1[0] <== output_nc_1_x;
-    msghash.output_note_nc_1[1] <== output_nc_1_y;
-    msghash.output_note_nc_2[0] <== output_nc_2_x;
-    msghash.output_note_nc_2[1] <== output_nc_2_y;
+    msghash.output_note_nc_1 <== output_nc_1;
+    msghash.output_note_nc_2 <== output_nc_2;
     msghash.public_value <== public_value;
     msghash.public_owner <== public_owner;
 
