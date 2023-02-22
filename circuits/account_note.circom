@@ -7,7 +7,7 @@ include "../node_modules/circomlib/circuits/mux1.circom";
 template AccountNoteCompressor() {
     signal input npk[2][4];
     signal input spk[2];
-    signal input account_id;
+    signal input alias_hash;
     signal output out;
 
     component hash = Poseidon(7);
@@ -19,7 +19,7 @@ template AccountNoteCompressor() {
     }
     hash.inputs[4] <== spk[0];
     hash.inputs[5] <== spk[1];
-    hash.inputs[6] <== account_id;
+    hash.inputs[6] <== alias_hash;
 
     hash.out ==> out;
 }

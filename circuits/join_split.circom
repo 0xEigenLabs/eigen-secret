@@ -40,6 +40,7 @@ template JoinSplit(nLevel) {
     var TYPE_DEPOSIT = 1;
     var TYPE_WITHDRAW = 2;
     var TYPE_SEND = 3;
+    var TYPE_CODE_VK = 4; // verification key of smart contract
 
     var NOTE_VALUE_BIT_LENGTH = 2**128;
     var NUM_ASSETS_BIT_LENGTH = 1000;
@@ -59,7 +60,7 @@ template JoinSplit(nLevel) {
 
     //private input
     signal input asset_id;
-    signal input account_note_account_id;
+    signal input alias_hash;
     signal input input_note_val[2];
     signal input input_note_secret[2];
     signal input input_note_asset_id[2];
@@ -183,7 +184,7 @@ template JoinSplit(nLevel) {
     component ac = AccountNoteCompressor();
     ac.npk <== account_note_npk;
     ac.spk <== account_note_spk;
-    ac.account_id <== account_note_account_id;
+    ac.alias_hash <== alias_hash;
 
     component ams = Membership(nLevel);
     ams.key <== ac.out;
@@ -241,7 +242,6 @@ template JoinSplit(nLevel) {
     balanceEqual.in[0] <== total_in_value;
     balanceEqual.in[1] <== total_out_value;
     1 === balanceEqual.out;
-    
 
     // asset type check
     //  (asset_id == input_note_1.asset_id) &&

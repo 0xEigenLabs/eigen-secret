@@ -45,15 +45,15 @@ export class Transaction {
     async joinAndSplit(
         accountKey: AccountOrNullifierKey,
         signingKey: SigningKey,
+        proofId: number,
         receiver: EigenAddress,
         val: bigint,
-        nonce: bigint,
+        alias_hash: bigint,
         accountId: bigint,
         assetId: bigint,
         publicValue: bigint,
         publicOwner: EigenAddress,
         creator: EigenAddress,
-        proofId: number,
         inputNotes: Array<Note>
     ): Promise<Transaction> {
         let secret = await this.crateSharedSecret(signingKey.prvKey);
@@ -118,7 +118,7 @@ export class Transaction {
 
         let digest = await this.hashMsg(nc1, nc2, onc1, onc2, publicOwner, publicValue);
 
-        let wallet = new ethers.Wallet(accountKey.prvKey);
+        let wallet = new ethers.Wallet(ethers.utils.arrayify(accountKey.prvKey));
         let signature = await wallet.signMessage(digest);
 
         this.proofId = proofId;
