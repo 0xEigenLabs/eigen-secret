@@ -63,12 +63,12 @@ template JoinSplit(nLevel) {
     signal input input_note_val[2];
     signal input input_note_secret[2];
     signal input input_note_asset_id[2];
-    signal input input_note_owner[2];
+    signal input input_note_owner[2][2][4];
     signal input input_note_input_nullifier[2];
     signal input siblings[2][nLevel];
     signal input output_note_val[2];
     signal input output_note_secret[2];
-    signal input output_note_owner[2];
+    signal input output_note_owner[2][4];
     signal input output_note_asset_id[2];
     signal input output_note_input_nullifier[2];
     signal input account_note_npk[2][4]; // (npk=account public key, ECDSA)
@@ -104,14 +104,14 @@ template JoinSplit(nLevel) {
     // Data validity checks:
     // true == (is_deposit || is_send || is_withdraw);
     //  true == (num_input_notes = 0 || 1 || 2);
-    component validType = GreaterThan();
-    validType.in[0] <== is_deposit.out + is_send.out + is_withdraw.out.out;
+    component validType = GreaterThan(252);
+    validType.in[0] <== is_deposit.out + is_send.out + is_withdraw.out;
     validType.in[1] <== 0;
     validType.out === 1;
-    component validType2 = LessThan();
-    validType.in[0] <== num_input_notes;
-    validType.in[1] <== 3;
-    validType.out === 1;
+    component validType2 = LessThan(252);
+    validType2.in[0] <== num_input_notes;
+    validType2.in[1] <== 3;
+    validType2.out === 1;
 
     // is_public_tx = is_withdraw || is_deposit
     component is_public_tx = XOR();
@@ -125,18 +125,18 @@ template JoinSplit(nLevel) {
 
     // if is_public_tx { public_value > 0 && public_owner > 0 } else { public_value == 0 && public_owner == 0 }
     component is_public_yes = AllHigh(3);
-    is_public_yes.in[0] <== is_public_tx;
+    is_public_yes.in[0] <== is_public_tx.out;
     is_public_yes.in[1] <== public_value;
     is_public_yes.in[2] <== public_owner;
 
     component is_public_no = AllLow(3);
-    is_public_no.in[0] <== is_public_tx;
+    is_public_no.in[0] <== is_public_tx.out;
     is_public_no.in[1] <== public_value;
     is_public_no.in[2] <== public_owner;
 
     component validPublic = XOR();
-    validPublic.in[0] <== is_public_yes.out;
-    validPublic.in[1] <== is_public_no.out;
+    validPublic.a <== is_public_yes.out;
+    validPublic.b <== is_public_no.out;
     validPublic.out === 1;
 
     //note validity check
@@ -147,9 +147,9 @@ template JoinSplit(nLevel) {
         nc[i] = NoteCompressor();
         nc[i].val <== input_note_val[i];
         nc[i].asset_id <== input_note_asset_id[i];
-        nc[i].account_id <== input_note_owner[i];
+        nc[i].owner <== input_note_owner[i][0]; // using point.x
         nc[i].secret <== input_note_secret[i];
-        nc[i].nonce <== input_note_input_nullifier[i];
+        nc[i].input_nullifier <== input_note_input_nullifier[i];
 
         ms[i] = Membership(nLevel);
         ms[i].key <== nc[i].out;
@@ -199,7 +199,7 @@ template JoinSplit(nLevel) {
 
     // check account_note_npk == input_note_1.owner && account_note_npk == input_note_2.owner
     account_note_npk === input_note_owner[0];
-    account_note_nkk === input_note_owner[1];
+    account_note_npk === input_note_owner[1];
 
 
     //check signature
