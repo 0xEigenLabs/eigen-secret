@@ -28,8 +28,8 @@ template Digest(k) {
     hash.inputs[3] <== output_note_nc_1[1];
     hash.inputs[4] <== output_note_nc_2[0];
     hash.inputs[5] <== output_note_nc_2[1];
-    hash.inputs[6] <== public_value;
     hash.inputs[7] <== public_owner;
+    hash.inputs[6] <== public_value;
 
     out <== hash.out;
 }
