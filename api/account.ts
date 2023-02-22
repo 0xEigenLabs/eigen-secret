@@ -1,5 +1,7 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
 import sequelize from "./db";
+import { login } from "./session";
+import { Err, ErrCode, Succ, BaseResp } from "./util";
 
 class AccountModel extends Model {}
 
@@ -27,6 +29,17 @@ AccountModel.init({
     modelName: 'AccountModel' // We need to choose the model name
 });
 
-export function createAccount(alias: string, ethAddres: string, hexSignature: string) {
-    // check if 
+class LoginMessage {
+    protocol: string;
+    message: string;
+    timestamp: number;
+}
+
+export function createAccount(alias: string, ethAddres: string, message: string, hexSignature: string): any {
+    // check signature, TODO
+
+    // check timestamp + 60s > current timestamp
+
+    // check if
+    login(alias, ethAddres);
 }

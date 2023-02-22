@@ -32,12 +32,11 @@ const Err = function (errno: ErrCode, message: string) {
  * @enum
  */
 export enum ErrCode {
-  Unknown = -1,
   Success = 0,
-  InvalidAuth = 1,
-  InvalidInput = 2,
-  CryptoError = 3,
-  NotTheOnlyPassword = 4,
+  Unknown = 1,
+  InvalidAuth = 2,
+  InvalidInput = 3,
+  CryptoError = 4
 }
 
 const has_value = function (variable: any) {
