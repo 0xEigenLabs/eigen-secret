@@ -64,13 +64,13 @@ template JoinSplit(nLevel) {
     signal input input_note_secret[2];
     signal input input_note_asset_id[2];
     signal input input_note_owner[2][2][4];
-    signal input input_note_input_nullifier[2];
+    signal input input_note_nullifier[2];
     signal input siblings[2][nLevel];
     signal input output_note_val[2];
     signal input output_note_secret[2];
     signal input output_note_owner[2][4];
     signal input output_note_asset_id[2];
-    signal input output_note_input_nullifier[2];
+    signal input output_note_nullifier[2];
     signal input account_note_npk[2][4]; // (npk=account public key, ECDSA)
     signal input account_note_nk[4]; // (nk = account private key, ECDSA)
     signal input account_note_spk[2]; // (spk=view public key, EdDSA)
@@ -149,7 +149,7 @@ template JoinSplit(nLevel) {
         nc[i].asset_id <== input_note_asset_id[i];
         nc[i].owner <== input_note_owner[i][0]; // using point.x
         nc[i].secret <== input_note_secret[i];
-        nc[i].input_nullifier <== input_note_input_nullifier[i];
+        nc[i].input_nullifier <== input_note_nullifier[i];
 
         ms[i] = Membership(nLevel);
         ms[i].key <== nc[i].out;
@@ -166,7 +166,7 @@ template JoinSplit(nLevel) {
             nf[i].siblings[j] <== siblings[i][j];
         }
 
-        nf[i].out === input_note_input_nullifier[i];
+        nf[i].out === output_note_nullifier[i];
     }
     // nc[0].out != nc[1].out
     component isSameNC = IsEqual();
