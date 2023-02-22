@@ -1,7 +1,8 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
 require('dotenv').config();
+import { require_env_variables } from "./util";
 
-//const sequelize = new Sequelize('sqlite::memory:');
+require_env_variables(["DB_NAME", "DB_USER", "DB_HOST", "DB_DRIVER", "DB_PASSWORD"]);
 
 const dbName = process.env.DB_NAME as string
 const dbUser = process.env.DB_USER as string

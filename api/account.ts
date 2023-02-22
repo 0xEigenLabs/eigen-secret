@@ -26,3 +26,7 @@ AccountModel.init({
     sequelize, // We need to pass the connection instance
     modelName: 'AccountModel' // We need to choose the model name
 });
+
+export function createAccount(alias: string, ethAddres: string, hexSignature: string) {
+    // check if 
+}
