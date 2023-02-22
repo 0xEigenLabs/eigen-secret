@@ -42,7 +42,7 @@ export class Transaction {
         return poseidon.F.toObject(res);
     }
 
-    async createTx(
+    async joinAndSplit(
         accountKey: AccountOrNullifierKey,
         signingKey: SigningKey,
         receiver: EigenAddress,
@@ -52,28 +52,29 @@ export class Transaction {
         assetId: bigint,
         publicValue: bigint,
         publicOwner: EigenAddress,
-        isDeposit: boolean,
-        isWithdraw: boolean,
+        creator: EigenAddress,
+        proofId: number,
         inputNotes: Array<Note>
-    ): Transaction {
-        if (isDeposit || isWithdraw) {
-            assert(publicValue > 0);
-        }
+    ): Promise<Transaction> {
         let secret = await this.crateSharedSecret(signingKey.prvKey);
+
+        // check proofId and publicValue
+        let isDeposit = publicValue > 0 && proofId == this.PROOF_ID_TYPE_DEPOSIT;
+        let isWithdraw = publicValue > 0 && proofId == this.PROOF_ID_TYPE_WITHDRAW;
+        // TODO: isDefi or is Private Computation
 
         let nc1: any;
         let nc2: any;
-        let proofId: any = this.PROOF_ID_TYPE_INVALID;
         if (isDeposit) {
-            proofId = this.PROOF_ID_TYPE_DEPOSIT;
+            assert(proofId == this.PROOF_ID_TYPE_DEPOSIT);
             if (inputNotes.length == 0) {
-                let n1 = new Note(nonce, assetId, accountId, publicValue, secret, signingKey.pubKey);
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey);
+                let n1 = new Note(nonce, assetId, accountId, publicValue, secret, signingKey.pubKey, creator);
+                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
                 nc1 = await n1.compress();
                 nc2 = await n2.compress();
             } else if (inputNotes.length == 1) {
                 nc1 = await inputNotes[0].compress();
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey);
+                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
                 nc2 = await n2.compress();
             } else {
                 assert(inputNotes.length == 2);
@@ -83,13 +84,13 @@ export class Transaction {
         } else if (isWithdraw) {
             proofId = this.PROOF_ID_TYPE_WITHDRAW;
             if (inputNotes.length == 0) {
-                let n1 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey);
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey);
+                let n1 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
+                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
                 nc1 = await n1.compress();
                 nc2 = await n2.compress();
             } else if (inputNotes.length == 1) {
                 nc1 = await inputNotes[0].compress();
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey);
+                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
                 nc2 = await n2.compress();
             } else {
                 assert(inputNotes.length == 2);
@@ -101,7 +102,7 @@ export class Transaction {
             assert(inputNotes.length > 0);
             if (inputNotes.length == 1) {
                 nc1 = await inputNotes[0].compress();
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey);
+                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
                 nc2 = await n2.compress();
             } else {
                 assert(inputNotes.length == 2);
@@ -110,8 +111,8 @@ export class Transaction {
             }
         }
 
-        let outputNote1 = new Note(nonce, assetId, accountId, val, secret, receiver.pubKey);
-        let outputNote2 = new Note(nonce, assetId, accountId, publicValue, secret, receiver.pubKey);
+        let outputNote1 = new Note(nonce, assetId, accountId, val, secret, receiver.pubKey, creator);
+        let outputNote2 = new Note(nonce, assetId, accountId, publicValue, secret, receiver.pubKey, creator);
         let onc1 = await outputNote1.compress();
         let onc2 = await outputNote2.compress();
 

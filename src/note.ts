@@ -9,8 +9,10 @@ export class Note {
     secret: bigint = 0n;
     ownerX: bigint = 0n;
     ownerY: bigint = 0n;
+    creatorX: bigint = 0n;
+    creatorY: bigint = 0n;
 
-    constructor(nonce: bigint, assetId: bigint, accountId: bigint, val: bigint, secret: bigint, pubKey: bigint[]) {
+    constructor(nonce: bigint, assetId: bigint, accountId: bigint, val: bigint, secret: bigint, pubKey: bigint[], creator: bigint[]) {
         this.nonce = nonce;
         this.assetId = assetId;
         this.accountId = accountId;
@@ -18,6 +20,8 @@ export class Note {
         this.secret = secret;
         this.ownerX = pubKey[0];
         this.ownerY = pubKey[1];
+        this.creatorX = creator[0];
+        this.creatorY = creator[1];
     }
 
     toCircuitInput(): any {
@@ -47,7 +51,9 @@ export class Note {
             val: this.val,
             secret: this.secret,
             ownerX: this.ownerX,
-            ownerY: this.ownerY
+            ownerY: this.ownerY,
+            creatorX: this.creatorX,
+            creatorY: this.creatorY
         });
         return aes.encrypt(data)
     }
@@ -62,7 +68,8 @@ export class Note {
             data.accountId,
             data.val,
             data.secret,
-            data.pubKey
+            [data.ownerX, data.ownerY],
+            [data.creatorX, data.creatorY]
         );
     }
 }

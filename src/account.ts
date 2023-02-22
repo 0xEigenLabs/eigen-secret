@@ -3,6 +3,7 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
+import { getPublicKey, sign, Point } from "@noble/secp256k1";
 
 interface Address {
     protocol: string;
@@ -32,7 +33,7 @@ export interface IKey {
 // eddsa
 export class SigningKey implements IKey {
     prvKey: bigint = 0n;
-    pubKey: [bigint, bigint] | ethers.utils.Bytes = [0n, 0n];
+    pubKey: [bigint, bigint] = [0n, 0n];
     constructor(prvKey: any, pubKey: any) {
         this.prvKey = prvKey;
         this.pubKey = pubKey;
@@ -65,8 +66,8 @@ export class AccountOrNullifierKey implements IKey {
     keyFunc: NewKeyFunc = async (signature: string) => {
         // return the first 32bytes as account key
         let prvKey = ethers.utils.arrayify(signature).slice(0, 32);
-        let pubKey = ethers.utils.arrayify(ethers.utils.computePublicKey(prvKey));
-        let result: IKey = new AccountOrNullifierKey(prvKey, pubKey);
+        let pubKey: Point = Point.fromPrivateKey(prvKey);
+        let result: IKey = new AccountOrNullifierKey(prvKey, [pubKey.x, pubKey.y]);
         return new Promise<IKey>((resolve, reject) => {
             resolve(result);
         });
