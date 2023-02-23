@@ -16,15 +16,26 @@ export class Transaction {
 
     proofId: number = 0;
     publicValue: bigint = 0n;
-    publicOwner: EigenAddress,
-    input: Note[] = new Array<Note>(2);
-    output: Note[] = new Array<Note>(2);
-    secret: bigint = 0n;
-    receiver: bigint[] = new Array<bigint>(2);
-    val: bigint = 0n;
-    nonce: bigint = 0n;
+    publicOwner: new EthAddress("0x0"),
+    assetId: number = 0;
+    numInputNotes: number = 0;
+    oldDataRoot: bigint = 0n;
+    inputNoteIndices: number[] = new Array<number>(0);
+    inputNote: Note[] = new Array<Note>(2);
+    outputNote: Note[] = new Array<Note>(2);
 
-    public constructor() { }
+    aliasHash: bigint = 0n;
+    accountPrivateKey: AccountOrNullifierKey,
+    signature: string,
+
+    val: bigint = 0n;
+
+    public constructor(publicOwner: EthAddress, accountPrivateKey: AccountOrNullifierKey, signingKey: SigningKey) {
+        this.publicOwner = publicOwner;
+        this.accountPrivateKey = accountPrivateKey;
+
+        this.signature = "";
+    }
 
     async crateSharedSecret(senderPvk: bigint): Promise<Buffer> {
         let eddsa = await buildEddsa();
@@ -42,7 +53,7 @@ export class Transaction {
         return poseidon.F.toObject(res);
     }
 
-    async joinAndSplit(
+    async createCircuitInput(
         accountKey: AccountOrNullifierKey,
         signingKey: SigningKey,
         proofId: number,

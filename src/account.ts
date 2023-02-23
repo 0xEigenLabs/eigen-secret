@@ -22,6 +22,15 @@ export class EigenAddress implements Address {
     }
 }
 
+export class EthAddress implements Address {
+    protocol: "eth";
+    pubKey: [bigint, bigint];
+    constructor(pubKey: string) {
+        let point = Point.fromHex(pubKey);
+        this.pubKey = [point.x, point.y];
+    }
+}
+
 type NewKeyFunc = (seed: string) => Promise<IKey>;
 export interface IKey {
     prvKey: bigint;
