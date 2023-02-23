@@ -17,7 +17,7 @@ export class JoinSplitInput {
 
     proofId: number = 0;
     publicValue: bigint = 0n;
-    publicOwner: new EthAddress("0x0"),
+    publicOwner: EthAddress = new EthAddress("0x0"),
     assetId: number = 0;
     numInputNotes: number = 0;
     oldDataRoot: bigint = 0n;
@@ -71,6 +71,8 @@ export class JoinSplitInput {
 
         let pendingInput = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Pending);
         let confirmedInput = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Confirmed);
+
+
 
         let keys = await this.crateSharedSecret(signingKey.prvKey);
 

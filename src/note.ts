@@ -10,18 +10,20 @@ export enum NoteState {
 }
 
 export class Note {
-    val: bigint = 0n;
-    secret: bigint = 0n;
-    ownerX: bigint = 0n;
-    assetId: bigint = 0n;
-    inputNullifier: bigint = 0n;
+    val: bigint;
+    secret: bigint;
+    ownerX: bigint;
+    assetId: bigint;
+    inputNullifier: bigint;
+    state: NoteState;
 
-    constructor(val: bigint, secret: bigint, ownerX: bigint, assetId: bigint, inputNullifier: bigint) {
+    constructor(val: bigint, secret: bigint, ownerX: bigint, assetId: bigint, inputNullifier: bigint, state: NoteState) {
         this.val = val;
         this.secret = secret;
         this.ownerX = ownerX;
         this.assetId = assetId;
         this.inputNullifier = inputNullifier;
+        this.state = state;
     }
 
     toCircuitInput(): any {
@@ -57,7 +59,8 @@ export class Note {
             secret: this.secret,
             assetId: this.assetId,
             ownerX: this.ownerX,
-            inputNullifier: this.inputNullifier
+            inputNullifier: this.inputNullifier,
+            state: this.state
         });
         return aes.encrypt(data)
     }
@@ -71,7 +74,8 @@ export class Note {
             data.secret,
             data.assetId,
             data.ownerX,
-            data.inputNullifier
+            data.inputNullifier,
+            data.state
         );
     }
 }
