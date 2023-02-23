@@ -5,40 +5,50 @@ const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { ethers } from "ethers";
 import { Note, NoteState } from "./note";
-import { SigningKey, AccountOrNullifierKey, EigenAddress } from "./account";
+import { SigningKey, AccountOrNullifierKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
 
-/*
 export class JoinSplitInput {
-    readonly PROOF_ID_TYPE_INVALID: number = 0;
-    readonly PROOF_ID_TYPE_DEPOSIT: number = 1;
-    readonly PROOF_ID_TYPE_WITHDRAW: number = 2;
-    readonly PROOF_ID_TYPE_SEND: number = 3;
+    static readonly PROOF_ID_TYPE_INVALID: number = 0;
+    static readonly PROOF_ID_TYPE_DEPOSIT: number = 1;
+    static readonly PROOF_ID_TYPE_WITHDRAW: number = 2;
+    static readonly PROOF_ID_TYPE_SEND: number = 3;
 
-    proofId: number = 0;
-    publicValue: bigint = 0n;
-    publicOwner: EthAddress = new EthAddress("0x0"),
-    assetId: number = 0;
-    numInputNotes: number = 0;
-    oldDataRoot: bigint = 0n;
-    inputNoteIndices: number[] = new Array<number>(0);
-    inputNote: Note[] = new Array<Note>(2);
-    outputNote: Note[] = new Array<Note>(2);
+    proofId: number;
+    publicValue: bigint;
+    publicOwner: EthAddress;
+    assetId: number;
+    numInputNotes: number;
+    oldDataRoot: bigint;
+    inputNoteIndices: number[];
+    inputNote: Note[];
+    outputNote: Note[];
+    aliasHash: bigint;
 
-    aliasHash: bigint = 0n;
-    accountPrivateKey: AccountOrNullifierKey,
-    signature: string,
 
-    val: bigint = 0n;
-
-    public constructor(publicOwner: EthAddress, accountPrivateKey: AccountOrNullifierKey, signingKey: SigningKey) {
+    public constructor(
+        proofId: number,
+        publicValue: bigint,
+        publicOwner: EthAddress,
+        assetId: number,
+        numInputNotes: number,
+        oldDataRoot: bigint,
+        inputNoteIndices: number[],
+        inputNote: Note[],
+        aliasHash: bigint) {
+        this.proofId = proofId;
         this.publicOwner = publicOwner;
-        this.accountPrivateKey = accountPrivateKey;
-
-        this.signature = "";
+        this.publicValue = publicValue;
+        this.assetId = assetId;
+        this.numInputNotes = numInputNotes;
+        this.oldDataRoot = oldDataRoot;
+        this.inputNoteIndices = inputNoteIndices;
+        this.inputNote = inputNote;
+        this.outputNote = new Array<Note>(0);
+        this.aliasHash = aliasHash;
     }
 
-    async createSharedSecret(senderPvk: bigint): Promise<Buffer> {
+    static async createSharedSecret(senderPvk: bigint): Promise<Buffer> {
         let eddsa = await buildEddsa();
         let babyJub = eddsa.babyJub;
         let rawSharedKey = babyJub.mulPointEscalar(babyJub.Base8, senderPvk);
@@ -54,48 +64,38 @@ export class JoinSplitInput {
         return poseidon.F.toObject(res);
     }
 
-    async createDepositInput (
+    static async createDepositInput (
         accountKey: AccountOrNullifierKey,
         signingKey: SigningKey,
         proofId: number,
         receiver: EigenAddress,
-        val: bigint,
-        alias_hash: bigint,
-        accountId: bigint,
+        aliasHash: bigint,
         assetId: bigint,
         publicValue: bigint,
         publicOwner: EigenAddress,
-        creator: EigenAddress,
         confirmedAndPendingInputNotes: Array<Note>
-    ): Promise<JoinSplitInput> {
-
-        let pendingInput = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Pending);
-        let confirmedInput = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Confirmed);
-
-
-
-        let keys = await this.crateSharedSecret(signingKey.prvKey);
-
+    ): Promise<Array<JoinSplitInput>> {
         // check proofId and publicValue
-        let isDeposit = publicValue > 0n && proofId == this.PROOF_ID_TYPE_DEPOSIT;
-        let isWithdraw = publicValue > 0n && proofId == this.PROOF_ID_TYPE_WITHDRAW;
-        // TODO: isDefi or is Private Computation
-        let 
+        if (publicValue == 0n || proofId != JoinSplitInput.PROOF_ID_TYPE_DEPOSIT) {
+            return Promise.reject("proofId or publicValue is invalid");
+        }
 
-        let outputNote1 = new Note(nonce, assetId, accountId, val, secret, receiver.pubKey, creator);
-        let outputNote2 = new Note(nonce, assetId, accountId, publicValue, secret, receiver.pubKey, creator);
-        let onc1 = await outputNote1.compress();
-        let onc2 = await outputNote2.compress();
+        let pendingNote = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Pending);
+        let confirmedNote = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Confirmed);
+        let firstNode = pendingNote.shift();
 
-        let digest = await this.hashMsg(nc1, nc2, onc1, onc2, publicOwner, publicValue);
+        let JoinSplitInputList = new Array<JoinSplitInput>();
+        for (const note of confirmedNote) {
+        }
 
-        let wallet = new ethers.Wallet(ethers.utils.arrayify(accountKey.prvKey));
-        let signature = await wallet.signMessage(digest);
 
-        this.proofId = proofId;
-        this.publicValue = publicValue;
-        this.publicOwner = publicOwner;
-        return this;
+        //let keys = await JoinSplitInput.crateSharedSecret(signingKey.prvKey);
+
+        return JoinSplitInputList;
+    }
+
+    static async createSendInput() {
+
     }
 
     updateState() {
@@ -106,4 +106,3 @@ export class JoinSplitInput {
 
     }
 }
-*/
