@@ -28,6 +28,10 @@ NoteModel.init({
     ownerY: {
         type: DataTypes.BIGINT,
         allowNull: false
+    },
+    state: {
+        type: DataTypes.NUMBER,
+        allowNull: false,
     }
 }, {
     // Other model options go here

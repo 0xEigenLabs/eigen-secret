@@ -4,11 +4,12 @@ const { Scalar } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { ethers } from "ethers";
-import { Note } from "./note";
+import { Note, NoteState } from "./note";
 import { SigningKey, AccountOrNullifierKey, EigenAddress } from "./account";
 import { strict as assert } from "assert";
 
-export class Transaction {
+/*
+export class JoinSplitInput {
     readonly PROOF_ID_TYPE_INVALID: number = 0;
     readonly PROOF_ID_TYPE_DEPOSIT: number = 1;
     readonly PROOF_ID_TYPE_WITHDRAW: number = 2;
@@ -37,7 +38,7 @@ export class Transaction {
         this.signature = "";
     }
 
-    async crateSharedSecret(senderPvk: bigint): Promise<Buffer> {
+    async createSharedSecret(senderPvk: bigint): Promise<Buffer> {
         let eddsa = await buildEddsa();
         let babyJub = eddsa.babyJub;
         let rawSharedKey = babyJub.mulPointEscalar(babyJub.Base8, senderPvk);
@@ -53,7 +54,7 @@ export class Transaction {
         return poseidon.F.toObject(res);
     }
 
-    async createCircuitInput(
+    async createDepositInput (
         accountKey: AccountOrNullifierKey,
         signingKey: SigningKey,
         proofId: number,
@@ -65,62 +66,19 @@ export class Transaction {
         publicValue: bigint,
         publicOwner: EigenAddress,
         creator: EigenAddress,
-        inputNotes: Array<Note>
-    ): Promise<Transaction> {
-        let secret = await this.crateSharedSecret(signingKey.prvKey);
+        confirmedAndPendingInputNotes: Array<Note>
+    ): Promise<JoinSplitInput> {
+
+        let pendingInput = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Pending);
+        let confirmedInput = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Confirmed);
+
+        let keys = await this.crateSharedSecret(signingKey.prvKey);
 
         // check proofId and publicValue
-        let isDeposit = publicValue > 0 && proofId == this.PROOF_ID_TYPE_DEPOSIT;
-        let isWithdraw = publicValue > 0 && proofId == this.PROOF_ID_TYPE_WITHDRAW;
+        let isDeposit = publicValue > 0n && proofId == this.PROOF_ID_TYPE_DEPOSIT;
+        let isWithdraw = publicValue > 0n && proofId == this.PROOF_ID_TYPE_WITHDRAW;
         // TODO: isDefi or is Private Computation
-
-        let nc1: any;
-        let nc2: any;
-        if (isDeposit) {
-            assert(proofId == this.PROOF_ID_TYPE_DEPOSIT);
-            if (inputNotes.length == 0) {
-                let n1 = new Note(nonce, assetId, accountId, publicValue, secret, signingKey.pubKey, creator);
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
-                nc1 = await n1.compress();
-                nc2 = await n2.compress();
-            } else if (inputNotes.length == 1) {
-                nc1 = await inputNotes[0].compress();
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
-                nc2 = await n2.compress();
-            } else {
-                assert(inputNotes.length == 2);
-                nc1 = await inputNotes[0].compress();
-                nc2 = await inputNotes[1].compress();
-            }
-        } else if (isWithdraw) {
-            proofId = this.PROOF_ID_TYPE_WITHDRAW;
-            if (inputNotes.length == 0) {
-                let n1 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
-                nc1 = await n1.compress();
-                nc2 = await n2.compress();
-            } else if (inputNotes.length == 1) {
-                nc1 = await inputNotes[0].compress();
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
-                nc2 = await n2.compress();
-            } else {
-                assert(inputNotes.length == 2);
-                nc1 = await inputNotes[0].compress();
-                nc2 = await inputNotes[1].compress();
-            }
-        } else {
-            proofId = this.PROOF_ID_TYPE_SEND;
-            assert(inputNotes.length > 0);
-            if (inputNotes.length == 1) {
-                nc1 = await inputNotes[0].compress();
-                let n2 = new Note(nonce, assetId, accountId, 0n, secret, signingKey.pubKey, creator);
-                nc2 = await n2.compress();
-            } else {
-                assert(inputNotes.length == 2);
-                nc1 = await inputNotes[0].compress();
-                nc2 = await inputNotes[1].compress();
-            }
-        }
+        let 
 
         let outputNote1 = new Note(nonce, assetId, accountId, val, secret, receiver.pubKey, creator);
         let outputNote2 = new Note(nonce, assetId, accountId, publicValue, secret, receiver.pubKey, creator);
@@ -146,3 +104,4 @@ export class Transaction {
 
     }
 }
+*/

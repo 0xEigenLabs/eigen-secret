@@ -33,6 +33,15 @@ class LoginMessage {
     protocol: string;
     message: string;
     timestamp: number;
+    constructor(
+        protocol: string,
+        message: string,
+        timestamp: number
+    ) {
+        this.protocol = protocol;
+        this.message = message;
+        this.timestamp = timestamp;
+    }
 }
 
 export function createAccount(alias: string, ethAddres: string, message: string, hexSignature: string): any {

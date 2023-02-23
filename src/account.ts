@@ -3,38 +3,53 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { getPublicKey, sign, Point } from "@noble/secp256k1";
+import { Point } from "@noble/secp256k1";
 
+type PackFunc = () => Promise<string>;
+type UnpackFunc = (s: string) => Promise<void>;
 interface Address {
     protocol: string;
     pubKey: [bigint, bigint];
+    pack: PackFunc;
+    unpack: UnpackFunc;
 }
 export class EigenAddress implements Address {
     protocol: string = "eig";
-    pubKey: [bigint, bigint];
-    constructor(pubKey: string) {
+    pubKey: [bigint, bigint] = [0n, 0n];
+    constructor() {}
+    unpack: UnpackFunc = async (pubKey: string) => {
         if (pubKey.startsWith(this.protocol)) {
             pubKey = pubKey.substring(this.protocol.length);
         }
-        let p0 = BigInt(pubKey.substring(0, 32));
-        let p1 = BigInt(pubKey.substring(32));
-        this.pubKey = [p0, p1];
-    }
+        let ecdsa = await buildEddsa();
+        this.pubKey = ecdsa.unpackPoint(pubKey);
+        return Promise.resolve();
+    };
+    pack: PackFunc = async () => {
+        let ecdsa = await buildEddsa();
+        let sPoint = ecdsa.pack(this.pubKey);
+        return Promise.resolve(this.protocol + Buffer.from(sPoint).toString("hex"));
+    };
 }
 
 export class EthAddress implements Address {
-    protocol: "eth";
-    pubKey: [bigint, bigint];
-    constructor(pubKey: string) {
-        let point = Point.fromHex(pubKey);
-        this.pubKey = [point.x, point.y];
+    protocol: string = "eth";
+    pubKey: [bigint, bigint] = [0n, 0n];
+    constructor() {}
+    unpack: UnpackFunc = async (pubKey: string) => {
+        let p = Point.fromHex(pubKey);
+        this.pubKey = [p.x, p.y];
+        return Promise.resolve();
+    }
+    pack: PackFunc = async () => {
+        return Promise.resolve((new Point(this.pubKey[0], this.pubKey[1])).toHex(true));
     }
 }
 
 type NewKeyFunc = (seed: string) => Promise<IKey>;
 export interface IKey {
     prvKey: bigint;
-    pubKey: [bigint, bigint] | ethers.utils.Bytes;
+    pubKey: [bigint, bigint];
     keyFunc: NewKeyFunc;
 }
 
@@ -42,7 +57,7 @@ export interface IKey {
 // eddsa
 export class SigningKey implements IKey {
     prvKey: bigint = 0n;
-    pubKey: [bigint, bigint] = [0n, 0n];
+    pubKey: [bigint, bigint];
     constructor(prvKey: any, pubKey: any) {
         this.prvKey = prvKey;
         this.pubKey = pubKey;
@@ -66,7 +81,7 @@ export class SigningKey implements IKey {
 // ecdsa
 export class AccountOrNullifierKey implements IKey {
     prvKey: bigint = 0n;
-    pubKey: [bigint, bigint] | ethers.utils.Bytes = [0n, 0n];
+    pubKey: [bigint, bigint] = [0n, 0n];
     constructor(prvKey: any, pubKey: any) {
         this.prvKey = prvKey;
         this.pubKey = pubKey;
