@@ -30,7 +30,7 @@ export class Note {
             secret: this.secret,
             owner: bigint2Tuple(this.ownerX),
             asset_id: this.assetId,
-            inputNullifier: this.inputNullifier,
+            input_nullifier: this.inputNullifier,
         }
     }
 
