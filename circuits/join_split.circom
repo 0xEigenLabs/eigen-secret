@@ -15,22 +15,20 @@ template Digest(k) {
     assert(k < 7);
     signal input nc_1;
     signal input nc_2;
-    signal input output_note_nc_1[2];
-    signal input output_note_nc_2[2];
+    signal input output_note_nc_1;
+    signal input output_note_nc_2;
     signal input public_owner;
     signal input public_value;
     signal output out[k];
 
-    component hash = PoseidonEx(8, k);
+    component hash = PoseidonEx(6, k);
     hash.initialState <== 0;
     hash.inputs[0] <== nc_1;
     hash.inputs[1] <== nc_2;
-    hash.inputs[2] <== output_note_nc_1[0];
-    hash.inputs[3] <== output_note_nc_1[1];
-    hash.inputs[4] <== output_note_nc_2[0];
-    hash.inputs[5] <== output_note_nc_2[1];
-    hash.inputs[7] <== public_owner;
-    hash.inputs[6] <== public_value;
+    hash.inputs[2] <== output_note_nc_1;
+    hash.inputs[3] <== output_note_nc_2;
+    hash.inputs[4] <== public_owner;
+    hash.inputs[5] <== public_value;
 
     out <== hash.out;
 }
@@ -50,8 +48,8 @@ template JoinSplit(nLevel) {
     signal input public_value;
     signal input public_owner;
     signal input num_input_notes;
-    signal input output_nc_1[2]; //(nc is short for note commitment)
-    signal input output_nc_2[2];
+    signal input output_nc_1; //(nc is short for note commitment)
+    signal input output_nc_2;
     signal input nullifier_1;
     signal input nullifier_2;
     signal input data_tree_root;
@@ -67,7 +65,7 @@ template JoinSplit(nLevel) {
     signal input siblings[2][nLevel];
     signal input output_note_val[2];
     signal input output_note_secret[2];
-    signal input output_note_owner[2][4];
+    signal input output_note_owner[2][2][4];
     signal input output_note_asset_id[2];
     signal input output_note_nullifier[2];
     signal input account_note_npk[2][4]; // (npk=account public key, ECDSA)
@@ -174,9 +172,7 @@ template JoinSplit(nLevel) {
         nf[i] = NullifierFunction(nLevel);
         nf[i].nc <== nc[i].out;
         nf[i].nk <== account_note_nk;
-        for (var j = 0; j < nLevel; j++) {
-            nf[i].siblings[j] <== siblings[i][j];
-        }
+        nf[i].input_note_in_use <== input_note_in_use[i].out;
 
         input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]) === 0;
     }

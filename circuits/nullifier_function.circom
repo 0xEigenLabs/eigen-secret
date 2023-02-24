@@ -3,20 +3,14 @@ include "../node_modules/circomlib/circuits/poseidon.circom";
 
 template NullifierFunction(nLevel) {
     signal input nc;
-    signal input siblings[nLevel];
+    signal input input_note_in_use;
     signal input nk[4];
     signal output out;
 
     component hash = Poseidon(6);
 
     hash.inputs[0] <== nc;
-
-    // FIXME
-    var base = 0;
-    for (var i = 0; i < nLevel; i ++) {
-        base = base + siblings[i] * (2**i);
-    }
-    hash.inputs[1] <== base;
+    hash.inputs[1] <== input_note_in_use;
     for (var i = 0; i < 4; i ++) {
         hash.inputs[2 + i] <== nk[i];
     }

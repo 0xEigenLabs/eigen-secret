@@ -13,11 +13,11 @@ export class Note {
     val: bigint;
     secret: bigint;
     ownerX: bigint;
-    assetId: bigint;
+    assetId: number;
     inputNullifier: bigint;
     state: NoteState;
 
-    constructor(val: bigint, secret: bigint, ownerX: bigint, assetId: bigint, inputNullifier: bigint, state: NoteState) {
+    constructor(val: bigint, secret: bigint, ownerX: bigint, assetId: number, inputNullifier: bigint, state: NoteState) {
         this.val = val;
         this.secret = secret;
         this.ownerX = ownerX;

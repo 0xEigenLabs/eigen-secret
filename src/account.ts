@@ -4,7 +4,8 @@ const buildEddsa = require("circomlibjs").buildEddsa;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { getPublicKey, Point } from "@noble/secp256k1";
+import { getPublicKey, sign as k1Sign, Point } from "@noble/secp256k1";
+import { bigint2Uint8Array } from "./utils";
 
 type UnpackFunc = () => Promise<[any, any]>;
 interface Address {
@@ -47,10 +48,12 @@ export class EthAddress implements Address {
 }
 
 type NewKeyFunc = (seed: string) => Promise<IKey>;
+type SignFunc = (msghash: Uint8Array) => Promise<Uint8Array>;
 export interface IKey {
     prvKey: bigint;
     pubKey: any;
-    keyFunc: NewKeyFunc;
+    newKey: NewKeyFunc;
+    sign: SignFunc;
 }
 
 
@@ -62,7 +65,7 @@ export class SigningKey implements IKey {
         this.prvKey = prvKey;
         this.pubKey = pubKey;
     }
-    keyFunc: NewKeyFunc = async (seed: string) => {
+    newKey: NewKeyFunc = async (seed: string) => {
         let rawpvk = Buffer.from(ethers.utils.randomBytes(31));
         let eddsa = await buildEddsa();
         let pvk = createBlakeHash("blake512")
@@ -76,6 +79,9 @@ export class SigningKey implements IKey {
         let result: IKey = new SigningKey(prvKey, new EigenAddress(hexPubKey));
         return Promise.resolve(result)
     }
+    sign: SignFunc = async (msghash: Uint8Array) => {
+        return Promise.reject("Unimplemented function");
+    }
 }
 
 // ecdsa
@@ -87,7 +93,7 @@ export class AccountOrNullifierKey implements IKey {
         this.pubKey = pubKey;
     }
     // signature hex string
-    keyFunc: NewKeyFunc = async (signature: string) => {
+    newKey: NewKeyFunc = async (signature: string) => {
         // return the first 32bytes as account key
         let prvKey = ethers.utils.arrayify(signature).slice(0, 32);
         //let pubKey: Point = Point.fromPrivateKey(prvKey);
@@ -95,5 +101,9 @@ export class AccountOrNullifierKey implements IKey {
         let hexPubKey = "eth:" + Buffer.from(pubKey).toString("hex");
         let result: IKey = new AccountOrNullifierKey(prvKey, hexPubKey);
         return Promise.resolve(result);
+    }
+    sign: SignFunc = async (msghash: Uint8Array) => {
+            let sig: Uint8Array = await k1Sign(msghash, bigint2Uint8Array(this.prvKey), {canonical: true, der: false})
+            return Promise.resolve(sig);
     }
 }

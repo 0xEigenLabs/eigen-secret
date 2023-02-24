@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { buildPoseidon, buildEddsa } = require("circomlibjs");
-const { Scalar } = require("ffjavascript");
+const { Scalar, buildBn128, F1Field } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { ethers } from "ethers";
@@ -8,6 +8,7 @@ import { Note, NoteState } from "./note";
 import { SigningKey, AccountOrNullifierKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
 import { StateTree } from "./state_tree";
+import { bigint2Tuple } from "./utils";
 
 export class JoinSplitInput {
     proofId: number;
@@ -18,6 +19,7 @@ export class JoinSplitInput {
     numInputNote: number;
     inputNotes: Note[];
     outputNotes: Note[];
+    signature: bigint;
 
     public constructor(
         proofId: number,
@@ -27,7 +29,8 @@ export class JoinSplitInput {
         aliasHash: bigint,
         numInputNote: number,
         inputNotes: Note[],
-        outputNotes: Note[]
+        outputNotes: Note[],
+        sig: bigint,
     ) {
         this.proofId = proofId;
         this.publicOwner = publicOwner;
@@ -37,6 +40,7 @@ export class JoinSplitInput {
         this.numInputNote = numInputNote;
         this.inputNotes = inputNotes;
         this.outputNotes = outputNotes;
+        this.signature = sig;
     }
 
     // nomalize the input
@@ -84,12 +88,20 @@ export class JoinSplitCircuit {
             return Promise.reject("proofId or publicValue is invalid");
         }
 
+        let bn128 = await buildBn128();
+        const F = new F1Field(bn128.r);
+
         let numInputNote = 0;
-        let secret = await JoinSplitCircuit.createSharedSecret(signingKey.prvKey);
-        
-        let nc = await note.compress();
-        let nullifier = JoinSplitCircuit.calculateNullifier(nc, state.siblings, accountKey);
-        let outputNote = new Note(publicValue, secret, signingKey.pubKey, assetId, nullifier, NoteState.Pending);
+        let secret = F.random();
+
+        let nc = 0n;
+        let nullifier = await JoinSplitCircuit.calculateNullifier(nc, state.tree.siblings, accountKey);
+        let owner = await signingKey.pubKey.unpack();
+        let outputNote = new Note(publicValue, secret, F.toObject(owner[0]), assetId, nullifier, NoteState.Pending);
+
+        // signature
+        let outputNc1 = await outputNote.compress();
+        let sig = await JoinSplitCircuit.calculateSignature(accountKey, 0n, 0n, outputNc1, 0n, publicOwner, publicValue);
 
         let input = new JoinSplitInput (
             proofId,
@@ -99,11 +111,13 @@ export class JoinSplitCircuit {
             aliasHash,
             numInputNote,
             [],
-            [outputNote]
+            [outputNote],
+            sig,
         );
         return input;
     }
 
+    /*
     static async createSendInput(
         accountKey: AccountOrNullifierKey,
         signingKey: SigningKey,
@@ -121,7 +135,7 @@ export class JoinSplitCircuit {
 
         for (const note of confirmedNote) {
             let nc = await note.compress();
-            let nullifier = JoinSplitCircuit.calculateNullifier(nc, state.siblings, accountKey);
+            let nullifier = await JoinSplitCircuit.calculateNullifier(nc, state.siblings, accountKey);
             let input = new JoinSplitInput {
                 proofId,
 
@@ -129,9 +143,38 @@ export class JoinSplitCircuit {
         }
 
     }
+    */
 
-    static calculateNullifier(nc: bigint, siblings: bigint[], nk: AccountOrNullifierKey) {
+    static async calculateSignature(
+        accountKey: AccountOrNullifierKey,
+        nc1: bigint, nc2: bigint, outputNc1: bigint,
+        outputNc2: bigint, publicOwner: EthAddress, publicValue: bigint) {
+        let publicOwnerX = await publicOwner.unpack();
+        let poseidon = await buildPoseidon();
+        let msghash = poseidon([
+            nc1,
+            nc2,
+            outputNc1,
+            outputNc2,
+            publicOwnerX[0],
+            publicValue
+        ]);
+        let sig = await accountKey.sign(msghash);
+        return poseidon.F.toObject(sig);
+    }
 
+    static async calculateNullifier(nc: bigint, inputNoteInUse: bigint, nk: AccountOrNullifierKey) {
+        let poseidon = await buildPoseidon();
+        let owner = bigint2Tuple(nk.prvKey);
+        let res = poseidon([
+            nc,
+            inputNoteInUse,
+            owner[0],
+            owner[1],
+            owner[2],
+            owner[3],
+        ]);
+        return poseidon.F.toObject(res);
     }
 
     static updateState() {
