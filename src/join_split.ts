@@ -8,45 +8,51 @@ import { Note, NoteState } from "./note";
 import { SigningKey, AccountOrNullifierKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
 
+
 export class JoinSplitInput {
+    proofId: number;
+    publicValue: bigint;
+    publicOwner: EthAddress;
+    assetId: number;
+    aliasHash: bigint;
+    receiver: EigenAddress;
+    numInputNote: number;
+    inputNotes: Note[];
+    outputNotes: Note[];
+
+    
+    public constructor(
+        accountKey: AccountOrNullifierKey,
+        signingKey: SigningKey,
+        proofId: number,
+        publicValue: bigint,
+        publicOwner: EthAddress,
+        assetId: number,
+        aliasHash: bigint,
+        privateInput: bigint,
+        privateOutput: bigint,
+        receiver: EigenAddress
+    ) {
+        this.proofId = proofId;
+        this.publicOwner = publicOwner;
+        this.publicValue = publicValue;
+        this.assetId = assetId;
+        this.aliasHash = aliasHash;
+        this.privateInput = privateInput;
+        this.privateOutput = privateOutput;
+        this.receiver = receiver;
+
+        //TODO
+    }
+}
+
+export class JoinSplitCircuit {
     static readonly PROOF_ID_TYPE_INVALID: number = 0;
     static readonly PROOF_ID_TYPE_DEPOSIT: number = 1;
     static readonly PROOF_ID_TYPE_WITHDRAW: number = 2;
     static readonly PROOF_ID_TYPE_SEND: number = 3;
 
-    proofId: number;
-    publicValue: bigint;
-    publicOwner: EthAddress;
-    assetId: number;
-    numInputNotes: number;
-    oldDataRoot: bigint;
-    inputNoteIndices: number[];
-    inputNote: Note[];
-    outputNote: Note[];
-    aliasHash: bigint;
-
-
-    public constructor(
-        proofId: number,
-        publicValue: bigint,
-        publicOwner: EthAddress,
-        assetId: number,
-        numInputNotes: number,
-        oldDataRoot: bigint,
-        inputNoteIndices: number[],
-        inputNote: Note[],
-        aliasHash: bigint) {
-        this.proofId = proofId;
-        this.publicOwner = publicOwner;
-        this.publicValue = publicValue;
-        this.assetId = assetId;
-        this.numInputNotes = numInputNotes;
-        this.oldDataRoot = oldDataRoot;
-        this.inputNoteIndices = inputNoteIndices;
-        this.inputNote = inputNote;
-        this.outputNote = new Array<Note>(0);
-        this.aliasHash = aliasHash;
-    }
+    constructor() {}
 
     static async createSharedSecret(senderPvk: bigint): Promise<Buffer> {
         let eddsa = await buildEddsa();
@@ -56,7 +62,7 @@ export class JoinSplitInput {
         return sharedKey;
     }
 
-    async hashMsg(nc1: any, nc2: any, outputNote1: any, outputNote2: any, publicOwner: any, publicValue: any) {
+    static async hashMsg(nc1: any, nc2: any, outputNote1: any, outputNote2: any, publicOwner: any, publicValue: any) {
         let poseidon = await buildPoseidon();
         let res = poseidon([
             nc1, nc2, outputNote1, outputNote2, publicOwner, publicValue
@@ -76,7 +82,7 @@ export class JoinSplitInput {
         confirmedAndPendingInputNotes: Array<Note>
     ): Promise<Array<JoinSplitInput>> {
         // check proofId and publicValue
-        if (publicValue == 0n || proofId != JoinSplitInput.PROOF_ID_TYPE_DEPOSIT) {
+        if (publicValue == 0n || proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT) {
             return Promise.reject("proofId or publicValue is invalid");
         }
 
@@ -86,10 +92,18 @@ export class JoinSplitInput {
 
         let JoinSplitInputList = new Array<JoinSplitInput>();
         for (const note of confirmedNote) {
+            let input = new JoinSplitInput (
+                proofId,
+                publicValue,
+                publicOwner,
+                assetId,
+                0,
+                
+            );
         }
 
 
-        //let keys = await JoinSplitInput.crateSharedSecret(signingKey.prvKey);
+        //let keys = await JoinSplitCircuit.crateSharedSecret(signingKey.prvKey);
 
         return JoinSplitInputList;
     }
@@ -98,11 +112,11 @@ export class JoinSplitInput {
 
     }
 
-    updateState() {
+    static updateState() {
 
     }
 
-    createProof() {
+    static createProof() {
 
     }
 }
