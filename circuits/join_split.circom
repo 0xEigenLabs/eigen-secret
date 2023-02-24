@@ -117,8 +117,6 @@ template JoinSplit(nLevel) {
     is_public_tx.a <== is_deposit.out;
     is_public_tx.b <== is_withdraw.out;
 
-    // public_asset_id = is_public_tx? asset_id: 0;
-    var public_assert_id = is_public_tx.out * asset_id;
     var public_input_ = public_value * is_deposit.out;
     var public_output_ = public_value * is_withdraw.out;
 
@@ -133,19 +131,25 @@ template JoinSplit(nLevel) {
     is_public_no.in[1] <== public_value;
     is_public_no.in[2] <== public_owner;
 
-    component validPublic = XOR();
-    validPublic.a <== is_public_yes.out;
-    validPublic.b <== is_public_no.out;
-    validPublic.out === 1;
+    component valid_public = XOR();
+    valid_public.a <== is_public_yes.out;
+    valid_public.b <== is_public_no.out;
+    valid_public.out === 1;
 
-    component inputNoteInUse[2];
-    inputNoteInUse[0] = GreaterThan(252);
-    inputNoteInUse[0].in[0] <== num_input_notes;
-    inputNoteInUse[0].in[1] <== 0;
+    //num_input_notes == 0 && is_deposit == true
+    component is_deposit_c = AllLow(2);
+    is_deposit_c.in[0] <== num_input_notes;
+    is_deposit_c.in[1] <== is_deposit.out - 1;
+    is_deposit_c.out === 1;
 
-    inputNoteInUse[1] = GreaterThan(252);
-    inputNoteInUse[1].in[0] <== num_input_notes;
-    inputNoteInUse[1].in[1] <== 1;
+    component input_note_in_use[2];
+    input_note_in_use[0] = GreaterThan(252);
+    input_note_in_use[0].in[0] <== num_input_notes;
+    input_note_in_use[0].in[1] <== 0;
+
+    input_note_in_use[1] = GreaterThan(252);
+    input_note_in_use[1].in[0] <== num_input_notes;
+    input_note_in_use[1].in[1] <== 1;
 
     //note validity check
     component nc[2];
@@ -174,20 +178,14 @@ template JoinSplit(nLevel) {
             nf[i].siblings[j] <== siblings[i][j];
         }
 
-        inputNoteInUse[i].out * (nf[i].out - output_note_nullifier[i]) === 0;
+        input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]) === 0;
     }
 
     // nc[0].out != nc[1].out
-    component isSameNC = IsEqual();
-    isSameNC.in[0] <== nc[0].out;
-    isSameNC.in[1] <== nc[1].out;
-    isSameNC.out === 0;
-
-    //num_input_notes == 0 && is_deposit == true
-    component isDepositC = AllLow(2);
-    isDepositC.in[0] <== num_input_notes;
-    isDepositC.in[1] <== is_deposit.out - 1;
-    isDepositC.out === 1;
+    component nc_not_same = IsEqual();
+    nc_not_same.in[0] <== nc[0].out;
+    nc_not_same.in[1] <== nc[1].out;
+    nc_not_same.out === 0;
 
     component ac = AccountNoteCompressor();
     ac.npk <== account_note_npk;
@@ -210,7 +208,6 @@ template JoinSplit(nLevel) {
     account_note_npk === input_note_owner[0];
     account_note_npk === input_note_owner[1];
 
-
     //check signature
     component msghash = Digest(4);
     msghash.nc_1 <== nc[0].out;
@@ -227,19 +224,23 @@ template JoinSplit(nLevel) {
     sig_verifier.pubkey <== account_note_npk;
     sig_verifier.result === 1;
 
-    // check value
+    // check value:  FIXME
     //case 1: num_input_notes < 1 && input_note_1.value == 0
     component note_num_less[2];
     note_num_less[0] = LessThan(252);
     note_num_less[0].in[0] <== num_input_notes;
     note_num_less[0].in[1] <== 1;
-    note_num_less[0].out * input_note_val[0] === 0;
+    component note_1_value_check = AllLow(2);
+    note_1_value_check.in[0] <== note_num_less[0].out - 1;
+    note_1_value_check.in[1] <== input_note_val[0];
 
     //case 2: num_input_notes < 2 && input_note_2.value == 0
     note_num_less[1] = LessThan(252);
     note_num_less[1].in[0] <== num_input_notes;
     note_num_less[1].in[1] <== 2;
-    note_num_less[1].out * input_note_val[1] === 0;
+    component note_2_value_check = AllLow(2);
+    note_2_value_check.in[0] <== note_num_less[0].out - 1;
+    note_2_value_check.in[1] <== input_note_val[1];
 
     // transfer balance check
     var total_in_value = public_input_ + input_note_val[0] + input_note_val[1];
@@ -258,8 +259,6 @@ template JoinSplit(nLevel) {
     output_note_asset_id[0] === output_note_asset_id[1];
 
     // if num_input_notes == 2 && input_note_1.asset_id == input_note_2.asset_id
-
-
     output_note_asset_id[0] === input_note_asset_id[1];
 
     //check: asset_id == input_note_1.asset_id <==> (public_input_ != 0 || public_output != 0)
