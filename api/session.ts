@@ -34,18 +34,18 @@ export function login(alias: string, ethAddress: string): any {
         expireAt: expireAt + DURATION,
     };
     return SessionModel
-        .findOne({ where: {alias: alias, ethAddress: ethAddress} )
+        .findOne({ where: {alias: alias, ethAddress: ethAddress }} )
         .then(function(obj: any) {
             // update
             if(obj)
                 return obj.update(value);
             // insert
             return Model.create(value);
-        })
+        });
 }
 
 export function logout(alias: string, ethAddress: string) {
-    // check if the record exists, updateOrAdd, 
+    // check if the record exists, updateOrAdd,
     let expireAt = Math.floor(Date.now() / 1000);
     let value = {
         alias: alias,
@@ -53,7 +53,7 @@ export function logout(alias: string, ethAddress: string) {
         expireAt: expireAt,
     };
     return SessionModel
-        .findOne({ where: {alias: alias, ethAddress: ethAddress } )
+        .findOne({ where: {alias: alias, ethAddress: ethAddress }} )
         .then(function(obj: any) {
             if(obj)
                 return obj.update(value);

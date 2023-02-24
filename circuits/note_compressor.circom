@@ -4,18 +4,22 @@ include "../node_modules/circomlib/circuits/poseidon.circom";
 template NoteCompressor() {
     signal input val;
     signal input secret;
-    signal input account_id;
-    signal input nonce;
+    signal input owner[4]; // public key x
     signal input asset_id;
+    signal input input_nullifier;
+
     signal output out;
 
-    component hash = Poseidon(5);
+    component hash = Poseidon(8);
 
     hash.inputs[0] <== val;
     hash.inputs[1] <== secret;
-    hash.inputs[2] <== account_id;
-    hash.inputs[3] <== nonce;
-    hash.inputs[4] <== asset_id;
+    hash.inputs[2] <== owner[0];
+    hash.inputs[3] <== owner[1];
+    hash.inputs[4] <== owner[2];
+    hash.inputs[5] <== owner[3];
+    hash.inputs[6] <== asset_id;
+    hash.inputs[7] <== input_nullifier;
 
     hash.out ==> out;
 }

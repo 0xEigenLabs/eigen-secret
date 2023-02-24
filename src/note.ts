@@ -1,68 +1,81 @@
 const buildPoseidon = require("circomlibjs").buildPoseidon;
 import { Aes256gcm } from "./aes_gcm";
+import { bigint2Tuple } from "./utils";
+
+export enum NoteState {
+    Pending = 1,
+    Confirmed, // UTXO
+    Destroyed,
+    Cancel
+}
 
 export class Note {
-    nonce: bigint = 0n;
-    assetId: bigint = 0n;
-    accountId: bigint = 0n;
-    val: bigint = 0n;
-    secret: bigint = 0n;
-    ownerX: bigint = 0n;
-    ownerY: bigint = 0n;
+    val: bigint;
+    secret: bigint;
+    ownerX: bigint;
+    assetId: number;
+    inputNullifier: bigint;
+    state: NoteState;
 
-    constructor(nonce: bigint, assetId: bigint, accountId: bigint, val: bigint, secret: bigint, pubKey: bigint[]) {
-        this.nonce = nonce;
-        this.assetId = assetId;
-        this.accountId = accountId;
+    constructor(val: bigint, secret: bigint, ownerX: bigint, assetId: number, inputNullifier: bigint, state: NoteState) {
         this.val = val;
         this.secret = secret;
-        this.ownerX = pubKey[0];
-        this.ownerY = pubKey[1];
+        this.ownerX = ownerX;
+        this.assetId = assetId;
+        this.inputNullifier = inputNullifier;
+        this.state = state;
     }
 
     toCircuitInput(): any {
         return {
             val: this.val,
             secret: this.secret,
-            account_id: this.accountId,
-            nonce: this.nonce,
-            asset_id: this.assetId
+            owner: bigint2Tuple(this.ownerX),
+            asset_id: this.assetId,
+            input_nullifier: this.inputNullifier,
         }
     }
 
     async compress(): Promise<bigint> {
         let poseidon = await buildPoseidon();
+        let owner = bigint2Tuple(this.ownerX);
         let res = poseidon([
-            this.val, this.secret, this.accountId, this.nonce, this.assetId
+            this.val,
+            this.secret,
+            owner[0],
+            owner[1],
+            owner[2],
+            owner[3],
+            this.assetId,
+            this.inputNullifier
         ]);
         return poseidon.F.toObject(res);
     }
 
-    encrypt(key: any): any {
-        let aes = new Aes256gcm(key);
+    encrypt(): any {
+        let aes = new Aes256gcm(this.secret);
         let data = JSON.stringify({
-            nonce: this.nonce,
-            assetId: this.assetId,
-            accountId: this.accountId,
             val: this.val,
             secret: this.secret,
+            assetId: this.assetId,
             ownerX: this.ownerX,
-            ownerY: this.ownerY
+            inputNullifier: this.inputNullifier,
+            state: this.state
         });
         return aes.encrypt(data)
     }
 
-    decrypt(key: any, cipherData: any): Note {
-        let aes = new Aes256gcm(key);
+    decrypt(cipherData: any): Note {
+        let aes = new Aes256gcm(this.secret);
         let jsonData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
         let data = JSON.parse(jsonData);
         return new Note(
-            data.nonce,
-            data.assetId,
-            data.accountId,
             data.val,
             data.secret,
-            data.pubKey
+            data.assetId,
+            data.ownerX,
+            data.inputNullifier,
+            data.state
         );
     }
 }

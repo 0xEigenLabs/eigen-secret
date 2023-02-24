@@ -24,10 +24,7 @@ describe("Test NoteCompressor", function () {
         const msg = F.e(123411111111111n);
         let prvKey = ethers.utils.randomBytes(31);
         let pubKey = eddsa.prv2pub(prvKey);
-
-        let note = new Note(
-            1n, 2n, 222223n, 11114n, 5n, pubKey,
-        );
+        let note = new Note(1n, 2n, F.toObject(pubKey[0]), 4, 5n, 1);
         let wtns = await utils.executeCircuit(circuit, note.toCircuitInput());
         await circuit.assertOut(wtns, { out: await note.compress() });
     })
