@@ -138,6 +138,15 @@ template JoinSplit(nLevel) {
     validPublic.b <== is_public_no.out;
     validPublic.out === 1;
 
+    component inputNoteInUse[2];
+    inputNoteInUse[0] = GreaterThan(252);
+    inputNoteInUse[0].in[0] <== num_input_notes;
+    inputNoteInUse[0].in[1] <== 0;
+
+    inputNoteInUse[1] = GreaterThan(252);
+    inputNoteInUse[1].in[0] <== num_input_notes;
+    inputNoteInUse[1].in[1] <== 1;
+
     //note validity check
     component nc[2];
     component nf[2];
@@ -165,8 +174,9 @@ template JoinSplit(nLevel) {
             nf[i].siblings[j] <== siblings[i][j];
         }
 
-        nf[i].out === output_note_nullifier[i];
+        inputNoteInUse[i].out * (nf[i].out - output_note_nullifier[i]) === 0;
     }
+
     // nc[0].out != nc[1].out
     component isSameNC = IsEqual();
     isSameNC.in[0] <== nc[0].out;

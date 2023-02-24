@@ -7,7 +7,7 @@ import { ethers } from "ethers";
 import { Note, NoteState } from "./note";
 import { SigningKey, AccountOrNullifierKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-
+import { StateTree } from "./state_tree";
 
 export class JoinSplitInput {
     proofId: number;
@@ -15,32 +15,33 @@ export class JoinSplitInput {
     publicOwner: EthAddress;
     assetId: number;
     aliasHash: bigint;
-    receiver: EigenAddress;
     numInputNote: number;
-    inputNotes: [Note, Note];
-    outputNotes: [Note, Note];
+    inputNotes: Note[];
+    outputNotes: Note[];
 
-    
     public constructor(
-        accountKey: AccountOrNullifierKey,
-        signingKey: SigningKey,
         proofId: number,
         publicValue: bigint,
         publicOwner: EthAddress,
         assetId: number,
         aliasHash: bigint,
-        privateInput: bigint,
-        privateOutput: bigint,
-        receiver: EigenAddress
+        numInputNote: number,
+        inputNotes: Note[],
+        outputNotes: Note[]
     ) {
         this.proofId = proofId;
         this.publicOwner = publicOwner;
         this.publicValue = publicValue;
         this.assetId = assetId;
         this.aliasHash = aliasHash;
-        this.receiver = receiver;
+        this.numInputNote = numInputNote;
+        this.inputNotes = inputNotes;
+        this.outputNotes = outputNotes;
+    }
 
-        //TODO
+    // nomalize the input
+    toCircuitInput() {
+
     }
 }
 
@@ -71,42 +72,65 @@ export class JoinSplitCircuit {
     static async createDepositInput (
         accountKey: AccountOrNullifierKey,
         signingKey: SigningKey,
+        state: StateTree,
         proofId: number,
-        receiver: EigenAddress,
         aliasHash: bigint,
-        assetId: bigint,
+        assetId: number,
         publicValue: bigint,
         publicOwner: EigenAddress,
-        confirmedAndPendingInputNotes: Array<Note>
-    ): Promise<Array<JoinSplitInput>> {
+    ): Promise<JoinSplitInput> {
         // check proofId and publicValue
         if (publicValue == 0n || proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT) {
             return Promise.reject("proofId or publicValue is invalid");
         }
 
+        let numInputNote = 0;
+        let secret = await JoinSplitCircuit.createSharedSecret(signingKey.prvKey);
+        
+        let nc = await note.compress();
+        let nullifier = JoinSplitCircuit.calculateNullifier(nc, state.siblings, accountKey);
+        let outputNote = new Note(publicValue, secret, signingKey.pubKey, assetId, nullifier, NoteState.Pending);
+
+        let input = new JoinSplitInput (
+            proofId,
+            publicValue,
+            publicOwner,
+            assetId,
+            aliasHash,
+            numInputNote,
+            [],
+            [outputNote]
+        );
+        return input;
+    }
+
+    static async createSendInput(
+        accountKey: AccountOrNullifierKey,
+        signingKey: SigningKey,
+        state: StateTree,
+        proofId: number,
+        aliasHash: bigint,
+        assetId: number,
+        publicValue: bigint,
+        publicOwner: EigenAddress,
+        confirmedAndPendingInputNotes: Array<Note>
+    ) {
         let pendingNote = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Pending);
         let confirmedNote = confirmedAndPendingInputNotes.filter((n) => n.state == NoteState.Confirmed);
         let firstNode = pendingNote.shift();
 
-        let JoinSplitInputList = new Array<JoinSplitInput>();
         for (const note of confirmedNote) {
-            let input = new JoinSplitInput (
+            let nc = await note.compress();
+            let nullifier = JoinSplitCircuit.calculateNullifier(nc, state.siblings, accountKey);
+            let input = new JoinSplitInput {
                 proofId,
-                publicValue,
-                publicOwner,
-                assetId,
-                0,
-                
-            );
+
+            }
         }
 
-
-        //let keys = await JoinSplitCircuit.crateSharedSecret(signingKey.prvKey);
-
-        return JoinSplitInputList;
     }
 
-    static async createSendInput() {
+    static calculateNullifier(nc: bigint, siblings: bigint[], nk: AccountOrNullifierKey) {
 
     }
 
