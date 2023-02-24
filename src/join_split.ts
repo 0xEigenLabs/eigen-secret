@@ -17,8 +17,8 @@ export class JoinSplitInput {
     aliasHash: bigint;
     receiver: EigenAddress;
     numInputNote: number;
-    inputNotes: Note[];
-    outputNotes: Note[];
+    inputNotes: [Note, Note];
+    outputNotes: [Note, Note];
 
     
     public constructor(
@@ -38,8 +38,6 @@ export class JoinSplitInput {
         this.publicValue = publicValue;
         this.assetId = assetId;
         this.aliasHash = aliasHash;
-        this.privateInput = privateInput;
-        this.privateOutput = privateOutput;
         this.receiver = receiver;
 
         //TODO
