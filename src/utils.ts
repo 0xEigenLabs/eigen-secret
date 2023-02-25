@@ -1,4 +1,5 @@
 import { Buffer } from "buffer";
+import { BigNumberish } from "ethers";
 
 export function arrayChunk(array: Array<number>, chunkSize: number): any {
   return Array(Math.ceil(array.length / chunkSize)).map((_, index) => index * chunkSize)
@@ -132,4 +133,21 @@ export function uint8Array2Bigint(x: Uint8Array) {
     ret = ret + BigInt(x[idx]);
   }
   return ret;
+}
+
+export interface Proof {
+    a: [BigNumberish, BigNumberish];
+    b: [[BigNumberish, BigNumberish], [BigNumberish, BigNumberish]];
+    c: [BigNumberish, BigNumberish];
+}
+
+export function parseProof(proof: any): Proof {
+    return {
+        a: [proof.pi_a[0], proof.pi_a[1]],
+        b: [
+            [proof.pi_b[0][1], proof.pi_b[0][0]],
+            [proof.pi_b[1][1], proof.pi_b[1][0]],
+        ],
+        c: [proof.pi_c[0], proof.pi_c[1]],
+    };
 }

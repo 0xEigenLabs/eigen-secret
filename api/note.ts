@@ -29,9 +29,9 @@ NoteModel.init({
         type: DataTypes.BIGINT,
         allowNull: false
     },
-    state: {
+    index: {
         type: DataTypes.NUMBER,
-        allowNull: false,
+        allowNull: true,
     }
 }, {
     // Other model options go here
