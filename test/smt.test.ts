@@ -31,6 +31,7 @@ describe("Test SMT Membership Query", function () {
             value: ci.newValue,
             root: Fr.toObject(tree.root()),
             siblings: ci.siblings,
+            enabled: 1,
         };
         await utils.executeCircuit(circuit, input)
     });

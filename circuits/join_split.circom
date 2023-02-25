@@ -50,7 +50,7 @@ template JoinSplit(nLevel) {
     signal input num_input_notes;
     signal input output_nc_1; //(nc is short for note commitment)
     signal input output_nc_2;
-    signal input old_data_tree_root;
+    signal input data_tree_root;
 
     //private input
     signal input asset_id;
@@ -162,7 +162,7 @@ template JoinSplit(nLevel) {
         ms[i] = Membership(nLevel);
         ms[i].key <== nc[i].out;
         ms[i].value <== num_input_notes;
-        ms[i].root <== old_data_tree_root;
+        ms[i].root <== data_tree_root;
         ms[i].enabled <== input_note_in_use[i].out;
         for (var j = 0; j < nLevel; j++) {
             ms[i].siblings[j] <== siblings[i][j];
@@ -191,7 +191,7 @@ template JoinSplit(nLevel) {
     ams.enabled <== 1;
     ams.key <== ac.out;
     ams.value <== 1; // setup any
-    ams.root <== old_data_tree_root;
+    ams.root <== data_tree_root;
     for (var j = 0; j < nLevel; j++) {
         ams.siblings[j] <== siblings_ac[j];
     }

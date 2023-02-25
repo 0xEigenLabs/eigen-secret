@@ -1,7 +1,6 @@
 const { Sequelize, DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import { login } from "./session";
-import { Err, ErrCode, Succ, BaseResp } from "./util";
 
 class AccountModel extends Model {}
 

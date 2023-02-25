@@ -2,6 +2,7 @@
   "env": {
     "browser": true,
     "commonjs": true,
+    "node": true,
     "es2021": true
   },
   "extends": [
@@ -20,6 +21,7 @@
     "require-jsdoc": 0,
     "semi": 0,
     'indent': 'off',
+    "no-unused-vars": "off",
     "comma-dangle": ["error", "never"],
     "camelcase": "off",
     "prefer-const": "off",

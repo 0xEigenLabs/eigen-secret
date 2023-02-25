@@ -5,7 +5,7 @@ const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { getPublicKey, sign as k1Sign, Point } from "@noble/secp256k1";
-import { bigint2Uint8Array } from "./utils";
+import { bigint2Uint8Array, bigint2Tuple } from "./utils";
 
 type UnpackFunc = () => Promise<[any, any]>;
 interface Address {
@@ -49,11 +49,13 @@ export class EthAddress implements Address {
 
 type NewKeyFunc = (seed: string) => Promise<IKey>;
 type SignFunc = (msghash: Uint8Array) => Promise<Uint8Array>;
+type KeyToCircuitInput = () => Promise<bigint[][]>;
 export interface IKey {
     prvKey: bigint;
     pubKey: any;
     newKey: NewKeyFunc;
     sign: SignFunc;
+    toCircuitInput: KeyToCircuitInput;
 }
 
 
@@ -80,7 +82,15 @@ export class SigningKey implements IKey {
         return Promise.resolve(result)
     }
     sign: SignFunc = async (msghash: Uint8Array) => {
-        return Promise.reject("Unimplemented function");
+        return Promise.reject(new Error("Unimplemented function"));
+    }
+    toCircuitInput: KeyToCircuitInput = async () => {
+        let eddsa = await buildEddsa();
+        let pPub = await this.pubKey.unpack();
+        return [[
+            eddsa.F.toObject(pPub[0]),
+            eddsa.F.toObject(pPub[1])
+        ]];
     }
 }
 
@@ -105,5 +115,9 @@ export class AccountOrNullifierKey implements IKey {
     sign: SignFunc = async (msghash: Uint8Array) => {
             let sig: Uint8Array = await k1Sign(msghash, bigint2Uint8Array(this.prvKey), { canonical: true, der: false })
             return Promise.resolve(sig);
+    }
+    toCircuitInput: KeyToCircuitInput = async () => {
+        let pPub = await this.pubKey.unpack();
+        return [bigint2Tuple(pPub[0]), bigint2Tuple(pPub[1])];
     }
 }
