@@ -6,12 +6,13 @@ template Membership(nLevels){
     signal input key;
     signal input value;
     signal input root;
+    signal input enabled;
     signal input siblings[nLevels];
 
     var i;
     // VERIFY INCLUSION
     component smtverifier = SMTVerifier(nLevels);
-    smtverifier.enabled <== 1;
+    smtverifier.enabled <== enabled;
     smtverifier.root <== root;
     for (i=0; i<nLevels;i++) {
         smtverifier.siblings[i] <== siblings[i];

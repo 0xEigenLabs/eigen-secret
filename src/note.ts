@@ -29,7 +29,7 @@ export class Note {
             secret: this.secret,
             owner: bigint2Tuple(this.ownerX),
             asset_id: this.assetId,
-            input_nullifier: this.inputNullifier,
+            input_nullifier: this.inputNullifier
         }
     }
 
@@ -71,7 +71,7 @@ export class Note {
             data.secret,
             data.assetId,
             data.ownerX,
-            data.inputNullifier,
+            data.inputNullifier
         );
         n.index = data.index;
         return n;

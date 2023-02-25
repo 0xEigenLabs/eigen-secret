@@ -50,9 +50,7 @@ template JoinSplit(nLevel) {
     signal input num_input_notes;
     signal input output_nc_1; //(nc is short for note commitment)
     signal input output_nc_2;
-    signal input nullifier_1;
-    signal input nullifier_2;
-    signal input data_tree_root;
+    signal input old_data_tree_root;
 
     //private input
     signal input asset_id;
@@ -164,7 +162,8 @@ template JoinSplit(nLevel) {
         ms[i] = Membership(nLevel);
         ms[i].key <== nc[i].out;
         ms[i].value <== num_input_notes;
-        ms[i].root <== data_tree_root;
+        ms[i].root <== old_data_tree_root;
+        ms[i].enabled <== input_note_in_use[i].out;
         for (var j = 0; j < nLevel; j++) {
             ms[i].siblings[j] <== siblings[i][j];
         }
@@ -189,8 +188,10 @@ template JoinSplit(nLevel) {
     ac.alias_hash <== alias_hash;
 
     component ams = Membership(nLevel);
+    ams.enabled <== 1;
     ams.key <== ac.out;
     ams.value <== 1; // setup any
+    ams.root <== old_data_tree_root;
     for (var j = 0; j < nLevel; j++) {
         ams.siblings[j] <== siblings_ac[j];
     }
@@ -241,10 +242,10 @@ template JoinSplit(nLevel) {
     // transfer balance check
     var total_in_value = public_input_ + input_note_val[0] + input_note_val[1];
     var total_out_value = public_output_ + output_note_val[0] + output_note_val[1];
-    component balanceEqual = IsEqual();
-    balanceEqual.in[0] <== total_in_value;
-    balanceEqual.in[1] <== total_out_value;
-    1 === balanceEqual.out;
+    component balance_check = IsEqual();
+    balance_check.in[0] <== total_in_value;
+    balance_check.in[1] <== total_out_value;
+    1 === balance_check.out;
 
     // asset type check
     //  (asset_id == input_note_1.asset_id) &&

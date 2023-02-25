@@ -16,13 +16,13 @@ const require_env_variables = (envVars: Array<string>) => {
   consola.success("Environmental variables properly set 👍");
 };
 
-const BaseResp = function (errno: ErrCode, message: string, data: string) {
+const BaseResp = function(errno: ErrCode, message: string, data: string) {
   return { errno: errno, message: message, data: data };
 };
-const Succ = function (data: any) {
+const Succ = function(data: any) {
   return BaseResp(0, "", data);
 };
-const Err = function (errno: ErrCode, message: string) {
+const Err = function(errno: ErrCode, message: string) {
   return BaseResp(errno, message, "");
 };
 
@@ -39,7 +39,7 @@ export enum ErrCode {
   CryptoError = 4
 }
 
-const has_value = function (variable: any) {
+const has_value = function(variable: any) {
   if (variable === undefined) {
     return false;
   }

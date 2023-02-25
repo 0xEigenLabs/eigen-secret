@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const crypto = require("crypto");
 const { buildPoseidon, buildEddsa } = require("circomlibjs");
 const { Scalar, buildBn128, F1Field } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
@@ -21,6 +21,7 @@ export class JoinSplitInput {
     aliasHash: bigint;
     inputNotes: Note[];
     outputNotes: Note[];
+    outputNCs: bigint[];
     signature: bigint;
 
     public constructor(
@@ -31,7 +32,8 @@ export class JoinSplitInput {
         aliasHash: bigint,
         inputNotes: Note[],
         outputNotes: Note[],
-        sig: bigint,
+        outputNCs: bigint[],
+        sig: bigint
     ) {
         this.proofId = proofId;
         this.publicOwner = publicOwner;
@@ -40,12 +42,21 @@ export class JoinSplitInput {
         this.aliasHash = aliasHash;
         this.inputNotes = inputNotes;
         this.outputNotes = outputNotes;
+        this.outputNCs = outputNCs;
         this.signature = sig;
     }
 
     // nomalize the input
     toCircuitInput() {
+        return {
+            proof_id: this.proofId,
+            public_value: this.publicValue,
+            public_owner: this.publicOwner,
+            num_input_notes: this.inputNotes.length,
+            output_nc_1: this.outputNCs[0],
+            output_nc_2: this.outputNCs[1]
 
+        }
     }
 }
 
@@ -73,7 +84,7 @@ export class JoinSplitCircuit {
         return poseidon.F.toObject(res);
     }
 
-    static async createDepositInput (
+    static async createDepositInput(
         accountKey: AccountOrNullifierKey,
         signingKey: SigningKey,
         state: StateTree,
@@ -81,7 +92,7 @@ export class JoinSplitCircuit {
         aliasHash: bigint,
         assetId: number,
         publicValue: bigint,
-        publicOwner: EigenAddress,
+        publicOwner: EigenAddress
     ): Promise<JoinSplitInput> {
         // check proofId and publicValue
         if (publicValue == 0n || proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT) {
@@ -101,7 +112,7 @@ export class JoinSplitCircuit {
         let outputNc1 = await outputNote.compress();
         let sig = await JoinSplitCircuit.calculateSignature(accountKey, 0n, 0n, outputNc1, 0n, publicOwner, publicValue);
 
-        let input = new JoinSplitInput (
+        let input = new JoinSplitInput(
             proofId,
             publicValue,
             publicOwner,
@@ -109,7 +120,8 @@ export class JoinSplitCircuit {
             aliasHash,
             [],
             [outputNote],
-            sig,
+            [outputNc1],
+            sig
         );
         return input;
     }
@@ -133,7 +145,7 @@ export class JoinSplitCircuit {
             throw new Error(`Failed to find notes that sum to ${privateValue}.`)
         }
         const confirmedNote = confirmedAndPendingInputNotes.filter((n) => !n.pending);
-        let firstNote = confirmedAndPendingInputNotes.find(n => n.pending) || confirmedNote.shift();
+        let firstNote = confirmedAndPendingInputNotes.find((n) => n.pending) || confirmedNote.shift();
         if (firstNote === undefined) {
             throw new Error(`Failed to find notes that sum to ${privateValue} + ${publicValue}`)
         }
@@ -167,6 +179,7 @@ export class JoinSplitCircuit {
                 proofId, 0n, undefined, assetId, aliasHash,
                 [firstNote, note],
                 [outputNote1, outputNote2],
+                [outputNc1, outputNc2],
                 sig
             );
             inputList.push(input);
@@ -187,6 +200,7 @@ export class JoinSplitCircuit {
             let nc2 = 0n;
             let outputNc2 = 0n;
             let outputNotes = [outputNote1];
+            let outputNCs = [outputNc1];
             const totalInputNoteValue = inputNotes.reduce((sum, n) => sum + n.val, 0n);
             const change = totalInputNoteValue > privateValue ? totalInputNoteValue - privateValue : 0n;
 
@@ -197,12 +211,13 @@ export class JoinSplitCircuit {
                 let outputNote2: Note = new Note(change + inputNotes[0].val + inputNotes[1].val, secret, F.toObject(owner[0]), assetId, nullifier2);
                 outputNotes.push(outputNote2);
                 outputNc2 = await outputNote2.compress();
+                outputNCs.push(outputNc2);
             }
 
             let sig = await JoinSplitCircuit.calculateSignature(accountKey, nc1, nc2, outputNc1, outputNc2, publicOwner, publicValue);
 
             let input = new JoinSplitInput(
-                proofId, publicValue, publicOwner, assetId, aliasHash, inputNotes, outputNotes, sig
+                proofId, publicValue, publicOwner, assetId, aliasHash, inputNotes, outputNotes, outputNCs, sig
             );
         }
 
@@ -236,12 +251,14 @@ export class JoinSplitCircuit {
             owner[0],
             owner[1],
             owner[2],
-            owner[3],
+            owner[3]
         ]);
         return poseidon.F.toObject(res);
     }
 
-    static updateState() {
+    static async updateState(
+        state: StateTree
+    ) {
 
     }
 

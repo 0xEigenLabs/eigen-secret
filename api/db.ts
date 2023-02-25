@@ -1,5 +1,5 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
-require('dotenv').config();
+const { Sequelize, DataTypes, Model } = require("sequelize");
+require("dotenv").config();
 import { require_env_variables } from "./util";
 
 require_env_variables(["DB_NAME", "DB_USER", "DB_HOST", "DB_DRIVER", "DB_PASSWORD"]);
@@ -15,7 +15,7 @@ if (dbDriver == "sqlite") {
     // only for test
     sequelize = new Sequelize(dbName, dbUser, dbPassword, {
         host: dbHost,
-        storage: '/tmp/database.sqlite', // or ':memory:'
+        storage: "/tmp/database.sqlite", // or ':memory:'
         dialect: dbDriver
     })
 } else {
