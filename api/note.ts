@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 
 class NoteModel extends Model {}
@@ -29,12 +29,12 @@ NoteModel.init({
         type: DataTypes.BIGINT,
         allowNull: false
     },
-    state: {
+    index: {
         type: DataTypes.NUMBER,
-        allowNull: false,
+        allowNull: true
     }
 }, {
     // Other model options go here
     sequelize, // We need to pass the connection instance
-    modelName: 'NoteModel' // We need to choose the model name
+    modelName: "NoteModel" // We need to choose the model name
 });
