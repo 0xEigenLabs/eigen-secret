@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 
 class TransactionModel extends Model {}
@@ -12,10 +12,10 @@ TransactionModel.init({
     inputNote2Id: {
         type: DataTypes.INTEGER
         // allowNull defaults to true
-    },
+    }
 
 }, {
     // Other model options go here
     sequelize, // We need to pass the connection instance
-    modelName: 'TransactionModel' // We need to choose the model name
+    modelName: "TransactionModel" // We need to choose the model name
 });

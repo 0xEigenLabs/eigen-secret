@@ -16,15 +16,15 @@ const require_env_variables = (envVars: Array<string>) => {
   consola.success("Environmental variables properly set 👍");
 };
 
-const BaseResp = function (errno: ErrCode, message: string, data: string) {
+const baseResp = function(errno: ErrCode, message: string, data: string) {
   return { errno: errno, message: message, data: data };
-};
-const Succ = function (data: any) {
-  return BaseResp(0, "", data);
-};
-const Err = function (errno: ErrCode, message: string) {
-  return BaseResp(errno, message, "");
-};
+}
+const succ = function(data: any) {
+  return baseResp(0, "", data);
+}
+const err = function(errno: ErrCode, message: string) {
+  return baseResp(errno, message, "");
+}
 
 /**
  * Error code for a JSON responce.
@@ -39,7 +39,7 @@ export enum ErrCode {
   CryptoError = 4
 }
 
-const has_value = function (variable: any) {
+const has_value = function(variable: any) {
   if (variable === undefined) {
     return false;
   }
@@ -49,4 +49,4 @@ const has_value = function (variable: any) {
   return true;
 };
 
-export { BaseResp, Succ, Err, has_value, require_env_variables };
+export { baseResp, succ, err, has_value, require_env_variables };

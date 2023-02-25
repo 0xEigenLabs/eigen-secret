@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 
 class SessionModel extends Model {}
@@ -15,30 +15,31 @@ SessionModel.init({
     },
     expireAt: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: false
     }
 }, {
     // Other model options go here
     sequelize, // We need to pass the connection instance
-    modelName: 'SessionModel' // We need to choose the model name
+    modelName: "SessionModel" // We need to choose the model name
 });
 
 const DURATION: number = 10 * 60; // seconds
 
 export function login(alias: string, ethAddress: string): any {
-    // check if the record exists, updateOrAdd, 
+    // check if the record exists, updateOrAdd,
     let expireAt = Math.floor(Date.now() / 1000);
     let value = {
         alias: alias,
         ethAddress: ethAddress,
-        expireAt: expireAt + DURATION,
+        expireAt: expireAt + DURATION
     };
     return SessionModel
-        .findOne({ where: {alias: alias, ethAddress: ethAddress }} )
+        .findOne({ where: { alias: alias, ethAddress: ethAddress } } )
         .then(function(obj: any) {
             // update
-            if(obj)
-                return obj.update(value);
+            if (obj) {
+return obj.update(value);
+}
             // insert
             return Model.create(value);
         });
@@ -50,12 +51,13 @@ export function logout(alias: string, ethAddress: string) {
     let value = {
         alias: alias,
         ethAddress: ethAddress,
-        expireAt: expireAt,
+        expireAt: expireAt
     };
     return SessionModel
-        .findOne({ where: {alias: alias, ethAddress: ethAddress }} )
+        .findOne({ where: { alias: alias, ethAddress: ethAddress } } )
         .then(function(obj: any) {
-            if(obj)
-                return obj.update(value);
+            if (obj) {
+return obj.update(value);
+}
         })
 }

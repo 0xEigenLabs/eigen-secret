@@ -1,7 +1,6 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import { login } from "./session";
-import { Err, ErrCode, Succ, BaseResp } from "./util";
 
 class AccountModel extends Model {}
 
@@ -26,7 +25,7 @@ AccountModel.init({
 }, {
     // Other model options go here
     sequelize, // We need to pass the connection instance
-    modelName: 'AccountModel' // We need to choose the model name
+    modelName: "AccountModel" // We need to choose the model name
 });
 
 class LoginMessage {

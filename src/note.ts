@@ -2,29 +2,25 @@ const buildPoseidon = require("circomlibjs").buildPoseidon;
 import { Aes256gcm } from "./aes_gcm";
 import { bigint2Tuple } from "./utils";
 
-export enum NoteState {
-    // Pending = 1,
-    // Confirmed, // UTXO
-    // Destroyed,
-    // Cancel
-}
-
 export class Note {
     val: bigint;
     secret: bigint;
     ownerX: bigint;
     assetId: number;
     inputNullifier: bigint;
-    state: NoteState;
+    index: number | undefined;
 
-    constructor(val: bigint, secret: bigint, ownerX: bigint,
-        assetId: number, inputNullifier: bigint, state: NoteState) {
+    constructor(val: bigint, secret: bigint, ownerX: bigint, assetId: number, inputNullifier: bigint) {
         this.val = val;
         this.secret = secret;
         this.ownerX = ownerX;
         this.assetId = assetId;
         this.inputNullifier = inputNullifier;
-        this.state = state;
+        this.index = undefined;
+    }
+
+    get pending(): boolean {
+        return this.pending === undefined;
     }
 
     toCircuitInput(): any {
@@ -61,7 +57,7 @@ export class Note {
             assetId: this.assetId,
             ownerX: this.ownerX,
             inputNullifier: this.inputNullifier,
-            state: this.state
+            index: this.index
         });
         return aes.encrypt(data)
     }
@@ -70,13 +66,14 @@ export class Note {
         let aes = new Aes256gcm(this.secret);
         let jsonData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
         let data = JSON.parse(jsonData);
-        return new Note(
+        let n = new Note(
             data.val,
             data.secret,
             data.assetId,
             data.ownerX,
-            data.inputNullifier,
-            data.state
+            data.inputNullifier
         );
+        n.index = data.index;
+        return n;
     }
 }
