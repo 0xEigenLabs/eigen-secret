@@ -3,10 +3,10 @@ import { Aes256gcm } from "./aes_gcm";
 import { bigint2Tuple } from "./utils";
 
 export enum NoteState {
-    Pending = 1,
-    Confirmed, // UTXO
-    Destroyed,
-    Cancel
+    // Pending = 1,
+    // Confirmed, // UTXO
+    // Destroyed,
+    // Cancel
 }
 
 export class Note {
