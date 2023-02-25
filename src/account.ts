@@ -80,7 +80,7 @@ export class SigningKey implements IKey {
         return Promise.resolve(result)
     }
     sign: SignFunc = async (msghash: Uint8Array) => {
-        return Promise.reject("Unimplemented function");
+        return Promise.reject(new Error("Unimplemented function"));
     }
 }
 
@@ -96,14 +96,14 @@ export class AccountOrNullifierKey implements IKey {
     newKey: NewKeyFunc = async (signature: string) => {
         // return the first 32bytes as account key
         let prvKey = ethers.utils.arrayify(signature).slice(0, 32);
-        //let pubKey: Point = Point.fromPrivateKey(prvKey);
+        // let pubKey: Point = Point.fromPrivateKey(prvKey);
         let pubKey = getPublicKey(prvKey);
         let hexPubKey = "eth:" + Buffer.from(pubKey).toString("hex");
         let result: IKey = new AccountOrNullifierKey(prvKey, hexPubKey);
         return Promise.resolve(result);
     }
     sign: SignFunc = async (msghash: Uint8Array) => {
-            let sig: Uint8Array = await k1Sign(msghash, bigint2Uint8Array(this.prvKey), {canonical: true, der: false})
+            let sig: Uint8Array = await k1Sign(msghash, bigint2Uint8Array(this.prvKey), { canonical: true, der: false })
             return Promise.resolve(sig);
     }
 }

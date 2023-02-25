@@ -1,12 +1,9 @@
-const crypto = require('crypto');
 const { buildPoseidon, buildEddsa } = require("circomlibjs");
-const { Scalar, buildBn128, F1Field } = require("ffjavascript");
+const { buildBn128, F1Field } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
-const { Buffer } = require("buffer");
-import { ethers } from "ethers";
+import { Buffer } from "buffer";
 import { Note, NoteState } from "./note";
 import { SigningKey, AccountOrNullifierKey, EigenAddress, EthAddress } from "./account";
-import { strict as assert } from "assert";
 import { StateTree } from "./state_tree";
 import { bigint2Tuple } from "./utils";
 
@@ -30,7 +27,7 @@ export class JoinSplitInput {
         numInputNote: number,
         inputNotes: Note[],
         outputNotes: Note[],
-        sig: bigint,
+        sig: bigint
     ) {
         this.proofId = proofId;
         this.publicOwner = publicOwner;
@@ -73,7 +70,7 @@ export class JoinSplitCircuit {
         return poseidon.F.toObject(res);
     }
 
-    static async createDepositInput (
+    static async createDepositInput(
         accountKey: AccountOrNullifierKey,
         signingKey: SigningKey,
         state: StateTree,
@@ -81,11 +78,11 @@ export class JoinSplitCircuit {
         aliasHash: bigint,
         assetId: number,
         publicValue: bigint,
-        publicOwner: EigenAddress,
+        publicOwner: EigenAddress
     ): Promise<JoinSplitInput> {
         // check proofId and publicValue
         if (publicValue == 0n || proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT) {
-            return Promise.reject("proofId or publicValue is invalid");
+            return Promise.reject(new Error("proofId or publicValue is invalid"));
         }
 
         let bn128 = await buildBn128();
@@ -101,9 +98,9 @@ export class JoinSplitCircuit {
 
         // signature
         let outputNc1 = await outputNote.compress();
-        let sig = await JoinSplitCircuit.calculateSignature(accountKey, 0n, 0n, outputNc1, 0n, publicOwner, publicValue);
-
-        let input = new JoinSplitInput (
+        let sig = await JoinSplitCircuit.calculateSignature(accountKey,
+            0n, 0n, outputNc1, 0n, publicOwner, publicValue);
+        let input = new JoinSplitInput(
             proofId,
             publicValue,
             publicOwner,
@@ -112,7 +109,7 @@ export class JoinSplitCircuit {
             numInputNote,
             [],
             [outputNote],
-            sig,
+            sig
         );
         return input;
     }
@@ -172,7 +169,7 @@ export class JoinSplitCircuit {
             owner[0],
             owner[1],
             owner[2],
-            owner[3],
+            owner[3]
         ]);
         return poseidon.F.toObject(res);
     }

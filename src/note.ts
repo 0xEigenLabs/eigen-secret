@@ -17,7 +17,8 @@ export class Note {
     inputNullifier: bigint;
     state: NoteState;
 
-    constructor(val: bigint, secret: bigint, ownerX: bigint, assetId: number, inputNullifier: bigint, state: NoteState) {
+    constructor(val: bigint, secret: bigint, ownerX: bigint,
+        assetId: number, inputNullifier: bigint, state: NoteState) {
         this.val = val;
         this.secret = secret;
         this.ownerX = ownerX;
@@ -32,7 +33,7 @@ export class Note {
             secret: this.secret,
             owner: bigint2Tuple(this.ownerX),
             asset_id: this.assetId,
-            input_nullifier: this.inputNullifier,
+            input_nullifier: this.inputNullifier
         }
     }
 
