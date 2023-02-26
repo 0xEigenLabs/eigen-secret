@@ -61,7 +61,7 @@ export class StateTree {
         let siblings = res.siblings;
         for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
         while (siblings.length < N_LEVEL) siblings.push(0);
-        return new StateTreeCircuitInput(this.tree, [0, 0], res, siblings, _key, res.foundValue)
+        return new StateTreeCircuitInput(this.tree, [0, 0], res, siblings, key, res.foundValue)
     }
 
     async insert(_key: any, _value: any): Promise<StateTreeCircuitInput> {
@@ -72,7 +72,7 @@ export class StateTree {
         for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
         while (siblings.length < N_LEVEL) siblings.push(0);
 
-        return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, _key, _value);
+        return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
     }
 
     async delete(_key: any): Promise<StateTreeCircuitInput> {

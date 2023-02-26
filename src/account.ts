@@ -151,6 +151,6 @@ export async function compress(
     input.push(spk[0][0]);
     input.push(spk[0][1]);
     input.push(aliasHash);
-    let res = poseidon(input);
-    return poseidon.F.toObject(res);
+    return poseidon(input);
+    // return poseidon.F.toObject(res);
 }
