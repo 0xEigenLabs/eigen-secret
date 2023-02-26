@@ -72,6 +72,7 @@ describe("Test SMT Membership Update", function () {
         let ci2 = await tree.insert(key2, value2);
         let input2 = ci2.toNonMembershipUpdateInput();
         await utils.executeCircuit(circuit, input)
+        await utils.executeCircuit(circuit, input2)
     });
 });
 

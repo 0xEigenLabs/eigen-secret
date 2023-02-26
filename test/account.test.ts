@@ -2,12 +2,12 @@ import { test, utils } from "../index";
 import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
-import { EigenAddress, EthAddress, SigningKey } from "../src/account";
+import { EigenAddress, EthAddress, SigningKey, AccountOrNullifierKey, compress as accountCompress } from "../src/account";
 import { getPublicKey, Point } from "@noble/secp256k1";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 
-describe("Test NoteCompressor", function () {
+describe("Test Account Compressor", function () {
 
     let circuit: any;
     let eddsa: any;
@@ -18,6 +18,8 @@ describe("Test NoteCompressor", function () {
         eddsa = await buildEddsa();
         babyJub = await buildBabyjub();
         F = babyJub.F;
+        circuit = await test.genTempMain("circuits/account_note.circom",
+            "AccountNoteCompressor", "", "", {});
     })
 
     it("EigenAddress Test", async () => {
@@ -47,5 +49,19 @@ describe("Test NoteCompressor", function () {
         let pubKey2 = await key.unpack();
         let pubKey3 = Point.fromPrivateKey(prvKey);
         expect(pubKey2[0]).to.eq(pubKey3.x);
+    })
+
+    it("AccountCompress Test", async() => {
+        let accountKey = await (new AccountOrNullifierKey()).newKey(undefined);
+        let signingKey = await (new SigningKey()).newKey(undefined);
+        let aliasHash = 1n;
+        let hashed = await accountCompress(accountKey, signingKey, aliasHash);
+
+        let wtns = await utils.executeCircuit(circuit, {
+            npk: await accountKey.toCircuitInput(),
+            spk: (await signingKey.toCircuitInput())[0],
+            alias_hash: aliasHash
+        });
+        await circuit.assertOut(wtns, { out: hashed });
     })
 });

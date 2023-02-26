@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 const buildBabyjub = require("circomlibjs").buildBabyjub;
 const buildEddsa = require("circomlibjs").buildEddsa;
+const buildPoseidon = require("circomlibjs").buildPoseidon;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
@@ -130,4 +131,26 @@ export class AccountOrNullifierKey implements IKey {
         let pPub = await this.pubKey.unpack();
         return [bigint2Tuple(pPub[0]), bigint2Tuple(pPub[1])];
     }
+}
+
+export async function compress(
+    accountKey: AccountOrNullifierKey,
+    signingKey: SigningKey,
+    aliasHash: bigint) {
+    let npk = await accountKey.toCircuitInput();
+    let spk = await signingKey.toCircuitInput();
+
+    let poseidon = await buildPoseidon();
+    let input: bigint[] = [];
+    for (let i = 0; i < 2; i ++) {
+        let low = npk[i][0] * (2n**64n) + npk[i][1];
+        let high = npk[i][2] * (2n**64n) + npk[i][3];
+        input.push(low);
+        input.push(high);
+    }
+    input.push(spk[0][0]);
+    input.push(spk[0][1]);
+    input.push(aliasHash);
+    let res = poseidon(input);
+    return poseidon.F.toObject(res);
 }
