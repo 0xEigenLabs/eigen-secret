@@ -99,14 +99,14 @@ template JoinSplit(nLevel) {
     // Data validity checks:
     // true == (is_deposit || is_send || is_withdraw);
     //  true == (num_input_notes = 0 || 1 || 2);
-    component validType = GreaterThan(252);
-    validType.in[0] <== is_deposit.out + is_send.out + is_withdraw.out;
-    validType.in[1] <== 0;
-    validType.out === 1;
-    component validType2 = LessThan(252);
-    validType2.in[0] <== num_input_notes;
-    validType2.in[1] <== 3;
-    validType2.out === 1;
+    component valid_type = GreaterThan(252);
+    valid_type.in[0] <== is_deposit.out + is_send.out + is_withdraw.out;
+    valid_type.in[1] <== 0;
+    valid_type.out === 1;
+    component valid_type2 = LessThan(252);
+    valid_type2.in[0] <== num_input_notes;
+    valid_type2.in[1] <== 3;
+    valid_type2.out === 1;
 
     // is_public_tx = is_withdraw || is_deposit
     component is_public_tx = XOR();

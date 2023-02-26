@@ -4,6 +4,7 @@ import { assert, expect } from "chai";
 import { ethers } from "ethers";
 const Scalar = require("ffjavascript").Scalar;
 const ffutils = require("ffjavascript").utils;
+import { SigningKey, AccountOrNullifierKey } from "../src/account";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 
@@ -22,7 +23,7 @@ describe("Test View Key", function () {
             "EdDSAPoseidonVerifier", "", "", {});
     })
 
-    it("Sign test", async () => {
+    it("EdDSA Sign test", async () => {
         const msg = F.e(123411111111111n);
         let prvKey = ethers.utils.randomBytes(31);
         let pubKey = eddsa.prv2pub(prvKey);
@@ -42,6 +43,34 @@ describe("Test View Key", function () {
         await utils.executeCircuit(circuit, input);
     })
 
+    it("SigningKey Sign test", async () => {
+        const msg = F.e(123411111111111n);
+        let key = await (new SigningKey()).newKey(undefined);
+        let signature = await key.sign(msg);
+        let pubKey = await key.toCircuitInput();
+        assert(key.verify(signature, msg));
+
+        const input = {
+            enabled: 1,
+            Ax: pubKey[0][0],
+            Ay: pubKey[0][1],
+            R8x: F.toObject(signature.R8[0]),
+            R8y: F.toObject(signature.R8[1]),
+            S: signature.S,
+            M: F.toObject(msg)
+        };
+        await utils.executeCircuit(circuit, input);
+    })
+
+    it("AccountKey Sign test", async () => {
+        const msg = F.e(123411111111111n);
+        let key = await (new AccountOrNullifierKey()).newKey(undefined);
+        let signature = await key.sign(msg);
+        let pubKey = await key.toCircuitInput();
+        assert(key.verify(signature, msg));
+
+        // TODO test circuit
+    })
 });
 
 describe("Test Proof knowledge of Private Key", function () {

@@ -66,6 +66,11 @@ describe("Test SMT Membership Update", function () {
         const value = Fr.e("19650379996168153643111744440707177573540245771926102415571667548153444658179");
         let ci = await tree.insert(key, value);
         let input = ci.toNonMembershipUpdateInput();
+
+        const key2 = Fr.e("1");
+        const value2 = Fr.e("2");
+        let ci2 = await tree.insert(key2, value2);
+        let input2 = ci2.toNonMembershipUpdateInput();
         await utils.executeCircuit(circuit, input)
     });
 });
