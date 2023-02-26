@@ -58,12 +58,12 @@ template JoinSplit(nLevel) {
     signal input input_note_val[2];
     signal input input_note_secret[2];
     signal input input_note_asset_id[2];
-    signal input input_note_owner[2][2][4];
+    signal input input_note_owner[2][4];
     signal input input_note_nullifier[2];
     signal input siblings[2][nLevel];
     signal input output_note_val[2];
     signal input output_note_secret[2];
-    signal input output_note_owner[2][2][4];
+    signal input output_note_owner[2][4];
     signal input output_note_asset_id[2];
     signal input output_note_nullifier[2];
     signal input account_note_npk[2][4]; // (npk=account public key, ECDSA)
@@ -99,14 +99,14 @@ template JoinSplit(nLevel) {
     // Data validity checks:
     // true == (is_deposit || is_send || is_withdraw);
     //  true == (num_input_notes = 0 || 1 || 2);
-    component validType = GreaterThan(252);
-    validType.in[0] <== is_deposit.out + is_send.out + is_withdraw.out;
-    validType.in[1] <== 0;
-    validType.out === 1;
-    component validType2 = LessThan(252);
-    validType2.in[0] <== num_input_notes;
-    validType2.in[1] <== 3;
-    validType2.out === 1;
+    component valid_type = GreaterThan(252);
+    valid_type.in[0] <== is_deposit.out + is_send.out + is_withdraw.out;
+    valid_type.in[1] <== 0;
+    valid_type.out === 1;
+    component valid_type2 = LessThan(252);
+    valid_type2.in[0] <== num_input_notes;
+    valid_type2.in[1] <== 3;
+    valid_type2.out === 1;
 
     // is_public_tx = is_withdraw || is_deposit
     component is_public_tx = XOR();
@@ -155,7 +155,7 @@ template JoinSplit(nLevel) {
         nc[i] = NoteCompressor();
         nc[i].val <== input_note_val[i];
         nc[i].asset_id <== input_note_asset_id[i];
-        nc[i].owner <== input_note_owner[i][0]; // using point.x
+        nc[i].owner <== input_note_owner[i]; // using point.x
         nc[i].secret <== input_note_secret[i];
         nc[i].input_nullifier <== input_note_nullifier[i];
 
@@ -202,8 +202,8 @@ template JoinSplit(nLevel) {
     pri2pub.pubkey === account_note_npk;
 
     // check account_note_npk == input_note_1.owner && account_note_npk == input_note_2.owner
-    account_note_npk === input_note_owner[0];
-    account_note_npk === input_note_owner[1];
+    account_note_npk[0] === input_note_owner[0];
+    account_note_npk[0] === input_note_owner[1];
 
     //check signature
     component msghash = Digest(4);
