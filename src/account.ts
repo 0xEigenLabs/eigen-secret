@@ -6,7 +6,7 @@ const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import { bigint2Uint8Array, bigint2Tuple } from "./utils";
+import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
 
 type UnpackFunc = () => Promise<[any, any]>;
 interface Address {
@@ -49,7 +49,7 @@ export class EthAddress implements Address {
 }
 
 type NewKeyFunc = (seed: string | undefined) => Promise<IKey>;
-type SignFunc = (msghash: Uint8Array) => Promise<Uint8Array | any>;
+type SignFunc = (msghash: Uint8Array) => Promise<any>;
 type VerifyFunc = (signature: Uint8Array | any, msghash: Uint8Array) => Promise<boolean>;
 type KeyToCircuitInput = () => Promise<bigint[][]>;
 export interface IKey {
@@ -120,8 +120,33 @@ export class AccountOrNullifierKey implements IKey {
         return Promise.resolve(this);
     }
     sign: SignFunc = async (msghash: Uint8Array) => {
-            let sig: Uint8Array = await k1Sign(msghash, this.prvKey, { canonical: true, der: false })
-            return Promise.resolve(sig);
+            let sig: Uint8Array = await k1Sign(msghash, bigint2Uint8Array(this.prvKey), { canonical: true, der: false })
+
+            var r: Uint8Array = sig.slice(0, 32);
+            var r_bigint: bigint = utils.uint8Array2Bigint(r);
+            var s: Uint8Array = sig.slice(32, 64);
+            var s_bigint: bigint = utils.uint8Array2Bigint(s);
+
+            var r_array: bigint[] = bigint2Array(64, 4, r_bigint);
+            var s_array: bigint[] = bigint2Array(64, 4, s_bigint);
+            /*
+            var msghash_array: bigint[] = utils.bigint2Array(64, 4, msghash_bigint);
+            var pub0_array: bigint[] = utils.bigint2Array(64, 4, pub0);
+            var pub1_array: bigint[] = utils.bigint2Array(64, 4, pub1);
+
+            console.log('r', r_bigint);
+            console.log('s', s_bigint);
+            let witness = await circuit.calculateWitness({
+                "r": r_array,
+                "s": s_array,
+                "msghash": msghash_array,
+                "pubkey": [pub0_array, pub1_array]
+            };
+            */
+            return Promise.resolve({
+                R: r_array,
+                S: s_array
+            });
     }
     verify: VerifyFunc = async (signature: Uint8Array | any, msghash: Uint8Array) => {
         let pPub = await this.pubKey.unpack();
