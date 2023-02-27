@@ -122,13 +122,13 @@ export class AccountOrNullifierKey implements IKey {
     sign: SignFunc = async (msghash: Uint8Array) => {
             let sig: Uint8Array = await k1Sign(msghash, bigint2Uint8Array(this.prvKey), { canonical: true, der: false })
 
-            var r: Uint8Array = sig.slice(0, 32);
-            var r_bigint: bigint = utils.uint8Array2Bigint(r);
-            var s: Uint8Array = sig.slice(32, 64);
-            var s_bigint: bigint = utils.uint8Array2Bigint(s);
+            let r: Uint8Array = sig.slice(0, 32);
+            let r_bigint: bigint = utils.uint8Array2Bigint(r);
+            let s: Uint8Array = sig.slice(32, 64);
+            let s_bigint: bigint = utils.uint8Array2Bigint(s);
 
-            var r_array: bigint[] = bigint2Array(64, 4, r_bigint);
-            var s_array: bigint[] = bigint2Array(64, 4, s_bigint);
+            let r_array: bigint[] = bigint2Array(64, 4, r_bigint);
+            let s_array: bigint[] = bigint2Array(64, 4, s_bigint);
             /*
             var msghash_array: bigint[] = utils.bigint2Array(64, 4, msghash_bigint);
             var pub0_array: bigint[] = utils.bigint2Array(64, 4, pub0);
