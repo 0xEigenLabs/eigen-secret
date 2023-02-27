@@ -8,14 +8,14 @@ base_dir=${CUR_DIR}/${circuit_name}_js
 export NODE_OPTIONS=--max_old_space_size=4096
 snarkjs=${CUR_DIR}/../node_modules/.bin/snarkjs
 
-circom ${circuit_name}.circom ../third-party --r1cs --wasm --sym
+circom ${circuit_name}.circom --r1cs --wasm --sym
 
 mv ${circuit_name}.r1cs ${circuit_name}.sym  $base_dir
 cd $base_dir
-node ../../scripts/generate_zkpay.js
+#node ../../scripts/generate_zkpay.js
 
 #Prapare phase 1
-node generate_witness.js ${circuit_name}.wasm input.json witness.wtns
+node generate_witness.js ${circuit_name}.wasm ${CUR_DIR}/input.json witness.wtns
 
 if [ ! -f "${CUR_DIR}/circuit_final.zkey" ]; then
     $snarkjs powersoftau new bn128 ${POWER} pot${POWER}_0000.ptau -v

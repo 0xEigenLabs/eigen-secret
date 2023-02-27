@@ -6,7 +6,7 @@ const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import { bigint2Uint8Array, bigint2Tuple } from "./utils";
+import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
 
 type UnpackFunc = () => Promise<[any, any]>;
 interface Address {
@@ -49,7 +49,7 @@ export class EthAddress implements Address {
 }
 
 type NewKeyFunc = (seed: string | undefined) => Promise<IKey>;
-type SignFunc = (msghash: Uint8Array) => Promise<Uint8Array | any>;
+type SignFunc = (msghash: Uint8Array) => Promise<any>;
 type VerifyFunc = (signature: Uint8Array | any, msghash: Uint8Array) => Promise<boolean>;
 type KeyToCircuitInput = () => Promise<bigint[][]>;
 export interface IKey {
@@ -70,10 +70,6 @@ export class SigningKey implements IKey {
     newKey: NewKeyFunc = async (_seed: string | undefined) => {
         let eddsa = await buildEddsa();
         let rawpvk = Buffer.from(ethers.utils.randomBytes(31));
-        // let pvk = eddsa.pruneBuffer(createBlakeHash("blake512")
-        //    .update(rawpvk)
-        //    .digest().slice(0, 32));
-        // let prvKey = Scalar.shr(utils.leBuff2int(pvk), 3);
         let pubKey = eddsa.prv2pub(rawpvk);
         let pPubKey = eddsa.babyJub.packPoint(pubKey);
         let hexPubKey = "eig:" + Buffer.from(pPubKey).toString("hex");
@@ -83,7 +79,12 @@ export class SigningKey implements IKey {
     }
     sign: SignFunc = async (msghash: Uint8Array) => {
         let eddsa = await buildEddsa();
-        return eddsa.signPoseidon(this.prvKey, msghash);
+        let F = eddsa.F;
+        let result = eddsa.signPoseidon(this.prvKey, msghash);
+        return {
+            R8: [F.toObject(result.R8[0]), F.toObject(result.R8[1])],
+            S: result.S
+        }
     }
     verify: VerifyFunc = async (signature: Uint8Array | any, msghash: Uint8Array) => {
         let eddsa = await buildEddsa();
@@ -93,10 +94,14 @@ export class SigningKey implements IKey {
     toCircuitInput: KeyToCircuitInput = async () => {
         let eddsa = await buildEddsa();
         let pPub = await this.pubKey.unpack();
+
+        const pvk = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.prvKey).digest().slice(0, 32));
+        const S = Scalar.shr(utils.leBuff2int(pvk), 3);
+
         return [[
             eddsa.F.toObject(pPub[0]),
             eddsa.F.toObject(pPub[1])
-        ]];
+        ], [S]];
     }
 }
 
@@ -120,8 +125,9 @@ export class AccountOrNullifierKey implements IKey {
         return Promise.resolve(this);
     }
     sign: SignFunc = async (msghash: Uint8Array) => {
-            let sig: Uint8Array = await k1Sign(msghash, this.prvKey, { canonical: true, der: false })
-            return Promise.resolve(sig);
+        // let sig: Uint8Array = await k1Sign(msghash, this.prvKey, { canonical: true, der: false })
+        // return Promise.resolve(sig);
+        throw new Error("Unimplemented");
     }
     verify: VerifyFunc = async (signature: Uint8Array | any, msghash: Uint8Array) => {
         let pPub = await this.pubKey.unpack();
@@ -134,7 +140,7 @@ export class AccountOrNullifierKey implements IKey {
 }
 
 export async function compress(
-    accountKey: AccountOrNullifierKey,
+    accountKey: SigningKey,
     signingKey: SigningKey,
     aliasHash: bigint) {
     let npk = await accountKey.toCircuitInput();
@@ -142,12 +148,8 @@ export async function compress(
 
     let poseidon = await buildPoseidon();
     let input: bigint[] = [];
-    for (let i = 0; i < 2; i ++) {
-        let low = npk[i][0] * (2n**64n) + npk[i][1];
-        let high = npk[i][2] * (2n**64n) + npk[i][3];
-        input.push(low);
-        input.push(high);
-    }
+    input.push(npk[0][0]);
+    input.push(npk[0][1]);
     input.push(spk[0][0]);
     input.push(spk[0][1]);
     input.push(aliasHash);

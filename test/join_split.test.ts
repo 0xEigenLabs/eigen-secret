@@ -31,7 +31,7 @@ describe("Test JoinSplit Circuit", function () {
         let third = path.join(__dirname, "../third-party");
         circuit = await test.genTempMain("circuits/join_split.circom",
             "JoinSplit", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root", "20", {include: third});
-        accountKey = await (new AccountOrNullifierKey()).newKey(undefined);
+        accountKey = await (new SigningKey()).newKey(undefined);
         signingKey = await (new SigningKey()).newKey(undefined);
         worldState = new StateTree();
         await worldState.init();

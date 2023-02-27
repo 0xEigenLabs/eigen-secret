@@ -52,13 +52,13 @@ describe("Test Account Compressor", function () {
     })
 
     it("AccountCompress Test", async() => {
-        let accountKey = await (new AccountOrNullifierKey()).newKey(undefined);
+        let accountKey = await (new SigningKey()).newKey(undefined);
         let signingKey = await (new SigningKey()).newKey(undefined);
         let aliasHash = 1n;
         let hashed = await accountCompress(accountKey, signingKey, aliasHash);
 
         let wtns = await utils.executeCircuit(circuit, {
-            npk: await accountKey.toCircuitInput(),
+            npk: (await accountKey.toCircuitInput())[0],
             spk: (await signingKey.toCircuitInput())[0],
             alias_hash: aliasHash
         });

@@ -1,28 +1,27 @@
 pragma circom 2.0.2;
 include "../node_modules/circomlib/circuits/poseidon.circom";
+include "../node_modules/circomlib/circuits/eddsaposeidon.circom";
+include "../node_modules/circomlib/circuits/babyjub.circom";
 include "../node_modules/circomlib/circuits/gates.circom";
 include "../node_modules/circomlib/circuits/smt/smtprocessor.circom";
 include "../node_modules/circomlib/circuits/comparators.circom";
 include "../node_modules/circomlib/circuits/gates.circom";
-include "../third-party/circom-ecdsa/circuits/ecdsa.circom";
 include "state_tree.circom";
 include "account_note.circom";
 include "nullifier_function.circom";
 include "note_compressor.circom";
 include "if_gadgets.circom";
 
-template Digest(k) {
-    assert(k < 7);
+template Digest() {
     signal input nc_1;
     signal input nc_2;
     signal input output_note_nc_1;
     signal input output_note_nc_2;
     signal input public_owner;
     signal input public_value;
-    signal output out[k];
+    signal output out;
 
-    component hash = PoseidonEx(6, k);
-    hash.initialState <== 0;
+    component hash = Poseidon(6);
     hash.inputs[0] <== nc_1;
     hash.inputs[1] <== nc_2;
     hash.inputs[2] <== output_note_nc_1;
@@ -58,19 +57,20 @@ template JoinSplit(nLevel) {
     signal input input_note_val[2];
     signal input input_note_secret[2];
     signal input input_note_asset_id[2];
-    signal input input_note_owner[2][2][4];
+    signal input input_note_owner[2][2];
     signal input input_note_nullifier[2];
     signal input siblings[2][nLevel];
     signal input output_note_val[2];
     signal input output_note_secret[2];
-    signal input output_note_owner[2][2][4];
+    signal input output_note_owner[2][2];
     signal input output_note_asset_id[2];
     signal input output_note_nullifier[2];
-    signal input account_note_npk[2][4]; // (npk=account public key, ECDSA)
-    signal input account_note_nk[4]; // (nk = account private key, ECDSA)
-    signal input account_note_spk[2]; // (spk=view public key, EdDSA)
+    signal input account_note_npk[2]; // (npk=account public key)
+    signal input account_note_nk; // (nk = account private key)
+    signal input account_note_spk[2]; // (spk=view public key)
     signal input siblings_ac[nLevel];
-    signal input signature[2][4]; // ecdsa signature
+    signal input signatureR8[2]; // eddsa signature
+    signal input signatureS; // eddsa signature
 
     //range check
     component is_less_than[2][2];
@@ -132,10 +132,10 @@ template JoinSplit(nLevel) {
     valid_public.b <== is_public_no.out;
     valid_public.out === 1;
 
-    //num_input_notes == 0 && is_deposit == true
-    component is_deposit_c = AllLow(2);
-    is_deposit_c.in[0] <== num_input_notes;
-    is_deposit_c.in[1] <== is_deposit.out - 1;
+    // num_input_notes == 0 => is_deposit == true
+    component is_deposit_c = GreaterThan(252);
+    is_deposit_c.in[0] <== num_input_notes + is_deposit.out;
+    is_deposit_c.in[1] <== 0;
     is_deposit_c.out === 1;
 
     component input_note_in_use[2];
@@ -148,28 +148,36 @@ template JoinSplit(nLevel) {
     input_note_in_use[1].in[1] <== 1;
 
     //note validity check
-    component nc[2];
+    component inc[2]; //note commitment input
+    component onc[2];
     component nf[2];
     component ms[2];
     for(var i = 0;  i < 2; i ++) {
-        nc[i] = NoteCompressor();
-        nc[i].val <== input_note_val[i];
-        nc[i].asset_id <== input_note_asset_id[i];
-        nc[i].owner <== input_note_owner[i][0]; // using point.x
-        nc[i].secret <== input_note_secret[i];
-        nc[i].input_nullifier <== input_note_nullifier[i];
+        onc[i] = NoteCompressor();
+        onc[i].val <== output_note_val[i];
+        onc[i].asset_id <== output_note_asset_id[i];
+        onc[i].owner <== output_note_owner[i];
+        onc[i].secret <== output_note_secret[i];
+        onc[i].input_nullifier <== output_note_nullifier[i];
 
         ms[i] = Membership(nLevel);
-        ms[i].key <== nc[i].out;
+        ms[i].key <== onc[i].out;
         ms[i].value <== num_input_notes;
         ms[i].root <== data_tree_root;
-        ms[i].enabled <== input_note_in_use[i].out;
+        ms[i].enabled <== 0;//input_note_in_use[i].out;
         for (var j = 0; j < nLevel; j++) {
             ms[i].siblings[j] <== siblings[i][j];
         }
 
+        inc[i] = NoteCompressor();
+        inc[i].val <== input_note_val[i];
+        inc[i].asset_id <== input_note_asset_id[i];
+        inc[i].owner <== input_note_owner[i];
+        inc[i].secret <== input_note_secret[i];
+        inc[i].input_nullifier <== input_note_nullifier[i];
+
         nf[i] = NullifierFunction(nLevel);
-        nf[i].nc <== nc[i].out;
+        nf[i].nc <== inc[i].out;
         nf[i].nk <== account_note_nk;
         nf[i].input_note_in_use <== input_note_in_use[i].out;
 
@@ -178,8 +186,8 @@ template JoinSplit(nLevel) {
 
     // nc[0].out != nc[1].out
     component nc_not_same = IsEqual();
-    nc_not_same.in[0] <== nc[0].out;
-    nc_not_same.in[1] <== nc[1].out;
+    nc_not_same.in[0] <== onc[0].out;
+    nc_not_same.in[1] <== onc[1].out;
     nc_not_same.out === 0;
 
     component ac = AccountNoteCompressor();
@@ -197,47 +205,52 @@ template JoinSplit(nLevel) {
     }
 
     // check private key to public key
-    component pri2pub = ECDSAPrivToPub(64, 4);
-    pri2pub.privkey <== account_note_nk;
-    pri2pub.pubkey === account_note_npk;
+    component pri2pub = BabyPbk();
+    pri2pub.in <== account_note_nk;
+    pri2pub.Ax === account_note_npk[0];
+    pri2pub.Ay === account_note_npk[1];
 
     // check account_note_npk == input_note_1.owner && account_note_npk == input_note_2.owner
     account_note_npk === input_note_owner[0];
     account_note_npk === input_note_owner[1];
 
     //check signature
-    component msghash = Digest(4);
-    msghash.nc_1 <== nc[0].out;
-    msghash.nc_2 <== nc[1].out;
+    component msghash = Digest();
+    msghash.nc_1 <== nf[0].out;
+    msghash.nc_2 <== nf[1].out;
     msghash.output_note_nc_1 <== output_nc_1;
     msghash.output_note_nc_2 <== output_nc_2;
     msghash.public_value <== public_value;
     msghash.public_owner <== public_owner;
 
-    component sig_verifier = ECDSAVerifyNoPubkeyCheck(64, 4);
-    sig_verifier.r <== signature[0];
-    sig_verifier.s <== signature[1];
-    sig_verifier.msghash <== msghash.out;
-    sig_verifier.pubkey <== account_note_npk;
-    sig_verifier.result === 1;
+    component sig_verifier = EdDSAPoseidonVerifier();
+    sig_verifier.enabled <== 1;
+    sig_verifier.R8x <== signatureR8[0];
+    sig_verifier.R8y <== signatureR8[1];
+    sig_verifier.S <== signatureS;
+    sig_verifier.M <== msghash.out;
+    sig_verifier.Ax <== account_note_npk[0];
+    sig_verifier.Ay <== account_note_npk[1];
 
-    // check value:  FIXME
-    //case 1: num_input_notes < 1 && input_note_1.value == 0
+    // check value
+    //case 1: num_input_notes < 1 => input_note_1.value == 0
     component note_num_less[2];
     note_num_less[0] = LessThan(252);
     note_num_less[0].in[0] <== num_input_notes;
     note_num_less[0].in[1] <== 1;
-    component note_1_value_check = AllLow(2);
-    note_1_value_check.in[0] <== note_num_less[0].out - 1;
-    note_1_value_check.in[1] <== input_note_val[0];
+    component note_1_value_check = GreaterThan(252);
+    note_1_value_check.in[0] <== note_num_less[0].out + input_note_val[0];
+    note_1_value_check.in[1] <== 0;
+    note_1_value_check.out === 1;
 
-    //case 2: num_input_notes < 2 && input_note_2.value == 0
+    //case 2: num_input_notes < 2 => input_note_2.value == 0
     note_num_less[1] = LessThan(252);
     note_num_less[1].in[0] <== num_input_notes;
     note_num_less[1].in[1] <== 2;
-    component note_2_value_check = AllLow(2);
-    note_2_value_check.in[0] <== note_num_less[0].out - 1;
-    note_2_value_check.in[1] <== input_note_val[1];
+    component note_2_value_check = GreaterThan(252);
+    note_2_value_check.in[0] <== note_num_less[0].out + input_note_val[1];
+    note_2_value_check.in[1] <== 0;
+    note_2_value_check.out === 1;
 
     // transfer balance check
     var total_in_value = public_input_ + input_note_val[0] + input_note_val[1];
