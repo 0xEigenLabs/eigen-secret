@@ -17,6 +17,7 @@ export class JoinSplitInput {
     publicValue: bigint;
     publicOwner: bigint;
     assetId: number;
+    publicAssetId: number;
     aliasHash: bigint;
     numInputNote: number;
     inputNotes: Note[];
@@ -36,6 +37,7 @@ export class JoinSplitInput {
         publicValue: bigint,
         publicOwner: bigint,
         assetId: number,
+        publicAssetId: number,
         aliasHash: bigint,
         numInputNote: number,
         inputNotes: Note[],
@@ -53,6 +55,7 @@ export class JoinSplitInput {
         this.publicOwner = publicOwner;
         this.publicValue = publicValue;
         this.assetId = assetId;
+        this.publicAssetId = publicAssetId;
         this.aliasHash = aliasHash;
         this.numInputNote = numInputNote;
         this.inputNotes = inputNotes;
@@ -79,6 +82,7 @@ export class JoinSplitInput {
             output_nc_2: this.outputNCs[1],
             data_tree_root: this.dataTreeRoot,
             asset_id: this.assetId,
+            public_asset_id: this.publicAssetId,
             alias_hash: this.aliasHash,
             input_note_val: new Array<bigint>(2),
             input_note_secret: new Array<bigint>(2),
@@ -148,8 +152,10 @@ export class JoinSplitCircuit {
         proofId: number,
         aliasHash: bigint,
         assetId: number,
+        publicAssetId: number,
         publicValue: bigint,
         publicOwner: EigenAddress,
+        noteRecipent: EigenAddress,
         confirmedAndPendingInputNotes: Array<Note>
     ): Promise<Array<JoinSplitInput>> {
         // check proofId and publicValue
@@ -165,19 +171,18 @@ export class JoinSplitCircuit {
             proofId,
             aliasHash,
             assetId,
+            publicAssetId,
             publicValue,
             publicOwner,
-            0n,
-            0n,
             publicValue,
-            signingKey.pubKey,
+            noteRecipent,
             confirmedAndPendingInputNotes
         );
         return Promise.resolve(res);
     }
 
-    static fakeNote(F: any, owner: bigint[], assetId: number) {
-        return new Note(0n, 0n, owner, assetId, F.toObject(F.random()));
+    static fakeNote(F: any, owner: bigint[], assetId: number, index: number | undefined = undefined) {
+        return new Note(0n, 0n, owner, assetId, F.toObject(F.random()), index);
     }
 
     static async createProofInput(
@@ -188,31 +193,29 @@ export class JoinSplitCircuit {
         proofId: number,
         aliasHash: bigint,
         assetId: number,
+        publicAssetId: number,
         publicValue: bigint,
-        publicOwner: EigenAddress,
-        privateValue: bigint,
+        publicOwner: EigenAddress | undefined,
         recipientPrivateOutput: bigint,
-        senderPrivateOutput: bigint,
-        noteRecipent: EigenAddress | undefined,
+        noteRecipent: EigenAddress,
         confirmedAndPendingInputNotes: Array<Note>
     ) {
-        if (privateValue && !confirmedAndPendingInputNotes.length) {
-            throw new Error(`Failed to find notes that sum to ${privateValue}.`)
-        }
         let eddsa = await buildEddsa();
         const F = eddsa.F;
         const confirmedNote = confirmedAndPendingInputNotes.filter((n) => !n.pending);
         let owner = await accountKey.pubKey.unpack();
         owner = [F.toObject(owner[0]), F.toObject(owner[1])];
 
-        let publicOwnerXY = await publicOwner.unpack();
-        let publicOwnerX = F.toObject(publicOwnerXY[0]);
+        let publicOwnerX = 0n;
+        if (publicOwner !== undefined) {
+            let publicOwnerXY = await publicOwner.unpack();
+            publicOwnerX = F.toObject(publicOwnerXY[0]);
+        }
 
-        // FIXME: what to do if firstNode is undefined
         let firstNote = confirmedAndPendingInputNotes.find((n) => n.pending) ||
             confirmedNote.shift();
+        let lastNote = confirmedNote.pop();
         let numInputNote = 0;
-        let inputNotes: Note[] = [];
 
         let inputList = new Array<JoinSplitInput>(0);
         // Merge all the confirmed notes and public input and output into 2 notes.
@@ -248,7 +251,7 @@ export class JoinSplitCircuit {
 
             let ak = await accountKey.toCircuitInput();
             let input = new JoinSplitInput(
-                proofId, 0n, 0n, assetId, aliasHash,
+                proofId, 0n, 0n, assetId, publicAssetId, aliasHash,
                 numInputNote,
                 [firstNote, note],
                 [outputNote1, outputNote2],
@@ -267,21 +270,26 @@ export class JoinSplitCircuit {
 
         // merge the last note and public input
         {
+            // assert(firstNote);
+            let inputNotes: Note[] = [];
             if (firstNote) {
-                inputNotes.push(firstNote);
+                inputNotes = lastNote? [firstNote, lastNote] : [firstNote];
             }
             let inputNoteInUse: bigint[] = [1n, 1n];
+            numInputNote = inputNotes.length;
+            // let startIndex = inputNotes[inputNotes.length - 1].index;
             for (let i = inputNotes.length; i < 2; i ++) {
                 inputNotes.push(
                     JoinSplitCircuit.fakeNote(F, owner, assetId)
                 );
                 inputNoteInUse[i] = 0n;
+                // startIndex += 1;
             }
 
             let nc1 = await inputNotes[0].compress();
             let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, inputNoteInUse[0], accountKey);
             let secret = F.toObject(F.random()); // FIXME: shared secret
-            let outputNote1 = new Note(0n, secret, owner, assetId, nullifier1);
+            let outputNote1 = new Note(recipientPrivateOutput, secret, owner, assetId, nullifier1);
             let outputNc1 = await outputNote1.compress();
 
             let nc2 = 0n;
@@ -289,21 +297,20 @@ export class JoinSplitCircuit {
             let outputNotes = [outputNote1];
             let outputNCs = [outputNc1];
             const totalInputNoteValue = inputNotes.reduce((sum, n) => sum + n.val, 0n);
-            const change = totalInputNoteValue > privateValue ? totalInputNoteValue - privateValue : 0n;
+            const change = totalInputNoteValue > recipientPrivateOutput ?
+                (totalInputNoteValue - recipientPrivateOutput) : 0n;
 
             assert(inputNotes[1]);
             nc2 = await inputNotes[1].compress();
             let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, inputNoteInUse[1], accountKey);
             let outputNote2: Note = new Note(
-                change + publicValue,
+                change,
                 secret, owner, assetId, nullifier2
             );
             outputNotes.push(outputNote2);
             outputNc2 = await outputNote2.compress();
             outputNCs.push(outputNc2);
 
-            let publicOwnerXY = await publicOwner.unpack();
-            let publicOwnerX = F.toObject(publicOwnerXY[0]);
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
             await state.insert(outputNc1, inputNotes.length);
@@ -313,7 +320,7 @@ export class JoinSplitCircuit {
             let ac = await state.find(F.e(acStateKey));
             let ak = await accountKey.toCircuitInput();
             let input = new JoinSplitInput(
-                proofId, publicValue, publicOwnerX, assetId, aliasHash,
+                proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
                 F.toObject(state.root()),
                 [noteInput1.siblings, noteInput2.siblings],
@@ -352,6 +359,7 @@ export class JoinSplitCircuit {
         const pvk = eddsa.pruneBuffer(createBlakeHash("blake512").update(nk.prvKey).digest().slice(0, 32));
         const ak = Scalar.shr(utils.leBuff2int(pvk), 3);
 
+        console.log("calculateNullifier", nc, inputNoteInUse, ak);
         let res = poseidon([
             nc,
             inputNoteInUse,

@@ -50,6 +50,7 @@ template JoinSplit(nLevel) {
     signal input output_nc_1; //(nc is short for note commitment)
     signal input output_nc_2;
     signal input data_tree_root;
+    signal input public_asset_id;
 
     //private input
     signal input asset_id;
@@ -67,7 +68,7 @@ template JoinSplit(nLevel) {
     signal input output_note_nullifier[2];
     signal input account_note_npk[2]; // (npk=account public key)
     signal input account_note_nk; // (nk = account private key)
-    signal input account_note_spk[2]; // (spk=view public key)
+    signal input account_note_spk[2]; // (spk=signing public key)
     signal input siblings_ac[nLevel];
     signal input signatureR8[2]; // eddsa signature
     signal input signatureS; // eddsa signature
@@ -97,7 +98,7 @@ template JoinSplit(nLevel) {
     is_send.in[1] <== TYPE_SEND;
 
     // Data validity checks:
-    // true == (is_deposit || is_send || is_withdraw);
+    // true == (is_deposit || is_send || is_withdraw); // TODO: one or more true? Can a tx include both a `send to L1` and a `send to L2`?
     //  true == (num_input_notes = 0 || 1 || 2);
     component valid_type = GreaterThan(252);
     valid_type.in[0] <== is_deposit.out + is_send.out + is_withdraw.out;
@@ -181,10 +182,12 @@ template JoinSplit(nLevel) {
         nf[i].nk <== account_note_nk;
         nf[i].input_note_in_use <== input_note_in_use[i].out;
 
+        // TODO push input notes into nullifier tree
+
         input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]) === 0;
     }
 
-    // nc[0].out != nc[1].out
+    // onc[0].out != onc[1].out
     component nc_not_same = IsEqual();
     nc_not_same.in[0] <== onc[0].out;
     nc_not_same.in[1] <== onc[1].out;
@@ -214,7 +217,7 @@ template JoinSplit(nLevel) {
     account_note_npk === input_note_owner[0];
     account_note_npk === input_note_owner[1];
 
-    //check signature
+    // check signature
     component msghash = Digest();
     msghash.nc_1 <== nf[0].out;
     msghash.nc_2 <== nf[1].out;
@@ -232,26 +235,6 @@ template JoinSplit(nLevel) {
     sig_verifier.Ax <== account_note_npk[0];
     sig_verifier.Ay <== account_note_npk[1];
 
-    // check value
-    //case 1: num_input_notes < 1 => input_note_1.value == 0
-    component note_num_less[2];
-    note_num_less[0] = LessThan(252);
-    note_num_less[0].in[0] <== num_input_notes;
-    note_num_less[0].in[1] <== 1;
-    component note_1_value_check = GreaterThan(252);
-    note_1_value_check.in[0] <== note_num_less[0].out + input_note_val[0];
-    note_1_value_check.in[1] <== 0;
-    note_1_value_check.out === 1;
-
-    //case 2: num_input_notes < 2 => input_note_2.value == 0
-    note_num_less[1] = LessThan(252);
-    note_num_less[1].in[0] <== num_input_notes;
-    note_num_less[1].in[1] <== 2;
-    component note_2_value_check = GreaterThan(252);
-    note_2_value_check.in[0] <== note_num_less[0].out + input_note_val[1];
-    note_2_value_check.in[1] <== 0;
-    note_2_value_check.out === 1;
-
     // transfer balance check
     var total_in_value = public_input_ + input_note_val[0] + input_note_val[1];
     var total_out_value = public_output_ + output_note_val[0] + output_note_val[1];
@@ -260,35 +243,18 @@ template JoinSplit(nLevel) {
     balance_check.in[1] <== total_out_value;
     1 === balance_check.out;
 
-    // asset type check
+    // output note type check
     //  (asset_id == input_note_1.asset_id) &&
     //  (asset_id == output_note_1.asset_id) &&
     //  (asset_id == output_note_2.asset_id)
-    input_note_asset_id[0] === asset_id;
-    output_note_asset_id[0] === input_note_asset_id[0];
-    output_note_asset_id[0] === output_note_asset_id[1];
+    asset_id === input_note_asset_id[0];
+    asset_id === output_note_asset_id[0];
+    asset_id === output_note_asset_id[1];
 
-    // if num_input_notes == 2 && input_note_1.asset_id == input_note_2.asset_id
-    output_note_asset_id[0] === input_note_asset_id[1];
+    // num_input_notes == 2 (input_note_in_use[1].out == 1) => input_note_1.asset_id == input_note_2.asset_id
+    input_note_in_use[1].out * (input_note_asset_id[0] - input_note_asset_id[1]) === 0;
 
-    //check: asset_id == input_note_1.asset_id <==> (public_input_ != 0 || public_output != 0)
-    component public_input_1 = IsEqual();
-    public_input_1.in[0] <== public_input_;
-    public_input_1.in[1] <== 0;
-    component public_output_1 = IsEqual();
-    public_output_1.in[0] <== public_output_;
-    public_output_1.in[1] <== 0;
-
-    component xor = XOR();
-    xor.a <== public_input_1.out;
-    xor.b <== public_output_1.out;
-
-    component asset_id_eq = IsEqual();
-    asset_id_eq.in[0] <== asset_id;
-    asset_id_eq.in[1] <== input_note_asset_id[0];
-
-    component and = AND();
-    and.a <== xor.out;
-    and.b <== asset_id_eq.out;
-    and.out === 1;
+    //check: public_asset_id == input_note_1.asset_id <==> (public_input_ != 0 || public_output != 0)
+    //aka. public_asset_id == input_note_1.asset_id <==> public_value > 0
+    public_asset_id === is_public_tx.out * asset_id;
 }

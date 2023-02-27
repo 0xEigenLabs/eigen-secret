@@ -9,17 +9,19 @@ export class Note {
     inputNullifier: bigint;
     index: number | undefined;
 
-    constructor(val: bigint, secret: bigint, owner: bigint[], assetId: number, inputNullifier: bigint) {
+    constructor(val: bigint, secret: bigint, owner: bigint[], assetId: number,
+                inputNullifier: bigint, index: number | undefined = undefined) {
         this.val = val;
         this.secret = secret;
         this.owner = owner;
         this.assetId = assetId;
         this.inputNullifier = inputNullifier;
-        this.index = undefined;
+        this.index = index;
     }
 
     get pending(): boolean {
-        return this.pending === undefined;
+        console.log(this.index);
+        return this.index === undefined;
     }
 
     toCircuitInput(): any {
@@ -42,6 +44,7 @@ export class Note {
             this.assetId,
             this.inputNullifier
         ]);
+        // console.log("NoteCompress js", this.val, this.secret, this.owner, this.assetId, this.inputNullifier);
         return poseidon.F.toObject(res);
     }
 
