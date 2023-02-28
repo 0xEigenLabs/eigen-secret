@@ -42,6 +42,7 @@ describe("Test JoinSplit Circuit", function () {
 
     it("JoinSplit deposit test", async () => {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
+        let noteReceiver = await (new SigningKey()).newKey(undefined);
         let inputs = await JoinSplitCircuit.createDepositInput(
             accountKey,
             signingKey,
@@ -50,11 +51,40 @@ describe("Test JoinSplit Circuit", function () {
             proofId,
             aliasHash,
             assetId,
+            assetId,
             10n,
+            signingKey.pubKey,
             signingKey.pubKey,
             []
         );
         for (const input of inputs) {
+            await utils.executeCircuit(circuit, input.toCircuitInput(F));
+        }
+        console.log("test send tx")
+        let confirmedNote: Note[] = [];
+        for (const inp of inputs) {
+            inp.outputNotes[0].index = 10;
+            inp.outputNotes[1].index = 10;
+            confirmedNote.push(inp.outputNotes[0]);
+            confirmedNote.push(inp.outputNotes[1]);
+        }
+        proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
+        let inputs2 = await JoinSplitCircuit.createProofInput(
+            accountKey,
+            signingKey,
+            worldState,
+            acStateKey,
+            proofId,
+            aliasHash,
+            assetId,
+            0,
+            0n, // public value
+            undefined, // public owner
+            5n, // receiver private value
+            noteReceiver.pubKey,
+            confirmedNote,
+        );
+        for (const input of inputs2) {
             await utils.executeCircuit(circuit, input.toCircuitInput(F));
         }
     })

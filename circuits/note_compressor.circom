@@ -11,7 +11,13 @@ template NoteCompressor() {
     signal output out;
 
     component hash = Poseidon(6);
-
+//log("NoteCompressor");
+//log(val);
+//log(secret);
+//log(owner[0]);
+//log(owner[1]);
+//log(asset_id);
+//log(input_nullifier);
     hash.inputs[0] <== val;
     hash.inputs[1] <== secret;
     hash.inputs[2] <== owner[0];
