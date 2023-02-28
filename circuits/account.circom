@@ -25,38 +25,40 @@ template AccountNoteCompressor() {
 }
 
 template Account(nLevel) {
+    var TYPE_CREATE = 11;
+    var TYPE_MIGRATE = 12;
+    var TYPE_UPDATE = 13;
+
     // public input
     signal input proof_id;
-    signal input public_value;
-    signal input public_owner;
-    signal input num_input_notes;
+    signal input public_value; // 0
+    signal input public_owner; // 0
+    signal input num_input_notes; // 0
     signal input output_nc_1; //(nc is short for note commitment)
     signal input output_nc_2;
     signal input data_tree_root;
-    signal input public_asset_id;
+    signal input public_asset_id; // 0
 
     // private input
-    signal input asset_id;
     signal input alias_hash;
-
     signal input account_note_npk[2]; // (npk=account public key)
-    signal input new_account_note_npk[2]; // (npk=account public key)
     signal input account_note_spk[2]; // (spk=signing public key)
+    signal input new_account_note_npk[2]; // (npk=account public key)
     signal input new_account_note_spk1[2]; // (spk=signing public key)
     signal input new_account_note_spk2[2]; // (spk=signing public key)
     signal input signatureR8[2];
     signal input signatureS;
-    signal input is_create;
-    signal input is_migrate;
-    signal input siblings_ac;
+    signal input siblings_ac[nLevel];
 
-    // check signature
-    component msghash = AccountDigest();
-    msghash.alias_hash <== alias_hash;
-    msghash.account_note_npk_x <== account_note_npk[0];
-    msghash.new_account_note_npk_x <== new_account_note_npk[0];
-    msghash.account_note_spk_x <== account_note_spk[0];
+    component is_create_c = IsEqual();
+    is_create_c.in[0] <== TYPE_CREATE;
+    is_create_c.in[1] <== proof_id;
+    var is_create = is_create_c.out;
 
+    component is_migrate_c = IsEqual();
+    is_migrate_c.in[0] <== TYPE_MIGRATE;
+    is_migrate_c.in[1] <== proof_id;
+    var is_migrate = is_migrate_c.out;
 
     component account_note_commitment = AccountNoteCompressor();
     account_note_commitment.npk <== account_note_npk;
@@ -67,27 +69,37 @@ template Account(nLevel) {
     output_note_commitment1.npk <== new_account_note_npk;
     output_note_commitment1.spk <== new_account_note_spk1;
     output_note_commitment1.alias_hash <== alias_hash;
-    output_note_commitment1 === output_nc_1;
+    output_note_commitment1.out === output_nc_1;
 
     component output_note_commitment2 = AccountNoteCompressor();
     output_note_commitment2.npk <== new_account_note_npk;
     output_note_commitment2.spk <== new_account_note_spk2;
     output_note_commitment2.alias_hash <== alias_hash;
-    output_note_commitment2 === output_nc_2;
+    output_note_commitment2.out === output_nc_2;
 
-    var nullifier1 = is_create * alias_hash;  // TODO: compress alias_hash
-    var nullifier2 = (is_create + is_migrate) * new_account_note_npk; // TODO: compress pk
+    component alias_hash_c = Poseidon(1);
+    alias_hash_c.inputs[0] <== alias_hash;
+    var nullifier1 = is_create * alias_hash_c.out;
+
+    component new_account_c = Poseidon(2);
+    new_account_c.inputs[0] <== new_account_note_npk[0];
+    new_account_c.inputs[1] <== new_account_note_npk[1];
+
+    component create_or_migrate = XOR();
+    create_or_migrate.a <== is_create;
+    create_or_migrate.b <== is_migrate;
+    var nullifier2 = create_or_migrate.out * new_account_c.out;
 
     // is_create = 0 or 1
     component one_or_zero = LessThan(252);
     one_or_zero.in[0] <== is_create;
-    one_or_zero.in[0] <== 2;
+    one_or_zero.in[1] <== 2;
     one_or_zero.out ===  1;
 
     // is_migrate = 0 or 1
     component one_or_zero2 = LessThan(252);
     one_or_zero2.in[0] <== is_migrate;
-    one_or_zero2.in[0] <== 2;
+    one_or_zero2.in[1] <== 2;
     one_or_zero2.out ===  1;
 
     // is_create && is_migrate == 1
@@ -108,23 +120,38 @@ template Account(nLevel) {
     // if (is_migrate == 0) { require(account_public_key == new_account_public_key) }
     (1 - is_migrate) * (account_note_npk[0] - new_account_note_npk[0] + account_note_npk[1] - new_account_note_npk[1]) === 0;
 
+    // check signature
+    component msghash = AccountDigest();
+    msghash.alias_hash <== alias_hash;
+    msghash.account_note_npk_x <== account_note_npk[0];
+    msghash.new_account_note_npk_x <== new_account_note_npk[0];
+    msghash.new_account_note_spk1_x <== new_account_note_spk1[0];
+    msghash.new_account_note_spk2_x <== new_account_note_spk2[0];
+    msghash.nullifier1 <== nullifier1;
+    msghash.nullifier2 <== nullifier2;
+
     component sig_verifier = EdDSAPoseidonVerifier();
     sig_verifier.enabled <== 1;
     sig_verifier.R8x <== signatureR8[0];
     sig_verifier.R8y <== signatureR8[1];
     sig_verifier.S <== signatureS;
     sig_verifier.M <== msghash.out;
+    log("msghash");
+    log(msghash.out);
     sig_verifier.Ax <== account_note_npk[0]; // FIXME: signing key
     sig_verifier.Ay <== account_note_npk[1];
 
     //if (is_create == 0) { require(membership_check(account_note_data, account_note_index, account_note_path, data_tree_root) == true) }
-
     component ms = Membership(nLevel);
     ms.key <== account_note_commitment.out;
     ms.value <== 1; // TODO
     ms.root <== data_tree_root;
     ms.enabled <== is_create;
+
+    //log(account_note_commitment.out);
+    //log(data_tree_root);
     for (var j = 0; j < nLevel; j++) {
         ms.siblings[j] <== siblings_ac[j];
+        //log(siblings_ac[j]);
     }
 }

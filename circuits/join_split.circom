@@ -199,7 +199,7 @@ template JoinSplit(nLevel) {
     account_note_npk === input_note_owner[1];
 
     // check signature
-    component msghash = Digest();
+    component msghash = JoinSplitDigest();
     msghash.nc_1 <== nf[0].out;
     msghash.nc_2 <== nf[1].out;
     msghash.output_note_nc_1 <== output_nc_1;

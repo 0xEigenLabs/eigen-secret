@@ -35,9 +35,8 @@ describe("Test JoinSplit Circuit", function () {
         signingKey = await (new SigningKey()).newKey(undefined);
         worldState = new StateTree();
         await worldState.init();
-        let acStateKeyTmp = await accountCompress(accountKey, signingKey, aliasHash);
-        await worldState.insert(acStateKeyTmp, 1);
-        acStateKey = F.toObject(acStateKeyTmp);
+        acStateKey = await accountCompress(accountKey, signingKey, aliasHash);
+        await worldState.insert(F.e(acStateKey), 1);
     })
 
     it("JoinSplit deposit test", async () => {

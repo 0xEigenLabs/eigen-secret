@@ -1,7 +1,7 @@
 pragma circom 2.0.2;
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
-template Digest() {
+template JoinSplitDigest() {
     signal input nc_1;
     signal input nc_2;
     signal input output_note_nc_1;
@@ -25,14 +25,20 @@ template AccountDigest() {
     signal input alias_hash;
     signal input account_note_npk_x;
     signal input new_account_note_npk_x;
-    signal input account_note_spk_x;
+    signal input new_account_note_spk1_x;
+    signal input new_account_note_spk2_x;
+    signal input nullifier1;
+    signal input nullifier2;
     signal output out;
 
-    component hash = Poseidon(4);
+    component hash = Poseidon(7);
     hash.inputs[0] <== alias_hash;
     hash.inputs[1] <== account_note_npk_x;
     hash.inputs[2] <== new_account_note_npk_x;
-    hash.inputs[3] <== account_note_spk_x;
+    hash.inputs[3] <== new_account_note_spk1_x;
+    hash.inputs[4] <== new_account_note_spk2_x;
+    hash.inputs[5] <== nullifier1;
+    hash.inputs[6] <== nullifier2;
 
     out <== hash.out;
 }

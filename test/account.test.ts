@@ -62,6 +62,6 @@ describe("Test Account Compressor", function () {
             spk: (await signingKey.toCircuitInput())[0],
             alias_hash: aliasHash
         });
-        await circuit.assertOut(wtns, { out: F.toObject(hashed) });
+        await circuit.assertOut(wtns, { out: hashed });
     })
 });
