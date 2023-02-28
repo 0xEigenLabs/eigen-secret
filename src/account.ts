@@ -156,3 +156,7 @@ export async function compress(
     return poseidon(input);
     // return poseidon.F.toObject(res);
 }
+
+class Account {
+
+}
