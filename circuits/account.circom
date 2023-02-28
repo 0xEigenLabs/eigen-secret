@@ -1,9 +1,11 @@
 pragma circom 2.0.2;
 include "../node_modules/circomlib/circuits/smt/smtprocessor.circom";
 include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/eddsaposeidon.circom";
 include "../node_modules/circomlib/circuits/gates.circom";
 include "../node_modules/circomlib/circuits/poseidon.circom";
 include "digest.circom";
+include "if_gadgets.circom";
 include "state_tree.circom";
 
 template AccountNoteCompressor() {
