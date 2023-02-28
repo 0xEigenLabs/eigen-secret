@@ -18,7 +18,7 @@ describe("Test Account Compressor", function () {
         eddsa = await buildEddsa();
         babyJub = await buildBabyjub();
         F = babyJub.F;
-        circuit = await test.genTempMain("circuits/account_note.circom",
+        circuit = await test.genTempMain("circuits/account.circom",
             "AccountNoteCompressor", "", "", {});
     })
 
