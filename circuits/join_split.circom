@@ -11,26 +11,7 @@ include "account_note.circom";
 include "nullifier_function.circom";
 include "note_compressor.circom";
 include "if_gadgets.circom";
-
-template Digest() {
-    signal input nc_1;
-    signal input nc_2;
-    signal input output_note_nc_1;
-    signal input output_note_nc_2;
-    signal input public_owner;
-    signal input public_value;
-    signal output out;
-
-    component hash = Poseidon(6);
-    hash.inputs[0] <== nc_1;
-    hash.inputs[1] <== nc_2;
-    hash.inputs[2] <== output_note_nc_1;
-    hash.inputs[3] <== output_note_nc_2;
-    hash.inputs[4] <== public_owner;
-    hash.inputs[5] <== public_value;
-
-    out <== hash.out;
-}
+include "digest.circom";
 
 template JoinSplit(nLevel) {
     //constant
@@ -165,7 +146,7 @@ template JoinSplit(nLevel) {
         ms[i].key <== onc[i].out;
         ms[i].value <== num_input_notes;
         ms[i].root <== data_tree_root;
-        ms[i].enabled <== 0;//input_note_in_use[i].out;
+        ms[i].enabled <== input_note_in_use[i].out;
         for (var j = 0; j < nLevel; j++) {
             ms[i].siblings[j] <== siblings[i][j];
         }

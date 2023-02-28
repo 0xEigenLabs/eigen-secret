@@ -17,3 +17,5 @@ cache
 artifacts
 test/*.js
 scripts/*.js
+circuits/main_js
+circuits/*.ptau
