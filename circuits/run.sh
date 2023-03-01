@@ -2,7 +2,7 @@
 set -e
 
 circuit_name=main
-POWER=20
+POWER=17
 CUR_DIR=$(cd $(dirname $0);pwd)
 base_dir=${CUR_DIR}/${circuit_name}_js
 export NODE_OPTIONS=--max_old_space_size=4096
@@ -24,7 +24,7 @@ if [ ! -f "${CUR_DIR}/circuit_final.zkey" ]; then
 
         ##Prapare phase 2
         #$snarkjs powersoftau prepare phase2 pot${POWER}_0001.ptau $CUR_DIR/powersOfTau28_hez_final_${POWER}.ptau -v
-        wget https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_${POWER}.ptau -O  ${CUR_DIR}/powersOfTau28_hez_final_${POWER}
+        wget https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_${POWER}.ptau -O  ${CUR_DIR}/powersOfTau28_hez_final_${POWER}.ptau
     fi
     $snarkjs groth16 setup ${circuit_name}.r1cs $CUR_DIR/powersOfTau28_hez_final_${POWER}.ptau ${CUR_DIR}/circuit_final.zkey
 fi

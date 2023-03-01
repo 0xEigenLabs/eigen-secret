@@ -129,6 +129,14 @@ template Account(nLevel) {
     msghash.new_account_note_spk2_x <== new_account_note_spk2[0];
     msghash.nullifier1 <== nullifier1;
     msghash.nullifier2 <== nullifier2;
+    //log("message");
+    //log(alias_hash);
+    //log(account_note_npk[0]);
+    //log(new_account_note_npk[0]);
+    //log(new_account_note_spk1[0]);
+    //log(new_account_note_spk2[0]);
+    //log(nullifier1);
+    //log(nullifier2);
 
     component sig_verifier = EdDSAPoseidonVerifier();
     sig_verifier.enabled <== 1;

@@ -34,8 +34,6 @@ describe("Test JoinSplit Circuit", function () {
         signingKey = await (new SigningKey()).newKey(undefined);
         worldState = new StateTree();
         await worldState.init();
-        acStateKey = await accountCompress(accountKey, signingKey, aliasHash);
-        await worldState.insert(F.e(acStateKey), 1);
     })
 
     it("Account create test", async () => {
@@ -53,6 +51,23 @@ describe("Test JoinSplit Circuit", function () {
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
 
         let input = await AccountCircuit.createProofInput(
+            proofId,
+            accountKey,
+            signingKey,
+            newAccountPubKey,
+            newSigningPubKey1,
+            newSigningPubKey2,
+            aliasHash,
+            worldState
+        );
+        await utils.executeCircuit(circuit, input.toCircuitInput());
+
+        proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
+        newAccountKey = await (new SigningKey()).newKey(undefined);
+        newAccountPubKey = await newAccountKey.pubKey.unpack();
+        newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
+
+        input = await AccountCircuit.createProofInput(
             proofId,
             accountKey,
             signingKey,

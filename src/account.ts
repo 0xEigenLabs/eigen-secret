@@ -271,7 +271,7 @@ export class AccountCircuit {
         let accountPubKey = await accountKey.pubKey.unpack();
         accountPubKey = [F.toObject(accountPubKey[0]), F.toObject(accountPubKey[1])];
 
-        let signingPubKey = await accountKey.pubKey.unpack();
+        let signingPubKey = await signingKey.pubKey.unpack();
         signingPubKey = [F.toObject(signingPubKey[0]), F.toObject(signingPubKey[1])];
 
         let accountNC = await rawCompress(accountPubKey, signingPubKey, aliasHash);
@@ -279,7 +279,7 @@ export class AccountCircuit {
         let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
 
         let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? (await aliashHashDigest(aliasHash)): 0;
-        let nullifier2 = proofId == (AccountCircuit.PROOF_ID_TYPE_CREATE ||
+        let nullifier2 = (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE ||
             proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) ?
             (await newAccountDigest(newAccountPubKey)): 0;
 
@@ -292,8 +292,13 @@ export class AccountCircuit {
             nullifier1,
             nullifier2
         );
+        console.log(
+            aliasHash, accountPubKey[0],
+            newAccountPubKey[0], newSigningPubKey1[0], newSigningPubKey2[0], nullifier1, nullifier2);
 
-        await state.insert(F.e(accountNC), 1);
+        if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
+await state.insert(F.e(accountNC), 1);
+}
 
         let leaf = await state.find(F.e(accountNC));
 

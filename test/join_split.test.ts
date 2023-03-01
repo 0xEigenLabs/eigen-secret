@@ -88,9 +88,4 @@ describe("Test JoinSplit Circuit", function () {
         }
     })
 
-    it("JoinSplit send to L2 test", async () => {
-    })
-
-    it("JoinSplit send to L1 test", async () => {
-    })
 });
