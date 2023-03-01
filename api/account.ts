@@ -1,6 +1,5 @@
 const { Sequelize, DataTypes, Model } = require("sequelize");
-const { bufferToHex, ecrecover, fromRpcSig } = require("ethereumjs-util");
-const sigUtil = require("eth-sig-util");
+const { ethers } = require("ethers");
 import sequelize from "./db";
 import { login } from "./session";
 
@@ -47,21 +46,21 @@ class LoginMessage {
 
 export function createAccount(alias: string, ethAddress: string, message: string, hexSignature: string): any {
     // check signature
-    const { v, r, s } = fromRpcSig(hexSignature);
-    const address = sigUtil.recoverPersonalSignature({ data: message, sig: hexSignature });
-    const publicKey = ecrecover(
-        bufferToHex(Buffer.from(message)), v, r, s
-    );
-    const recoveredAddress = bufferToHex(
-        Buffer.from(publicKey, "hex").slice(12)
-      );
-      if (recoveredAddress.toLowerCase() === address.toLowerCase()) {
+    let messageBytes = ethers.utils.arrayify(message);
+    let signature = ethers.utils.splitSignature(hexSignature);
+    let address = ethers.utils.verifyMessage({ messageBytes, signature });
+    if (ethAddress == address){
         console.log("Signature is valid!");
-      } else {
+    } else {
         console.log("Signature is invalid!");
-      }
+    }
     // check timestamp + 60s > current timestamp
+    //message: include...
 
     // check if
     login(alias, ethAddress);
+}
+
+module.exports = function (app: any) {
+    app.post("/account", createAccount);
 }
