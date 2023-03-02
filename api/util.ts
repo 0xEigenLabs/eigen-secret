@@ -39,7 +39,7 @@ export enum ErrCode {
   CryptoError = 4
 }
 
-const has_value = function(variable: any) {
+const hasValue = function(variable: any) {
   if (variable === undefined) {
     return false;
   }
@@ -49,4 +49,4 @@ const has_value = function(variable: any) {
   return true;
 };
 
-export { baseResp, succ, err, has_value, require_env_variables };
+export { baseResp, succ, err, hasValue, require_env_variables };

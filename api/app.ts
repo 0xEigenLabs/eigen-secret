@@ -10,13 +10,13 @@ import cors from "cors";
 import consola from "consola";
 import { BasicReporter } from "consola";
 import "dotenv/config";
+import * as util from "./util";
+import bodyParser from "body-parser";
+import { createAccount } from "./account";
 
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);
 
-import * as util from "./util";
-
-import bodyParser from "body-parser";
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -27,7 +27,10 @@ const issueOptions = {
 };
 app.use(cors(issueOptions));
 
-require("./account")(app);
+app.post("/accounts", createAccount);
+app.get("/ping", (req, resp) => {
+  resp.json(util.succ("pong"));
+})
 
 app.listen(3000, function() {
   consola.log("hello world!");

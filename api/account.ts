@@ -2,6 +2,8 @@ const { Sequelize, DataTypes, Model } = require("sequelize");
 const { ethers } = require("ethers");
 import sequelize from "./db";
 import { login } from "./session";
+import consola from "consola";
+import * as util from "./util";
 
 class AccountModel extends Model {}
 
@@ -44,7 +46,7 @@ class LoginMessage {
     }
 }
 
-export function createAccount(alias: string, ethAddress: string, message: string, hexSignature: string): any {
+export function doCreateAccount(alias: string, ethAddress: string, message: string, hexSignature: string): any {
     // check signature
     let messageBytes = ethers.utils.arrayify(message);
     let signature = ethers.utils.splitSignature(hexSignature);
@@ -54,13 +56,26 @@ export function createAccount(alias: string, ethAddress: string, message: string
     } else {
         console.log("Signature is invalid!");
     }
-    // check timestamp + 60s > current timestamp
+    // TODO: check timestamp + 60s > current timestamp
     // message: include...
 
-    // check if
+    // TODO
     login(alias, ethAddress);
 }
 
-module.exports = function(app: any) {
-    app.post("/account", createAccount);
+// add new key
+export async function createAccount(req: any, res: any) {
+  consola.log("crate account");
+  const alias = req.body.alias;
+  const ethAddress = req.query.ethAddress;
+  const message = req.body.message; // TODO: should be structed object
+  const hexSignature = req.body.message;
+  if (!util.hasValue(alias) || !util.hasValue(ethAddress)) {
+    consola.error("missing alias or ethAddress");
+    return res.json(util.err(1, "missing input"));
+  }
+
+  const result = doCreateAccount(alias, ethAddress, message, hexSignature);
+  res.json(util.succ(result));
 }
+
