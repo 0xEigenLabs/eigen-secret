@@ -23,6 +23,8 @@ describe("Test JoinSplit Circuit", function () {
     let aliasHash: bigint = 123n;
     let acStateKey: any;
     let assetId: number = 1;
+    let signer: any;
+    let accountRequired: boolean = false;
 
     before(async () => {
         eddsa = await buildEddsa();
@@ -35,12 +37,12 @@ describe("Test JoinSplit Circuit", function () {
         signingKey = await (new SigningKey()).newKey(undefined);
         worldState = new StateTree();
         await worldState.init();
-        let acStateKeyTmp = await accountCompress(accountKey, signingKey, aliasHash);
-        await worldState.insert(acStateKeyTmp, 1);
-        acStateKey = F.toObject(acStateKeyTmp);
+        signer = accountRequired? signingKey: accountKey;
+        acStateKey = await accountCompress(accountKey, signer, aliasHash);
+        await worldState.insert(F.e(acStateKey), 1);
     })
 
-    it("JoinSplit deposit test", async () => {
+    it("JoinSplit deposit and send test", async () => {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let noteReceiver = await (new SigningKey()).newKey(undefined);
         let inputs = await JoinSplitCircuit.createDepositInput(
@@ -55,7 +57,8 @@ describe("Test JoinSplit Circuit", function () {
             10n,
             signingKey.pubKey,
             signingKey.pubKey,
-            []
+            [],
+            accountRequired
         );
         for (const input of inputs) {
             await utils.executeCircuit(circuit, input.toCircuitInput(F));
@@ -83,15 +86,11 @@ describe("Test JoinSplit Circuit", function () {
             5n, // receiver private value
             noteReceiver.pubKey,
             confirmedNote,
+            accountRequired
         );
         for (const input of inputs2) {
             await utils.executeCircuit(circuit, input.toCircuitInput(F));
         }
     })
-
-    it("JoinSplit send to L2 test", async () => {
-    })
-
-    it("JoinSplit send to L1 test", async () => {
-    })
+    //TODO add unit test for withdraw
 });

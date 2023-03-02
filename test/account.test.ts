@@ -18,7 +18,7 @@ describe("Test Account Compressor", function () {
         eddsa = await buildEddsa();
         babyJub = await buildBabyjub();
         F = babyJub.F;
-        circuit = await test.genTempMain("circuits/account_note.circom",
+        circuit = await test.genTempMain("circuits/account.circom",
             "AccountNoteCompressor", "", "", {});
     })
 
@@ -62,6 +62,6 @@ describe("Test Account Compressor", function () {
             spk: (await signingKey.toCircuitInput())[0],
             alias_hash: aliasHash
         });
-        await circuit.assertOut(wtns, { out: F.toObject(hashed) });
+        await circuit.assertOut(wtns, { out: hashed });
     })
 });

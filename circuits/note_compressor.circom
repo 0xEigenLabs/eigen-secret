@@ -7,10 +7,11 @@ template NoteCompressor() {
     signal input owner[2];
     signal input asset_id;
     signal input input_nullifier;
+    signal input account_required;
 
     signal output out;
 
-    component hash = Poseidon(6);
+    component hash = Poseidon(7);
 //log("NoteCompressor");
 //log(val);
 //log(secret);
@@ -24,6 +25,7 @@ template NoteCompressor() {
     hash.inputs[3] <== owner[1];
     hash.inputs[4] <== asset_id;
     hash.inputs[5] <== input_nullifier;
+    hash.inputs[6] <== account_required;
 
     hash.out ==> out;
 }

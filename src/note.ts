@@ -7,15 +7,17 @@ export class Note {
     owner: bigint[];
     assetId: number;
     inputNullifier: bigint;
+    accountRequired: boolean;
     index: number | undefined;
 
     constructor(val: bigint, secret: bigint, owner: bigint[], assetId: number,
-                inputNullifier: bigint, index: number | undefined = undefined) {
+                inputNullifier: bigint, accountRequired: boolean, index: number | undefined = undefined) {
         this.val = val;
         this.secret = secret;
         this.owner = owner;
         this.assetId = assetId;
         this.inputNullifier = inputNullifier;
+        this.accountRequired = accountRequired;
         this.index = index;
     }
 
@@ -30,7 +32,8 @@ export class Note {
             secret: this.secret,
             owner: this.owner,
             asset_id: this.assetId,
-            input_nullifier: this.inputNullifier
+            input_nullifier: this.inputNullifier,
+            account_required: BigInt(this.accountRequired)
         }
     }
 
@@ -42,7 +45,8 @@ export class Note {
             this.owner[0],
             this.owner[1],
             this.assetId,
-            this.inputNullifier
+            this.inputNullifier,
+            this.accountRequired? 1: 0
         ]);
         // console.log("NoteCompress js", this.val, this.secret, this.owner, this.assetId, this.inputNullifier);
         return poseidon.F.toObject(res);
@@ -56,6 +60,7 @@ export class Note {
             assetId: this.assetId,
             owner: this.owner,
             inputNullifier: this.inputNullifier,
+            accountRequired: this.accountRequired,
             index: this.index
         });
         return aes.encrypt(data)
@@ -70,7 +75,8 @@ export class Note {
             data.secret,
             data.assetId,
             data.owner,
-            data.inputNullifier
+            data.inputNullifier,
+            data.accountRequired
         );
         n.index = data.index;
         return n;
