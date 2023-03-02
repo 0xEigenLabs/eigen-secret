@@ -39,7 +39,7 @@ describe("Test JoinSplit Circuit", function () {
         await worldState.insert(F.e(acStateKey), 1);
     })
 
-    it("JoinSplit deposit test", async () => {
+    it("JoinSplit deposit and send test", async () => {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let noteReceiver = await (new SigningKey()).newKey(undefined);
         let inputs = await JoinSplitCircuit.createDepositInput(
@@ -87,5 +87,5 @@ describe("Test JoinSplit Circuit", function () {
             await utils.executeCircuit(circuit, input.toCircuitInput(F));
         }
     })
-
+    //TODO add unit test for withdraw
 });

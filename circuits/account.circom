@@ -154,7 +154,7 @@ template Account(nLevel) {
     ms.key <== account_note_commitment.out;
     ms.value <== 1; // TODO
     ms.root <== data_tree_root;
-    ms.enabled <== is_create;
+    ms.enabled <== 1 - is_create;
 
     //log(account_note_commitment.out);
     //log(data_tree_root);

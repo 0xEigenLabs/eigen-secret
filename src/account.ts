@@ -297,8 +297,8 @@ export class AccountCircuit {
             newAccountPubKey[0], newSigningPubKey1[0], newSigningPubKey2[0], nullifier1, nullifier2);
 
         if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
-await state.insert(F.e(accountNC), 1);
-}
+            await state.insert(F.e(accountNC), 1);
+        }
 
         let leaf = await state.find(F.e(accountNC));
 

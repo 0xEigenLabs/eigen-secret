@@ -32,7 +32,7 @@ describe("Test JoinSplit Circuit", function () {
             "Account", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root", "20", {include: third});
         accountKey = await (new SigningKey()).newKey(undefined);
         signingKey = await (new SigningKey()).newKey(undefined);
-        worldState = new StateTree();
+        worldState = new StateTree(); // account and joinsplit share same SMT.
         await worldState.init();
     })
 
@@ -79,4 +79,6 @@ describe("Test JoinSplit Circuit", function () {
         );
         await utils.executeCircuit(circuit, input.toCircuitInput());
     })
+
+    // TODO test alias-address migrating and joinsplit
 });
