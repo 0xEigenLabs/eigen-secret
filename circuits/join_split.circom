@@ -41,20 +41,38 @@ template JoinSplit(nLevel) {
     signal input input_note_asset_id[2];
     signal input input_note_owner[2][2];
     signal input input_note_nullifier[2];
+    signal input input_note_account_required[2];
     signal input siblings[2][nLevel];
     signal input output_note_val[2];
     signal input output_note_secret[2];
     signal input output_note_owner[2][2];
     signal input output_note_asset_id[2];
     signal input output_note_nullifier[2];
+    signal input output_note_account_required[2];
     signal input account_note_npk[2]; // (npk=account public key)
     signal input account_note_nk; // (nk = account private key)
     signal input account_note_spk[2]; // (spk=signing public key)
     signal input siblings_ac[nLevel];
     signal input signatureR8[2]; // eddsa signature
     signal input signatureS; // eddsa signature
+    signal input account_required;
 
-    //range check
+    // TODO check: xx_note_account_required in [0, 1];
+
+    component valid_account_required = LessThan(252);
+    valid_account_required.in[0] <== account_required;
+    valid_account_required.in[1] <== 2;
+    valid_account_required.out === 1;
+
+    account_required === input_note_account_required[0];
+    account_required === input_note_account_required[1];
+
+    // signer_pk = account_required ? signing_pk.x : account_pk.x;
+    var signer_pk[2];
+    signer_pk[0] = account_required * (account_note_spk[0] - account_note_npk[0]) + account_note_npk[0];
+    signer_pk[1] = account_required * (account_note_spk[1] - account_note_npk[1]) + account_note_npk[1];
+
+    // range check
     component is_less_than[2][2];
     for(var i = 0;  i < 2; i ++) {
         is_less_than[i][0] = LessEqThan(252);
@@ -141,6 +159,7 @@ template JoinSplit(nLevel) {
         onc[i].owner <== output_note_owner[i];
         onc[i].secret <== output_note_secret[i];
         onc[i].input_nullifier <== output_note_nullifier[i];
+        onc[i].account_required <== output_note_account_required[i];
 
         ms[i] = Membership(nLevel);
         ms[i].key <== onc[i].out;
@@ -157,6 +176,7 @@ template JoinSplit(nLevel) {
         inc[i].owner <== input_note_owner[i];
         inc[i].secret <== input_note_secret[i];
         inc[i].input_nullifier <== input_note_nullifier[i];
+        inc[i].account_required <== input_note_account_required[i];
 
         nf[i] = NullifierFunction(nLevel);
         nf[i].nc <== inc[i].out;
@@ -176,7 +196,7 @@ template JoinSplit(nLevel) {
 
     component ac = AccountNoteCompressor();
     ac.npk <== account_note_npk;
-    ac.spk <== account_note_spk;
+    ac.spk <== signer_pk;
     ac.alias_hash <== alias_hash;
 
     component ams = Membership(nLevel);

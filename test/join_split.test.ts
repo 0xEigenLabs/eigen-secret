@@ -23,6 +23,8 @@ describe("Test JoinSplit Circuit", function () {
     let aliasHash: bigint = 123n;
     let acStateKey: any;
     let assetId: number = 1;
+    let signer: any;
+    let accountRequired: boolean = false;
 
     before(async () => {
         eddsa = await buildEddsa();
@@ -35,7 +37,8 @@ describe("Test JoinSplit Circuit", function () {
         signingKey = await (new SigningKey()).newKey(undefined);
         worldState = new StateTree();
         await worldState.init();
-        acStateKey = await accountCompress(accountKey, signingKey, aliasHash);
+        signer = accountRequired? signingKey: accountKey;
+        acStateKey = await accountCompress(accountKey, signer, aliasHash);
         await worldState.insert(F.e(acStateKey), 1);
     })
 
@@ -54,7 +57,8 @@ describe("Test JoinSplit Circuit", function () {
             10n,
             signingKey.pubKey,
             signingKey.pubKey,
-            []
+            [],
+            accountRequired
         );
         for (const input of inputs) {
             await utils.executeCircuit(circuit, input.toCircuitInput(F));
@@ -82,6 +86,7 @@ describe("Test JoinSplit Circuit", function () {
             5n, // receiver private value
             noteReceiver.pubKey,
             confirmedNote,
+            accountRequired
         );
         for (const input of inputs2) {
             await utils.executeCircuit(circuit, input.toCircuitInput(F));
