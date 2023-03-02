@@ -49,18 +49,18 @@ export function createAccount(alias: string, ethAddress: string, message: string
     let messageBytes = ethers.utils.arrayify(message);
     let signature = ethers.utils.splitSignature(hexSignature);
     let address = ethers.utils.verifyMessage({ messageBytes, signature });
-    if (ethAddress == address){
+    if (ethAddress == address) {
         console.log("Signature is valid!");
     } else {
         console.log("Signature is invalid!");
     }
     // check timestamp + 60s > current timestamp
-    //message: include...
+    // message: include...
 
     // check if
     login(alias, ethAddress);
 }
 
-module.exports = function (app: any) {
+module.exports = function(app: any) {
     app.post("/account", createAccount);
 }
