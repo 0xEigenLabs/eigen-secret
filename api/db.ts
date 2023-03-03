@@ -1,6 +1,7 @@
 const { Sequelize, DataTypes, Model } = require("sequelize");
 require("dotenv").config();
 import { require_env_variables } from "./util";
+import consola from "consola";
 
 require_env_variables(["DB_NAME", "DB_USER", "DB_HOST", "DB_DRIVER", "DB_PASSWORD"]);
 
@@ -15,7 +16,7 @@ if (dbDriver == "sqlite") {
     // only for test
     sequelize = new Sequelize(dbName, dbUser, dbPassword, {
         host: dbHost,
-        storage: "/tmp/database.sqlite", // or ':memory:'
+        storage: "./tmp/database.sqlite", // or ':memory:'
         dialect: dbDriver
     })
 } else {
@@ -24,5 +25,11 @@ if (dbDriver == "sqlite") {
         dialect: dbDriver
     })
 }
+
+  sequelize
+    .sync()
+    .catch(function (err: any) {
+      consola.log("Unable to connect to the database:", err);
+    });
 
 export default sequelize;

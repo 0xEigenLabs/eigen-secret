@@ -48,9 +48,10 @@ class LoginMessage {
 
 export function doCreateAccount(alias: string, ethAddress: string, message: string, hexSignature: string): any {
     // check signature
-    let messageBytes = ethers.utils.arrayify(message);
+    let messageBinary = ethers.utils.arrayify(message);
+    let hash = ethers.utils.hashMessage(messageBinary);
     let signature = ethers.utils.splitSignature(hexSignature);
-    let address = ethers.utils.verifyMessage({ messageBytes, signature });
+    let address = ethers.utils.recoverAddress(hash,signature);
     if (ethAddress == address) {
         console.log("Signature is valid!");
     } else {
@@ -67,9 +68,9 @@ export function doCreateAccount(alias: string, ethAddress: string, message: stri
 export async function createAccount(req: any, res: any) {
   consola.log("crate account");
   const alias = req.body.alias;
-  const ethAddress = req.query.ethAddress;
+  const ethAddress = req.body.ethAddress;
   const message = req.body.message; // TODO: should be structed object
-  const hexSignature = req.body.message;
+  const hexSignature = req.body.hexSignature;
   if (!util.hasValue(alias) || !util.hasValue(ethAddress)) {
     consola.error("missing alias or ethAddress");
     return res.json(util.err(1, "missing input"));

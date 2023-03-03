@@ -25,24 +25,30 @@ SessionModel.init({
 
 const DURATION: number = 10 * 60; // seconds
 
-export function login(alias: string, ethAddress: string): any {
+export async function login(alias: string, ethAddress: string): Promise<any> {
     // check if the record exists, updateOrAdd,
+    await sequelize.sync();
     let expireAt = Math.floor(Date.now() / 1000);
     let value = {
         alias: alias,
         ethAddress: ethAddress,
         expireAt: expireAt + DURATION
     };
-    return SessionModel
+
+    let is_alias_available = await SessionModel.findOne({ where: { alias: alias } } );
+    if (is_alias_available === null){
+        return SessionModel.create(value);
+    }
+    else {
+        return SessionModel
         .findOne({ where: { alias: alias, ethAddress: ethAddress } } )
         .then(function(obj: any) {
             // update
-            if (obj) {
-return obj.update(value);
-}
+            if (obj) {return obj.update(value);}
             // insert
-            return Model.create(value);
+            return console.log("Alias already exists!");
         });
+    };
 }
 
 export function logout(alias: string, ethAddress: string) {
