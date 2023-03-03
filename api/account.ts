@@ -65,17 +65,17 @@ export function doCreateAccount(alias: string, ethAddress: string, message: stri
 
 // add new key
 export async function createAccount(req: any, res: any) {
-  consola.log("crate account");
-  const alias = req.body.alias;
-  const ethAddress = req.query.ethAddress;
-  const message = req.body.message; // TODO: should be structed object
-  const hexSignature = req.body.message;
-  if (!util.hasValue(alias) || !util.hasValue(ethAddress)) {
-    consola.error("missing alias or ethAddress");
-    return res.json(util.err(1, "missing input"));
-  }
+    consola.log("crate account", req);
+    const alias = req.body.alias;
+    const ethAddress = req.params.ethAddress;
+    const message = req.body.message; // TODO: should be structed object
+        const hexSignature = req.body.message;
+    if (!util.hasValue(alias) || !util.hasValue(ethAddress)) {
+        consola.error("missing alias or ethAddress");
+        return res.json(util.err(1, "missing input"));
+    }
 
-  const result = doCreateAccount(alias, ethAddress, message, hexSignature);
-  res.json(util.succ(result));
+    const result = doCreateAccount(alias, ethAddress, message, hexSignature);
+    res.json(util.succ(result));
 }
 
