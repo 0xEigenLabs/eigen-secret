@@ -27,7 +27,7 @@ const issueOptions = {
 };
 app.use(cors(issueOptions));
 
-app.post("/accounts", createAccount);
+app.post("/accounts/:ethAddress", createAccount);
 app.get("/ping", (req, resp) => {
   resp.json(util.succ("pong"));
 })
