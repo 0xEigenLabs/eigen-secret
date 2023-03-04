@@ -340,7 +340,7 @@ export class AccountCircuit {
             signatureR8: this.signatureR8,
             signatureS: this.signatureS
         }
-        fs.writeFileSync("circuits/account.input.json", JSON.stringify(result));
+        fs.writeFileSync("circuits/main_account.input.json", JSON.stringify(result));
         return result;
     }
 }
