@@ -5,7 +5,7 @@ pragma solidity ^0.8.16;
  * @dev Interface poseidon hash function
  */
 contract PoseidonUnit {
-  function poseidon(uint256[] memory) public pure returns(uint256) {}
+  function poseidon(uint256[2] memory) public pure returns(uint256) {}
 }
 
 /**
@@ -28,7 +28,7 @@ contract SMT {
    * @param inputs input element array
    * @return poseidon hash
    */
-  function hashGeneric(uint256[] memory inputs) internal view returns (uint256){
+  function hashGeneric(uint256[2] memory inputs) internal view returns (uint256){
     return insPoseidonUnit.poseidon(inputs);
   }
 
@@ -39,9 +39,7 @@ contract SMT {
    * @return poseidon hash
    */
   function hashNode(uint256 left, uint256 right) internal view returns (uint256){
-    uint256[] memory inputs = new uint256[](2);
-    inputs[0] = left;
-    inputs[1] = right;
+    uint256[2] memory inputs = [left, right];
     return hashGeneric(inputs);
   }
 
@@ -52,10 +50,7 @@ contract SMT {
    * @return poseidon hash1
    */
   function hashFinalNode(uint256 key, uint256 value) internal view returns (uint256){
-    uint256[] memory inputs = new uint256[](3);
-    inputs[0] = key;
-    inputs[1] = value;
-    inputs[2] = 1;
+    uint256[2] memory inputs = [key, value];
     return hashGeneric(inputs);
   }
 
