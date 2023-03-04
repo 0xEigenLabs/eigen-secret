@@ -67,6 +67,9 @@ describe("Test JoinSplit Circuit", function () {
         newAccountPubKey = await newAccountKey.pubKey.unpack();
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
 
+        newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        newSigningPubKey2 = await newSigningKey2.pubKey.unpack();
+        newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         input = await AccountCircuit.createProofInput(
             proofId,
             accountKey,

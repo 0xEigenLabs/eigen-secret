@@ -303,7 +303,7 @@ export class AccountCircuit {
         let leaf = await state.find(F.e(accountNC));
 
         console.log("msghash", F.toObject(msghash));
-        let sig = await accountKey.sign(msghash);
+        let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
             [outputNC1, outputNC2],

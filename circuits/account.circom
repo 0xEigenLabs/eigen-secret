@@ -146,8 +146,8 @@ template Account(nLevel) {
     sig_verifier.M <== msghash.out;
     log("msghash");
     log(msghash.out);
-    sig_verifier.Ax <== account_note_npk[0]; // FIXME: signing key
-    sig_verifier.Ay <== account_note_npk[1];
+    sig_verifier.Ax <== account_note_spk[0];
+    sig_verifier.Ay <== account_note_spk[1];
 
     //if (is_create == 0) { require(membership_check(account_note_data, account_note_index, account_note_path, data_tree_root) == true) }
     component ms = Membership(nLevel);
