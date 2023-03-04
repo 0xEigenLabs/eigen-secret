@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.16;
 
-import './Memory.sol';
-
 /**
  * @dev Interface poseidon hash function
  */
@@ -14,8 +12,6 @@ contract PoseidonUnit {
  * @dev Rollup helper functions
  */
 contract SMT {
-
-  using Memory for *;
 
   PoseidonUnit insPoseidonUnit;
 
@@ -77,7 +73,7 @@ contract SMT {
    */
   function smtVerifier(uint256 root, uint256[] memory siblings,
     uint256 key, uint256 value, uint256 oldKey, uint256 oldValue,
-    bool isNonExistence, bool isOld, uint256 maxLevels) internal view returns (bool){
+    bool isNonExistence, bool isOld, uint256 maxLevels) public view returns (bool){
 
     // Step 1: check if proof is non-existence non-empty
     uint256 newHash;
@@ -109,4 +105,5 @@ contract SMT {
     // Step 3: Check root
     return root == nextHash;
   }
+
 }
