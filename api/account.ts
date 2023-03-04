@@ -49,7 +49,8 @@ class LoginMessage {
 export function doCreateAccount(alias: string, ethAddress: string, message: any, hexSignature: string): any {
     // check signature
     const message_ = JSON.parse(JSON.stringify(message));
-    const message_encode = ethers.utils.solidityPack([ "string", "string", "string" ], [ message_["protocol"], message_["message"], message_["timestamp"]]);
+    const message_encode = ethers.utils.solidityPack([ "string", "string", "string" ],
+    [ message_["protocol"], message_["message"], message_["timestamp"]]);
     let messageBinary = ethers.utils.arrayify(message_encode);
     let hash = ethers.utils.hashMessage(messageBinary);
     let signature = ethers.utils.splitSignature(hexSignature);
