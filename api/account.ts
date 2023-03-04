@@ -46,36 +46,51 @@ class LoginMessage {
     }
 }
 
-export function doCreateAccount(alias: string, ethAddress: string, message: string, hexSignature: string): any {
+export function doCreateAccount(alias: string, ethAddress: string, message: any, hexSignature: string): any {
     // check signature
-    let messageBytes = ethers.utils.arrayify(message);
+    const message_ = JSON.parse(JSON.stringify(message));
+    const message_encode = ethers.utils.solidityPack([ "string", "string", "string" ],
+    [ message_["protocol"], message_["message"], message_["timestamp"]]);
+    let messageBinary = ethers.utils.arrayify(message_encode);
+    let hash = ethers.utils.hashMessage(messageBinary);
     let signature = ethers.utils.splitSignature(hexSignature);
-    let address = ethers.utils.verifyMessage({ messageBytes, signature });
+    let address = ethers.utils.recoverAddress(hash,signature);
     if (ethAddress == address) {
-        console.log("Signature is valid!");
+        consola.log("Signature is valid!");
     } else {
-        console.log("Signature is invalid!");
+        consola.error("Signature is invalid!");
+        return util.err(
+            util.ErrCode.InvalidAuth,
+            "User signature error!"
+        );
     }
-    // TODO: check timestamp + 60s > current timestamp
-    // message: include...
-
-    // TODO
-    login(alias, ethAddress);
+    // check timestamp + 60s > current timestamp
+    const DURATION: number = 60; // seconds
+    let expireAt = Math.floor(Date.now() / 1000);
+    if (Number(message_["timestamp"])+DURATION <= expireAt){
+        consola.error("Signature acquisition timeout!");
+        return util.err(
+            util.ErrCode.InvalidAuth,
+            "Please try again!"
+        );
+    }
+    // record user info
+    const result = login(alias, ethAddress);
+    return result;
 }
 
 // add new key
 export async function createAccount(req: any, res: any) {
-    consola.log("crate account", req);
-    const alias = req.body.alias;
-    const ethAddress = req.params.ethAddress;
-    const message = req.body.message; // TODO: should be structed object
-        const hexSignature = req.body.message;
-    if (!util.hasValue(alias) || !util.hasValue(ethAddress)) {
-        consola.error("missing alias or ethAddress");
-        return res.json(util.err(1, "missing input"));
-    }
-
-    const result = doCreateAccount(alias, ethAddress, message, hexSignature);
-    res.json(util.succ(result));
+  consola.log("crate account");
+  const alias = req.body.alias;
+  const ethAddress = req.body.ethAddress;
+  const message = req.body.message; // TODO: should be structed object
+  const hexSignature = req.body.hexSignature;
+  if (!util.hasValue(alias) || !util.hasValue(ethAddress)) {
+    consola.error("missing alias or ethAddress");
+    return res.json(util.err(1, "missing input"));
+  }
+  const result = doCreateAccount(alias, ethAddress, message, hexSignature);
+  res.json(result);
 }
 
