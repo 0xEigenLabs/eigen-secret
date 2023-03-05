@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.16;
 import "./AccountVerifier.sol";
-import "./SMT.sol";
 
 contract Account is Verifier {
     uint8 public constant PROOF_ID_TYPE_INVALID = 0;
@@ -17,7 +16,7 @@ contract Account is Verifier {
         uint[2] memory a,
         uint[2][2] memory b,
         uint[2] memory c,
-        uint[7] memory input) public payable {
+        uint[8] memory input) public payable {
         uint256 proofId = input[0];
         uint256 nullifier1 = input[4];
         uint256 nullifier2 = input[5];
@@ -41,7 +40,7 @@ contract Account is Verifier {
         uint[2] memory a,
         uint[2][2] memory b,
         uint[2] memory c,
-        uint[7] memory input) public payable {
+        uint[8] memory input) public payable {
 
         uint256 proofId = input[0];
         uint256 nullifier1 = input[4];
@@ -63,7 +62,7 @@ contract Account is Verifier {
         uint[2] memory a,
         uint[2][2] memory b,
         uint[2] memory c,
-        uint[7] memory input) public payable {
+        uint[8] memory input) public payable {
 
         uint256 proofId = input[0];
         uint256 nullifier1 = input[4];
