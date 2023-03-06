@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.16;
 import "./JoinSplitVerifier.sol";
+import "./SMT.sol";
 
 contract ITokenRegistry {
     address public coordinator;
@@ -37,7 +38,13 @@ contract Rollup {
     IERC20 public tokenContract;
     address public coordinator;
 
-    uint256[] public pendingDeposits;
+    struct Deposit{
+        uint[2] publicOwner;
+        uint publicAssetId;
+        uint publicValue;
+        uint nonce;
+    }
+    Deposit[] public pendingDeposits;
     uint public queueNumber;
 
     mapping(uint256 => bool) public nullifierHashs;
@@ -46,8 +53,11 @@ contract Rollup {
 
     JoinSplitVerifier joinSplitVerifier;
 
+    SMT public smt;
+
     event RegisteredToken(uint publicAssetId, address tokenContract);
     event RequestDeposit(uint[2] pubkey, uint publicValue, uint publicAssetId);
+    event UpdatedState(uint, uint, uint); //newRoot, txRoot, oldRoot
 
     constructor(
         address _poseidonContractAddr,
@@ -58,6 +68,7 @@ contract Rollup {
         coordinator = msg.sender;
         dataTreeRoot = 0;
         joinSplitVerifier = new JoinSplitVerifier();
+        smt = new SMT(_poseidonContractAddr);
     }
 
     modifier onlyCoordinator(){
@@ -95,21 +106,19 @@ contract Rollup {
         }
 
 
-        uint depositHash = insPoseidon.poseidon([
-            pubkey[0],
-            pubkey[1],
+        pendingDeposits.push(Deposit(
+            pubkey,
             publicAssetId,
-            nonce,
-            publicValue
-        ]);
+            publicValue,
+            nonce
+        ));
 
-        pendingDeposits.push(depositHash);
         queueNumber++;
 
         emit RequestDeposit(pubkey, publicValue, publicAssetId);
     }
 
-    function removeDeposit(uint index) internal returns(uint[] memory) {
+    function removeDeposit(uint index) internal returns(Deposit[] memory) {
         require(index < pendingDeposits.length, "index is out of bounds");
 
         for (uint i = index; i<pendingDeposits.length-1; i++){
@@ -120,7 +129,17 @@ contract Rollup {
         return pendingDeposits;
     }
 
-    function send(
+    function processDeposits(
+    ) public returns (bool) {
+        Deposit memory deposit = pendingDeposits[0];
+        // TODO verify the 
+
+        return true;
+    }
+
+    // TODO batchUpdate with aggregated proof
+    function update(
+        uint queueNumberEnd,
         uint[2] memory a,
         uint[2][2] memory b,
         uint[2] memory c,
@@ -138,36 +157,19 @@ contract Rollup {
         require(!nullifierHashs[nullifier1], "Invalid nullifier1 when deposit");
         require(!nullifierHashs[nullifier2], "Invalid nullifier2 when deposit");
 
+        uint i = 0;
+        require(pendingDeposits.length > queueNumberEnd, "Invalid queueNumberEnd");
+        for (; i < queueNumberEnd; i++) {
+            processDeposits();
+        }
+
         require(joinSplitVerifier.verifyProof(a, b, c, input),
                 "Invalid deposit proof");
-
-        if ( publicAssetId == 0 ) {
-            require(
-                msg.sender == coordinator,
-                "publicAssetId 0 is reserved for coordinator");
-                require(
-                    publicValue == 0 && msg.value == 0,
-                    "publicAssetId 0 does not have real value");
-        } else if ( publicAssetId == 1 ) { // ETH
-            require(
-                msg.value > 0 && msg.value >= publicValue,
-                "msg.value must at least equal stated publicValue in wei");
-        } else if ( publicAssetId > 1 ) { // ERC20
-            require(
-                publicValue > 0,
-                "token deposit must be greater than 0");
-                address tokenContractAddress = tokenRegistry.registeredTokens(publicAssetId);
-                tokenContract = IERC20(tokenContractAddress);
-                require(
-                    tokenContract.transferFrom(address(this), msg.sender, publicValue),
-                    "token transfer not approved"
-                );
-        }
 
         dataTreeRoot = inDataTreeRoot;
         nullifierHashs[nullifier1] = true;
         nullifierHashs[nullifier2] = true;
-
+        emit UpdatedState(inDataTreeRoot, nullifier1, nullifier2);
     }
 
     function registerToken(

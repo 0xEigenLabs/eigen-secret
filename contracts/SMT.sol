@@ -44,17 +44,6 @@ contract SMT {
   }
 
   /**
-   * @dev hash poseidon for sparse merkle tree final nodes
-   * @param key input element array
-   * @param value input element array
-   * @return poseidon hash1
-   */
-  function hashFinalNode(uint256 key, uint256 value) internal view returns (uint256){
-    uint256[2] memory inputs = [key, value];
-    return hashGeneric(inputs);
-  }
-
-  /**
    * @dev Verify sparse merkle tree proof
    * @param root root to verify
    * @param siblings all siblings
@@ -84,11 +73,11 @@ contract SMT {
       if (exist == 0) {
         return false;
       }
-      newHash = hashFinalNode(oldKey, oldValue);
+      newHash = hashNode(oldKey, oldValue);
     }
 
     // Step 2: Calcuate root
-    uint256 nextHash = isNonExistence ? newHash : hashFinalNode(key, value);
+    uint256 nextHash = isNonExistence ? newHash : hashNode(key, value);
     uint256 siblingTmp;
     for (int256 i = int256(siblings.length) - 1; i >= 0; i--) {
      siblingTmp = siblings[uint256(i)];
