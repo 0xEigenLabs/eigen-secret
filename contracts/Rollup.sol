@@ -52,12 +52,27 @@ contract Rollup {
     uint256 public dataTreeRoot;
 
     JoinSplitVerifier joinSplitVerifier;
+    WithdrawVerifier withdrawVerifier;
 
     SMT public smt;
 
     event RegisteredToken(uint publicAssetId, address tokenContract);
     event RequestDeposit(uint[2] pubkey, uint publicValue, uint publicAssetId);
     event UpdatedState(uint, uint, uint); //newRoot, txRoot, oldRoot
+    event Withdraw(uint, uint);
+
+    struct TxInfo {
+        uint pubkeyX;
+        uint pubkeyY;
+        uint index;
+        uint toX;
+        uint toY;
+        uint nonce;
+        uint amount;
+        uint fromAssetId;
+        uint txRoot;
+        uint[] proof;
+    }
 
     constructor(
         address _poseidonContractAddr,
@@ -105,7 +120,6 @@ contract Rollup {
                 );
         }
 
-
         pendingDeposits.push(Deposit(
             pubkey,
             publicAssetId,
@@ -132,7 +146,6 @@ contract Rollup {
     function processDeposits(
     ) public returns (bool) {
         Deposit memory deposit = pendingDeposits[0];
-        // TODO verify the 
 
         return true;
     }
@@ -170,6 +183,60 @@ contract Rollup {
         nullifierHashs[nullifier1] = true;
         nullifierHashs[nullifier2] = true;
         emit UpdatedState(inDataTreeRoot, nullifier1, nullifier2);
+    }
+
+    function withdraw(
+        TxInfo memory txInfo,
+        address payable recipient,
+        uint[] memory proof
+    ) public{
+        require(txInfo.fromAssetId > 0, "invalid tokenType");
+        require(updates[txInfo.txRoot] > 0, "txRoot does not exist");
+        uint[] memory txArray = new uint[](8);
+        txArray[0] = txInfo.pubkeyX;
+        txArray[1] = txInfo.pubkeyY;
+        txArray[2] = txInfo.index;
+        txArray[3] = txInfo.toX;
+        txArray[4] = txInfo.toY;
+        txArray[5] = txInfo.nonce;
+        txArray[6] = txInfo.amount;
+        txArray[7] = txInfo.fromAssetId;
+
+        // check if the leaf is in merkle tree
+        uint leaf = insPoseidon.poseidon(txArray);
+        require(
+            smtVerifier(txInfo.root, txInfo.proof, leaf, 1, 0, 0, false, false, 20),
+            "Invalid tex"
+        );
+
+        // message is hash of nonce and recipient address
+        uint[] memory msgArray = new uint[](2);
+        msgArray[0] = txInfo.nonce;
+        address tmp = recipient;
+        msgArray[1] = uint256(uint160(tmp));
+
+        uint[] memory input = new uint[](3);
+        input[0] = txInfo.pubkeyX;
+        input[1] = txInfo.pubkeyY;
+        input[2] = insPoseidon.poseidon(msgArray);
+
+        require(withdrawVerifier.verify_serialized_proof(input, proof), "eddsa signature is not valid");
+
+        // transfer token on tokenContract
+        if (txInfo.fromAssetId == 1){
+            // ETH
+            recipient.transfer(txInfo.amount);
+        } else {
+            // ERC20
+            address tokenContractAddress = tokenRegistry.registeredTokens(txInfo.fromAssetId);
+            tokenContract = IERC20(tokenContractAddress);
+            require(
+                tokenContract.transfer(recipient, txInfo.amount),
+                "transfer failed"
+            );
+        }
+
+        emit Withdraw(txInfo, recipient);
     }
 
     function registerToken(
