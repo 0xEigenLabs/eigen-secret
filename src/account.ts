@@ -303,7 +303,7 @@ export class AccountCircuit {
         let leaf = await state.find(F.e(accountNC));
 
         console.log("msghash", F.toObject(msghash));
-        let sig = await accountKey.sign(msghash);
+        let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
             [outputNC1, outputNC2],
@@ -340,7 +340,7 @@ export class AccountCircuit {
             signatureR8: this.signatureR8,
             signatureS: this.signatureS
         }
-        fs.writeFileSync("circuits/account.input.json", JSON.stringify(result));
+        fs.writeFileSync("circuits/main_account.input.json", JSON.stringify(result));
         return result;
     }
 }

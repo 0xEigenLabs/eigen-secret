@@ -60,6 +60,35 @@ template Account(nLevel) {
     is_migrate_c.in[1] <== proof_id;
     var is_migrate = is_migrate_c.out;
 
+    component is_update_c = IsEqual();
+    is_update_c.in[0] <== TYPE_UPDATE;
+    is_update_c.in[1] <== proof_id;
+    var is_update = is_update_c.out;
+
+    // is_create = 0 or 1
+    component one_or_zero = LessThan(252);
+    one_or_zero.in[0] <== is_create;
+    one_or_zero.in[1] <== 2;
+    one_or_zero.out ===  1;
+
+    // is_migrate = 0 or 1
+    component one_or_zero2 = LessThan(252);
+    one_or_zero2.in[0] <== is_migrate;
+    one_or_zero2.in[1] <== 2;
+    one_or_zero2.out ===  1;
+
+    // is_update = 0 or 1
+    component one_or_zero3 = LessThan(252);
+    one_or_zero3.in[0] <== is_update;
+    one_or_zero3.in[1] <== 2;
+    one_or_zero3.out ===  1;
+
+    // is_create + is_migrate + is_update == 1
+    component sum_1 = IsEqual();
+    sum_1.in[0] <== is_create + is_migrate + is_update;
+    sum_1.in[1] <== 1;
+    sum_1.out === 1;
+
     component account_note_commitment = AccountNoteCompressor();
     account_note_commitment.npk <== account_note_npk;
     account_note_commitment.spk <== account_note_spk;
@@ -85,28 +114,11 @@ template Account(nLevel) {
     new_account_c.inputs[0] <== new_account_note_npk[0];
     new_account_c.inputs[1] <== new_account_note_npk[1];
 
+    // only when is_migrate = is_create = 0, nullifier = 0
     component create_or_migrate = XOR();
     create_or_migrate.a <== is_create;
     create_or_migrate.b <== is_migrate;
     var nullifier2 = create_or_migrate.out * new_account_c.out;
-
-    // is_create = 0 or 1
-    component one_or_zero = LessThan(252);
-    one_or_zero.in[0] <== is_create;
-    one_or_zero.in[1] <== 2;
-    one_or_zero.out ===  1;
-
-    // is_migrate = 0 or 1
-    component one_or_zero2 = LessThan(252);
-    one_or_zero2.in[0] <== is_migrate;
-    one_or_zero2.in[1] <== 2;
-    one_or_zero2.out ===  1;
-
-    // is_create && is_migrate == 1
-    component sum_1 = IsEqual();
-    sum_1.in[0] <== is_create + is_migrate;
-    sum_1.in[1] <== 1;
-    sum_1.out === 1;
 
     // (new_account_public_key != spending_public_key_1) &&
     // (new_account_public_key != spending_public_key_2)
@@ -118,7 +130,8 @@ template Account(nLevel) {
     new_key_not_equal.out === 1;
 
     // if (is_migrate == 0) { require(account_public_key == new_account_public_key) }
-    (1 - is_migrate) * (account_note_npk[0] - new_account_note_npk[0] + account_note_npk[1] - new_account_note_npk[1]) === 0;
+    (1 - is_migrate) * (account_note_npk[0] - new_account_note_npk[0]) === 0;
+    (1 - is_migrate) * (account_note_npk[1] - new_account_note_npk[1]) === 0;
 
     // check signature
     component msghash = AccountDigest();
@@ -146,8 +159,8 @@ template Account(nLevel) {
     sig_verifier.M <== msghash.out;
     log("msghash");
     log(msghash.out);
-    sig_verifier.Ax <== account_note_npk[0]; // FIXME: signing key
-    sig_verifier.Ay <== account_note_npk[1];
+    sig_verifier.Ax <== account_note_spk[0];
+    sig_verifier.Ay <== account_note_spk[1];
 
     //if (is_create == 0) { require(membership_check(account_note_data, account_note_index, account_note_path, data_tree_root) == true) }
     component ms = Membership(nLevel);

@@ -29,7 +29,7 @@ describe("Test JoinSplit Circuit", function () {
         F = babyJub.F;
         let third = path.join(__dirname, "../third-party");
         circuit = await test.genTempMain("circuits/account.circom",
-            "Account", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root", "20", {include: third});
+            "Account", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {include: third});
         accountKey = await (new SigningKey()).newKey(undefined);
         signingKey = await (new SigningKey()).newKey(undefined);
         worldState = new StateTree(); // account and joinsplit share same SMT.
@@ -67,6 +67,9 @@ describe("Test JoinSplit Circuit", function () {
         newAccountPubKey = await newAccountKey.pubKey.unpack();
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
 
+        newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        newSigningPubKey2 = await newSigningKey2.pubKey.unpack();
+        newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         input = await AccountCircuit.createProofInput(
             proofId,
             accountKey,
