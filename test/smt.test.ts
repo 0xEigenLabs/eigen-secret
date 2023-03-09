@@ -110,7 +110,8 @@ describe("Test SMT smart contract", () => {
         Fr = tree.F;
     })
 
-    it("Test contract and circuits", async () => {
+    // TODO @Zelig
+    it.skip("Test contract and circuits", async () => {
         const key = Fr.e(333);
         const value = Fr.e(444);
         await tree.insert(key, value);

@@ -5,7 +5,7 @@ pragma solidity ^0.8.16;
  * @dev Interface poseidon hash function
  */
 contract PoseidonUnit {
-  function poseidon(uint256[2] memory) public pure returns(uint256) {}
+  function poseidon(uint256[] memory) public pure returns(uint256) {}
 }
 
 /**
@@ -62,7 +62,6 @@ contract SMT {
 
    /**
    * @dev Verify sparse merkle tree proof
-   * @param root root to verify
    * @param siblings all siblings
    * @param key key to verify
    * @param value value to verify
@@ -72,9 +71,9 @@ contract SMT {
    * @param oldValue needed in case of non-existence proof with non-empty node
    * @return true if verification is correct, false otherwise
    */
-  function smtVerifier(uint256 root, uint256[] memory siblings,
+  function smtVerifier(uint256[] memory siblings,
     uint256 key, uint256 value, uint256 oldKey, uint256 oldValue,
-    bool isNonExistence, bool isOld, uint256 maxLevels) internal view returns (bool){
+    bool isNonExistence, bool isOld, uint256 maxLevels) internal view returns (uint256){
 
     // Step 1: check if proof is non-existence non-empty
     uint256 newHash;
@@ -88,7 +87,7 @@ contract SMT {
       }
 
       if (exist == 0) {
-        return false;
+        return 0;
       }
       newHash = hashFinalNode(oldKey, oldValue);
     }
@@ -97,13 +96,13 @@ contract SMT {
     uint256 nextHash = isNonExistence ? newHash : hashFinalNode(key, value);
     uint256 siblingTmp;
     for (int256 i = int256(siblings.length) - 1; i >= 0; i--) {
-     siblingTmp = siblings[uint256(i)];
-      bool leftRight = (uint8(key >> i) & 0x01) == 1;
+      siblingTmp = siblings[uint256(i)];
+      bool leftRight = (uint8(key >> uint256(i)) & 0x01) == 1;
       nextHash = leftRight ? hashNode(siblingTmp, nextHash)
                            : hashNode(nextHash, siblingTmp);
     }
 
-    // Step 3: Check root
-    return root == nextHash;
+    // Step 3: return root
+    return nextHash;
   }
 }

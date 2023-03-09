@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.16;
 import "./JoinSplitVerifier.sol";
+import "./WithdrawVerifier.sol";
 import "./SMT.sol";
 
 contract ITokenRegistry {
@@ -23,17 +24,17 @@ contract IERC20 {
     function allowance(address owner, address spender) external view returns (uint256) {}
 }
 
-contract IPoseidon5 {
-  function poseidon(uint256[5] memory) public pure returns(uint256) {}
+contract IPoseidon {
+  function poseidon(uint256[] memory) public pure returns(uint256) {}
 }
 
-contract Rollup {
+contract Rollup is SMT {
     uint8 public constant PROOF_ID_TYPE_INVALID = 0;
     uint8 public constant PROOF_ID_TYPE_DEPOSIT = 1;
     uint8 public constant PROOF_ID_TYPE_WITHDRAW = 2;
     uint8 public constant PROOF_ID_TYPE_SEND = 3;
 
-    IPoseidon5 public insPoseidon;
+    IPoseidon public insPoseidon;
     ITokenRegistry public tokenRegistry;
     IERC20 public tokenContract;
     address public coordinator;
@@ -48,18 +49,12 @@ contract Rollup {
     uint public queueNumber;
 
     mapping(uint256 => bool) public nullifierHashs;
+    mapping(uint256 => bool) public nullifierRoots;
 
     uint256 public dataTreeRoot;
 
     JoinSplitVerifier joinSplitVerifier;
     WithdrawVerifier withdrawVerifier;
-
-    SMT public smt;
-
-    event RegisteredToken(uint publicAssetId, address tokenContract);
-    event RequestDeposit(uint[2] pubkey, uint publicValue, uint publicAssetId);
-    event UpdatedState(uint, uint, uint); //newRoot, txRoot, oldRoot
-    event Withdraw(uint, uint);
 
     struct TxInfo {
         uint pubkeyX;
@@ -74,16 +69,21 @@ contract Rollup {
         uint[] proof;
     }
 
+    event RegisteredToken(uint publicAssetId, address tokenContract);
+    event RequestDeposit(uint[2] pubkey, uint publicValue, uint publicAssetId);
+    event UpdatedState(uint, uint, uint); //newRoot, txRoot, oldRoot
+    event Withdraw(TxInfo, address);
+
+
     constructor(
         address _poseidonContractAddr,
         address _tokenRegistryAddr
-    ) public {
-        insPoseidon = IPoseidon5(_poseidonContractAddr);
+    ) SMT(_poseidonContractAddr) public {
+        insPoseidon = IPoseidon(_poseidonContractAddr);
         tokenRegistry = ITokenRegistry(_tokenRegistryAddr);
         coordinator = msg.sender;
         dataTreeRoot = 0;
         joinSplitVerifier = new JoinSplitVerifier();
-        smt = new SMT(_poseidonContractAddr);
     }
 
     modifier onlyCoordinator(){
@@ -152,23 +152,25 @@ contract Rollup {
         require(keys.length == values.length, "Key and value must have same size");
         require(keys.length == proof.length, "Key and sibling must have same size");
         // TODO keys.length should less than or equal to queueNumber
+        uint newRoot = dataTreeRoot;
         for (uint i = 0; i < keys.length; i ++) {
             Deposit memory deposit = pendingDeposits[0];
             // ensure the leaf is empty
+            newRoot = smtVerifier(proof[i], keys[i], values[i], 0, 0, false, false, 20);
             require(
-                !smtVerifier(dataTreeRoot, proof[i], keys[i], values[i], 0, 0, false, false, 20),
+                nullifierRoots[newRoot] != true,
                 "Invalid tex"
             );
 
             // update data tree root
-            
+            nullifierRoots[newRoot] = true;
         }
+        dataTreeRoot = newRoot;
         return dataTreeRoot;
     }
 
     // TODO batchUpdate with aggregated proof
     function update(
-        uint queueNumberEnd,
         uint[2] memory a,
         uint[2][2] memory b,
         uint[2] memory c,
@@ -185,17 +187,13 @@ contract Rollup {
 
         require(!nullifierHashs[nullifier1], "Invalid nullifier1 when deposit");
         require(!nullifierHashs[nullifier2], "Invalid nullifier2 when deposit");
-
-        uint i = 0;
-        require(pendingDeposits.length > queueNumberEnd, "Invalid queueNumberEnd");
-        for (; i < queueNumberEnd; i++) {
-            processDeposits();
-        }
+        require(!nullifierRoots[inDataTreeRoot], "Invalid data tree root");
 
         require(joinSplitVerifier.verifyProof(a, b, c, input),
                 "Invalid deposit proof");
 
         dataTreeRoot = inDataTreeRoot;
+        nullifierRoots[inDataTreeRoot] = true;
         nullifierHashs[nullifier1] = true;
         nullifierHashs[nullifier2] = true;
         emit UpdatedState(inDataTreeRoot, nullifier1, nullifier2);
@@ -204,10 +202,12 @@ contract Rollup {
     function withdraw(
         TxInfo memory txInfo,
         address payable recipient,
-        uint[] memory proof
+        uint[2] memory a,
+        uint[2][2] memory b,
+        uint[2] memory c
     ) public{
         require(txInfo.fromAssetId > 0, "invalid tokenType");
-        require(updates[txInfo.txRoot] > 0, "txRoot does not exist");
+        require(nullifierRoots[txInfo.txRoot], "txRoot does not exist");
         uint[] memory txArray = new uint[](8);
         txArray[0] = txInfo.pubkeyX;
         txArray[1] = txInfo.pubkeyY;
@@ -221,7 +221,7 @@ contract Rollup {
         // check if the leaf is in merkle tree
         uint leaf = insPoseidon.poseidon(txArray);
         require(
-            smtVerifier(txInfo.root, txInfo.proof, leaf, 1, 0, 0, false, false, 20),
+            txInfo.txRoot == smtVerifier(txInfo.proof, leaf, 1, 0, 0, false, false, 20),
             "Invalid tex"
         );
 
@@ -231,12 +231,13 @@ contract Rollup {
         address tmp = recipient;
         msgArray[1] = uint256(uint160(tmp));
 
-        uint[] memory input = new uint[](3);
-        input[0] = txInfo.pubkeyX;
-        input[1] = txInfo.pubkeyY;
-        input[2] = insPoseidon.poseidon(msgArray);
+        uint[3] memory input = [
+            txInfo.pubkeyX,
+            txInfo.pubkeyY,
+            insPoseidon.poseidon(msgArray)
+        ];
 
-        require(withdrawVerifier.verify_serialized_proof(input, proof), "eddsa signature is not valid");
+        require(withdrawVerifier.verifyProof(a, b, c, input), "eddsa signature is not valid");
 
         // transfer token on tokenContract
         if (txInfo.fromAssetId == 1){

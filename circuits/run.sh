@@ -2,7 +2,7 @@
 set -e
 
 circuit_name=$1
-POWER=16
+POWER=13
 CUR_DIR=$(cd $(dirname $0);pwd)
 base_dir=${CUR_DIR}/${circuit_name}_js
 export NODE_OPTIONS=--max_old_space_size=4096
