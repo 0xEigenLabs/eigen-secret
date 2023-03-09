@@ -143,11 +143,27 @@ contract Rollup {
         return pendingDeposits;
     }
 
+    // proof is siblings
     function processDeposits(
-    ) public returns (bool) {
-        Deposit memory deposit = pendingDeposits[0];
+        uint[] memory keys,
+        uint[] memory values,
+        uint[][] memory proof
+    ) public returns (uint) {
+        require(keys.length == values.length, "Key and value must have same size");
+        require(keys.length == proof.length, "Key and sibling must have same size");
+        // TODO keys.length should less than or equal to queueNumber
+        for (uint i = 0; i < keys.length; i ++) {
+            Deposit memory deposit = pendingDeposits[0];
+            // ensure the leaf is empty
+            require(
+                !smtVerifier(dataTreeRoot, proof[i], keys[i], values[i], 0, 0, false, false, 20),
+                "Invalid tex"
+            );
 
-        return true;
+            // update data tree root
+            
+        }
+        return dataTreeRoot;
     }
 
     // TODO batchUpdate with aggregated proof
