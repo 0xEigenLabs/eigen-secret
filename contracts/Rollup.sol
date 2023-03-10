@@ -24,8 +24,16 @@ contract IERC20 {
     function allowance(address owner, address spender) external view returns (uint256) {}
 }
 
-contract IPoseidon {
-  function poseidon(uint256[] memory) public pure returns(uint256) {}
+contract IPoseidon2 {
+  function poseidon(uint256[2] memory) public pure returns(uint256) {}
+}
+
+contract IPoseidon3 {
+  function poseidon(uint256[3] memory) public pure returns(uint256) {}
+}
+
+contract IPoseidon8 {
+  function poseidon(uint256[8] memory) public pure returns(uint256) {}
 }
 
 contract Rollup is SMT {
@@ -34,7 +42,9 @@ contract Rollup is SMT {
     uint8 public constant PROOF_ID_TYPE_WITHDRAW = 2;
     uint8 public constant PROOF_ID_TYPE_SEND = 3;
 
-    IPoseidon public insPoseidon;
+    IPoseidon2 public insPoseidon2;
+    IPoseidon3 public insPoseidon3;
+    IPoseidon8 public insPoseidon8;
     ITokenRegistry public tokenRegistry;
     IERC20 public tokenContract;
     address public coordinator;
@@ -76,10 +86,14 @@ contract Rollup is SMT {
 
 
     constructor(
-        address _poseidonContractAddr,
+        address _poseidon2ContractAddr,
+        address _poseidon3ContractAddr,
+        address _poseidon8ContractAddr,
         address _tokenRegistryAddr
-    ) SMT(_poseidonContractAddr) public {
-        insPoseidon = IPoseidon(_poseidonContractAddr);
+    ) SMT(_poseidon2ContractAddr, _poseidon2ContractAddr) public {
+        insPoseidon2 = IPoseidon2(_poseidon2ContractAddr);
+        insPoseidon3 = IPoseidon3(_poseidon3ContractAddr);
+        insPoseidon8 = IPoseidon8(_poseidon8ContractAddr);
         tokenRegistry = ITokenRegistry(_tokenRegistryAddr);
         coordinator = msg.sender;
         dataTreeRoot = 0;
@@ -208,33 +222,32 @@ contract Rollup is SMT {
     ) public{
         require(txInfo.fromAssetId > 0, "invalid tokenType");
         require(nullifierRoots[txInfo.txRoot], "txRoot does not exist");
-        uint[] memory txArray = new uint[](8);
-        txArray[0] = txInfo.pubkeyX;
-        txArray[1] = txInfo.pubkeyY;
-        txArray[2] = txInfo.index;
-        txArray[3] = txInfo.toX;
-        txArray[4] = txInfo.toY;
-        txArray[5] = txInfo.nonce;
-        txArray[6] = txInfo.amount;
-        txArray[7] = txInfo.fromAssetId;
+        uint[8] memory txArray = [
+            txInfo.pubkeyX,
+            txInfo.pubkeyY,
+            txInfo.index,
+            txInfo.toX,
+            txInfo.toY,
+            txInfo.nonce,
+            txInfo.amount,
+            txInfo.fromAssetId
+        ];
 
         // check if the leaf is in merkle tree
-        uint leaf = insPoseidon.poseidon(txArray);
+        uint leaf = insPoseidon8.poseidon(txArray);
         require(
             txInfo.txRoot == smtVerifier(txInfo.proof, leaf, 1, 0, 0, false, false, 20),
             "Invalid tex"
         );
 
         // message is hash of nonce and recipient address
-        uint[] memory msgArray = new uint[](2);
-        msgArray[0] = txInfo.nonce;
         address tmp = recipient;
-        msgArray[1] = uint256(uint160(tmp));
+        uint[2] memory msgArray = [txInfo.nonce, uint256(uint160(tmp))];
 
         uint[3] memory input = [
             txInfo.pubkeyX,
             txInfo.pubkeyY,
-            insPoseidon.poseidon(msgArray)
+            insPoseidon2.poseidon(msgArray)
         ];
 
         require(withdrawVerifier.verifyProof(a, b, c, input), "eddsa signature is not valid");
