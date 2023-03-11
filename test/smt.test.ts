@@ -119,7 +119,7 @@ describe("Test SMT smart contract", () => {
         Fr = tree.F;
     })
 
-    it("Test contract and circuits", async () => {
+    it.only("Test contract and circuits", async () => {
         const oldKey = "0";
         const oldValue = "0";
 
@@ -129,7 +129,8 @@ describe("Test SMT smart contract", () => {
         await tree.insert(key, value);
         let ci = await tree.find(key, value);
         let siblingsContract = ci.siblings.slice();
-        // do not push "0" into siblingsContract, otherwise the root calculation in contract.smtVerifier will be affected.
+        // Note:do not push "0" into siblingsContract
+        // otherwise the root calculation in contract.smtVerifier will be affected.
         for (let i=0; i<ci.siblings.length; i++) {
             siblingsContract[i] = tree.F.toObject(ci.siblings[i]).toString();
         }
@@ -138,6 +139,8 @@ describe("Test SMT smart contract", () => {
             key: Fr.toObject(key),
             value: Fr.toObject(ci.foundValue),
             root: Fr.toObject(tree.root()),
+            // Note: need to pad siblings with "0"
+            // Cause the siblings array length in circuit is N_LEVEL
             siblings: siblingsPad(ci.siblings, Fr),
             enabled: 1,
         };
@@ -155,7 +158,8 @@ describe("Test SMT smart contract", () => {
         let ci1 = await tree.find(key1, value1);
 
         let siblingsContract1 = ci1.siblings.slice();
-        // do not push "0" into siblingsContract1, otherwise the root calculation in contract.smtVerifier will be affected.
+        // Note: do not push "0" into siblingsContract1
+        // otherwise the root calculation in contract.smtVerifier will be affected.
         for (let i=0; i<ci1.siblings.length; i++) {
             siblingsContract1[i] = tree.F.toObject(siblingsContract1[i]).toString();
         }
@@ -164,6 +168,8 @@ describe("Test SMT smart contract", () => {
             key: Fr.toObject(key1),
             value: Fr.toObject(ci1.foundValue),
             root: Fr.toObject(tree.root()),
+            // Note: need to pad siblings with "0"
+            // Cause the siblings array length in circuit is N_LEVEL
             siblings: siblingsPad(ci1.siblings, Fr),
             enabled: 1,
         };
@@ -173,5 +179,12 @@ describe("Test SMT smart contract", () => {
             siblingsContract1, Fr.toObject(key1).toString(),
             Fr.toObject(value1).toString(), oldKey, oldValue, false, false, 20)
         expect(BigInt(result1)).to.eq(Fr.toObject(tree.tree.root));
+
+        // test 3, pass wrong value, should not equal
+        const wrongValue = Fr.e(4444+1);
+        const result2 = await contract.smtVerifier(
+            siblingsContract1, Fr.toObject(key1).toString(),
+            Fr.toObject(wrongValue).toString(), oldKey, oldValue, false, false, 20)
+        expect(BigInt(result2) == Fr.toObject(tree.tree.root)).to.eq(false);
     })
 })
