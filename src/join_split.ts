@@ -5,8 +5,8 @@ import { ethers } from "ethers";
 import { Note } from "./note";
 import { SigningKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-import { StateTree } from "./state_tree";
-import { parseProof, Proof } from "./utils";
+import { StateTree, N_LEVEL } from "./state_tree";
+import { parseProof, Proof, siblingsPad } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
 const snarkjs = require("snarkjs");
@@ -258,7 +258,7 @@ export class JoinSplitCircuit {
 
             let noteInput1 = await state.find(outputNc1);
             let noteInput2 = await state.find(outputNc2);
-            let ac = await state.find(F.e(acStateKey))
+            let ac = await state.find(F.e(acStateKey));
 
             let ak = await accountKey.toCircuitInput();
             let input = new JoinSplitInput(
@@ -268,8 +268,8 @@ export class JoinSplitCircuit {
                 [outputNote1, outputNote2],
                 [outputNc1, outputNc2],
                 F.toObject(state.root()),
-                [noteInput1.siblings, noteInput2.siblings],
-                ac.siblings,
+                [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
+                siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
                 (await signingKey.toCircuitInput())[0],
@@ -335,8 +335,8 @@ export class JoinSplitCircuit {
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
                 F.toObject(state.root()),
-                [noteInput1.siblings, noteInput2.siblings],
-                ac.siblings,
+                [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
+                siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
                 (await signingKey.toCircuitInput())[0],

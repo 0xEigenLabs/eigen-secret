@@ -2,10 +2,17 @@
 pragma solidity ^0.8.16;
 
 /**
- * @dev Interface poseidon hash function
+ * @dev Interface poseidon hash function with 2 inputs
  */
-contract PoseidonUnit {
-  function poseidon(uint256[] memory) public pure returns(uint256) {}
+contract Poseidon2Unit {
+  function poseidon(uint256[2] memory) public pure returns(uint256) {}
+}
+
+/**
+ * @dev Interface poseidon hash function with 3 inputs
+ */
+contract Poseidon3Unit {
+  function poseidon(uint256[3] memory) public pure returns(uint256) {}
 }
 
 /**
@@ -13,24 +20,17 @@ contract PoseidonUnit {
  */
 contract SMT {
 
-  PoseidonUnit insPoseidonUnit;
+  Poseidon2Unit insPoseidon2Unit;
+  Poseidon3Unit insPoseidon3Unit;  
 
   /**
    * @dev Load poseidon smart contract
-   * @param _poseidonContractAddr poseidon contract address
+   * @param _poseidon2InputsContractAddr poseidon contract with 2 inputs address
+   * @param _poseidon3InputsContractAddr poseidon contract with 3 inputs address
    */
-  constructor (address _poseidonContractAddr) public {
-    insPoseidonUnit = PoseidonUnit(_poseidonContractAddr);
-  }
-
-
-  /**
-   * @dev hash poseidon multi-input elements
-   * @param inputs input element array
-   * @return poseidon hash
-   */
-  function hashGeneric(uint256[] memory inputs) internal view returns (uint256){
-    return insPoseidonUnit.poseidon(inputs);
+  constructor (address _poseidon2InputsContractAddr, address _poseidon3InputsContractAddr) public {
+    insPoseidon2Unit = Poseidon2Unit(_poseidon2InputsContractAddr);
+    insPoseidon3Unit = Poseidon3Unit(_poseidon3InputsContractAddr);
   }
 
   /**
@@ -40,10 +40,10 @@ contract SMT {
    * @return poseidon hash
    */
   function hashNode(uint256 left, uint256 right) internal view returns (uint256){
-    uint256[] memory inputs = new uint256[](2);
-    inputs[0] = left;
-    inputs[1] = right;
-    return hashGeneric(inputs);
+    uint256[2] memory inputs = [left, right];
+    // inputs[0] = left;
+    // inputs[1] = right;
+    return insPoseidon2Unit.poseidon(inputs);
   }
 
   /**
@@ -53,11 +53,8 @@ contract SMT {
    * @return poseidon hash1
    */
   function hashFinalNode(uint256 key, uint256 value) internal view returns (uint256){
-    uint256[] memory inputs = new uint256[](3);
-    inputs[0] = key;
-    inputs[1] = value;
-    inputs[2] = 1;
-    return hashGeneric(inputs);
+    uint256[3] memory inputs = [key, value, 1];
+    return insPoseidon3Unit.poseidon(inputs);
   }
 
    /**
@@ -73,7 +70,7 @@ contract SMT {
    */
   function smtVerifier(uint256[] memory siblings,
     uint256 key, uint256 value, uint256 oldKey, uint256 oldValue,
-    bool isNonExistence, bool isOld, uint256 maxLevels) internal view returns (uint256){
+    bool isNonExistence, bool isOld, uint256 maxLevels) public view returns (uint256){
 
     // Step 1: check if proof is non-existence non-empty
     uint256 newHash;
