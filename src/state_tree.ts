@@ -2,7 +2,7 @@ import { assert } from "chai";
 
 const { newMemEmptyTrie } = require("circomlibjs");
 
-const N_LEVEL = 20;
+export const N_LEVEL = 20;
 export class StateTreeCircuitInput {
     fnc: number[] = new Array(2);
     oldRoot: any;
@@ -54,14 +54,10 @@ export class StateTree {
         return this.tree.root;
     }
 
-    async find(_key: any): Promise<StateTreeCircuitInput> {
+    async find(_key: any) {
         let key = this.tree.F.e(_key);
         let res = await this.tree.find(key);
-        assert(res.found === true);
-        let siblings = res.siblings;
-        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
-        while (siblings.length < N_LEVEL) siblings.push(0);
-        return new StateTreeCircuitInput(this.tree, [0, 0], res, siblings, key, res.foundValue)
+        return res;
     }
 
     async insert(_key: any, _value: any): Promise<StateTreeCircuitInput> {

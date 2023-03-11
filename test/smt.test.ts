@@ -2,7 +2,8 @@ import { expect, assert } from "chai";
 import path = require("path");
 import { test, utils } from "../index";
 const cls = require("circomlibjs");
-import { StateTree, StateTreeCircuitInput } from "../src/state_tree";
+import { StateTree, StateTreeCircuitInput, N_LEVEL } from "../src/state_tree";
+import { siblingsPad } from "../src/utils";
 const { ethers } = require("hardhat");
 
 describe("Test SMT Membership Query", function () {
@@ -30,9 +31,9 @@ describe("Test SMT Membership Query", function () {
 
         let input = {
             key: Fr.toObject(key),
-            value: ci.newValue,
+            value: Fr.toObject(value),
             root: Fr.toObject(tree.root()),
-            siblings: ci.siblings,
+            siblings: siblingsPad(ci.siblings, Fr),
             enabled: 1,
         };
         await utils.executeCircuit(circuit, input)
@@ -115,33 +116,62 @@ describe("Test SMT smart contract", () => {
         console.log("contract address:", contract.address)
         tree = new StateTree();
         await tree.init();
-        console.log("the original root is:", tree.root())
         Fr = tree.F;
     })
 
     it("Test contract and circuits", async () => {
         const oldKey = "0";
         const oldValue = "0";
+
+        // test 1
         const key = Fr.e(333);
         const value = Fr.e(444);
         await tree.insert(key, value);
-        console.log("root: ", tree.tree.root)
         let ci = await tree.find(key, value);
-        console.log("the ci is:", ci)
-
+        let siblingsContract = ci.siblings.slice();
+        // do not push "0" into siblingsContract, otherwise the root calculation in contract.smtVerifier will be affected.
+        for (let i=0; i<ci.siblings.length; i++) {
+            siblingsContract[i] = tree.F.toObject(ci.siblings[i]).toString();
+        }
+  
         let input = {
             key: Fr.toObject(key),
-            value: ci.newValue,
+            value: Fr.toObject(ci.foundValue),
             root: Fr.toObject(tree.root()),
-            siblings: ci.siblings,
+            siblings: siblingsPad(ci.siblings, Fr),
             enabled: 1,
         };
         await utils.executeCircuit(circuit, input)
 
         const result = await contract.smtVerifier(
-            ci.siblings, Fr.toObject(key),
-            Fr.toObject(value), oldKey, oldValue, false, false, 20)
-        console.log("the result is:", result);
-        expect(result).to.eq(ci.newRoot);
+            siblingsContract, Fr.toObject(key).toString(),
+            Fr.toObject(value).toString(), oldKey, oldValue, false, false, 20)
+        expect(BigInt(result)).to.eq(Fr.toObject(tree.tree.root));
+
+        // test 2
+        const key1 = Fr.e(3333);
+        const value1 = Fr.e(4444);
+        await tree.insert(key1, value1);
+        let ci1 = await tree.find(key1, value1);
+
+        let siblingsContract1 = ci1.siblings.slice();
+        // do not push "0" into siblingsContract1, otherwise the root calculation in contract.smtVerifier will be affected.
+        for (let i=0; i<ci1.siblings.length; i++) {
+            siblingsContract1[i] = tree.F.toObject(siblingsContract1[i]).toString();
+        }
+
+        let input1 = {
+            key: Fr.toObject(key1),
+            value: Fr.toObject(ci1.foundValue),
+            root: Fr.toObject(tree.root()),
+            siblings: siblingsPad(ci1.siblings, Fr),
+            enabled: 1,
+        };
+        await utils.executeCircuit(circuit, input1)
+
+        const result1 = await contract.smtVerifier(
+            siblingsContract1, Fr.toObject(key1).toString(),
+            Fr.toObject(value1).toString(), oldKey, oldValue, false, false, 20)
+        expect(BigInt(result1)).to.eq(Fr.toObject(tree.tree.root));
     })
 })

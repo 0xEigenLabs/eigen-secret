@@ -7,7 +7,7 @@ const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { StateTree } from "./state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
+import { bigint2Array, bigint2Uint8Array, bigint2Tuple, siblingsPad } from "./utils";
 const fs = require("fs");
 
 type UnpackFunc = () => Promise<[any, any]>;
@@ -308,7 +308,7 @@ export class AccountCircuit {
             proofId,
             [outputNC1, outputNC2],
             F.toObject(state.root()),
-            leaf.siblings,
+            siblingsPad(leaf.siblings, F),
             aliasHash,
             accountPubKey,
             signingPubKey,

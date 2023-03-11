@@ -1,5 +1,6 @@
 import { Buffer } from "buffer";
 import { BigNumberish } from "ethers";
+import { N_LEVEL } from "./state_tree";
 
 export function arrayChunk(array: Array<number>, chunkSize: number): any {
   return Array(Math.ceil(array.length / chunkSize)).map((_, index) => index * chunkSize)
@@ -150,4 +151,10 @@ export function parseProof(proof: any): Proof {
         ],
         c: [proof.pi_c[0], proof.pi_c[1]]
     };
+}
+
+export function siblingsPad(siblings: any, F: any) {
+  for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
+  while (siblings.length < N_LEVEL) siblings.push(0);
+  return siblings;
 }
