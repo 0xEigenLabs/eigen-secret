@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.16;
-import "./JoinSplitVerifier.sol";
+import "./UpdateStateVerifier.sol";
 import "./WithdrawVerifier.sol";
 import "./SMT.sol";
 
@@ -63,7 +63,7 @@ contract Rollup is SMT {
 
     uint256 public dataTreeRoot;
 
-    JoinSplitVerifier joinSplitVerifier;
+    UpdateStateVerifier updateStateVerifier;
     WithdrawVerifier withdrawVerifier;
 
     struct TxInfo {
@@ -97,7 +97,7 @@ contract Rollup is SMT {
         tokenRegistry = ITokenRegistry(_tokenRegistryAddr);
         coordinator = msg.sender;
         dataTreeRoot = 0;
-        joinSplitVerifier = new JoinSplitVerifier();
+        updateStateVerifier = new UpdateStateVerifier();
     }
 
     modifier onlyCoordinator(){
@@ -203,7 +203,7 @@ contract Rollup is SMT {
         require(!nullifierHashs[nullifier2], "Invalid nullifier2 when deposit");
         require(!nullifierRoots[inDataTreeRoot], "Invalid data tree root");
 
-        require(joinSplitVerifier.verifyProof(a, b, c, input),
+        require(updateStateVerifier.verifyProof(a, b, c, input),
                 "Invalid deposit proof");
 
         dataTreeRoot = inDataTreeRoot;
