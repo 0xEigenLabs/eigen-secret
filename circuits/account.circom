@@ -39,6 +39,8 @@ template Account(nLevel) {
     signal input data_tree_root;
     signal input public_asset_id; // 0
 
+    // private selector
+    signal input enabled;
     // private input
     signal input alias_hash;
     signal input account_note_npk[2]; // (npk=account public key)
@@ -69,25 +71,25 @@ template Account(nLevel) {
     component one_or_zero = LessThan(252);
     one_or_zero.in[0] <== is_create;
     one_or_zero.in[1] <== 2;
-    one_or_zero.out ===  1;
+    enabled * (one_or_zero.out - 1) === 0;
 
     // is_migrate = 0 or 1
     component one_or_zero2 = LessThan(252);
     one_or_zero2.in[0] <== is_migrate;
     one_or_zero2.in[1] <== 2;
-    one_or_zero2.out ===  1;
+    enabled * (one_or_zero2.out - 1) === 0;
 
     // is_update = 0 or 1
     component one_or_zero3 = LessThan(252);
     one_or_zero3.in[0] <== is_update;
     one_or_zero3.in[1] <== 2;
-    one_or_zero3.out ===  1;
+    enabled * (one_or_zero3.out - 1) === 0;
 
     // is_create + is_migrate + is_update == 1
     component sum_1 = IsEqual();
     sum_1.in[0] <== is_create + is_migrate + is_update;
     sum_1.in[1] <== 1;
-    sum_1.out === 1;
+    enabled * (sum_1.out - 1) === 0;
 
     component account_note_commitment = AccountNoteCompressor();
     account_note_commitment.npk <== account_note_npk;
@@ -98,13 +100,13 @@ template Account(nLevel) {
     output_note_commitment1.npk <== new_account_note_npk;
     output_note_commitment1.spk <== new_account_note_spk1;
     output_note_commitment1.alias_hash <== alias_hash;
-    output_note_commitment1.out === output_nc_1;
+    enabled * (output_note_commitment1.out - output_nc_1) === 0;
 
     component output_note_commitment2 = AccountNoteCompressor();
     output_note_commitment2.npk <== new_account_note_npk;
     output_note_commitment2.spk <== new_account_note_spk2;
     output_note_commitment2.alias_hash <== alias_hash;
-    output_note_commitment2.out === output_nc_2;
+    enabled * (output_note_commitment2.out - output_nc_2) === 0;
 
     component alias_hash_c = Poseidon(1);
     alias_hash_c.inputs[0] <== alias_hash;
@@ -130,8 +132,15 @@ template Account(nLevel) {
     new_key_not_equal.out === 1;
 
     // if (is_migrate == 0) { require(account_public_key == new_account_public_key) }
-    (1 - is_migrate) * (account_note_npk[0] - new_account_note_npk[0]) === 0;
-    (1 - is_migrate) * (account_note_npk[1] - new_account_note_npk[1]) === 0;
+    // enabled * (1 - is_migrate) * (account_note_npk[0] - new_account_note_npk[0]) === 0;
+    component forceAssetIdEql = ForceAEqBIfEnabled();
+    forceAssetIdEql.enabled <== enabled;
+    forceAssetIdEql.a <== (1 - is_migrate) * (account_note_npk[0] - new_account_note_npk[0]);
+    forceAssetIdEql.b <== 0;
+    component forceAssetIdEql2 = ForceAEqBIfEnabled();
+    forceAssetIdEql2.enabled <== enabled;
+    forceAssetIdEql2.a <== (1 - is_migrate) * (account_note_npk[1] - new_account_note_npk[1]);
+    forceAssetIdEql2.b <== 0;
 
     // check signature
     component msghash = AccountDigest();
@@ -152,13 +161,13 @@ template Account(nLevel) {
     //log(nullifier2);
 
     component sig_verifier = EdDSAPoseidonVerifier();
-    sig_verifier.enabled <== 1;
+    sig_verifier.enabled <== enabled;
     sig_verifier.R8x <== signatureR8[0];
     sig_verifier.R8y <== signatureR8[1];
     sig_verifier.S <== signatureS;
     sig_verifier.M <== msghash.out;
-    log("msghash");
-    log(msghash.out);
+    //log("msghash");
+    //log(msghash.out);
     sig_verifier.Ax <== account_note_spk[0];
     sig_verifier.Ay <== account_note_spk[1];
 
@@ -167,7 +176,7 @@ template Account(nLevel) {
     ms.key <== account_note_commitment.out;
     ms.value <== 1; // TODO
     ms.root <== data_tree_root;
-    ms.enabled <== 1 - is_create;
+    ms.enabled <== (1 - is_create) * enabled;
 
     //log(account_note_commitment.out);
     //log(data_tree_root);

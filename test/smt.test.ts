@@ -119,7 +119,7 @@ describe("Test SMT smart contract", () => {
         Fr = tree.F;
     })
 
-    it.only("Test contract and circuits", async () => {
+    it("Test contract and circuits", async () => {
         const oldKey = "0";
         const oldValue = "0";
 
