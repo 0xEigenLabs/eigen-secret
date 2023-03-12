@@ -344,7 +344,7 @@ export class AccountCircuit {
             signatureS: this.signatureS,
             enabled: this.enabled,
         }
-        fs.writeFileSync("circuits/main_account.input.json", JSON.stringify(result));
+        fs.writeFileSync("circuits/main_update_state.input.json", JSON.stringify(result));
         return result;
     }
 }

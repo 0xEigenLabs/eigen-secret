@@ -129,7 +129,7 @@ export class JoinSplitInput {
             inputJson.output_note_account_required[i] = BigInt(this.outputNotes[i].accountRequired);
         }
         console.log(inputJson)
-        fs.writeFileSync("./circuits/main_joinsplit.input.json", JSON.stringify(inputJson))
+        fs.writeFileSync("./circuits/main_update_state.input.json", JSON.stringify(inputJson))
         return inputJson;
     }
 }
