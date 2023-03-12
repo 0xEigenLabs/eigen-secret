@@ -110,7 +110,7 @@ export class JoinSplitInput {
             siblings_ac: this.siblingsAC,
             signatureR8: this.signatureR8,
             signatureS: this.signatureS,
-            enabled: this.enabled,
+            enabled: this.enabled
         };
 
         for (let i = 0; i < 2; i ++) {

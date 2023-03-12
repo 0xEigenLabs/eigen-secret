@@ -78,20 +78,3 @@ template IfAThenBElseC() {
 
     out <== switcher.outR;
 }
-
-// if (enabled) then a === b else 1
-// TODO: unittest want
-template ForceAEqBIfEnabled() {
-    signal input enabled;
-    signal input a;
-    signal input b;
-
-    component isZeroA = IsZero();
-    isZeroA.in <== a - b;
-
-    component ifelse = IfAThenBElseC();
-    ifelse.aCond <== enabled;
-    ifelse.bBranch <== isZeroA.out;
-    ifelse.cBranch <== 1;
-    ifelse.out === 1;
-}

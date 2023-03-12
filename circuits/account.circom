@@ -52,6 +52,13 @@ template Account(nLevel) {
     signal input signatureS;
     signal input siblings_ac[nLevel];
 
+    log("proof_id account");
+    log(proof_id);
+    log(enabled);
+    public_owner === 0;
+    public_value === 0;
+    num_input_notes === 0;
+    public_asset_id === 0;
     component is_create_c = IsEqual();
     is_create_c.in[0] <== TYPE_CREATE;
     is_create_c.in[1] <== proof_id;
@@ -68,22 +75,19 @@ template Account(nLevel) {
     var is_update = is_update_c.out;
 
     // is_create = 0 or 1
-    component one_or_zero = LessThan(252);
-    one_or_zero.in[0] <== is_create;
-    one_or_zero.in[1] <== 2;
-    enabled * (one_or_zero.out - 1) === 0;
+    signal aux0;
+    aux0 <== is_create * (1 - is_create);
+    aux0 * enabled === 0;
 
     // is_migrate = 0 or 1
-    component one_or_zero2 = LessThan(252);
-    one_or_zero2.in[0] <== is_migrate;
-    one_or_zero2.in[1] <== 2;
-    enabled * (one_or_zero2.out - 1) === 0;
+    signal aux1;
+    aux1 <== is_migrate * (1 - is_migrate);
+    aux1 * enabled === 0;
 
     // is_update = 0 or 1
-    component one_or_zero3 = LessThan(252);
-    one_or_zero3.in[0] <== is_update;
-    one_or_zero3.in[1] <== 2;
-    enabled * (one_or_zero3.out - 1) === 0;
+    signal aux2;
+    aux2 <== is_update * (1 - is_update);
+    aux2 * enabled === 0;
 
     // is_create + is_migrate + is_update == 1
     component sum_1 = IsEqual();
@@ -129,18 +133,17 @@ template Account(nLevel) {
     new_key_not_equal.in[1] <== new_account_note_npk[1] - new_account_note_spk1[1];
     new_key_not_equal.in[2] <== new_account_note_npk[0] - new_account_note_spk2[0];
     new_key_not_equal.in[3] <== new_account_note_npk[1] - new_account_note_spk2[1];
-    new_key_not_equal.out === 1;
+    enabled * (new_key_not_equal.out - 1) === 0;
 
     // if (is_migrate == 0) { require(account_public_key == new_account_public_key) }
     // enabled * (1 - is_migrate) * (account_note_npk[0] - new_account_note_npk[0]) === 0;
-    component forceAssetIdEql = ForceAEqBIfEnabled();
-    forceAssetIdEql.enabled <== enabled;
-    forceAssetIdEql.a <== (1 - is_migrate) * (account_note_npk[0] - new_account_note_npk[0]);
-    forceAssetIdEql.b <== 0;
-    component forceAssetIdEql2 = ForceAEqBIfEnabled();
-    forceAssetIdEql2.enabled <== enabled;
-    forceAssetIdEql2.a <== (1 - is_migrate) * (account_note_npk[1] - new_account_note_npk[1]);
-    forceAssetIdEql2.b <== 0;
+    signal aux3;
+    aux3 <== (1 - is_migrate) * (account_note_npk[0] - new_account_note_npk[0]);
+    enabled * aux3 === 0;
+
+    signal aux4;
+    aux4 <== (1 - is_migrate) * (account_note_npk[1] - new_account_note_npk[1]);
+    enabled * aux4 === 0;
 
     // check signature
     component msghash = AccountDigest();

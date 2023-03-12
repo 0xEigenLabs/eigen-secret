@@ -2,12 +2,13 @@
 set -e
 
 circuit_name=$1
-POWER=13
+POWER=17
 CUR_DIR=$(cd $(dirname $0);pwd)
 base_dir=${CUR_DIR}/${circuit_name}_js
 export NODE_OPTIONS=--max_old_space_size=4096
 snarkjs=${CUR_DIR}/../node_modules/.bin/snarkjs
 
+rm -rf $base_dir
 circom ${circuit_name}.circom --r1cs --wasm --sym
 
 mv ${circuit_name}.r1cs ${circuit_name}.sym  $base_dir
@@ -18,7 +19,7 @@ cd $base_dir
 node generate_witness.js ${circuit_name}.wasm ${CUR_DIR}/${circuit_name}.input.json witness.wtns
 
 if [ ! -f "${CUR_DIR}/circuit_final.zkey" ]; then
-    if [ ! -f "${CUR_DIR}/powersOfTau28_hez_final_${POWER}" ]; then
+    if [ ! -f "${CUR_DIR}/powersOfTau28_hez_final_${POWER}.ptau" ]; then
         #$snarkjs powersoftau new bn128 ${POWER} pot${POWER}_0000.ptau -v
         #$snarkjs powersoftau contribute pot${POWER}_0000.ptau pot${POWER}_0001.ptau --name="First contribution" -v
 

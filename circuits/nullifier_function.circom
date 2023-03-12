@@ -1,7 +1,7 @@
 pragma circom 2.0.2;
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
-template NullifierFunction(nLevel) {
+template NullifierFunction() {
     signal input nc;
     signal input input_note_in_use;
     signal input nk;
