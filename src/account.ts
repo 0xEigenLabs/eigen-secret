@@ -226,6 +226,7 @@ export class AccountCircuit {
 
     signatureR8: bigint[];
     signatureS: bigint;
+    enabled: bigint;
 
     constructor(
         proofId: number,
@@ -239,7 +240,8 @@ export class AccountCircuit {
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
         signatureR8: bigint[],
-        signatureS: bigint
+        signatureS: bigint,
+        enabled: bigint = 1n
     ) {
         this.proofId = proofId;
         this.outputNCs = outputNCs;
@@ -253,6 +255,7 @@ export class AccountCircuit {
         this.newSigningPubKey2 = newSigningPubKey2;
         this.signatureR8 = signatureR8;
         this.signatureS = signatureS;
+        this.enabled = enabled;
     }
 
     static async createProofInput(
@@ -338,7 +341,8 @@ export class AccountCircuit {
             new_account_note_spk2: this.newSigningPubKey2,
             siblings_ac: this.siblingsAC,
             signatureR8: this.signatureR8,
-            signatureS: this.signatureS
+            signatureS: this.signatureS,
+            enabled: this.enabled,
         }
         fs.writeFileSync("circuits/main_account.input.json", JSON.stringify(result));
         return result;

@@ -33,7 +33,10 @@ template JoinSplit(nLevel) {
     signal input data_tree_root;
     signal input public_asset_id;
 
-    //private input
+    // private input
+    signal input enabled;
+
+    // private input
     signal input asset_id;
     signal input alias_hash;
     signal input input_note_val[2];
@@ -62,10 +65,10 @@ template JoinSplit(nLevel) {
     component valid_account_required = LessThan(252);
     valid_account_required.in[0] <== account_required;
     valid_account_required.in[1] <== 2;
-    valid_account_required.out === 1;
+    enabled * (valid_account_required.out - 1) === 0;
 
-    account_required === input_note_account_required[0];
-    account_required === input_note_account_required[1];
+    enabled * (account_required - input_note_account_required[0]) === 0;
+    enabled * (account_required - input_note_account_required[1]) === 0;
 
     // signer_pk = account_required ? signing_pk.x : account_pk.x;
     var signer_pk[2];
@@ -102,11 +105,11 @@ template JoinSplit(nLevel) {
     component valid_type = GreaterThan(252);
     valid_type.in[0] <== is_deposit.out + is_send.out + is_withdraw.out;
     valid_type.in[1] <== 0;
-    valid_type.out === 1;
+    enabled * (valid_type.out - 1) === 0;
     component valid_type2 = LessThan(252);
     valid_type2.in[0] <== num_input_notes;
     valid_type2.in[1] <== 3;
-    valid_type2.out === 1;
+    enabled * (valid_type2.out - 1) === 0;
 
     // is_public_tx = is_withdraw || is_deposit
     component is_public_tx = XOR();
@@ -130,13 +133,13 @@ template JoinSplit(nLevel) {
     component valid_public = XOR();
     valid_public.a <== is_public_yes.out;
     valid_public.b <== is_public_no.out;
-    valid_public.out === 1;
+    enabled * (valid_public.out - 1) === 0;
 
     // num_input_notes == 0 => is_deposit == true
     component is_deposit_c = GreaterThan(252);
     is_deposit_c.in[0] <== num_input_notes + is_deposit.out;
     is_deposit_c.in[1] <== 0;
-    is_deposit_c.out === 1;
+    enabled * (is_deposit_c.out - 1) === 0;
 
     component input_note_in_use[2];
     input_note_in_use[0] = GreaterThan(252);
@@ -152,6 +155,7 @@ template JoinSplit(nLevel) {
     component onc[2];
     component nf[2];
     component ms[2];
+    component forceNullifierEql[2];
     for(var i = 0;  i < 2; i ++) {
         onc[i] = NoteCompressor();
         onc[i].val <== output_note_val[i];
@@ -165,7 +169,7 @@ template JoinSplit(nLevel) {
         ms[i].key <== onc[i].out;
         ms[i].value <== num_input_notes;
         ms[i].root <== data_tree_root;
-        ms[i].enabled <== input_note_in_use[i].out;
+        ms[i].enabled <== input_note_in_use[i].out * enabled;
         for (var j = 0; j < nLevel; j++) {
             ms[i].siblings[j] <== siblings[i][j];
         }
@@ -184,15 +188,18 @@ template JoinSplit(nLevel) {
         nf[i].input_note_in_use <== input_note_in_use[i].out;
 
         // TODO push input notes into nullifier tree
-
-        input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]) === 0;
+        // enabled * input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]) === 0;
+        forceNullifierEql[i] = ForceAEqBIfEnabled();
+        forceNullifierEql[i].enabled <== enabled;
+        forceNullifierEql[i].a <== input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]);
+        forceNullifierEql[i].b <== 0;
     }
 
     // onc[0].out != onc[1].out
     component nc_not_same = IsEqual();
     nc_not_same.in[0] <== onc[0].out;
     nc_not_same.in[1] <== onc[1].out;
-    nc_not_same.out === 0;
+    enabled * nc_not_same.out === 0;
 
     component ac = AccountNoteCompressor();
     ac.npk <== account_note_npk;
@@ -211,12 +218,14 @@ template JoinSplit(nLevel) {
     // check private key to public key
     component pri2pub = BabyPbk();
     pri2pub.in <== account_note_nk;
-    pri2pub.Ax === account_note_npk[0];
-    pri2pub.Ay === account_note_npk[1];
+    enabled * (pri2pub.Ax - account_note_npk[0]) === 0;
+    enabled * (pri2pub.Ay - account_note_npk[1]) === 0;
 
     // check account_note_npk == input_note_1.owner && account_note_npk == input_note_2.owner
-    account_note_npk === input_note_owner[0];
-    account_note_npk === input_note_owner[1];
+    enabled * (account_note_npk[0] - input_note_owner[0][0]) === 0;
+    enabled * (account_note_npk[1] - input_note_owner[0][1]) === 0;
+    enabled * (account_note_npk[0] - input_note_owner[1][0]) === 0;
+    enabled * (account_note_npk[1] - input_note_owner[1][1]) === 0;
 
     // check signature
     component msghash = JoinSplitDigest();
@@ -242,20 +251,28 @@ template JoinSplit(nLevel) {
     component balance_check = IsEqual();
     balance_check.in[0] <== total_in_value;
     balance_check.in[1] <== total_out_value;
-    1 === balance_check.out;
+    enabled * (1 - balance_check.out) === 0;
 
     // output note type check
     //  (asset_id == input_note_1.asset_id) &&
     //  (asset_id == output_note_1.asset_id) &&
     //  (asset_id == output_note_2.asset_id)
-    asset_id === input_note_asset_id[0];
-    asset_id === output_note_asset_id[0];
-    asset_id === output_note_asset_id[1];
+    enabled * (asset_id - input_note_asset_id[0]) === 0;
+    enabled * (asset_id - output_note_asset_id[0]) === 0;
+    enabled * (asset_id - output_note_asset_id[1]) === 0;
 
     // num_input_notes == 2 (input_note_in_use[1].out == 1) => input_note_1.asset_id == input_note_2.asset_id
-    input_note_in_use[1].out * (input_note_asset_id[0] - input_note_asset_id[1]) === 0;
+    // enabled * input_note_in_use[1].out * (input_note_asset_id[0] - input_note_asset_id[1]) === 0;
+    component forceInputInUse = ForceAEqBIfEnabled();
+    forceInputInUse.enabled <== enabled;
+    forceInputInUse.a <== input_note_in_use[1].out * (input_note_asset_id[0] - input_note_asset_id[1]);
+    forceInputInUse.b <== 0;
 
     //check: public_asset_id == input_note_1.asset_id <==> (public_input_ != 0 || public_output != 0)
     //aka. public_asset_id == input_note_1.asset_id <==> public_value > 0
-    public_asset_id === is_public_tx.out * asset_id;
+    // enabled * (public_asset_id - is_public_tx.out * asset_id) === 0;
+    component forceAssetIdEql = ForceAEqBIfEnabled();
+    forceAssetIdEql.enabled <== enabled;
+    forceAssetIdEql.a <== public_asset_id - is_public_tx.out * asset_id;
+    forceAssetIdEql.b <== 0;
 }
