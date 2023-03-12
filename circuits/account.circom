@@ -29,6 +29,9 @@ template Account(nLevel) {
     var TYPE_MIGRATE = 12;
     var TYPE_UPDATE = 13;
 
+    // private selector
+    signal input enabled;
+
     // public input
     signal input proof_id;
     signal input public_value; // 0
@@ -39,8 +42,6 @@ template Account(nLevel) {
     signal input data_tree_root;
     signal input public_asset_id; // 0
 
-    // private selector
-    signal input enabled;
     // private input
     signal input alias_hash;
     signal input account_note_npk[2]; // (npk=account public key)
@@ -52,13 +53,13 @@ template Account(nLevel) {
     signal input signatureS;
     signal input siblings_ac[nLevel];
 
-    log("proof_id account");
+    //log("proof_id account");
     log(proof_id);
     log(enabled);
-    public_owner === 0;
-    public_value === 0;
-    num_input_notes === 0;
-    public_asset_id === 0;
+    enabled * public_owner === 0;
+    enabled * public_value === 0;
+    enabled * num_input_notes === 0;
+    enabled * public_asset_id === 0;
     component is_create_c = IsEqual();
     is_create_c.in[0] <== TYPE_CREATE;
     is_create_c.in[1] <== proof_id;

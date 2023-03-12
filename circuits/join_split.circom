@@ -60,7 +60,7 @@ template JoinSplit(nLevel) {
     signal input account_required;
 
     // TODO check: xx_note_account_required in [0, 1];
-    log("proof_id JoinSplit");
+    //log("proof_id JoinSplit");
     log(proof_id);
     log(enabled);
 
