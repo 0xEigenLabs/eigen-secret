@@ -46,7 +46,7 @@ template UpdateState(nLevel) {
     component enabled_account_circuit = GreaterThan(252);
     enabled_account_circuit.in[0] <== proof_id;
     enabled_account_circuit.in[1] <== 10;
-    log("check");
+    log("enabled_account_circuit");
     log(enabled_account_circuit.out);
 
     component account_circuit = Account(nLevel);
@@ -55,7 +55,7 @@ template UpdateState(nLevel) {
     account_circuit.public_value  <== public_value;
     account_circuit.public_owner  <== public_owner;
     account_circuit.num_input_notes  <== num_input_notes;
-    account_circuit.output_nc_1  <== output_nc_1; //(nc is short for note commitment)
+    account_circuit.output_nc_1  <== output_nc_1;
     account_circuit.output_nc_2  <== output_nc_2;
     account_circuit.data_tree_root  <== data_tree_root;
     account_circuit.public_asset_id  <== public_asset_id;
