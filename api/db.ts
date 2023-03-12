@@ -28,7 +28,7 @@ if (dbDriver == "sqlite") {
 
 sequelize
     .sync()
-    .catch(function (err: any) {
+    .catch(function(err: any) {
       consola.log("Unable to connect to the database:", err);
     });
 

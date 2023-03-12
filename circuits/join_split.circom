@@ -18,7 +18,6 @@ template JoinSplit(nLevel) {
     var TYPE_DEPOSIT = 1;
     var TYPE_WITHDRAW = 2;
     var TYPE_SEND = 3;
-    var TYPE_CODE_VK = 4; // verification key of smart contract
 
     var NOTE_VALUE_BIT_LENGTH = 2**128;
     var NUM_ASSETS_BIT_LENGTH = 1000;
@@ -61,11 +60,14 @@ template JoinSplit(nLevel) {
     signal input account_required;
 
     // TODO check: xx_note_account_required in [0, 1];
+    //log("proof_id JoinSplit");
+    log(proof_id);
+    log(enabled);
 
-    component valid_account_required = LessThan(252);
-    valid_account_required.in[0] <== account_required;
-    valid_account_required.in[1] <== 2;
-    enabled * (valid_account_required.out - 1) === 0;
+    //account_required is 0 or 1
+    signal aux0;
+    aux0 <== account_required * (1 - account_required);
+    enabled * aux0 === 0;
 
     enabled * (account_required - input_note_account_required[0]) === 0;
     enabled * (account_required - input_note_account_required[1]) === 0;
@@ -101,15 +103,17 @@ template JoinSplit(nLevel) {
 
     // Data validity checks:
     // true == (is_deposit || is_send || is_withdraw); // TODO: one or more true? Can a tx include both a `send to L1` and a `send to L2`?
-    //  true == (num_input_notes = 0 || 1 || 2);
     component valid_type = GreaterThan(252);
     valid_type.in[0] <== is_deposit.out + is_send.out + is_withdraw.out;
     valid_type.in[1] <== 0;
     enabled * (valid_type.out - 1) === 0;
-    component valid_type2 = LessThan(252);
-    valid_type2.in[0] <== num_input_notes;
-    valid_type2.in[1] <== 3;
-    enabled * (valid_type2.out - 1) === 0;
+
+    //  true == (num_input_notes = 0 || 1 || 2);
+    signal aux;
+    signal aux2;
+    aux <== num_input_notes * (1 - num_input_notes);
+    aux2 <== aux * (2 - num_input_notes);
+    enabled * aux2 === 0;
 
     // is_public_tx = is_withdraw || is_deposit
     component is_public_tx = XOR();
@@ -156,6 +160,7 @@ template JoinSplit(nLevel) {
     component nf[2];
     component ms[2];
     component forceNullifierEql[2];
+    signal aux3[2];
     for(var i = 0;  i < 2; i ++) {
         onc[i] = NoteCompressor();
         onc[i].val <== output_note_val[i];
@@ -182,17 +187,15 @@ template JoinSplit(nLevel) {
         inc[i].input_nullifier <== input_note_nullifier[i];
         inc[i].account_required <== input_note_account_required[i];
 
-        nf[i] = NullifierFunction(nLevel);
+        nf[i] = NullifierFunction();
         nf[i].nc <== inc[i].out;
         nf[i].nk <== account_note_nk;
         nf[i].input_note_in_use <== input_note_in_use[i].out;
 
         // TODO push input notes into nullifier tree
         // enabled * input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]) === 0;
-        forceNullifierEql[i] = ForceAEqBIfEnabled();
-        forceNullifierEql[i].enabled <== enabled;
-        forceNullifierEql[i].a <== input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]);
-        forceNullifierEql[i].b <== 0;
+        aux3[i] <== input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]);
+        enabled * aux3[i] === 0;
     }
 
     // onc[0].out != onc[1].out
@@ -263,16 +266,14 @@ template JoinSplit(nLevel) {
 
     // num_input_notes == 2 (input_note_in_use[1].out == 1) => input_note_1.asset_id == input_note_2.asset_id
     // enabled * input_note_in_use[1].out * (input_note_asset_id[0] - input_note_asset_id[1]) === 0;
-    component forceInputInUse = ForceAEqBIfEnabled();
-    forceInputInUse.enabled <== enabled;
-    forceInputInUse.a <== input_note_in_use[1].out * (input_note_asset_id[0] - input_note_asset_id[1]);
-    forceInputInUse.b <== 0;
+    signal aux4;
+    aux4 <== input_note_in_use[1].out * (input_note_asset_id[0] - input_note_asset_id[1]);
+    enabled * aux4 === 0;
 
     //check: public_asset_id == input_note_1.asset_id <==> (public_input_ != 0 || public_output != 0)
     //aka. public_asset_id == input_note_1.asset_id <==> public_value > 0
     // enabled * (public_asset_id - is_public_tx.out * asset_id) === 0;
-    component forceAssetIdEql = ForceAEqBIfEnabled();
-    forceAssetIdEql.enabled <== enabled;
-    forceAssetIdEql.a <== public_asset_id - is_public_tx.out * asset_id;
-    forceAssetIdEql.b <== 0;
+    signal aux5;
+    aux5 <== public_asset_id - is_public_tx.out * asset_id;
+    enabled * aux5 === 0;
 }

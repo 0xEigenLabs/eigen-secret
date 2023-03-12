@@ -12,7 +12,7 @@ template UpdateState(nLevel) {
     signal input output_nc_2;
     signal input data_tree_root;
     signal input public_asset_id;
-    
+
     // private
     /// account
     signal input account_note_npk[2]; // (npk=account public key)
@@ -43,22 +43,23 @@ template UpdateState(nLevel) {
     signal input account_note_nk; // (nk = account private key)
     signal input account_required;
 
-
-    component enable_account_circuit = GreaterThan(252);
-    enable_account_circuit.in[0] <== proof_id;
-    enable_account_circuit.in[1] <== 10;
+    component enabled_account_circuit = GreaterThan(252);
+    enabled_account_circuit.in[0] <== proof_id;
+    enabled_account_circuit.in[1] <== 10;
+    //log("enabled_account_circuit");
+    log(enabled_account_circuit.out);
 
     component account_circuit = Account(nLevel);
-
-    account_circuit.enabled <== enable_account_circuit.out;
+    account_circuit.enabled <== enabled_account_circuit.out;
     account_circuit.proof_id  <== proof_id;
     account_circuit.public_value  <== public_value;
     account_circuit.public_owner  <== public_owner;
     account_circuit.num_input_notes  <== num_input_notes;
-    account_circuit.output_nc_1  <== output_nc_1; //(nc is short for note commitment)
+    account_circuit.output_nc_1  <== output_nc_1;
     account_circuit.output_nc_2  <== output_nc_2;
     account_circuit.data_tree_root  <== data_tree_root;
     account_circuit.public_asset_id  <== public_asset_id;
+    account_circuit.alias_hash <== alias_hash;
     account_circuit.account_note_npk  <== account_note_npk;
     account_circuit.account_note_spk  <== account_note_spk;
     account_circuit.new_account_note_npk  <== new_account_note_npk;
@@ -68,9 +69,8 @@ template UpdateState(nLevel) {
     account_circuit.signatureS  <== signatureS;
     account_circuit.siblings_ac  <== siblings_ac;
 
-
     component join_split_circuit = JoinSplit(nLevel);
-    join_split_circuit.enabled <== 1 - enable_account_circuit.out;
+    join_split_circuit.enabled <== 1 - enabled_account_circuit.out;
     join_split_circuit.proof_id    <== proof_id;
     join_split_circuit.public_value    <== public_value;
     join_split_circuit.public_owner    <== public_owner;

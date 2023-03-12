@@ -38,12 +38,11 @@ export async function login(alias: string, ethAddress: string): Promise<any> {
     };
 
     let is_alias_available = await SessionModel.findOne({ where: { alias: alias } } );
-    if (is_alias_available === null){
+    if (is_alias_available === null) {
         SessionModel.create(value);
         consola.log("User registered successfully");
         return util.succ("Registration succeeded!");
-    }
-    else {
+    } else {
         return SessionModel
         .findOne({ where: { alias: alias, ethAddress: ethAddress } } )
         .then(function(obj: any) {
@@ -57,7 +56,7 @@ export async function login(alias: string, ethAddress: string): Promise<any> {
             consola.error("Alias already exists!");
             return util.err(util.ErrCode.InvalidAuth, "Alias already exists!");
         });
-    };
+    }
 }
 
 export function logout(alias: string, ethAddress: string) {
