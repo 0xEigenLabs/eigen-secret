@@ -221,6 +221,9 @@ export class JoinSplitCircuit {
         let owner = await accountKey.pubKey.unpack();
         owner = [F.toObject(owner[0]), F.toObject(owner[1])];
 
+        let noteRecipentPoint = await noteRecipent.unpack();
+        noteRecipentPoint = [F.toObject(noteRecipentPoint[0]), F.toObject(noteRecipentPoint[1])];
+
         let publicOwnerX = 0n;
         if (publicOwner !== undefined) {
             let publicOwnerXY = await publicOwner.unpack();
@@ -249,10 +252,10 @@ export class JoinSplitCircuit {
             numInputNote = 2;
             let secret = F.toObject(F.random());
             let outputNote1: Note = new Note(
-                0n, secret, owner, assetId, nullifier1, false);
+                0n, secret, noteRecipentPoint, assetId, nullifier1, false);
             let outputNc1 = await outputNote1.compress();
             let outputNote2: Note = new Note(
-                firstNote.val + note.val, secret, owner, assetId, nullifier2, false);
+                firstNote.val + note.val, secret, noteRecipentPoint, assetId, nullifier2, false);
             let outputNc2 = await outputNote2.compress();
 
             let sig = await JoinSplitCircuit.calculateSignature(
@@ -296,7 +299,7 @@ export class JoinSplitCircuit {
             // let startIndex = inputNotes[inputNotes.length - 1].index;
             for (let i = inputNotes.length; i < 2; i ++) {
                 inputNotes.push(
-                    JoinSplitCircuit.fakeNote(F, owner, assetId)
+                    JoinSplitCircuit.fakeNote(F, noteRecipentPoint, assetId)
                 );
                 inputNoteInUse[i] = 0n;
                 // startIndex += 1;
@@ -305,7 +308,7 @@ export class JoinSplitCircuit {
             let nc1 = await inputNotes[0].compress();
             let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, inputNoteInUse[0], accountKey);
             let secret = F.toObject(F.random()); // FIXME: shared secret
-            let outputNote1 = new Note(recipientPrivateOutput, secret, owner, assetId, nullifier1, false);
+            let outputNote1 = new Note(recipientPrivateOutput, secret, noteRecipentPoint, assetId, nullifier1, false);
             let outputNc1 = await outputNote1.compress();
 
             let nc2 = 0n;

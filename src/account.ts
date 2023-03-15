@@ -54,6 +54,8 @@ type NewKeyFunc = (seed: string | undefined) => Promise<IKey>;
 type SignFunc = (msghash: Uint8Array) => Promise<any>;
 type VerifyFunc = (signature: Uint8Array | any, msghash: Uint8Array) => Promise<boolean>;
 type KeyToCircuitInput = () => Promise<bigint[][]>;
+type MakeSharedKey = (receiver: Address) => Promise<Buffer>;
+
 export interface IKey {
     prvKey: bigint;
     pubKey: any;
@@ -61,6 +63,7 @@ export interface IKey {
     sign: SignFunc;
     verify: VerifyFunc;
     toCircuitInput: KeyToCircuitInput;
+    makeSharedKey: MakeSharedKey;
 }
 
 
@@ -92,6 +95,14 @@ export class SigningKey implements IKey {
         let eddsa = await buildEddsa();
         let pubKey = await this.pubKey.unpack();
         return Promise.resolve(eddsa.verifyPoseidon(msghash, signature, pubKey));
+    }
+    makeSharedKey: MakeSharedKey = async (receiver: EigenAddress) => {
+        let eddsa = await buildEddsa();
+        let babyJub = eddsa.babyJub;
+        let receiverPoint = await receiver.unpack();
+        let rawSharedKey = babyJub.mulPointEscalar(receiverPoint, this.prvKey);
+        let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
+        return sharedKey;
     }
     toCircuitInput: KeyToCircuitInput = async () => {
         let eddsa = await buildEddsa();
@@ -125,6 +136,9 @@ export class AccountOrNullifierKey implements IKey {
         this.prvKey = Buffer.from(prvKey);
         this.pubKey = new EthAddress(hexPubKey);
         return Promise.resolve(this);
+    }
+    makeSharedKey: MakeSharedKey = async (receiver: EigenAddress) => {
+        throw new Error("Unimplemented")
     }
     sign: SignFunc = async (msghash: Uint8Array) => {
         // let sig: Uint8Array = await k1Sign(msghash, this.prvKey, { canonical: true, der: false })
