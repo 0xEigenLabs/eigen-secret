@@ -17,7 +17,7 @@ class Transaction {
     async create() {
         let tmpKey = await (new SigningKey()).newKey(undefined);
         for (let note of this.notes) {
-            let sharedKey = tmpKey.makeSharedKey(note.owner);
+            //let sharedKey = tmpKey.makeSharedKey(note.owner);
 
         }
     }
