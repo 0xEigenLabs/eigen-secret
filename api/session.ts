@@ -71,7 +71,7 @@ export function logout(alias: string, ethAddress: string) {
         .findOne({ where: { alias: alias, ethAddress: ethAddress } } )
         .then(function(obj: any) {
             if (obj) {
-return obj.update(value);
-}
+                return obj.update(value);
+            }
         })
 }

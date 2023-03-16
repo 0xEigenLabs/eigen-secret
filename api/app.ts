@@ -13,6 +13,7 @@ import "dotenv/config";
 import * as util from "./util";
 import bodyParser from "body-parser";
 import { createAccount } from "./account";
+import { createTx, getTxByAccountId } from "./transaction";
 
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);
@@ -28,6 +29,8 @@ const issueOptions = {
 app.use(cors(issueOptions));
 
 app.post("/accounts/:ethAddress", createAccount);
+app.post("/txs/", createTx);
+app.get("/txs/:accountId", getTxByAccountId);
 app.get("/ping", (req, resp) => {
   resp.json(util.succ("pong"));
 })

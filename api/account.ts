@@ -88,7 +88,7 @@ export async function createAccount(req: any, res: any) {
   const hexSignature = req.body.hexSignature;
   if (!util.hasValue(alias) || !util.hasValue(ethAddress)) {
     consola.error("missing alias or ethAddress");
-    return res.json(util.err(1, "missing input"));
+    return res.json(util.err(util.ErrCode.InvalidInput, "missing input"));
   }
   const result = doCreateAccount(alias, ethAddress, message, hexSignature);
   res.json(result);
