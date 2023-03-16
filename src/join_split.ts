@@ -141,6 +141,7 @@ export class JoinSplitCircuit {
     static readonly PROOF_ID_TYPE_WITHDRAW: number = 2;
     static readonly PROOF_ID_TYPE_SEND: number = 3;
 
+    /*
     static async createSharedSecret(senderPvk: bigint): Promise<Buffer> {
         let eddsa = await buildEddsa();
         let babyJub = eddsa.babyJub;
@@ -148,6 +149,7 @@ export class JoinSplitCircuit {
         let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
         return sharedKey;
     }
+    */
 
     static async hashMsg(nc1: any, nc2: any, outputNote1: any, outputNote2: any, publicOwner: any, publicValue: any) {
         let poseidon = await buildPoseidon();
@@ -168,7 +170,7 @@ export class JoinSplitCircuit {
         publicAssetId: number,
         publicValue: bigint,
         publicOwner: EigenAddress,
-        noteRecipent: EigenAddress,
+        noteRecipent: EigenAddress, // allow user to deposit to others
         confirmedAndPendingInputNotes: Array<Note>,
         accountRequired: boolean
     ): Promise<Array<JoinSplitInput>> {
@@ -251,10 +253,10 @@ export class JoinSplitCircuit {
             numInputNote = 2;
             let secret = F.toObject(F.random());
             let outputNote1: Note = new Note(
-                0n, secret, noteRecipent, assetId, nullifier1, false);
+                0n, secret, owner, assetId, nullifier1, false);
             let outputNc1 = await outputNote1.compress(babyJub);
             let outputNote2: Note = new Note(
-                firstNote.val + note.val, secret, noteRecipent, assetId, nullifier2, false);
+                firstNote.val + note.val, secret, owner, assetId, nullifier2, false);
             let outputNc2 = await outputNote2.compress(babyJub);
 
             let sig = await JoinSplitCircuit.calculateSignature(
@@ -298,7 +300,7 @@ export class JoinSplitCircuit {
             // let startIndex = inputNotes[inputNotes.length - 1].index;
             for (let i = inputNotes.length; i < 2; i ++) {
                 inputNotes.push(
-                    JoinSplitCircuit.fakeNote(F, noteRecipent, assetId)
+                    JoinSplitCircuit.fakeNote(F, owner, assetId)
                 );
                 inputNoteInUse[i] = 0n;
                 // startIndex += 1;
