@@ -1,12 +1,23 @@
-import Level from "level-ts";
+import { DataTypes } from "sequelize";
+
+const {sequelize} = require("../api/db");
 
 export default class SMTDb {
     nodesDB: any;
     root: bigint;
     F: any;
 
-    constructor(F: any, dbPath: string) {
-        this.nodesDB = new Level(dbPath);
+    constructor(F: any) {
+        this.nodesDB = sequelize.define("KeyValue", {
+            key: {
+                type: DataTypes.BIGINT,
+                allowNull: false
+            },
+            value: {
+                type: DataTypes.BIGINT,
+                allowNull: false
+            }
+        });
         this.root = F.zero;
         this.F = F;
     }
@@ -30,8 +41,8 @@ export default class SMTDb {
 
     async get(key: any) {
         const keyS = this._key2str(key);
-        const res = await this.nodesDB.get(keyS);
-        return res;
+        const res = await this.nodesDB.findOne({where: {key: keyS}});
+        return res.value;
     }
 
     async multiGet(keys: any) {
@@ -50,14 +61,22 @@ export default class SMTDb {
         for (let i=0; i<inserts.length; i++) {
             const keyS = this._key2str(inserts[i][0]);
             this._normalize(inserts[i][1]);
-            await this.nodesDB.put(keyS, inserts[i][1]);
+            await this.nodesDB.create({
+                key: keyS,
+                value: inserts[i][1]
+            })
         }
     }
 
     async multiDel(dels: any) {
         for (let i=0; i<dels.length; i++) {
             const keyS = this._key2str(dels[i]);
-            await this.nodesDB.del(keyS);
+            const res = await this.nodesDB.destroy({
+                where: {
+                    key: keyS
+                }
+            }); 
         }
     }
 }
+
