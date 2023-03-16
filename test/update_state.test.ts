@@ -91,7 +91,7 @@ describe("Test JoinSplit Circuit", function () {
         acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
         await worldState.insert(F.e(acStateKey), 1);
         let proofId = UpdateStatusCircuit.PROOF_ID_TYPE_DEPOSIT;
-        let inputs = await UpdateStatusCircuit.createDepositInput(
+        let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             accountKey,
             signingKey,
             worldState,
@@ -102,6 +102,7 @@ describe("Test JoinSplit Circuit", function () {
             assetId,
             10n,
             signingKey.pubKey,
+            10n,
             accountKey.pubKey,
             [],
             accountRequired

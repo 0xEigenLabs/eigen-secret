@@ -3,8 +3,8 @@ const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { ethers } from "ethers";
 import { Note } from "./note";
-import { SigningKey, EigenAddress, rawCompress, aliashHashDigest, newAccountDigest, accountDigest } from "./account";
-import { JoinSplitCircuit } from "./join_split";
+import { AccountCircuit, SigningKey, EigenAddress } from "./account";
+import { JoinSplitCircuit, JoinSplitInput } from "./join_split";
 import { strict as assert } from "assert";
 import { StateTree, N_LEVEL } from "./state_tree";
 import { parseProof, Proof, siblingsPad } from "./utils";
@@ -12,6 +12,7 @@ const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
 const snarkjs = require("snarkjs");
 const path = require("path");
+const { buildBabyjub } = require("circomlibjs");
 
 export class UpdateStatusInput {
     proofId: number;
@@ -55,7 +56,8 @@ export class UpdateStatusInput {
         accountPubKey: bigint[],
         signingPubKey: bigint[],
         accountRequired: boolean,
-        sig: any,
+        signatureR8: bigint[],
+        signatureS: bigint,
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[]
@@ -79,8 +81,8 @@ export class UpdateStatusInput {
         this.newAccountPubKey = newAccountPubKey;
         this.newSigningPubKey1 = newSigningPubKey1;
         this.newSigningPubKey2 = newSigningPubKey2;
-        this.signatureR8 = sig.R8;
-        this.signatureS = sig.S;
+        this.signatureR8 = signatureR8;
+        this.signatureS = signatureS;
         this.accountRequired = accountRequired;
     }
 
@@ -116,7 +118,7 @@ export class UpdateStatusInput {
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
             siblings_ac: this.siblingsAC,
-            signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
+            signatureR8: this.signatureR8,
             signatureS: this.signatureS,
             new_account_note_npk: this.newAccountPubKey,
             new_account_note_spk1: this.newSigningPubKey1,
@@ -182,114 +184,40 @@ export class UpdateStatusCircuit {
         aliasHash: bigint,
         state: StateTree
     ) {
-        let eddsa = await buildEddsa();
-        const F = eddsa.F;
-
-        let accountPubKey = accountKey.pubKey.unpack(eddsa.babyJub);
-        accountPubKey = [F.toObject(accountPubKey[0]), F.toObject(accountPubKey[1])];
-
-        let signingPubKey = signingKey.pubKey.unpack(eddsa.babyJub);
-        signingPubKey = [F.toObject(signingPubKey[0]), F.toObject(signingPubKey[1])];
-
-        let accountNC = await rawCompress(accountPubKey, signingPubKey, aliasHash);
-        let outputNC1 = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
-        let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
-
-        let nullifier1 = proofId == UpdateStatusCircuit.PROOF_ID_TYPE_CREATE? (await aliashHashDigest(aliasHash)): 0;
-        let nullifier2 = (proofId == UpdateStatusCircuit.PROOF_ID_TYPE_CREATE ||
-            proofId == UpdateStatusCircuit.PROOF_ID_TYPE_MIGRATE) ?
-            (await newAccountDigest(newAccountPubKey)): 0;
-
-        let msghash = await accountDigest(
-            aliasHash,
-            accountPubKey[0],
-            newAccountPubKey[0],
-            newSigningPubKey1[0],
-            newSigningPubKey2[0],
-            nullifier1,
-            nullifier2
-        );
-        console.log(
-            aliasHash, accountPubKey[0],
-            newAccountPubKey[0], newSigningPubKey1[0], newSigningPubKey2[0], nullifier1, nullifier2);
-
-        if (proofId == UpdateStatusCircuit.PROOF_ID_TYPE_CREATE) {
-            await state.insert(F.e(accountNC), 1);
-        }
-
-        let leaf = await state.find(F.e(accountNC));
-
-        console.log("msghash", F.toObject(msghash));
-        let sig = await signingKey.sign(msghash);
-
-        const siblings_zero = Array.from({ length: 2 }, () => Array.from({ length: 20 }, () => BigInt(0)));
-
-        return new UpdateStatusInput(
+        let accountInput = await AccountCircuit.createProofInput(
             proofId,
-            0n,
-            0n,
-            0,
-            0,
+            accountKey,
+            signingKey,
+            newAccountPubKey,
+            newSigningPubKey1,
+            newSigningPubKey2,
             aliasHash,
+            state);
+        const siblings_zero = Array.from({ length: 2 }, () => Array.from({ length: 20 }, () => BigInt(0)));
+        return new UpdateStatusInput(
+            accountInput.proofId,
+            0n,
+            0n,
+            0,
+            0,
+            accountInput.aliasHash,
             0,
             [],
             [],
-            [outputNC1, outputNC2],
-            F.toObject(state.root()),
+            accountInput.outputNCs,
+            accountInput.dataTreeRoot,
             siblings_zero,
-            siblingsPad(leaf.siblings, F),
+            accountInput.siblingsAC,
             0n,
-            accountPubKey,
-            signingPubKey,
+            accountInput.accountPubKey,
+            accountInput.signingPubKey,
             false,
-            sig,
+            accountInput.signatureR8,
+            accountInput.signatureS,
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2
         );
-    }
-
-    static async createDepositInput(
-        accountKey: SigningKey,
-        signingKey: SigningKey,
-        state: StateTree,
-        acStateKey: bigint,
-        proofId: number,
-        aliasHash: bigint,
-        assetId: number,
-        publicAssetId: number,
-        publicValue: bigint,
-        publicOwner: EigenAddress,
-        noteRecipent: EigenAddress, // allow user to deposit to others
-        confirmedAndPendingInputNotes: Array<Note>,
-        accountRequired: boolean
-    ): Promise<Array<UpdateStatusInput>> {
-        // check proofId and publicValue
-        if (publicValue == 0n || proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT) {
-            return Promise.reject(new Error("proofId or publicValue is invalid"));
-        }
-
-        let res = await UpdateStatusCircuit.createJoinSplitInput(
-            accountKey,
-            signingKey,
-            state,
-            acStateKey,
-            proofId,
-            aliasHash,
-            assetId,
-            publicAssetId,
-            publicValue,
-            publicOwner,
-            publicValue,
-            noteRecipent,
-            confirmedAndPendingInputNotes,
-            accountRequired
-        );
-        return Promise.resolve(res);
-    }
-
-    static fakeNote(F: any, owner: EigenAddress, assetId: number, index: number | undefined = undefined) {
-        return new Note(0n, 0n, owner, assetId, F.toObject(F.random()), false, index);
     }
 
     static async createJoinSplitInput(
@@ -308,147 +236,50 @@ export class UpdateStatusCircuit {
         confirmedAndPendingInputNotes: Array<Note>,
         accountRequired: boolean
     ) {
-        let eddsa = await buildEddsa();
-        const F = eddsa.F;
-        const babyJub = eddsa.babyJub;
-        const confirmedNote = confirmedAndPendingInputNotes.filter((n) => !n.pending);
-
-        let owner = accountKey.pubKey;
-
-        let publicOwnerX = 0n;
-        if (publicOwner !== undefined) {
-            let publicOwnerXY = publicOwner.unpack(babyJub);
-            publicOwnerX = F.toObject(publicOwnerXY[0]);
-        }
-
-        let firstNote = confirmedAndPendingInputNotes.find((n) => n.pending) ||
-            confirmedNote.shift();
-        let lastNote = confirmedNote.pop();
-        let numInputNote = 0;
-
+        let joinSplitInput = await JoinSplitCircuit.createProofInput(
+            accountKey,
+            signingKey,
+            state,
+            acStateKey,
+            proofId,
+            aliasHash,
+            assetId,
+            publicAssetId,
+            publicValue,
+            publicOwner,
+            recipientPrivateOutput,
+            noteRecipent,
+            confirmedAndPendingInputNotes,
+            accountRequired);
+        let babyJub = await buildBabyjub();
+        const F = babyJub.F;
         let inputList = new Array<UpdateStatusInput>(0);
-        // Merge all the confirmed notes and public input and output into 2 notes.
-        // Assume a is pending utxo and a.val is greater than 0, [a] is confirmed utxo, and [[a]] is spent input.
-        // Given sequence, <[[o]], [a], [b], [c], d>, we firstly filter all the confirmed notes,
-        // and begin to merge [a] and [b], outputs [a'] with 0 value and [b'] with a+b'value,
-        // then merge [b'] and [c], to get [c'],  [c'] and d to [d].
-        for (const note of confirmedNote) {
-            assert(firstNote);
-            let nc1 = await firstNote.compress(babyJub);
-            let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, 1n, accountKey);
-
-            let nc2 = await note.compress(babyJub);
-            let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, 1n, accountKey);
-
-            numInputNote = 2;
-            let secret = F.toObject(F.random());
-            let outputNote1: Note = new Note(
-                0n, secret, owner, assetId, nullifier1, false);
-            let outputNc1 = await outputNote1.compress(babyJub);
-            let outputNote2: Note = new Note(
-                firstNote.val + note.val, secret, owner, assetId, nullifier2, false);
-            let outputNc2 = await outputNote2.compress(babyJub);
-
-            let sig = await JoinSplitCircuit.calculateSignature(
-                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
-            await state.insert(outputNc1, 2);
-            await state.insert(outputNc2, 2);
-
-            let noteInput1 = await state.find(outputNc1);
-            let noteInput2 = await state.find(outputNc2);
-            let ac = await state.find(F.e(acStateKey));
-            let ak = await accountKey.toCircuitInput(eddsa);
-
-            const publicKey = new BigInt64Array(0);
-            const publicKeyArray = Array.from(publicKey.slice());
-
+        for (let i=0; i<joinSplitInput.length; i++) {
             let input = new UpdateStatusInput(
-                proofId, 0n, 0n, assetId, publicAssetId, aliasHash,
-                numInputNote,
-                [firstNote, note],
-                [outputNote1, outputNote2],
-                [outputNc1, outputNc2],
-                F.toObject(state.root()),
-                [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
-                siblingsPad(ac.siblings, F),
-                ak[1][0],
-                ak[0],
-                (await signingKey.toCircuitInput(eddsa))[0],
-                accountRequired,
-                sig,
-                [0n, 0n], [0n, 0n], [0n, 0n]
-            );
-            inputList.push(input);
-            firstNote = outputNote2;
-        }
-
-        // merge the last note and public input
-        {
-            // assert(firstNote);
-            let inputNotes: Note[] = [];
-            if (firstNote) {
-                inputNotes = lastNote? [firstNote, lastNote] : [firstNote];
-            }
-            let inputNoteInUse: bigint[] = [1n, 1n];
-            numInputNote = inputNotes.length;
-            // let startIndex = inputNotes[inputNotes.length - 1].index;
-            for (let i = inputNotes.length; i < 2; i ++) {
-                inputNotes.push(
-                    JoinSplitCircuit.fakeNote(F, owner, assetId)
-                );
-                inputNoteInUse[i] = 0n;
-                // startIndex += 1;
-            }
-
-            let nc1 = await inputNotes[0].compress(babyJub);
-            let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, inputNoteInUse[0], accountKey);
-            let secret = F.toObject(F.random()); // FIXME: shared secret
-            let outputNote1 = new Note(recipientPrivateOutput, secret, noteRecipent, assetId, nullifier1, false);
-            let outputNc1 = await outputNote1.compress(babyJub);
-
-            let nc2 = 0n;
-            let outputNc2 = 0n;
-            let outputNotes = [outputNote1];
-            let outputNCs = [outputNc1];
-            const totalInputNoteValue = inputNotes.reduce((sum, n) => sum + n.val, 0n);
-            const change = totalInputNoteValue > recipientPrivateOutput ?
-                (totalInputNoteValue - recipientPrivateOutput) : 0n;
-
-            assert(inputNotes[1]);
-            nc2 = await inputNotes[1].compress(babyJub);
-            let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, inputNoteInUse[1], accountKey);
-            let outputNote2: Note = new Note(
-                change,
-                secret, owner, assetId, nullifier2, false
-            );
-            outputNotes.push(outputNote2);
-            outputNc2 = await outputNote2.compress(babyJub);
-            outputNCs.push(outputNc2);
-
-            let sig = await JoinSplitCircuit.calculateSignature(
-                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
-            await state.insert(outputNc1, inputNotes.length);
-            await state.insert(outputNc2, inputNotes.length);
-            let noteInput1 = await state.find(outputNc1);
-            let noteInput2 = await state.find(outputNc2);
-            let ac = await state.find(F.e(acStateKey));
-            let ak = accountKey.toCircuitInput(eddsa);
-            let input = new UpdateStatusInput(
-                proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
-                numInputNote, inputNotes, outputNotes, outputNCs,
-                F.toObject(state.root()),
-                [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
-                siblingsPad(ac.siblings, F),
-                ak[1][0],
-                ak[0],
-                (signingKey.toCircuitInput(eddsa))[0],
-                accountRequired,
-                sig,
+                joinSplitInput[i].proofId,
+                joinSplitInput[i].publicValue,
+                joinSplitInput[i].publicOwner,
+                joinSplitInput[i].assetId,
+                joinSplitInput[i].publicAssetId,
+                joinSplitInput[i].aliasHash,
+                joinSplitInput[i].numInputNote,
+                joinSplitInput[i].inputNotes,
+                joinSplitInput[i].outputNotes,
+                joinSplitInput[i].outputNCs,
+                joinSplitInput[i].dataTreeRoot,
+                joinSplitInput[i].siblings,
+                joinSplitInput[i].siblingsAC,
+                joinSplitInput[i].accountPrvKey,
+                joinSplitInput[i].accountPubKey,
+                joinSplitInput[i].signingPubKey,
+                joinSplitInput[i].accountRequired,
+                [F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
+                joinSplitInput[i].signatureS,
                 [0n, 0n], [0n, 0n], [0n, 0n]
             );
             inputList.push(input);
         }
-
         return Promise.resolve(inputList);
     }
 }
+
