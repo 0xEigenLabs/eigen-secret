@@ -210,7 +210,7 @@ template JoinSplit(nLevel) {
     ac.alias_hash <== alias_hash;
 
     component ams = Membership(nLevel);
-    ams.enabled <== 1;
+    ams.enabled <== enabled;
     ams.key <== ac.out;
     ams.value <== 1; // setup any
     ams.root <== data_tree_root;
@@ -240,7 +240,7 @@ template JoinSplit(nLevel) {
     msghash.public_owner <== public_owner;
 
     component sig_verifier = EdDSAPoseidonVerifier();
-    sig_verifier.enabled <== 1;
+    sig_verifier.enabled <== enabled;
     sig_verifier.R8x <== signatureR8[0];
     sig_verifier.R8y <== signatureR8[1];
     sig_verifier.S <== signatureS;
