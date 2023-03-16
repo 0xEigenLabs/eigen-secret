@@ -37,8 +37,8 @@ describe("Test withdraw", async() => {
 
         let input = {
             enabled: 1,
-            R8x: signature.R8[0],
-            R8y: signature.R8[1],
+            R8x: F.toObject(signature.R8[0]),
+            R8y: F.toObject(signature.R8[1]),
             S: signature.S,
             Ax: F.toObject(xy[0]),
             Ay: F.toObject(xy[1]),

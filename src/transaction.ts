@@ -20,7 +20,6 @@ class Transaction {
         let tmpKey = await (new SigningKey()).newKey(undefined);
         for (let note of this.notes) {
             let sharedKey = tmpKey.makeSharedKey(eddsa, note._owner);
-
         }
     }
 }

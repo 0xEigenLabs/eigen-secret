@@ -109,7 +109,7 @@ export class JoinSplitInput {
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
             siblings_ac: this.siblingsAC,
-            signatureR8: this.signatureR8,
+            signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
             signatureS: this.signatureS,
             enabled: this.enabled
         };

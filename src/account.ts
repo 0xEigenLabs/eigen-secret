@@ -27,7 +27,7 @@ export class EigenAddress implements Address {
         if (pubKey.startsWith(this.protocol)) {
             pubKey = pubKey.substring(this.protocol.length);
         }
-        //let babyJub = await buildBabyjub();
+        // let babyJub = await buildBabyjub();
         let bPubKey = Buffer.from(pubKey, "hex");
         let pPubKey = babyJub.unpackPoint(bPubKey);
         return pPubKey;
@@ -87,7 +87,7 @@ export class SigningKey implements IKey {
         let F = eddsa.F;
         let result = eddsa.signPoseidon(this.prvKey, msghash);
         return {
-            R8: [F.toObject(result.R8[0]), F.toObject(result.R8[1])],
+            R8: [result.R8[0], result.R8[1]],
             S: result.S
         }
     }
@@ -330,7 +330,7 @@ export class AccountCircuit {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            sig.R8,
+            [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
             sig.S
         );
     }

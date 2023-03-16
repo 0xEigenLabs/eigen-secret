@@ -54,8 +54,8 @@ describe("Test View Key", function () {
             enabled: 1,
             Ax: pubKey[0][0],
             Ay: pubKey[0][1],
-            R8x: signature.R8[0],
-            R8y: signature.R8[1],
+            R8x: F.toObject(signature.R8[0]),
+            R8y: F.toObject(signature.R8[1]),
             S: signature.S,
             M: F.toObject(msg)
         };
