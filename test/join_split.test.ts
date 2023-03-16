@@ -38,7 +38,7 @@ describe("Test JoinSplit Circuit", function () {
         worldState = new StateTree();
         await worldState.init();
         signer = accountRequired? signingKey: accountKey;
-        acStateKey = await accountCompress(accountKey, signer, aliasHash);
+        acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
         await worldState.insert(F.e(acStateKey), 1);
     })
 
@@ -61,7 +61,7 @@ describe("Test JoinSplit Circuit", function () {
             accountRequired
         );
         for (const input of inputs) {
-            await utils.executeCircuit(circuit, input.toCircuitInput(F));
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
         }
         console.log("test send tx")
         let confirmedNote: Note[] = [];

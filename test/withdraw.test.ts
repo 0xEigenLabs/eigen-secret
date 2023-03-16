@@ -33,7 +33,7 @@ describe("Test withdraw", async() => {
         var msg = poseidon([rawMsg])
 
         let signature = await signingKey.sign(msg);
-        let xy = await signingKey.pubKey.unpack();
+        let xy = signingKey.pubKey.unpack(eddsa.babyJub);
 
         let input = {
             enabled: 1,

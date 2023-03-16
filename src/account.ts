@@ -10,7 +10,7 @@ import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/
 import { bigint2Array, bigint2Uint8Array, bigint2Tuple, siblingsPad } from "./utils";
 const fs = require("fs");
 
-type UnpackFunc = () => Promise<[any, any]>;
+type UnpackFunc = (babyJub: any) => [any, any];
 interface Address {
     protocol: string;
     pubKey: string;
@@ -22,15 +22,15 @@ export class EigenAddress implements Address {
     constructor(pubKey: string) {
         this.pubKey = pubKey;
     }
-    unpack: UnpackFunc = async () => {
+    unpack: UnpackFunc = (babyJub: any) => {
         let pubKey = this.pubKey;
         if (pubKey.startsWith(this.protocol)) {
             pubKey = pubKey.substring(this.protocol.length);
         }
-        let babyJub = await buildBabyjub();
+        //let babyJub = await buildBabyjub();
         let bPubKey = Buffer.from(pubKey, "hex");
         let pPubKey = babyJub.unpackPoint(bPubKey);
-        return Promise.resolve(pPubKey);
+        return pPubKey;
     };
 }
 
@@ -40,21 +40,21 @@ export class EthAddress implements Address {
     constructor(pubKey: string) {
         this.pubKey = pubKey;
     }
-    unpack: UnpackFunc = async () => {
+    unpack: UnpackFunc = (babyJub: any) => {
         let pubKey = this.pubKey;
         if (pubKey.startsWith(this.protocol)) {
             pubKey = pubKey.substring(this.protocol.length);
         }
         let p = Point.fromHex(pubKey);
-        return Promise.resolve([p.x, p.y]);
+        return [p.x, p.y];
     }
 }
 
 type NewKeyFunc = (seed: string | undefined) => Promise<IKey>;
 type SignFunc = (msghash: Uint8Array) => Promise<any>;
-type VerifyFunc = (signature: Uint8Array | any, msghash: Uint8Array) => Promise<boolean>;
-type KeyToCircuitInput = () => Promise<bigint[][]>;
-type MakeSharedKey = (receiver: Address) => Promise<Buffer>;
+type VerifyFunc = (eddsa: any, signature: Uint8Array | any, msghash: Uint8Array) => boolean;
+type KeyToCircuitInput = (eddsa: any) => bigint[][];
+type MakeSharedKey = (eddsa: any, receiver: Address) => Buffer;
 
 export interface IKey {
     prvKey: bigint;
@@ -91,22 +91,19 @@ export class SigningKey implements IKey {
             S: result.S
         }
     }
-    verify: VerifyFunc = async (signature: Uint8Array | any, msghash: Uint8Array) => {
-        let eddsa = await buildEddsa();
-        let pubKey = await this.pubKey.unpack();
-        return Promise.resolve(eddsa.verifyPoseidon(msghash, signature, pubKey));
+    verify: VerifyFunc = (eddsa: any, signature: Uint8Array | any, msghash: Uint8Array) => {
+        let pubKey = this.pubKey.unpack(eddsa.babyJub);
+        return eddsa.verifyPoseidon(msghash, signature, pubKey);
     }
-    makeSharedKey: MakeSharedKey = async (receiver: EigenAddress) => {
-        let eddsa = await buildEddsa();
+    makeSharedKey: MakeSharedKey = (eddsa: any, receiver: EigenAddress) => {
         let babyJub = eddsa.babyJub;
-        let receiverPoint = await receiver.unpack();
+        let receiverPoint = receiver.unpack(babyJub);
         let rawSharedKey = babyJub.mulPointEscalar(receiverPoint, this.prvKey);
         let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
         return sharedKey;
     }
-    toCircuitInput: KeyToCircuitInput = async () => {
-        let eddsa = await buildEddsa();
-        let pPub = await this.pubKey.unpack();
+    toCircuitInput: KeyToCircuitInput = (eddsa: any) => {
+        let pPub = this.pubKey.unpack(eddsa.babyJub);
 
         const pvk = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.prvKey).digest().slice(0, 32));
         const S = Scalar.shr(utils.leBuff2int(pvk), 3);
@@ -137,7 +134,7 @@ export class AccountOrNullifierKey implements IKey {
         this.pubKey = new EthAddress(hexPubKey);
         return Promise.resolve(this);
     }
-    makeSharedKey: MakeSharedKey = async (receiver: EigenAddress) => {
+    makeSharedKey: MakeSharedKey = (eddsa: any, receiver: EigenAddress) => {
         throw new Error("Unimplemented")
     }
     sign: SignFunc = async (msghash: Uint8Array) => {
@@ -145,23 +142,24 @@ export class AccountOrNullifierKey implements IKey {
         // return Promise.resolve(sig);
         throw new Error("Unimplemented");
     }
-    verify: VerifyFunc = async (signature: Uint8Array | any, msghash: Uint8Array) => {
-        let pPub = await this.pubKey.unpack();
-        return Promise.resolve(k1Verify(signature, msghash, new Point(pPub[0], pPub[1])));
+    verify: VerifyFunc = (eddsa: any, signature: Uint8Array | any, msghash: Uint8Array) => {
+        let pPub = this.pubKey.unpack(eddsa.babyJub);
+        return k1Verify(signature, msghash, new Point(pPub[0], pPub[1]));
     }
-    toCircuitInput: KeyToCircuitInput = async () => {
-        let pPub = await this.pubKey.unpack();
+    toCircuitInput: KeyToCircuitInput = (eddsa: any) => {
+        let pPub = this.pubKey.unpack(eddsa.babyJub);
         return [bigint2Tuple(pPub[0]), bigint2Tuple(pPub[1])];
     }
 }
 
 
 export async function compress(
+    eddsa: any,
     accountKey: SigningKey,
     signingKey: SigningKey,
     aliasHash: bigint) {
-    let npk = await accountKey.toCircuitInput();
-    let spk = await signingKey.toCircuitInput();
+    let npk = accountKey.toCircuitInput(eddsa);
+    let spk = signingKey.toCircuitInput(eddsa);
 
     return await rawCompress(npk[0], spk[0], aliasHash);
 }
@@ -285,10 +283,10 @@ export class AccountCircuit {
         let eddsa = await buildEddsa();
         const F = eddsa.F;
 
-        let accountPubKey = await accountKey.pubKey.unpack();
+        let accountPubKey = accountKey.pubKey.unpack(eddsa.babyJub);
         accountPubKey = [F.toObject(accountPubKey[0]), F.toObject(accountPubKey[1])];
 
-        let signingPubKey = await signingKey.pubKey.unpack();
+        let signingPubKey = signingKey.pubKey.unpack(eddsa.babyJub);
         signingPubKey = [F.toObject(signingPubKey[0]), F.toObject(signingPubKey[1])];
 
         let accountNC = await rawCompress(accountPubKey, signingPubKey, aliasHash);

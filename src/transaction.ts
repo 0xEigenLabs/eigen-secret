@@ -4,6 +4,7 @@
  */
 import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
+const buildEddsa = require("circomlibjs").buildEddsa;
 
 class Transaction {
     notes: Array<Note>;
@@ -15,9 +16,10 @@ class Transaction {
     }
 
     async create() {
+        let eddsa = await buildEddsa();
         let tmpKey = await (new SigningKey()).newKey(undefined);
         for (let note of this.notes) {
-            //let sharedKey = tmpKey.makeSharedKey(note.owner);
+            let sharedKey = tmpKey.makeSharedKey(eddsa, note._owner);
 
         }
     }
