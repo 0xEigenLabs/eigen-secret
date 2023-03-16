@@ -3,7 +3,7 @@ const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { ethers } from "ethers";
 import { Note } from "./note";
-import { SigningKey, EigenAddress, EthAddress, rawCompress, aliashHashDigest, newAccountDigest, accountDigest } from "./account";
+import { SigningKey, EigenAddress, rawCompress, aliashHashDigest, newAccountDigest, accountDigest } from "./account";
 import { JoinSplitCircuit } from "./join_split";
 import { strict as assert } from "assert";
 import { StateTree, N_LEVEL } from "./state_tree";
@@ -131,7 +131,7 @@ export class UpdateStatusInput {
                 inputJson.input_note_owner[i] = this.inputNotes[i].owner(babyJub);
                 inputJson.input_note_nullifier[i] = this.inputNotes[i].inputNullifier;
                 inputJson.input_note_account_required[i] = BigInt(this.inputNotes[i].accountRequired);
-    
+
                 inputJson.output_note_val[i] = this.outputNotes[i].val;
                 inputJson.output_note_secret[i] = this.outputNotes[i].secret;
                 inputJson.output_note_asset_id[i] = BigInt(this.outputNotes[i].assetId);
@@ -139,8 +139,7 @@ export class UpdateStatusInput {
                 inputJson.output_note_nullifier[i] = this.outputNotes[i].inputNullifier;
                 inputJson.output_note_account_required[i] = BigInt(this.outputNotes[i].accountRequired);
             }
-        }
-        else{
+        } else {
             for (let i = 0; i < 2; i ++) {
                 inputJson.input_note_val[i] = 0n;
                 inputJson.input_note_secret[i] = 0n;
@@ -148,7 +147,7 @@ export class UpdateStatusInput {
                 inputJson.input_note_owner[i] = [0n, 0n];
                 inputJson.input_note_nullifier[i] = 0n;
                 inputJson.input_note_account_required[i] = 0n;
-    
+
                 inputJson.output_note_val[i] = 0n;
                 inputJson.output_note_secret[i] = 0n;
                 inputJson.output_note_asset_id[i] = 0n;
@@ -237,7 +236,7 @@ export class UpdateStatusCircuit {
             [],
             [outputNC1, outputNC2],
             F.toObject(state.root()),
-            siblings_zero,        
+            siblings_zero,
             siblingsPad(leaf.siblings, F),
             0n,
             accountPubKey,
@@ -246,7 +245,7 @@ export class UpdateStatusCircuit {
             sig,
             newAccountPubKey,
             newSigningPubKey1,
-            newSigningPubKey2,
+            newSigningPubKey2
         );
     }
 
@@ -377,7 +376,7 @@ export class UpdateStatusCircuit {
                 (await signingKey.toCircuitInput(eddsa))[0],
                 accountRequired,
                 sig,
-                [0n,0n],[0n,0n],[0n,0n]
+                [0n, 0n], [0n, 0n], [0n, 0n]
             );
             inputList.push(input);
             firstNote = outputNote2;
@@ -445,7 +444,7 @@ export class UpdateStatusCircuit {
                 (signingKey.toCircuitInput(eddsa))[0],
                 accountRequired,
                 sig,
-                [0n,0n],[0n,0n],[0n,0n]
+                [0n, 0n], [0n, 0n], [0n, 0n]
             );
             inputList.push(input);
         }
