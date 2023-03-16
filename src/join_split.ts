@@ -78,7 +78,8 @@ export class JoinSplitInput {
     }
 
     // nomalize the input
-    toCircuitInput(F: any) {
+    toCircuitInput(babyJub: any) {
+        const F = babyJub.F;
         let inputJson = {
             proof_id: this.proofId,
             public_value: this.publicValue,
@@ -108,7 +109,7 @@ export class JoinSplitInput {
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
             siblings_ac: this.siblingsAC,
-            signatureR8: this.signatureR8,
+            signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
             signatureS: this.signatureS,
             enabled: this.enabled
         };
@@ -117,14 +118,14 @@ export class JoinSplitInput {
             inputJson.input_note_val[i] = this.inputNotes[i].val;
             inputJson.input_note_secret[i] = this.inputNotes[i].secret;
             inputJson.input_note_asset_id[i] = BigInt(this.inputNotes[i].assetId);
-            inputJson.input_note_owner[i] = this.inputNotes[i].owner;
+            inputJson.input_note_owner[i] = this.inputNotes[i].owner(babyJub);
             inputJson.input_note_nullifier[i] = this.inputNotes[i].inputNullifier;
             inputJson.input_note_account_required[i] = BigInt(this.inputNotes[i].accountRequired);
 
             inputJson.output_note_val[i] = this.outputNotes[i].val;
             inputJson.output_note_secret[i] = this.outputNotes[i].secret;
             inputJson.output_note_asset_id[i] = BigInt(this.outputNotes[i].assetId);
-            inputJson.output_note_owner[i] = this.outputNotes[i].owner;
+            inputJson.output_note_owner[i] = this.outputNotes[i].owner(babyJub);
             inputJson.output_note_nullifier[i] = this.outputNotes[i].inputNullifier;
             inputJson.output_note_account_required[i] = BigInt(this.outputNotes[i].accountRequired);
         }
@@ -140,6 +141,7 @@ export class JoinSplitCircuit {
     static readonly PROOF_ID_TYPE_WITHDRAW: number = 2;
     static readonly PROOF_ID_TYPE_SEND: number = 3;
 
+    /*
     static async createSharedSecret(senderPvk: bigint): Promise<Buffer> {
         let eddsa = await buildEddsa();
         let babyJub = eddsa.babyJub;
@@ -147,6 +149,7 @@ export class JoinSplitCircuit {
         let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
         return sharedKey;
     }
+    */
 
     static async hashMsg(nc1: any, nc2: any, outputNote1: any, outputNote2: any, publicOwner: any, publicValue: any) {
         let poseidon = await buildPoseidon();
@@ -167,7 +170,7 @@ export class JoinSplitCircuit {
         publicAssetId: number,
         publicValue: bigint,
         publicOwner: EigenAddress,
-        noteRecipent: EigenAddress,
+        noteRecipent: EigenAddress, // allow user to deposit to others
         confirmedAndPendingInputNotes: Array<Note>,
         accountRequired: boolean
     ): Promise<Array<JoinSplitInput>> {
@@ -195,7 +198,7 @@ export class JoinSplitCircuit {
         return Promise.resolve(res);
     }
 
-    static fakeNote(F: any, owner: bigint[], assetId: number, index: number | undefined = undefined) {
+    static fakeNote(F: any, owner: EigenAddress, assetId: number, index: number | undefined = undefined) {
         return new Note(0n, 0n, owner, assetId, F.toObject(F.random()), false, index);
     }
 
@@ -217,13 +220,14 @@ export class JoinSplitCircuit {
     ) {
         let eddsa = await buildEddsa();
         const F = eddsa.F;
+        const babyJub = eddsa.babyJub;
         const confirmedNote = confirmedAndPendingInputNotes.filter((n) => !n.pending);
-        let owner = await accountKey.pubKey.unpack();
-        owner = [F.toObject(owner[0]), F.toObject(owner[1])];
+
+        let owner = accountKey.pubKey;
 
         let publicOwnerX = 0n;
         if (publicOwner !== undefined) {
-            let publicOwnerXY = await publicOwner.unpack();
+            let publicOwnerXY = publicOwner.unpack(babyJub);
             publicOwnerX = F.toObject(publicOwnerXY[0]);
         }
 
@@ -240,20 +244,20 @@ export class JoinSplitCircuit {
         // then merge [b'] and [c], to get [c'],  [c'] and d to [d].
         for (const note of confirmedNote) {
             assert(firstNote);
-            let nc1 = await firstNote.compress();
+            let nc1 = await firstNote.compress(babyJub);
             let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, 1n, accountKey);
 
-            let nc2 = await note.compress();
+            let nc2 = await note.compress(babyJub);
             let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, 1n, accountKey);
 
             numInputNote = 2;
             let secret = F.toObject(F.random());
             let outputNote1: Note = new Note(
                 0n, secret, owner, assetId, nullifier1, false);
-            let outputNc1 = await outputNote1.compress();
+            let outputNc1 = await outputNote1.compress(babyJub);
             let outputNote2: Note = new Note(
                 firstNote.val + note.val, secret, owner, assetId, nullifier2, false);
-            let outputNc2 = await outputNote2.compress();
+            let outputNc2 = await outputNote2.compress(babyJub);
 
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
@@ -264,7 +268,7 @@ export class JoinSplitCircuit {
             let noteInput2 = await state.find(outputNc2);
             let ac = await state.find(F.e(acStateKey));
 
-            let ak = await accountKey.toCircuitInput();
+            let ak = await accountKey.toCircuitInput(eddsa);
             let input = new JoinSplitInput(
                 proofId, 0n, 0n, assetId, publicAssetId, aliasHash,
                 numInputNote,
@@ -276,7 +280,7 @@ export class JoinSplitCircuit {
                 siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
-                (await signingKey.toCircuitInput())[0],
+                (await signingKey.toCircuitInput(eddsa))[0],
                 accountRequired,
                 sig
             );
@@ -302,11 +306,11 @@ export class JoinSplitCircuit {
                 // startIndex += 1;
             }
 
-            let nc1 = await inputNotes[0].compress();
+            let nc1 = await inputNotes[0].compress(babyJub);
             let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, inputNoteInUse[0], accountKey);
             let secret = F.toObject(F.random()); // FIXME: shared secret
-            let outputNote1 = new Note(recipientPrivateOutput, secret, owner, assetId, nullifier1, false);
-            let outputNc1 = await outputNote1.compress();
+            let outputNote1 = new Note(recipientPrivateOutput, secret, noteRecipent, assetId, nullifier1, false);
+            let outputNc1 = await outputNote1.compress(babyJub);
 
             let nc2 = 0n;
             let outputNc2 = 0n;
@@ -317,14 +321,14 @@ export class JoinSplitCircuit {
                 (totalInputNoteValue - recipientPrivateOutput) : 0n;
 
             assert(inputNotes[1]);
-            nc2 = await inputNotes[1].compress();
+            nc2 = await inputNotes[1].compress(babyJub);
             let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, inputNoteInUse[1], accountKey);
             let outputNote2: Note = new Note(
                 change,
                 secret, owner, assetId, nullifier2, false
             );
             outputNotes.push(outputNote2);
-            outputNc2 = await outputNote2.compress();
+            outputNc2 = await outputNote2.compress(babyJub);
             outputNCs.push(outputNc2);
 
             let sig = await JoinSplitCircuit.calculateSignature(
@@ -334,7 +338,7 @@ export class JoinSplitCircuit {
             let noteInput1 = await state.find(outputNc1);
             let noteInput2 = await state.find(outputNc2);
             let ac = await state.find(F.e(acStateKey));
-            let ak = await accountKey.toCircuitInput();
+            let ak = accountKey.toCircuitInput(eddsa);
             let input = new JoinSplitInput(
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
@@ -343,7 +347,7 @@ export class JoinSplitCircuit {
                 siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
-                (await signingKey.toCircuitInput())[0],
+                (signingKey.toCircuitInput(eddsa))[0],
                 accountRequired,
                 sig
             );

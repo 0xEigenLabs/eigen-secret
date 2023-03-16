@@ -4,6 +4,7 @@ import { assert, expect } from "chai";
 import { ethers } from "ethers";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
+import { SigningKey } from "../src/account";
 
 describe("Test NoteCompressor", function () {
 
@@ -21,11 +22,9 @@ describe("Test NoteCompressor", function () {
     })
 
     it("Note compress test", async () => {
-        const msg = F.e(123411111111111n);
-        let prvKey = ethers.utils.randomBytes(31);
-        let pubKey = eddsa.prv2pub(prvKey);
-        let note = new Note(1n, 2n, [F.toObject(pubKey[0]), F.toObject(pubKey[1])], 4, 5n, true);
-        let wtns = await utils.executeCircuit(circuit, note.toCircuitInput());
-        await circuit.assertOut(wtns, { out: await note.compress() });
+        let key = await (new SigningKey()).newKey(undefined);
+        let note = new Note(1n, 2n, key.pubKey, 4, 5n, true);
+        let wtns = await utils.executeCircuit(circuit, note.toCircuitInput(babyJub));
+        await circuit.assertOut(wtns, { out: await note.compress(babyJub) });
     })
 });

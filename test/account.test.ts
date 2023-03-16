@@ -34,7 +34,7 @@ describe("Test Account Compressor", function () {
         );
 
         let key = new EigenAddress(hexPubKey);
-        let pubKey3 = await key.unpack();
+        let pubKey3 = key.unpack(babyJub);
         expect(Buffer.from(pubKey[0]).toString("hex")).to.eq(
             Buffer.from(pubKey3[0]).toString("hex")
         );
@@ -46,7 +46,7 @@ describe("Test Account Compressor", function () {
         let hexPubKey = "eth:" + Buffer.from(pubKey).toString("hex");
 
         let key = new EthAddress(hexPubKey);
-        let pubKey2 = await key.unpack();
+        let pubKey2 = key.unpack(babyJub);
         let pubKey3 = Point.fromPrivateKey(prvKey);
         expect(pubKey2[0]).to.eq(pubKey3.x);
     })
@@ -55,11 +55,11 @@ describe("Test Account Compressor", function () {
         let accountKey = await (new SigningKey()).newKey(undefined);
         let signingKey = await (new SigningKey()).newKey(undefined);
         let aliasHash = 1n;
-        let hashed = await accountCompress(accountKey, signingKey, aliasHash);
+        let hashed = await accountCompress(eddsa, accountKey, signingKey, aliasHash);
 
         let wtns = await utils.executeCircuit(circuit, {
-            npk: (await accountKey.toCircuitInput())[0],
-            spk: (await signingKey.toCircuitInput())[0],
+            npk: (accountKey.toCircuitInput(eddsa))[0],
+            spk: (signingKey.toCircuitInput(eddsa))[0],
             alias_hash: aliasHash
         });
         await circuit.assertOut(wtns, { out: hashed });

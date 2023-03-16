@@ -1,20 +1,22 @@
 const buildPoseidon = require("circomlibjs").buildPoseidon;
 import { Aes256gcm } from "./aes_gcm";
+import { EigenAddress } from "./account";
 
 export class Note {
     val: bigint;
     secret: bigint;
-    owner: bigint[];
+    _owner: EigenAddress;
     assetId: number;
     inputNullifier: bigint;
     accountRequired: boolean;
     index: number | undefined;
+    poseidon: any;
 
-    constructor(val: bigint, secret: bigint, owner: bigint[], assetId: number,
+    constructor(val: bigint, secret: bigint, owner: EigenAddress, assetId: number,
                 inputNullifier: bigint, accountRequired: boolean, index: number | undefined = undefined) {
         this.val = val;
         this.secret = secret;
-        this.owner = owner;
+        this._owner = owner;
         this.assetId = assetId;
         this.inputNullifier = inputNullifier;
         this.accountRequired = accountRequired;
@@ -26,24 +28,32 @@ export class Note {
         return this.index === undefined;
     }
 
-    toCircuitInput(): any {
+    owner(babyJub: any): bigint[] {
+        let owner = this._owner.unpack(babyJub);
+        const F = babyJub.F;
+        return [F.toObject(owner[0]), F.toObject(owner[1])];
+    }
+
+    toCircuitInput(babyJub: any): any {
         return {
             val: this.val,
             secret: this.secret,
-            owner: this.owner,
+            owner: this.owner(babyJub),
             asset_id: this.assetId,
             input_nullifier: this.inputNullifier,
             account_required: BigInt(this.accountRequired)
         }
     }
 
-    async compress(): Promise<bigint> {
+    async compress(babyJub: any): Promise<bigint> {
         let poseidon = await buildPoseidon();
+        let owner = this.owner(babyJub);
+
         let res = poseidon([
             this.val,
             this.secret,
-            this.owner[0],
-            this.owner[1],
+            owner[0],
+            owner[1],
             this.assetId,
             this.inputNullifier,
             this.accountRequired? 1: 0
@@ -52,6 +62,7 @@ export class Note {
         return poseidon.F.toObject(res);
     }
 
+    /*
     encrypt(): any {
         let aes = new Aes256gcm(this.secret);
         let data = JSON.stringify({
@@ -81,4 +92,5 @@ export class Note {
         n.index = data.index;
         return n;
     }
+     */
 }

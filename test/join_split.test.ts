@@ -38,13 +38,12 @@ describe("Test JoinSplit Circuit", function () {
         worldState = new StateTree();
         await worldState.init();
         signer = accountRequired? signingKey: accountKey;
-        acStateKey = await accountCompress(accountKey, signer, aliasHash);
+        acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
         await worldState.insert(F.e(acStateKey), 1);
     })
 
     it("JoinSplit deposit and send test", async () => {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
-        let noteReceiver = await (new SigningKey()).newKey(undefined);
         let inputs = await JoinSplitCircuit.createDepositInput(
             accountKey,
             signingKey,
@@ -56,21 +55,24 @@ describe("Test JoinSplit Circuit", function () {
             assetId,
             10n,
             signingKey.pubKey,
-            signingKey.pubKey,
+            accountKey.pubKey,
             [],
             accountRequired
         );
         for (const input of inputs) {
-            await utils.executeCircuit(circuit, input.toCircuitInput(F));
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
         }
         console.log("test send tx")
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
-            inp.outputNotes[0].index = 10;
+            inp.outputNotes[0].index = 10; // FIXME update index
             inp.outputNotes[1].index = 10;
-            confirmedNote.push(inp.outputNotes[0]);
+            confirmedNote.push(inp.outputNotes[0]); // after depositing, all balance becomes private value
             confirmedNote.push(inp.outputNotes[1]);
         }
+
+        // create a send proof
+        let noteReceiver = await (new SigningKey()).newKey(undefined);
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let inputs2 = await JoinSplitCircuit.createProofInput(
             accountKey,
@@ -89,7 +91,7 @@ describe("Test JoinSplit Circuit", function () {
             accountRequired
         );
         for (const input of inputs2) {
-            await utils.executeCircuit(circuit, input.toCircuitInput(F));
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
         }
     })
     //TODO add unit test for withdraw

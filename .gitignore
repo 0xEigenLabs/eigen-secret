@@ -20,3 +20,5 @@ scripts/*.js
 circuits/*_js
 circuits/*.ptau
 circuits/circuit_final.zkey
+
+contracts/main_*.sol

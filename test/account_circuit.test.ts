@@ -39,15 +39,15 @@ describe("Account circuit test", function () {
     it("Account create test", async () => {
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
         let newAccountKey = accountKey;
-        let newAccountPubKey = await newAccountKey.pubKey.unpack();
+        let newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
 
         let newSigningKey1 = await (new SigningKey()).newKey(undefined);
-        let newSigningPubKey1 = await newSigningKey1.pubKey.unpack();
+        let newSigningPubKey1 = newSigningKey1.pubKey.unpack(babyJub);
         newSigningPubKey1 = [F.toObject(newSigningPubKey1[0]), F.toObject(newSigningPubKey1[1])];
 
         let newSigningKey2 = await (new SigningKey()).newKey(undefined);
-        let newSigningPubKey2 = await newSigningKey2.pubKey.unpack();
+        let newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
 
         let input = await AccountCircuit.createProofInput(
@@ -64,11 +64,11 @@ describe("Account circuit test", function () {
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = await (new SigningKey()).newKey(undefined);
-        newAccountPubKey = await newAccountKey.pubKey.unpack();
+        newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
 
         newSigningKey2 = await (new SigningKey()).newKey(undefined);
-        newSigningPubKey2 = await newSigningKey2.pubKey.unpack();
+        newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         input = await AccountCircuit.createProofInput(
             proofId,

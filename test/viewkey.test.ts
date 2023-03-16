@@ -46,16 +46,16 @@ describe("Test View Key", function () {
     it("SigningKey Sign test", async () => {
         const msg = F.e(123411111111111n);
         let key = await (new SigningKey()).newKey(undefined);
+        let eddsa = await buildEddsa();
         let signature = await key.sign(msg);
-        let pubKey = await key.toCircuitInput();
-        assert(key.verify(signature, msg));
-
+        let pubKey = key.toCircuitInput(eddsa);
+        assert(key.verify(eddsa, signature, msg));
         const input = {
             enabled: 1,
             Ax: pubKey[0][0],
             Ay: pubKey[0][1],
-            R8x: signature.R8[0],
-            R8y: signature.R8[1],
+            R8x: F.toObject(signature.R8[0]),
+            R8y: F.toObject(signature.R8[1]),
             S: signature.S,
             M: F.toObject(msg)
         };
@@ -66,8 +66,9 @@ describe("Test View Key", function () {
         const msg = F.e(123411111111111n);
         let key = await (new AccountOrNullifierKey()).newKey(undefined);
         let signature = await key.sign(msg);
-        let pubKey = await key.toCircuitInput();
-        assert(key.verify(signature, msg));
+        let eddsa = await buildEddsa();
+        let pubKey = key.toCircuitInput(eddsa);
+        assert(key.verify(eddsa, signature, msg));
 
         // TODO test circuit
     })
