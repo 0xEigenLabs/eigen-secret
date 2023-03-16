@@ -1,6 +1,8 @@
 import { assert } from "chai";
+import level from "level-ts";
 
-const { newMemEmptyTrie } = require("circomlibjs");
+const { SMT, getHashes } = require("circomlibjs");
+const {SMTDb} = require("./smt_db")
 
 export const N_LEVEL = 20;
 export class StateTreeCircuitInput {
@@ -45,8 +47,8 @@ export class StateTree {
     F: any;
 
     constructor() { }
-    async init() {
-        this.tree = await newMemEmptyTrie();
+    async init(dbPath: string) {
+        this.tree = await newMemEmptyTrie(dbPath);
         this.F = this.tree.F;
     }
 
@@ -89,4 +91,12 @@ export class StateTree {
         while (siblings.length < N_LEVEL) siblings.push(0);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
     }
+}
+
+export async function newMemEmptyTrie(dbPath: string) {
+    const {hash0, hash1,F} = await getHashes();
+    const db = new SMTDb(F, dbPath);
+    const rt = await db.getRoot();
+    const smt = new SMT(db, rt, hash0, hash1, F);
+    return smt;
 }
