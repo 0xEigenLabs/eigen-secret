@@ -6,7 +6,7 @@ import { compress as accountCompress, AccountOrNullifierKey, SigningKey } from "
 import { StateTree } from "../src/state_tree";
 import { JoinSplitCircuit } from "../src/join_split";
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
-import { createProof } from "../create_proof/createProof";
+import { Prover } from "../create_proof/createProof";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 const path = require("path");
 const { readFileSync } = require("fs");
@@ -150,7 +150,7 @@ describe("Test JoinSplit Circuit", function () {
         let inputJson = path.join(__dirname, "..", "circuits/main_update_state.input.json");
         const input = JSON.parse(readFileSync(inputJson));
         let circuitPath = path.join(__dirname, "..", "circuits");
-        let proofAndPublicSignals = createProof.updateState(circuitPath, input, F);
+        let proofAndPublicSignals = Prover.updateState(circuitPath, input, F);
         console.log((await proofAndPublicSignals).publicSignals);
 
         const proof = (await proofAndPublicSignals).proof;
