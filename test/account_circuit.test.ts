@@ -27,9 +27,8 @@ describe("Account circuit test", function () {
         eddsa = await buildEddsa();
         babyJub = await buildBabyjub();
         F = babyJub.F;
-        let third = path.join(__dirname, "../third-party");
         circuit = await test.genTempMain("circuits/account.circom",
-            "Account", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {include: third});
+            "Account", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {});
         accountKey = await (new SigningKey()).newKey(undefined);
         signingKey = await (new SigningKey()).newKey(undefined);
         worldState = new StateTree(); // account and joinsplit share same SMT.

@@ -5,6 +5,7 @@ import { ethers } from "ethers";
 import { compress as accountCompress, AccountOrNullifierKey, SigningKey } from "../src/account";
 import { StateTree } from "../src/state_tree";
 import { JoinSplitCircuit } from "../src/join_split";
+import { AccountCircuit } from "../src/account";
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
 import { Prover } from "../src/prover";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
@@ -43,7 +44,7 @@ describe("Test JoinSplit Circuit", function () {
     })
 
     it("Account create update_state test", async () => {
-        let proofId = UpdateStatusCircuit.PROOF_ID_TYPE_CREATE;
+        let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
         let newAccountKey = accountKey;
         let newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
@@ -68,7 +69,7 @@ describe("Test JoinSplit Circuit", function () {
         );
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
 
-        proofId = UpdateStatusCircuit.PROOF_ID_TYPE_MIGRATE;
+        proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = await (new SigningKey()).newKey(undefined);
         newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
@@ -93,7 +94,7 @@ describe("Test JoinSplit Circuit", function () {
         signer = accountRequired? signingKey: accountKey;
         acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
         await worldState.insert(F.e(acStateKey), 1);
-        let proofId = UpdateStatusCircuit.PROOF_ID_TYPE_DEPOSIT;
+        let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             accountKey,
             signingKey,
@@ -124,7 +125,7 @@ describe("Test JoinSplit Circuit", function () {
 
         // create a send proof
         let noteReceiver = await (new SigningKey()).newKey(undefined);
-        proofId = UpdateStatusCircuit.PROOF_ID_TYPE_SEND;
+        proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let inputs2 = await UpdateStatusCircuit.createJoinSplitInput(
             accountKey,
             signingKey,

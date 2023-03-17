@@ -4,7 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const snarkjs = require("snarkjs");
 
-export class Prover{
+export class Prover {
 
     static async updateState(circuitPath: string, input: any, F: any) {
         let wasm = path.join(circuitPath, "main_update_state_js", "main_update_state.wasm");
