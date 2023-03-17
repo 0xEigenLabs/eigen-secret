@@ -7,7 +7,7 @@ import sequelize from "../api/db";
 
 import { expect, assert } from "chai";
 
-describe('GET /txs', function() {
+describe('POST /txs', function() {
     this.timeout(1000 * 1000);
     before(async() => {
         let tmpKey = await (new SigningKey()).newKey(undefined);

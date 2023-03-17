@@ -36,11 +36,17 @@ export async function login(alias: string, ethAddress: string) {
         ethAddress: ethAddress,
         expireAt: expireAt + DURATION
     };
-
-    let result = await util.upsert(SessionModel, value, { where: { alias: alias } });
-    return result;
+    let transaction = await sequelize.transaction();
+    try {
+        let result = await util.upsert(SessionModel, value, { where: { alias: alias } }, {transaction});
+        return result;
+    } catch (err: any) {
+        consola.log(err)
+    }
+    return null;
 }
 
+// TODO: fix me with transaction
 export async function logout(alias: string, ethAddress: string) {
     // check if the record exists, updateOrAdd,
     let expireAt = Math.floor(Date.now() / 1000);
