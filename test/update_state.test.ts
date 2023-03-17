@@ -126,6 +126,7 @@ describe("Test JoinSplit Circuit", function () {
         // create a send proof
         let noteReceiver = await (new SigningKey()).newKey(undefined);
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
+
         let inputs2 = await UpdateStatusCircuit.createJoinSplitInput(
             accountKey,
             signingKey,
