@@ -16,7 +16,7 @@ if (dbDriver == "sqlite") {
     // only for test
     sequelize = new Sequelize(dbName, dbUser, dbPassword, {
         host: dbHost,
-        storage: "/tmp/database.sqlite", // or ':memory:'
+        storage: ":memory:",
         dialect: dbDriver,
         pool: {
             max: 100,

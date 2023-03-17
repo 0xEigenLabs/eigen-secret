@@ -24,7 +24,7 @@ TransactionModel.init({
         allowNull: false
     },
     publicInput: {
-        type: DataTypes.JSON,
+        type: DataTypes.TEXT,
         allowNull: false
     },
     status: {
@@ -36,6 +36,13 @@ TransactionModel.init({
     sequelize, // We need to pass the connection instance
     modelName: "TransactionModel" // We need to choose the model name
 });
+
+export enum TransactionModelStatus {
+    UNKNOWN = 1,
+    CREATED = 2,
+    AGGREGATING = 3,
+    SETTLED = 4,
+}
 
 // add new key
 export async function createTx(req: any, res: any) {
@@ -56,24 +63,45 @@ export async function createTx(req: any, res: any) {
     return res.json(util.err(util.ErrCode.InvalidInput, "missing input"));
   }
 
-  let isAliasAvailable = await TransactionModel.findOne({ where: { alias: alias, pubKey: pubKey } } );
-  if (isAliasAvailable === null) {
-      let result = await TransactionModel.create({
-          alias: alias,
-          pubKey: pubKey,
-          content: content,
-          proof: proof,
-          publicInput: publicInput
-      });
-      return res.json(result)
+  let transaction: any;
+
+  try {
+      transaction = await sequelize.transaction();
+      let isAliasAvailable = await TransactionModel.findOne({ where: { alias: alias, pubKey: pubKey } } );
+      console.log(isAliasAvailable);
+
+      if (isAliasAvailable === null) {
+          let result = await TransactionModel.create({
+              alias: alias,
+              pubKey: pubKey,
+              content: content,
+              proof: proof,
+              publicInput: publicInput,
+              status: TransactionModelStatus.CREATED
+          }, { transaction });
+          await transaction.commit();
+          return res.json(util.succ(result))
+      }
+      return res.json(util.err(util.ErrCode.DBCreateError, "Duplicated transaction found"));
+  } catch (err: any) {
+      if (transaction) {
+          transaction.rollback();
+      }
+      return res.json(util.err(util.ErrCode.DBCreateError, err.toString()));
   }
-  res.json(util.err(util.ErrCode.DBCreateError, "Duplicated transaction found"));
 }
 
 // add new key
 export async function getTxByAccountId(req: any, res: any) {
-  const alias = req.params.alias;
-  let result = await TransactionModel.findAll({ where: {alias: alias} });
-  return res.json(result);
+    const alias = req.params.alias;
+    console.log(alias);
+    let result: any;
+    try {
+        result = await TransactionModel.findAll({ where: { alias: alias } });
+    } catch (err: any) {
+        console.log(err)
+        return res.json(util.err(util.ErrCode.DBCreateError, err.toString()));
+    }
+    return res.json(util.succ(result));
 }
 

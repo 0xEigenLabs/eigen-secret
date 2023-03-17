@@ -1,6 +1,6 @@
 const { Sequelize, DataTypes, Model } = require("sequelize");
 import * as util from "./util";
-import sequelize  from "./db";
+import sequelize from "./db";
 import consola from "consola";
 
 class SessionModel extends Model {}
@@ -37,7 +37,7 @@ export async function login(alias: string, ethAddress: string) {
         expireAt: expireAt + DURATION
     };
 
-    let result = await util.upsert(SessionModel, value, {where: {alias: alias}});
+    let result = await util.upsert(SessionModel, value, { where: { alias: alias } });
     return result;
 }
 

@@ -1,6 +1,6 @@
 const { Sequelize, DataTypes, Model } = require("sequelize");
 const { ethers } = require("ethers");
-import sequelize  from "./db";
+import sequelize from "./db";
 import { login } from "./session";
 import consola from "consola";
 import * as util from "./util";
@@ -74,7 +74,11 @@ export async function doCreateAccount(alias: string, ethAddress: string, message
             "Please try again!"
         );
     }
-    let res = await util.upsert(AccountModel, {alias, ethAddress, ethAddress2: "", ethAddress3: ""}, {alias, ethAddress});
+    let res = await util.upsert(
+        AccountModel,
+        { alias, ethAddress, ethAddress2: "", ethAddress3: "" }, // new item
+        { alias, ethAddress } // condition
+    );
     consola.log("Upinset: ", res);
     if (!util.hasValue(res.item)) {
         return util.err(
@@ -91,7 +95,7 @@ export async function createAccount(req: any, res: any) {
   consola.log("crate account");
   const alias = req.body.alias;
   const ethAddress = req.body.ethAddress;
-  const message = req.body.message; // TODO: should be structed object
+  const message = req.body.message;
   const hexSignature = req.body.hexSignature;
   if (!util.hasValue(alias) || !util.hasValue(ethAddress)) {
     consola.error("missing alias or ethAddress");

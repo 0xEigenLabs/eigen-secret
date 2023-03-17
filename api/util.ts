@@ -52,12 +52,12 @@ const hasValue = function(variable: any) {
 
 async function upsert(modelObj: any, newItem: any, condition: any) {
     const found = await modelObj.findOne({ where: condition });
-    if(!found) {
+    if (!found) {
         const item = await modelObj.create(newItem);
-        return {item, created: true};
+        return { item, created: true };
     }
-    const item = modelObj.update(newItem, {where: condition});
-    return {item, created: false};
+    const item = modelObj.update(newItem, { where: condition });
+    return { item, created: false };
 }
 
 export { baseResp, succ, err, hasValue, require_env_variables, upsert };
