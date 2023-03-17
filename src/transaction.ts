@@ -6,7 +6,6 @@ import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
 const buildEddsa = require("circomlibjs").buildEddsa;
 
-
 class TxData {
     pubKey: EigenAddress;
     content: Buffer;

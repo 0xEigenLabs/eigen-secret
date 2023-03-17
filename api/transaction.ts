@@ -18,6 +18,18 @@ TransactionModel.init({
     content: {
         type: DataTypes.TEXT,
         allowNull: false
+    },
+    proof: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    publicInput: {
+        type: DataTypes.JSON,
+        allowNull: false
+    },
+    status: {
+        type: DataTypes.INTEGER, // 1: UNKNOWN; 2. CREATED, 3: AGGREGATING, 4. SETTLED
+        allowNull: false
     }
 }, {
     // Other model options go here
@@ -27,7 +39,7 @@ TransactionModel.init({
 
 // add new key
 export async function createTx(req: any, res: any) {
-  consola.log("crate tx");
+  consola.log("create tx");
   const alias = req.body.alias;
   const pubKey = req.body.pubKey;
   const content = req.body.content;
@@ -44,14 +56,24 @@ export async function createTx(req: any, res: any) {
     return res.json(util.err(util.ErrCode.InvalidInput, "missing input"));
   }
 
-  const result = util.succ("");
-
-  res.json(result);
+  let isAliasAvailable = await TransactionModel.findOne({ where: { alias: alias, pubKey: pubKey } } );
+  if (isAliasAvailable === null) {
+      let result = await TransactionModel.create({
+          alias: alias,
+          pubKey: pubKey,
+          content: content,
+          proof: proof,
+          publicInput: publicInput
+      });
+      return res.json(result)
+  }
+  res.json(util.err(util.ErrCode.DBCreateError, "Duplicated transaction found"));
 }
 
 // add new key
 export async function getTxByAccountId(req: any, res: any) {
-  const result = util.succ("");
-  res.json(result);
+  const alias = req.params.alias;
+  let result = await TransactionModel.findAll({ where: {alias: alias} });
+  return res.json(result);
 }
 

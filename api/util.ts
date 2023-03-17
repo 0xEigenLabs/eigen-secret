@@ -36,7 +36,8 @@ export enum ErrCode {
   Unknown = 1,
   InvalidAuth = 2,
   InvalidInput = 3,
-  CryptoError = 4
+  CryptoError = 4,
+  DBCreateError = 5
 }
 
 const hasValue = function(variable: any) {
@@ -49,4 +50,14 @@ const hasValue = function(variable: any) {
   return true;
 };
 
-export { baseResp, succ, err, hasValue, require_env_variables };
+async function upsert(modelObj: any, newItem: any, condition: any) {
+    const found = await modelObj.findOne({ where: condition });
+    if(!found) {
+        const item = await modelObj.create(newItem);
+        return {item, created: true};
+    }
+    const item = modelObj.update(newItem, {where: condition});
+    return {item, created: false};
+}
+
+export { baseResp, succ, err, hasValue, require_env_variables, upsert };

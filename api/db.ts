@@ -17,19 +17,31 @@ if (dbDriver == "sqlite") {
     sequelize = new Sequelize(dbName, dbUser, dbPassword, {
         host: dbHost,
         storage: "/tmp/database.sqlite", // or ':memory:'
-        dialect: dbDriver
+        dialect: dbDriver,
+        pool: {
+            max: 100,
+            min: 0,
+            acquire: 30000,
+            idle: 10000
+        }
     })
 } else {
     sequelize = new Sequelize(dbName, dbUser, dbPassword, {
         host: dbHost,
-        dialect: dbDriver
+        dialect: dbDriver,
+        pool: {
+            max: 100,
+            min: 0,
+            acquire: 30000,
+            idle: 10000
+        }
     })
 }
 
 sequelize
-    .sync()
-    .catch(function(err: any) {
-      consola.log("Unable to connect to the database:", err);
-    });
+.sync()
+.catch(function(err: any) {
+    consola.log("Unable to connect to the database:", err);
+});
 
 export default sequelize;

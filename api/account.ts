@@ -1,6 +1,6 @@
 const { Sequelize, DataTypes, Model } = require("sequelize");
 const { ethers } = require("ethers");
-import sequelize from "./db";
+import sequelize  from "./db";
 import { login } from "./session";
 import consola from "consola";
 import * as util from "./util";
@@ -9,7 +9,7 @@ class AccountModel extends Model {}
 
 AccountModel.init({
     // Model attributes are defined here
-    accountId: {
+    alias: {
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -46,7 +46,7 @@ class LoginMessage {
     }
 }
 
-export function doCreateAccount(alias: string, ethAddress: string, message: any, hexSignature: string): any {
+export async function doCreateAccount(alias: string, ethAddress: string, message: any, hexSignature: string) {
     // check signature
     const message_ = JSON.parse(JSON.stringify(message));
     const message_encode = ethers.utils.solidityPack(["string", "string", "string"],
@@ -74,9 +74,16 @@ export function doCreateAccount(alias: string, ethAddress: string, message: any,
             "Please try again!"
         );
     }
+    let res = await util.upsert(AccountModel, {alias, ethAddress, ethAddress2: "", ethAddress3: ""}, {alias, ethAddress});
+    consola.log("Upinset: ", res);
+    if (!util.hasValue(res.item)) {
+        return util.err(
+            util.ErrCode.DBCreateError,
+            "Create alias-ethAddress records error"
+        );
+    }
     // record user info
-    const result = login(alias, ethAddress);
-    return result;
+    return login(alias, ethAddress);
 }
 
 // add new key
@@ -90,7 +97,6 @@ export async function createAccount(req: any, res: any) {
     consola.error("missing alias or ethAddress");
     return res.json(util.err(util.ErrCode.InvalidInput, "missing input"));
   }
-  const result = doCreateAccount(alias, ethAddress, message, hexSignature);
-  res.json(result);
+  return doCreateAccount(alias, ethAddress, message, hexSignature);
 }
 
