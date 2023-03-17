@@ -6,7 +6,7 @@ import { compress as accountCompress, AccountOrNullifierKey, SigningKey } from "
 import { StateTree } from "../src/state_tree";
 import { JoinSplitCircuit } from "../src/join_split";
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
-import { Prover } from "../create_proof/createProof";
+import { Prover } from "../src/prover";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 const path = require("path");
 const { readFileSync } = require("fs");

@@ -1,5 +1,5 @@
-import { UpdateStatusInput } from "../src/update_state";
-import { parseProof } from "../src/utils";
+import { UpdateStatusInput } from "./update_state";
+import { parseProof } from "./utils";
 const path = require("path");
 const fs = require("fs");
 const snarkjs = require("snarkjs");
