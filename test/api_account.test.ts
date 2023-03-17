@@ -34,6 +34,8 @@ describe('POST /accounts', function() {
         console.log(response.body)
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
+        expect(response.body.data["id"]).to.gt(0);
+        expect(response.body.data["ethAddress"]).to.eq(newEOAAccount.address);
     });
 
     it.skip('responds with json', async() => {

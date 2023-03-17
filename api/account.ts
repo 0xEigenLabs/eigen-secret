@@ -101,7 +101,7 @@ export async function createAccount(req: any, res: any) {
         }
         transaction.commit();
         let result = await login(alias, ethAddress);
-        return res.json(util.succ(result));
+        return res.json(util.succ(insertResult.item));
     } catch (err: any) {
         consola.log(err)
         if (transaction) {
