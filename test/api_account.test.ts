@@ -2,9 +2,9 @@ const request = require('supertest');
 const express = require('express');
 import { ethers } from "ethers";
 
-import app from "../api/service";
+import app from "../server/service";
 import { SigningKey } from "../src/account";
-import sequelize from "../api/db";
+import sequelize from "../server/db";
 
 import { expect, assert } from "chai";
 
@@ -48,5 +48,4 @@ describe('POST /accounts', function() {
         console.log(response.body);
         assert(response.body.data[0].alias, 'alice.eth')
     });
-    after(() => { sequelize.close() })
 });

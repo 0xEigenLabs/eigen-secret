@@ -1,9 +1,9 @@
 const request = require('supertest');
 const express = require('express');
-
-import app from "../api/service";
+const consola = require("consola");
+import app from "../server/service";
 import { SigningKey } from "../src/account";
-import sequelize from "../api/db";
+import sequelize from "../server/db";
 
 import { expect, assert } from "chai";
 
@@ -12,6 +12,7 @@ describe('POST /txs', function() {
     before(async() => {
         let tmpKey = await (new SigningKey()).newKey(undefined);
         let pubKey = tmpKey.pubKey.pubKey;
+        // TODO create proof for `createAccount` and `joinSplit`
         const response = await request(app)
         .post('/txs')
         .send({
@@ -23,7 +24,7 @@ describe('POST /txs', function() {
         })
         .set('Accept', 'application/json');
 
-        console.log(response.body)
+        consola.log(response.body)
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
         expect(response.body.data["id"]).to.gt(0);
