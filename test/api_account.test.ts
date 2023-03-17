@@ -5,29 +5,25 @@ import { ethers } from "ethers";
 import app from "../server/service";
 import { SigningKey } from "../src/account";
 import sequelize from "../server/db";
-
+import * as utils from "../src/utils";
 import { expect, assert } from "chai";
 
 describe('POST /accounts', function() {
     this.timeout(1000 * 1000);
     before(async() => {
-        let tmpKey = await (new SigningKey()).newKey(undefined);
-        let pubKey = tmpKey.pubKey.pubKey;
-
         let newEOAAccount = await ethers.Wallet.createRandom();
-
-        // example: https://github.com/ethers-io/ethers.js/issues/447
         let rawMessage = "Use Eigen Secret to shield your asset";
-        let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessage.length + rawMessage
-        const signatue = await newEOAAccount.signMessage(strRawMessage)
+        let timestamp = Math.floor(Date.now()/1000).toString();
+        let alias = "eigen.eth";
+        const signature = await utils.signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
 
         const response = await request(app)
         .post('/accounts/' + newEOAAccount.address)
         .send({
-            alias: "eigen.eth",
-            timestamp: Math.floor(Date.now()/1000),
+            alias: alias,
             message: rawMessage,
-            hexSignature: signatue
+            timestamp: timestamp,
+            hexSignature: signature
         })
         .set('Accept', 'application/json');
 
