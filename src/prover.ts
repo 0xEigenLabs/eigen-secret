@@ -11,12 +11,12 @@ export class Prover {
         const wc = require(`${circuitPath}/main_update_state_js/witness_calculator`);
         const buffer = fs.readFileSync(wasm);
         const witnessCalculator = await wc(buffer);
-    
+
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(
             input,
             0
         );
-    
+
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkey, witnessBuffer);
         const proofAndPublicSignals = {
             proof,

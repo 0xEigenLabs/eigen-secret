@@ -70,7 +70,7 @@ export async function createAccount(req: any, res: any) {
             AccountModel,
             { alias, ethAddress, ethAddress2: "", ethAddress3: "" }, // new item
             { alias, ethAddress }, // condition
-            { transaction },
+            { transaction }
 
         );
         consola.log("Upsert: ", insertResult);

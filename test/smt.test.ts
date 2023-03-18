@@ -2,8 +2,7 @@ import { expect, assert } from "chai";
 import path = require("path");
 import { test, utils } from "../index";
 const cls = require("circomlibjs");
-import { StateTree, StateTreeCircuitInput, N_LEVEL } from "../src/state_tree";
-import { siblingsPad } from "../src/utils";
+import { StateTree, StateTreeCircuitInput, N_LEVEL, siblingsPad } from "../src/state_tree";
 const { ethers } = require("hardhat");
 
 describe("Test SMT Membership Query", function () {

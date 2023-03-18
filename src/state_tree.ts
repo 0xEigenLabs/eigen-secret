@@ -2,6 +2,12 @@ import { assert } from "chai";
 
 const { newMemEmptyTrie } = require("circomlibjs");
 
+export function siblingsPad(siblings: any, F: any) {
+  for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
+  while (siblings.length < N_LEVEL) siblings.push(0);
+  return siblings;
+}
+
 export const N_LEVEL = 20;
 export class StateTreeCircuitInput {
     fnc: number[] = new Array(2);
@@ -64,19 +70,14 @@ export class StateTree {
         const key = this.tree.F.e(_key);
         const value = this.tree.F.e(_value)
         const res = await this.tree.insert(key, value);
-        let siblings = res.siblings;
-        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
-        while (siblings.length < N_LEVEL) siblings.push(0);
-
+        const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
     }
 
     async delete(_key: any): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const res = await this.tree.delete(key);
-        let siblings = res.siblings;
-        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
-        while (siblings.length < N_LEVEL) siblings.push(0);
+        const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [1, 1], res, siblings, res.delKey, res.delValue);
     }
 
@@ -84,9 +85,7 @@ export class StateTree {
         const key = this.tree.F.e(_key);
         const newValue = this.tree.F.e(_newValue);
         const res = await this.tree.update(key, newValue);
-        let siblings = res.siblings;
-        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
-        while (siblings.length < N_LEVEL) siblings.push(0);
+        const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
     }
 }

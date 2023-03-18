@@ -13,7 +13,7 @@
     "lint": "npm run lint_ts & npm run lint_sol",
     "compile": "hardhat compile",
     "test": "npm run build && npm run compile && npx hardhat test",
-    "lint_ts": "./node_modules/.bin/eslint --fix --ext .ts src api",
+    "lint_ts": "./node_modules/.bin/eslint --fix --ext .ts src server sdk",
     "clean": "rm -rf build dist typechain cache artifacts",
     "build": "./node_modules/.bin/tsc",
     "start": "npm run build && node ./dist/api/app.js"

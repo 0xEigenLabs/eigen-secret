@@ -154,14 +154,14 @@ export function parseProof(proof: any): Proof {
     };
 }
 
-export function siblingsPad(siblings: any, F: any) {
-  for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
-  while (siblings.length < N_LEVEL) siblings.push(0);
-  return siblings;
-}
-
 // example: https://github.com/ethers-io/ethers.js/issues/447
-export function verifyEOASignature(rawMessage: string, hexSignature: string, ethAddress: string, alias: string, timestamp: string) {
+export function verifyEOASignature(
+    rawMessage: string,
+    hexSignature: string,
+    ethAddress: string,
+    alias: string,
+    timestamp: string
+) {
     let rawMessageAll = rawMessage + ethAddress + alias + timestamp;
     let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
     let message = ethers.utils.toUtf8Bytes(strRawMessage);
@@ -170,7 +170,13 @@ export function verifyEOASignature(rawMessage: string, hexSignature: string, eth
     return address == ethAddress;
 }
 
-export async function signEOASignature(EOAAccount: any, rawMessage: string, ethAddress: string, alias: string, timestamp: string) {
+export async function signEOASignature(
+    EOAAccount: any,
+    rawMessage: string,
+    ethAddress: string,
+    alias: string,
+    timestamp: string
+) {
     let rawMessageAll = rawMessage + ethAddress + alias + timestamp;
     let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
     return await EOAAccount.signMessage(strRawMessage)

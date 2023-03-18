@@ -5,9 +5,9 @@ const buildPoseidon = require("circomlibjs").buildPoseidon;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { StateTree } from "./state_tree";
+import { StateTree, siblingsPad } from "./state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import { bigint2Array, bigint2Uint8Array, bigint2Tuple, siblingsPad } from "./utils";
+import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
 
 type UnpackFunc = (babyJub: any) => [any, any];
 interface Address {
@@ -358,7 +358,7 @@ export class AccountCircuit {
             signatureS: this.signatureS,
             enabled: this.enabled
         }
-        //fs.writeFileSync("circuits/main_update_state.input.json", JSON.stringify(result));
+        // fs.writeFileSync("circuits/main_update_state.input.json", JSON.stringify(result));
         return result;
     }
 }
