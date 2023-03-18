@@ -5,10 +5,9 @@ const buildPoseidon = require("circomlibjs").buildPoseidon;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { StateTree } from "./state_tree";
+import { StateTree, siblingsPad } from "./state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import { bigint2Array, bigint2Uint8Array, bigint2Tuple, siblingsPad } from "./utils";
-const fs = require("fs");
+import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
 
 type UnpackFunc = (babyJub: any) => [any, any];
 interface Address {
@@ -134,9 +133,11 @@ export class AccountOrNullifierKey implements IKey {
         this.pubKey = new EthAddress(hexPubKey);
         return Promise.resolve(this);
     }
+
     makeSharedKey: MakeSharedKey = (eddsa: any, receiver: EigenAddress) => {
         throw new Error("Unimplemented")
     }
+
     sign: SignFunc = async (msghash: Uint8Array) => {
         // let sig: Uint8Array = await k1Sign(msghash, this.prvKey, { canonical: true, der: false })
         // return Promise.resolve(sig);
@@ -146,6 +147,7 @@ export class AccountOrNullifierKey implements IKey {
         let pPub = this.pubKey.unpack(eddsa.babyJub);
         return k1Verify(signature, msghash, new Point(pPub[0], pPub[1]));
     }
+
     toCircuitInput: KeyToCircuitInput = (eddsa: any) => {
         let pPub = this.pubKey.unpack(eddsa.babyJub);
         return [bigint2Tuple(pPub[0]), bigint2Tuple(pPub[1])];
@@ -356,7 +358,7 @@ export class AccountCircuit {
             signatureS: this.signatureS,
             enabled: this.enabled
         }
-        fs.writeFileSync("circuits/main_update_state.input.json", JSON.stringify(result));
+        // fs.writeFileSync("circuits/main_update_state.input.json", JSON.stringify(result));
         return result;
     }
 }

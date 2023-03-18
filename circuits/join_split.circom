@@ -170,6 +170,7 @@ template JoinSplit(nLevel) {
         onc[i].input_nullifier <== output_note_nullifier[i];
         onc[i].account_required <== output_note_account_required[i];
 
+        // FIXME: the key is the merkle path, and the value is is commitment
         ms[i] = Membership(nLevel);
         ms[i].key <== onc[i].out;
         ms[i].value <== num_input_notes;
@@ -209,10 +210,11 @@ template JoinSplit(nLevel) {
     ac.spk <== signer_pk;
     ac.alias_hash <== alias_hash;
 
+    // FIXME: the key is the merkle path, and the value is is commitment
     component ams = Membership(nLevel);
     ams.enabled <== enabled;
     ams.key <== ac.out;
-    ams.value <== 1; // setup any
+    ams.value <== 1;
     ams.root <== data_tree_root;
     for (var j = 0; j < nLevel; j++) {
         ams.siblings[j] <== siblings_ac[j];

@@ -2,9 +2,9 @@ import { expect, assert } from "chai";
 import path = require("path");
 import { test, utils } from "../index";
 const cls = require("circomlibjs");
-import { StateTree, StateTreeCircuitInput, N_LEVEL } from "../src/state_tree";
-import { siblingsPad } from "../src/utils";
+import { StateTree, StateTreeCircuitInput, N_LEVEL, siblingsPad } from "../src/state_tree";
 const { ethers } = require("hardhat");
+import SMTModel from "../src/state_tree_db";
 
 describe("Test SMT Membership Query", function () {
     this.timeout(1000 * 1000);
@@ -18,7 +18,7 @@ describe("Test SMT Membership Query", function () {
         circuit = await test.genTempMain(stateTree, "Membership", "", [20], {});
         await circuit.loadSymbols();
         tree = new StateTree();
-        await tree.init();
+        await tree.init(SMTModel);
         Fr = tree.F;
     });
 
@@ -52,7 +52,7 @@ describe("Test SMT Membership Update", function () {
         circuit = await test.genTempMain(stateTree, "NonMembershipUpdate", "", [20], {});
         await circuit.loadSymbols();
         tree = new StateTree();
-        await tree.init();
+        await tree.init(SMTModel);
         Fr = tree.F;
     });
 
@@ -115,7 +115,7 @@ describe("Test SMT smart contract", () => {
         await contract.deployed()
         console.log("contract address:", contract.address)
         tree = new StateTree();
-        await tree.init();
+        await tree.init(SMTModel);
         Fr = tree.F;
     })
 

@@ -6,8 +6,8 @@ import { Note } from "./note";
 import { AccountCircuit, SigningKey, EigenAddress } from "./account";
 import { JoinSplitCircuit, JoinSplitInput } from "./join_split";
 import { strict as assert } from "assert";
-import { StateTree, N_LEVEL } from "./state_tree";
-import { parseProof, Proof, siblingsPad } from "./utils";
+import { StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
 const snarkjs = require("snarkjs");
@@ -166,14 +166,6 @@ export class UpdateStatusInput {
 }
 
 export class UpdateStatusCircuit {
-    static readonly PROOF_ID_TYPE_INVALID: number = 0;
-    static readonly PROOF_ID_TYPE_DEPOSIT: number = 1;
-    static readonly PROOF_ID_TYPE_WITHDRAW: number = 2;
-    static readonly PROOF_ID_TYPE_SEND: number = 3;
-    static readonly PROOF_ID_TYPE_CREATE: number = 11;
-    static readonly PROOF_ID_TYPE_MIGRATE: number = 12;
-    static readonly PROOF_ID_TYPE_UPDATE: number = 13;
-
     static async createAccountInput(
         proofId: number,
         accountKey: SigningKey,
