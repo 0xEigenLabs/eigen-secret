@@ -5,7 +5,7 @@ import { EigenAddress } from "./account";
 export class Note {
     val: bigint;
     secret: bigint;
-    _owner: EigenAddress;
+    _owner: EigenAddress; // account key
     assetId: number;
     inputNullifier: bigint;
     accountRequired: boolean;
@@ -62,9 +62,8 @@ export class Note {
         return poseidon.F.toObject(res);
     }
 
-    /*
-    encrypt(): any {
-        let aes = new Aes256gcm(this.secret);
+    encrypt(secret: any): any {
+        let aes = new Aes256gcm(secret);
         let data = JSON.stringify({
             val: this.val,
             secret: this.secret,
@@ -77,8 +76,8 @@ export class Note {
         return aes.encrypt(data)
     }
 
-    decrypt(cipherData: any): Note {
-        let aes = new Aes256gcm(this.secret);
+    static decrypt(cipherData: any, secret: any): Note {
+        let aes = new Aes256gcm(secret);
         let jsonData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
         let data = JSON.parse(jsonData);
         let n = new Note(
@@ -92,5 +91,4 @@ export class Note {
         n.index = data.index;
         return n;
     }
-     */
 }

@@ -5,8 +5,8 @@ import { ethers } from "ethers";
 import { Note } from "./note";
 import { SigningKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-import { StateTree, N_LEVEL } from "./state_tree";
-import { parseProof, Proof, siblingsPad } from "./utils";
+import { StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
 const snarkjs = require("snarkjs");
@@ -130,7 +130,7 @@ export class JoinSplitInput {
             inputJson.output_note_account_required[i] = BigInt(this.outputNotes[i].accountRequired);
         }
         console.log(inputJson)
-        fs.writeFileSync("./circuits/main_update_state.input.json", JSON.stringify(inputJson))
+        // fs.writeFileSync("./circuits/main_update_state.input.json", JSON.stringify(inputJson))
         return inputJson;
     }
 }

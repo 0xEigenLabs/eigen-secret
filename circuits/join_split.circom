@@ -170,6 +170,7 @@ template JoinSplit(nLevel) {
         onc[i].input_nullifier <== output_note_nullifier[i];
         onc[i].account_required <== output_note_account_required[i];
 
+        // FIXME: the key is the merkle path, and the value is is commitment
         ms[i] = Membership(nLevel);
         ms[i].key <== onc[i].out;
         ms[i].value <== num_input_notes;
@@ -209,10 +210,11 @@ template JoinSplit(nLevel) {
     ac.spk <== signer_pk;
     ac.alias_hash <== alias_hash;
 
+    // FIXME: the key is the merkle path, and the value is is commitment
     component ams = Membership(nLevel);
-    ams.enabled <== 1;
+    ams.enabled <== enabled;
     ams.key <== ac.out;
-    ams.value <== 1; // setup any
+    ams.value <== 1;
     ams.root <== data_tree_root;
     for (var j = 0; j < nLevel; j++) {
         ams.siblings[j] <== siblings_ac[j];
@@ -240,7 +242,7 @@ template JoinSplit(nLevel) {
     msghash.public_owner <== public_owner;
 
     component sig_verifier = EdDSAPoseidonVerifier();
-    sig_verifier.enabled <== 1;
+    sig_verifier.enabled <== enabled;
     sig_verifier.R8x <== signatureR8[0];
     sig_verifier.R8y <== signatureR8[1];
     sig_verifier.S <== signatureS;

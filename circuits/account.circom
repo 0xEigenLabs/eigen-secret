@@ -176,9 +176,11 @@ template Account(nLevel) {
     sig_verifier.Ay <== account_note_spk[1];
 
     //if (is_create == 0) { require(membership_check(account_note_data, account_note_index, account_note_path, data_tree_root) == true) }
+    // FIXME: the key is the merkle path, and the value is is commitment
+    // https://wiki.polygon.technology/docs/zkEVM/zkProver/detailed-smt-concepts
     component ms = Membership(nLevel);
     ms.key <== account_note_commitment.out;
-    ms.value <== 1; // TODO
+    ms.value <== 1; 
     ms.root <== data_tree_root;
     ms.enabled <== (1 - is_create) * enabled;
 

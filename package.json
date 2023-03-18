@@ -13,7 +13,7 @@
     "lint": "npm run lint_ts & npm run lint_sol",
     "compile": "hardhat compile",
     "test": "npm run build && npm run compile && npx hardhat test",
-    "lint_ts": "./node_modules/.bin/eslint --fix --ext .ts src api",
+    "lint_ts": "./node_modules/.bin/eslint --fix --ext .ts src server sdk",
     "clean": "rm -rf build dist typechain cache artifacts",
     "build": "./node_modules/.bin/tsc",
     "start": "npm run build && node ./dist/api/app.js"
@@ -55,6 +55,7 @@
     "eslint": "^8.17.0",
     "eslint-config-google": "^0.14.0",
     "solhint": "^3.3.7",
+    "supertest": "^6.3.3",
     "temp": "^0.9.4",
     "tmp-promise": "^3.0.3",
     "ts-node": "^10.4.0",
