@@ -52,5 +52,4 @@ describe('POST /txs', function() {
         console.log(response.body);
         assert(response.body.data[0].alias, alias)
     });
-    after(() => { sequelize.close() })
 });

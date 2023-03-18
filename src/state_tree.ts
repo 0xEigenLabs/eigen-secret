@@ -116,7 +116,7 @@ export default class SMTDB {
     async multiGet(keys: any) {
         const promises = [];
         for (let i=0; i<keys.length; i++) {
-            let res = this.get(keys[i]);
+            let res = await this.get(keys[i]);
             promises.push(this._normalize(res, false));
         }
         return await Promise.all(promises);
@@ -128,26 +128,32 @@ export default class SMTDB {
 
     async multiIns(inserts: any) {
         try {
+            let bulks = [];
             for (let i=0; i<inserts.length; i++) {
                 const keyS = this._key2str(inserts[i][0]);
                 // this.nodes[keyS] = inserts[i][1];
                 let value = this._normalize(inserts[i][1]);
-                await this.model.create({ key: keyS, value: value });
+                bulks.push({ key: keyS, value: value });
             }
+            await this.model.bulkCreate(bulks);
         } catch (err: any) {
             consola.log(err);
+            throw new Error(err)
         }
     }
 
     async multiDel(dels: any) {
         try {
+            let keys = [];
             for (let i=0; i<dels.length; i++) {
                 const keyS = this._key2str(dels[i]);
                 // delete this.nodes[keyS];
-                await this.model.destroy({ where: { key: keyS } });
+                keys.push(keyS);
             }
+            await this.model.destroy({ where: { key: keys } });
         } catch (err: any) {
             consola.log(err);
+            throw new Error(err)
         }
     }
 }
