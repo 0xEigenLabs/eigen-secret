@@ -10,7 +10,7 @@ const path = require("path");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 
-describe("Account circuit test", function () {
+describe.only("Account circuit test", function () {
 
     let circuit: any;
     let eddsa: any;

@@ -1,11 +1,6 @@
-const { SMT, getHashes } = require("circomlibjs");
-const {SMTDb} = require("./smt_db")
-
-export function siblingsPad(siblings: any, F: any) {
-  for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
-  while (siblings.length < N_LEVEL) siblings.push(0);
-  return siblings;
-}
+const { SMT, buildPoseidon } = require("circomlibjs");
+const { SMTDb } = require("./smt_db");
+const { getCurveFromName }  = require("ffjavascript");
 
 export const N_LEVEL = 20;
 export class StateTreeCircuitInput {
@@ -69,14 +64,19 @@ export class StateTree {
         const key = this.tree.F.e(_key);
         const value = this.tree.F.e(_value)
         const res = await this.tree.insert(key, value);
-        const siblings = siblingsPad(res.siblings, this.tree.F);
+        let siblings = res.siblings;
+        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
+        while (siblings.length < N_LEVEL) siblings.push(0);
+
         return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
     }
 
     async delete(_key: any): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const res = await this.tree.delete(key);
-        const siblings = siblingsPad(res.siblings, this.tree.F);
+        let siblings = res.siblings;
+        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
+        while (siblings.length < N_LEVEL) siblings.push(0);
         return new StateTreeCircuitInput(this.tree, [1, 1], res, siblings, res.delKey, res.delValue);
     }
 
@@ -84,14 +84,31 @@ export class StateTree {
         const key = this.tree.F.e(_key);
         const newValue = this.tree.F.e(_newValue);
         const res = await this.tree.update(key, newValue);
-        const siblings = siblingsPad(res.siblings, this.tree.F);
+        let siblings = res.siblings;
+        for (let i = 0; i < siblings.length; i++) siblings[i] = this.tree.F.toObject(siblings[i]);
+        while (siblings.length < N_LEVEL) siblings.push(0);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
+    }
+}
+
+export default async function getHashes() {
+    const bn128 = await getCurveFromName("bn128", true);
+    const poseidon = await buildPoseidon();
+    return {
+        hash0: function (left: any, right: any) {
+            return poseidon([left, right]);
+        },
+        hash1: function(key: any, value: any) {
+            return poseidon([key, value, bn128.Fr.one]);
+        },
+        F: bn128.Fr
     }
 }
 
 export async function newMemEmptyTrie() {
     const {hash0, hash1,F} = await getHashes();
     const db = new SMTDb(F);
+    await db.init();
     const rt = await db.getRoot();
     const smt = new SMT(db, rt, hash0, hash1, F);
     return smt;

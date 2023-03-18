@@ -154,6 +154,12 @@ export function parseProof(proof: any): Proof {
     };
 }
 
+export function siblingsPad(siblings: any, F: any) {
+  for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
+  while (siblings.length < N_LEVEL) siblings.push(0);
+  return siblings;
+}
+
 // example: https://github.com/ethers-io/ethers.js/issues/447
 export function verifyEOASignature(
     rawMessage: string,

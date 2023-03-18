@@ -1,25 +1,42 @@
-import { DataTypes } from "sequelize";
+import { DataTypes, Model } from "sequelize";
+import sequelize from "../server/db";
 
-const {sequelize} = require("../api/db");
+// const { Sequelize, DataTypes } = require('sequelize');
+// const sequelize = new Sequelize({
+//     dialect: "sqlite",
+//     storage: "../data/test.db"
+// });
 
-export default class SMTDb {
+class KeyValueModel extends Model {}
+
+KeyValueModel.init({
+    key: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    value: {
+        type: DataTypes.STRING,
+        allowNull: false
+    }
+}, {
+    sequelize,
+    modelName: "KeyValueModel"
+})
+
+
+export class SMTDb {
     nodesDB: any;
     root: bigint;
     F: any;
 
     constructor(F: any) {
-        this.nodesDB = sequelize.define("KeyValue", {
-            key: {
-                type: DataTypes.BIGINT,
-                allowNull: false
-            },
-            value: {
-                type: DataTypes.BIGINT,
-                allowNull: false
-            }
-        });
+        this.nodesDB = KeyValueModel
         this.root = F.zero;
         this.F = F;
+    }
+
+    async init() {
+        await this.nodesDB.sync({force:true});
     }
 
     async getRoot() {
@@ -42,6 +59,11 @@ export default class SMTDb {
     async get(key: any) {
         const keyS = this._key2str(key);
         const res = await this.nodesDB.findOne({where: {key: keyS}});
+        if (res === null) {
+            console.log("not found", res)
+        } else {
+            console.log(res.value);
+        }
         return res.value;
     }
 
@@ -61,22 +83,63 @@ export default class SMTDb {
         for (let i=0; i<inserts.length; i++) {
             const keyS = this._key2str(inserts[i][0]);
             this._normalize(inserts[i][1]);
-            await this.nodesDB.create({
-                key: keyS,
-                value: inserts[i][1]
-            })
+            
+            let transaction: any;
+            try {
+                transaction = await sequelize.transaction();
+                let found = await KeyValueModel.findOne({
+                    where:{
+                        key: keyS
+                    }
+                });
+                console.log("found:", found)
+
+                if (found === null) {
+                    let res = await KeyValueModel.create({
+                        key: keyS,
+                        value: this.F.toString(inserts[i][1])
+                    }, {
+                        transaction
+                    });
+                }
+                await transaction.commit();
+            } catch (err: any) {
+                if (transaction) {
+                    transaction.rollback();
+                }
+            }
         }
     }
 
     async multiDel(dels: any) {
         for (let i=0; i<dels.length; i++) {
             const keyS = this._key2str(dels[i]);
-            const res = await this.nodesDB.destroy({
-                where: {
-                    key: keyS
+            let transaction: any;
+            try {
+                transaction = await sequelize.transaction();
+                let found = await KeyValueModel.findOne({
+                    where:{
+                        key: keyS
+                    }
+                });
+                console.log("found:", found)
+        
+                if (found !== null) {
+                    let res = KeyValueModel.destroy({
+                        where: {
+                            key: keyS
+                        }, 
+                        transaction
+                    })
+                } else {
+                    console.log("Not found", keyS);
                 }
-            }); 
+                await transaction.commit();
+            } catch (err: any) {
+                if (transaction) {
+                    transaction.rollback();
+                }
+            }
         }
     }
 }
-
