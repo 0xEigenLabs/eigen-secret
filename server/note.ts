@@ -9,7 +9,8 @@ NoteModel.init({
     // Model attributes are defined here
     cmt: {
         type: DataTypes.BIGINT,
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     alias: {
         type: DataTypes.STRING,
@@ -17,7 +18,8 @@ NoteModel.init({
     },
     index: {
         type: DataTypes.BIGINT,
-        allowNull: true
+        allowNull: false,
+        unique: true
     }
 }, {
     // Other model options go here
@@ -26,23 +28,25 @@ NoteModel.init({
 });
 
 export async function getIndices(cmt: Array<bigint>, alias: string) {
-    let indices = new Array(cmt.length).map(() => StateTree.index);
-    let transaction = sequelize.transaction();
-    try {
-        for (let i = 0; i < cmt.length; i ++) {
-            await NoteModel.create({
-                index: indices[i],
+    let inserts = new Array(cmt.length).fill({}).map(
+        (v, i) => (
+            {
+                index: StateTree.index,
                 alias: alias,
                 cmt: cmt[i]
-            });
-        }
+            }
+        ));
+    let transaction: any;
+    try {
+        transaction = await sequelize.transaction();
+        let result = await NoteModel.bulkCreate(inserts, {transaction});
         transaction.commit();
-        return indices;
+        return inserts;
     } catch (err: any) {
         consola.log(err);
         if (transaction) {
             transaction.rollback();
         }
+        return null;
     }
-    return null;
 }

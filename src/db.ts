@@ -18,6 +18,9 @@ if (dbDriver == "sqlite") {
         host: dbHost,
         storage: ":memory:",
         dialect: dbDriver,
+        dialectOptions: {
+            supportBigNumbers: true
+        },
         pool: {
             max: 100,
             min: 0,
@@ -29,6 +32,9 @@ if (dbDriver == "sqlite") {
     sequelize = new Sequelize(dbName, dbUser, dbPassword, {
         host: dbHost,
         dialect: dbDriver,
+        dialectOptions: {
+            supportBigNumbers: true
+        },
         pool: {
             max: 100,
             min: 0,

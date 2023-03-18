@@ -126,5 +126,8 @@ export async function fetchIndices(req: any, res: any) {
 
     const commitments = req.body.commitments;
     let result = await getIndices(commitments, alias);
+    if (!result) {
+        return res.json(utils.err(utils.ErrCode.DBCreateError, "Generate index error"));
+    }
     return res.json(utils.succ(result));
 }
