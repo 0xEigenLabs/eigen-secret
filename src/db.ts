@@ -1,6 +1,6 @@
 const { Sequelize, DataTypes, Model } = require("sequelize");
 require("dotenv").config();
-import { require_env_variables } from "./util";
+import { require_env_variables } from "./utils";
 import consola from "consola";
 
 require_env_variables(["DB_NAME", "DB_USER", "DB_HOST", "DB_DRIVER", "DB_PASSWORD"]);

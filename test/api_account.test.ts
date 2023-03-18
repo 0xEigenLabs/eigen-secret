@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 
 import app from "../server/service";
 import { SigningKey } from "../src/account";
-import sequelize from "../server/db";
+import sequelize from "../src/db";
 import * as utils from "../src/utils";
 import { expect, assert } from "chai";
 

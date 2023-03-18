@@ -1,11 +1,11 @@
 const { Sequelize, DataTypes, Model } = require("sequelize");
-import sequelize from "./db";
+import sequelize from "../src/db";
 import consola from "consola";
-import * as util from "./util";
-import { verifyEOASignature } from "../src/utils";
+import * as utils from "../src/utils";
+import { StateTree } from "../src/state_tree";
+import { getIndices } from "./note";
 
 class TransactionModel extends Model {}
-
 TransactionModel.init({
     // Model attributes are defined here
     alias: {
@@ -45,7 +45,6 @@ export enum TransactionModelStatus {
         SETTLED = 4,
 }
 
-// add new key
 export async function createTx(req: any, res: any) {
     consola.log("create tx");
     const alias = req.body.alias;
@@ -59,18 +58,18 @@ export async function createTx(req: any, res: any) {
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
 
-    if (!util.hasValue(alias) ||
-        !util.hasValue(pubKey) ||
-        !util.hasValue(content) ||
-        !util.hasValue(proof) ||
-        !util.hasValue(publicInput)
+    if (!utils.hasValue(alias) ||
+        !utils.hasValue(pubKey) ||
+        !utils.hasValue(content) ||
+        !utils.hasValue(proof) ||
+        !utils.hasValue(publicInput)
     ) {
         consola.error("missing one or more arguments");
-        return res.json(util.err(util.ErrCode.InvalidInput, "missing input"));
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "missing input"));
     }
-    let validAdddr = await verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
+    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
-        return res.json(util.err(util.ErrCode.InvalidInput, "Invalid EOA address"));
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
     }
 
     let transaction: any;
@@ -89,18 +88,17 @@ export async function createTx(req: any, res: any) {
                 status: TransactionModelStatus.CREATED
             }, { transaction });
             await transaction.commit();
-            return res.json(util.succ(result))
+            return res.json(utils.succ(result))
         }
-        return res.json(util.err(util.ErrCode.DBCreateError, "Duplicated transaction found"));
+        return res.json(utils.err(utils.ErrCode.DBCreateError, "Duplicated transaction found"));
     } catch (err: any) {
         if (transaction) {
             transaction.rollback();
         }
-        return res.json(util.err(util.ErrCode.DBCreateError, err.toString()));
+        return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
     }
 }
 
-// add new key
 export async function getTxByAccountId(req: any, res: any) {
     const alias = req.params.alias;
     console.log(alias);
@@ -109,8 +107,24 @@ export async function getTxByAccountId(req: any, res: any) {
         result = await TransactionModel.findAll({ where: { alias: alias } });
     } catch (err: any) {
         console.log(err)
-        return res.json(util.err(util.ErrCode.DBCreateError, err.toString()));
+        return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
     }
-    return res.json(util.succ(result));
+    return res.json(utils.succ(result));
 }
 
+export async function fetchIndices(req: any, res: any) {
+    const alias = req.body.alias;
+    const ethAddress = req.body.ethAddress;
+    const timestamp = req.body.timestamp;
+    const rawMessage = req.body.message;
+    const hexSignature = req.body.hexSignature;
+
+    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
+    if (!validAdddr) {
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
+    }
+
+    const commitments = req.body.commitments;
+    let result = await getIndices(commitments, alias);
+    return res.json(utils.succ(result));
+}

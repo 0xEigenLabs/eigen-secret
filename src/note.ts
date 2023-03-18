@@ -9,11 +9,11 @@ export class Note {
     assetId: number;
     inputNullifier: bigint;
     accountRequired: boolean;
-    index: number | undefined;
+    index: bigint;
     poseidon: any;
 
     constructor(val: bigint, secret: bigint, owner: EigenAddress, assetId: number,
-                inputNullifier: bigint, accountRequired: boolean, index: number | undefined = undefined) {
+                inputNullifier: bigint, accountRequired: boolean, index: bigint) {
         this.val = val;
         this.secret = secret;
         this._owner = owner;
@@ -86,9 +86,9 @@ export class Note {
             data.assetId,
             data.owner,
             data.inputNullifier,
-            data.accountRequired
+            data.accountRequired,
+            data.index
         );
-        n.index = data.index;
         return n;
     }
 }

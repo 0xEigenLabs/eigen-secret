@@ -1,6 +1,7 @@
-import { assert } from "chai";
-
-const { newMemEmptyTrie } = require("circomlibjs");
+import { randomBytes as _randomBytes } from "crypto";
+const { SMT, buildPoseidon } = require("circomlibjs");
+const { getCurveFromName } = require("ffjavascript");
+const consola = require("consola");
 
 export function siblingsPad(siblings: any, F: any) {
   for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
@@ -46,18 +47,130 @@ export class StateTreeCircuitInput {
     }
 }
 
+async function getHashes() {
+    const bn128 = await getCurveFromName("bn128", true);
+    const poseidon = await buildPoseidon();
+    return {
+        hash0: function(left: any, right: any) {
+            return poseidon([left, right]);
+        },
+        hash1: function(key: any, value: any) {
+            return poseidon([key, value, bn128.Fr.one]);
+        },
+        F: bn128.Fr
+    }
+}
+
+// NOTE: we never guarantee the atomic
+export default class SMTDB {
+    // nodes: any;
+    root: any;
+    F: any;
+    model: any;
+    constructor(F: any, model: any) {
+        // this.nodes = {};
+        this.root = F.zero;
+        this.F = F;
+        this.model = model;
+    }
+
+    async getRoot() {
+        return this.root;
+    }
+
+    _key2str(k: any) {
+        const F = this.F;
+        const keyS = this.F.toString(k);
+        return keyS;
+    }
+
+    _normalize(n: any, join: boolean = true) {
+        const F = this.F;
+        if (join) {
+            let nn = new Array(n.length);
+            for (let i=0; i<nn.length; i++) {
+                // NOTE: the value maybe Uint8Array, or Number
+                nn[i] = ArrayBuffer.isView(n[i])? this.F.toObject(n[i]) : n[i];
+            }
+            return nn.join("|")
+        } else {
+            let splited = n.split("|");
+            let nn = new Array(splited.length);
+            for (let i=0; i<nn.length; i++) {
+                nn[i] = this.F.e(splited[i]);
+            }
+            return nn;
+        }
+    }
+
+    async get(key: any) {
+        const keyS = this._key2str(key);
+        // return this.nodes[keyS];
+        let item = await this.model.findOne({ where: { key: keyS } });
+        if (!item) {
+            return null;
+        }
+        return this._normalize(item.value, false);
+    }
+
+    async multiGet(keys: any) {
+        const promises = [];
+        for (let i=0; i<keys.length; i++) {
+            let res = this.get(keys[i]);
+            promises.push(this._normalize(res, false));
+        }
+        return await Promise.all(promises);
+    }
+
+    async setRoot(rt: any) {
+        this.root = rt;
+    }
+
+    async multiIns(inserts: any) {
+        try {
+            for (let i=0; i<inserts.length; i++) {
+                const keyS = this._key2str(inserts[i][0]);
+                // this.nodes[keyS] = inserts[i][1];
+                let value = this._normalize(inserts[i][1]);
+                await this.model.create({ key: keyS, value: value });
+            }
+        } catch (err: any) {
+            consola.log(err);
+        }
+    }
+
+    async multiDel(dels: any) {
+        try {
+            for (let i=0; i<dels.length; i++) {
+                const keyS = this._key2str(dels[i]);
+                // delete this.nodes[keyS];
+                await this.model.destroy({ where: { key: keyS } });
+            }
+        } catch (err: any) {
+            consola.log(err);
+        }
+    }
+}
+
 export class StateTree {
     tree: any;
     F: any;
 
     constructor() { }
-    async init() {
-        this.tree = await newMemEmptyTrie();
+    async init(model: any) {
+        const { hash0, hash1, F } = await getHashes();
+        const db = new SMTDB(F, model);
+        const rt = await db.getRoot();
+        this.tree = new SMT(db, rt, hash0, hash1, F);
         this.F = this.tree.F;
     }
 
     root(): any {
         return this.tree.root;
+    }
+
+    static get index(): bigint {
+        return BigInt("0x" + _randomBytes(32).toString("hex"))
     }
 
     async find(_key: any) {

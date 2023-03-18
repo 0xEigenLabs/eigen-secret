@@ -1,9 +1,8 @@
 const { Sequelize, DataTypes, Model } = require("sequelize");
 const { ethers } = require("ethers");
-import sequelize from "./db";
+import sequelize from "../src/db";
 import consola from "consola";
-import * as util from "./util";
-import { verifyEOASignature } from "../src/utils";
+import * as utils from "../src/utils";
 
 class AccountModel extends Model {}
 
@@ -40,33 +39,33 @@ export async function createAccount(req: any, res: any) {
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
     if (
-        !util.hasValue(alias) ||
-        !util.hasValue(hexSignature) ||
-        !util.hasValue(rawMessage) ||
-        !util.hasValue(timestamp) ||
-        !util.hasValue(ethAddress)) {
+        !utils.hasValue(alias) ||
+        !utils.hasValue(hexSignature) ||
+        !utils.hasValue(rawMessage) ||
+        !utils.hasValue(timestamp) ||
+        !utils.hasValue(ethAddress)) {
         consola.log(alias, hexSignature, rawMessage, timestamp, ethAddress)
-        return res.json(util.err(util.ErrCode.InvalidInput, "missing input"));
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "missing input"));
     }
 
-    let validAdddr = await verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
+    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
-        return res.json(util.err(util.ErrCode.InvalidInput, "Invalid EOA address"));
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
     }
 
     const DURATION: number = 60; // seconds
     let expireAt = Math.floor(Date.now() / 1000);
 
     if (Number(timestamp) + DURATION <= expireAt) {
-        return res.json(util.err(
-            util.ErrCode.InvalidAuth,
+        return res.json(utils.err(
+            utils.ErrCode.InvalidAuth,
             "Expired signature"
         ));
     }
     let transaction = await sequelize.transaction();
 
     try {
-        let insertResult = await util.upsert(
+        let insertResult = await utils.upsert(
             AccountModel,
             { alias, ethAddress, ethAddress2: "", ethAddress3: "" }, // new item
             { alias, ethAddress }, // condition
@@ -74,20 +73,20 @@ export async function createAccount(req: any, res: any) {
 
         );
         consola.log("Upsert: ", insertResult);
-        if (!util.hasValue(insertResult.item)) {
-            return res.json(util.err(
-                util.ErrCode.DBCreateError,
+        if (!utils.hasValue(insertResult.item)) {
+            return res.json(utils.err(
+                utils.ErrCode.DBCreateError,
                 "Create alias-ethAddress record error"
             ));
         }
         transaction.commit();
-        return res.json(util.succ(insertResult.item));
+        return res.json(utils.succ(insertResult.item));
     } catch (err: any) {
         consola.log(err)
         if (transaction) {
             transaction.rollback();
         }
     }
-    return res.json(util.err(util.ErrCode.DBCreateError, "Unknown error"));
+    return res.json(utils.err(utils.ErrCode.DBCreateError, "Unknown error"));
 }
 

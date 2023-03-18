@@ -6,6 +6,8 @@ import {  } from "../src/join_split";
 import { compress as accountCompress, AccountOrNullifierKey, SigningKey, AccountCircuit } from "../src/account";
 import { StateTree } from "../src/state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
+import SMTModel from "../src/state_tree_db";
+
 const path = require("path");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
@@ -32,7 +34,7 @@ describe("Account circuit test", function () {
         accountKey = await (new SigningKey()).newKey(undefined);
         signingKey = await (new SigningKey()).newKey(undefined);
         worldState = new StateTree(); // account and joinsplit share same SMT.
-        await worldState.init();
+        await worldState.init(SMTModel);
     })
 
     it("Account create test", async () => {

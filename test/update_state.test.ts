@@ -12,6 +12,7 @@ import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/
 const path = require("path");
 const { readFileSync } = require("fs");
 const snarkjs = require("snarkjs");
+import SMTModel from "../src/state_tree_db";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 
@@ -40,7 +41,7 @@ describe("Test JoinSplit Circuit", function () {
         accountKey = await (new SigningKey()).newKey(undefined);
         signingKey = await (new SigningKey()).newKey(undefined);
         worldState = new StateTree();
-        await worldState.init();
+        await worldState.init(SMTModel);
     })
 
     it("Account create update_state test", async () => {
@@ -117,8 +118,8 @@ describe("Test JoinSplit Circuit", function () {
         console.log("test send tx")
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
-            inp.outputNotes[0].index = 10; // FIXME update index
-            inp.outputNotes[1].index = 10;
+            //inp.outputNotes[0].index = 10; // FIXME update index
+            //inp.outputNotes[1].index = 10;
             confirmedNote.push(inp.outputNotes[0]); // after depositing, all balance becomes private value
             confirmedNote.push(inp.outputNotes[1]);
         }
