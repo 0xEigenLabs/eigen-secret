@@ -118,8 +118,6 @@ describe("Test JoinSplit Circuit", function () {
         console.log("test send tx")
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
-            //inp.outputNotes[0].index = 10; // FIXME update index
-            //inp.outputNotes[1].index = 10;
             confirmedNote.push(inp.outputNotes[0]); // after depositing, all balance becomes private value
             confirmedNote.push(inp.outputNotes[1]);
         }

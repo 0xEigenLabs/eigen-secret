@@ -108,7 +108,7 @@ export default class SMTDB {
         // return this.nodes[keyS];
         let item = await this.model.findOne({ where: { key: keyS } });
         if (!item) {
-            return null;
+            return undefined;
         }
         return this._normalize(item.value, false);
     }
@@ -158,7 +158,13 @@ export default class SMTDB {
     }
 }
 
-export class StateTree {
+export interface IStateTree {
+    root(): any;
+    find(key: any): Promise<any>;
+    insert(key: any, value: any): Promise<StateTreeCircuitInput>;
+}
+
+export class StateTree implements IStateTree {
     tree: any;
     F: any;
 
@@ -176,7 +182,7 @@ export class StateTree {
     }
 
     static get index(): bigint {
-        return BigInt("0x" + _randomBytes(32).toString("hex"))
+        return BigInt("0x" + _randomBytes(31).toString("hex"))
     }
 
     async find(_key: any) {

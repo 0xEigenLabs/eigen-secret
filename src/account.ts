@@ -5,7 +5,7 @@ const buildPoseidon = require("circomlibjs").buildPoseidon;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { StateTree, siblingsPad } from "./state_tree";
+import { IStateTree, siblingsPad } from "./state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
 
@@ -280,7 +280,7 @@ export class AccountCircuit {
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
         aliasHash: bigint,
-        state: StateTree
+        state: IStateTree
     ) {
         let eddsa = await buildEddsa();
         const F = eddsa.F;
