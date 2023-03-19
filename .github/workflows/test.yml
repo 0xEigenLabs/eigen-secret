@@ -32,6 +32,8 @@ jobs:
         run: curl https://universal-setup.ams3.digitaloceanspaces.com/setup_2^20.key -o ${{ github.workspace }}/circuits/setup_2^20.key
       - name: Download Circom
         run: wget https://github.com/iden3/circom/releases/download/v2.1.0/circom-linux-amd64 && chmod u+x circom-linux-amd64 && mv circom-linux-amd64 /usr/local/bin/circom
+      - name: Download ZKIT
+        run: wget https://github.com/0xEigenLabs/eigen-zkvm/releases/download/v0.0.1/x86_64-unknown-linux-gnu.tar.gz && tar -xzvf x86_64-unknown-linux-gnu.tar.gz && chmod u+x zkit && mv zkit /usr/local/bin/
       - name: Start hardhat node
         run: nohup npx hardhat node &
       - name: Generate circuits
