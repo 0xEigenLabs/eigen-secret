@@ -33,7 +33,7 @@ jobs:
       - name: Download Circom
         run: wget https://github.com/iden3/circom/releases/download/v2.1.0/circom-linux-amd64 && chmod u+x circom-linux-amd64 && mv circom-linux-amd64 /usr/local/bin/circom
       - name: Download ZKIT
-        run: wget wget https://github.com/0xEigenLabs/eigen-zkvm/archive/refs/tags/v0.0.1.tar.gz && tar zxvf v0.0.1.tar.gz && cd eigen-zkvm-0.0.1 && cargo build --release && chmod u+x target/release/zkit && mv target/release/zkit /usr/local/bin/
+        run: wget wget https://github.com/0xEigenLabs/eigen-zkvm/archive/refs/tags/v0.0.1.tar.gz && tar -xzvf v0.0.1.tar.gz && cd eigen-zkvm-0.0.1 && cargo build --release && chmod u+x target/release/zkit && mv target/release/zkit /usr/local/bin/
       - name: Start hardhat node
         run: nohup npx hardhat node &
       - name: Generate circuits
