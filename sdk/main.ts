@@ -1,17 +1,46 @@
 import { SigningKey } from "../src/account";
 import { ethers } from "ethers";
 import { AccountCircuit } from "../src/account";
+import { IStateTree, StateTreeCircuitInput } from "../src/state_tree";
 const createBlakeHash = require("blake-hash");
 const { buildEddsa, buildBabyJub } = require("circomlibjs");
+
+export class StateTreeClient implements IStateTree {
+    serverAddr: string;
+    constructor(serverAddr: string) {
+        this.serverAddr = serverAddr;
+    }
+
+    root(): any {
+        //return this.tree.root;
+        return "";
+    }
+
+    static get index(): bigint {
+        //return BigInt("0x" + _randomBytes(32).toString("hex"))
+        return 0n;
+    }
+
+    async find(_key: any) {
+        return "";
+    }
+
+    async insert(_key: any, _value: any): Promise<StateTreeCircuitInput> {
+        return Promise.reject(null);
+        //return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
+    }
+}
 
 export class SecretSDK {
     alias: string;
     accountKey: SigningKey;
     signingKey: SigningKey;
-    constructor(alias: string, accountKey: SigningKey, signingKey: SigningKey) {
+    state: StateTreeClient;
+    constructor(alias: string, accountKey: SigningKey, signingKey: SigningKey, serverAddr: string) {
         this.alias = alias;
         this.signingKey = signingKey;
         this.accountKey = accountKey;
+        this.state = new StateTreeClient(serverAddr);
     }
 
     static async newSigningKey() {
@@ -40,7 +69,6 @@ export class SecretSDK {
         let newSigningPubKey2 = newSigningKey2.toCircuitInput(eddsa);
         const aliasHash = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
 
-        let worldState: any;
         let input = await AccountCircuit.createProofInput(
             proofId,
             this.accountKey,
@@ -49,7 +77,7 @@ export class SecretSDK {
             newSigningPubKey1[0],
             newSigningPubKey2[0],
             aliasHash,
-            worldState
+            this.state
         );
     }
 

@@ -173,7 +173,7 @@ template JoinSplit(nLevel) {
         // FIXME: the key is the merkle path, and the value is is commitment
         ms[i] = Membership(nLevel);
         ms[i].key <== onc[i].out;
-        ms[i].value <== num_input_notes;
+        ms[i].value <== output_note_nullifier[i];
         ms[i].root <== data_tree_root;
         ms[i].enabled <== input_note_in_use[i].out * enabled;
         for (var j = 0; j < nLevel; j++) {

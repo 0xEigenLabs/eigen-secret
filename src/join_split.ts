@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { Note } from "./note";
 import { SigningKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-import { StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import {  IStateTree, StateTree, N_LEVEL, siblingsPad } from "./state_tree";
 import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
@@ -162,7 +162,7 @@ export class JoinSplitCircuit {
     static async createDepositInput(
         accountKey: SigningKey,
         signingKey: SigningKey,
-        state: StateTree,
+        state: IStateTree,
         acStateKey: bigint,
         proofId: number,
         aliasHash: bigint,
@@ -205,7 +205,7 @@ export class JoinSplitCircuit {
     static async createProofInput(
         accountKey: SigningKey,
         signingKey: SigningKey,
-        state: StateTree,
+        state: IStateTree,
         acStateKey: bigint,
         proofId: number,
         aliasHash: bigint,
@@ -261,11 +261,11 @@ export class JoinSplitCircuit {
 
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
-            await state.insert(outputNc1, 2);
-            await state.insert(outputNc2, 2);
+            await state.insert(outputNc1, nullifier1);
+            await state.insert(outputNc2, nullifier2);
 
-            let noteInput1 = await state.find(outputNc1);
-            let noteInput2 = await state.find(outputNc2);
+            let outputNoteLeaf = await state.find(outputNc1);
+            let outputNoteLeaf2 = await state.find(outputNc2);
             let ac = await state.find(F.e(acStateKey));
 
             let ak = await accountKey.toCircuitInput(eddsa);
@@ -276,7 +276,7 @@ export class JoinSplitCircuit {
                 [outputNote1, outputNote2],
                 [outputNc1, outputNc2],
                 F.toObject(state.root()),
-                [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
+                [siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
                 siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
@@ -341,17 +341,17 @@ export class JoinSplitCircuit {
 
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
-            await state.insert(outputNc1, inputNotes.length);
-            await state.insert(outputNc2, inputNotes.length);
-            let noteInput1 = await state.find(outputNc1);
-            let noteInput2 = await state.find(outputNc2);
+            await state.insert(outputNc1, nullifier1);
+            await state.insert(outputNc2, nullifier2);
+            let outputNoteLeaf = await state.find(outputNc1);
+            let outputNoteLeaf2 = await state.find(outputNc2);
             let ac = await state.find(F.e(acStateKey));
             let ak = accountKey.toCircuitInput(eddsa);
             let input = new JoinSplitInput(
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
                 F.toObject(state.root()),
-                [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
+                [siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
                 siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
