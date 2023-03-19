@@ -2,7 +2,7 @@ const { promisify } = require('util');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { aggregation_Prover } = require('../src/aggregation_prover');
+const { AggregationProver } = require('../src/aggregation_prover');
 const bigPower = 23;
 const power = 18;
 const srs = path.join(__dirname, '..', `keys/setup_2^${power}.key`);
@@ -18,21 +18,22 @@ describe("Plonk aggregation verifier test", async function() {
     await execAsync(`zkit setup -p ${bigPower} -s ${bigSrs}`);
   }
   it("verifier test", async () => {
+    const aggregationProver = new AggregationProver();
     console.log('1. compile circuit');
-    await aggregation_Prover.compileCircuit();
+    await aggregationProver.compileCircuit();
     console.log('2. export verification key');
-    await aggregation_Prover.exportVerificationKey();
+    await aggregationProver.exportVerificationKey();
     console.log('3. generate each proof');
-    await aggregation_Prover.generateEachProof();
+    await aggregationProver.generateEachProof();
     console.log('4. collect old proof list and export aggregation vk');
-    await aggregation_Prover.exportAggregationVk();
+    await aggregationProver.exportAggregationVk();
     console.log('5. generate aggregation proof');
-    await aggregation_Prover.generateAggregationProof();
+    await aggregationProver.generateAggregationProof();
     console.log('6. verify');
-    await aggregation_Prover.verify();
+    await aggregationProver.verify();
     console.log('7. generate verifier(.sol)');
-    await aggregation_Prover.generateVerifier();
+    await aggregationProver.generateVerifier();
     console.log('8. run verifier test');
-    await aggregation_Prover.runVerifierTest();
+    await aggregationProver.runVerifierTest();
   })
 });

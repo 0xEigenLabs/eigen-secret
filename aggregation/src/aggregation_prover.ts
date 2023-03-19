@@ -6,58 +6,64 @@ import os from 'os';
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const bigPower = 23;
-const power = 18;
-const numInputs = 8;
+export class AggregationProver {
+    bigPower: number = 23;
+    power: number = 18;
+    numInputs: number = 8;
+    circuitsDir: string;
+    curDir: string;
+    circuit: string = 'main_update_state';
+    workspace: string;
+    srs: string;
+    bigSrs: string;
+    execAsync: (command: string) => Promise<{ stdout: string, stderr: string }> = promisify(exec);
 
-const circuitsDir = path.join(__dirname, '..', '../circuits');
-console.log(circuitsDir);
-const curDir = path.join(__dirname, '..');
-console.log(curDir);
-const circuit = 'main_update_state';
-const workspace = path.resolve(os.tmpdir(), 'aggregation');
-console.log(workspace);
-try {
-  fs.rmdirSync(workspace, { recursive: true });
-} catch (err: any) {
-  if (err.code !== 'ENOENT') {
-    console.error(err);
-  }
-}
-fs.mkdirSync(workspace, { recursive: true });
-
-const srs = path.join(__dirname, '..', `keys/setup_2^${power}.key`);
-const bigSrs = path.join(__dirname, '..', `keys/setup_2^${bigPower}.key`);
-
-const execAsync = promisify(exec);
-
-export class aggregation_Prover {
-    static async compileCircuit(): Promise<void> {
-        await execAsync(`zkit compile -i ${circuitsDir}/${circuit}.circom --O2=full -o ${workspace}`);
+    constructor() {
+        this.circuitsDir = path.join(__dirname, '..', '../circuits');
+        console.log(this.circuitsDir);
+        this.curDir = path.join(__dirname, '..');
+        console.log(this.curDir);
+        this.workspace = path.resolve(os.tmpdir(), 'aggregation');
+        console.log(this.workspace);
+        try {
+        fs.rmdirSync(this.workspace, { recursive: true });
+        } catch (err: any) {
+        if (err.code !== 'ENOENT') {
+            console.error(err);
+        }
+        }
+        fs.mkdirSync(this.workspace, { recursive: true });
+        this.srs = path.join(__dirname, '..', `keys/setup_2^${this.power}.key`);
+        this.bigSrs = path.join(__dirname, '..', `keys/setup_2^${this.bigPower}.key`);
+        this.execAsync = promisify(exec);
     }
 
-    static async exportVerificationKey(): Promise<void> {
-        await execAsync(`zkit export_verification_key -s ${srs} -c ${workspace}/${circuit}.r1cs -v ${workspace}/vk.bin`);
+    async compileCircuit() {
+        await this.execAsync(`zkit compile -i ${this.circuitsDir}/${this.circuit}.circom --O2=full -o ${this.workspace}`);
     }
 
-    static async generateEachProof(): Promise<void> {
+    async exportVerificationKey() {
+        await this.execAsync(`zkit export_verification_key -s ${this.srs} -c ${this.workspace}/${this.circuit}.r1cs -v ${this.workspace}/vk.bin`);
+    }
+
+    async generateEachProof() {
         const inputDir = path.join(__dirname, "..", "input");
-        const inputDirs = fs.readdirSync(inputDir);
+        const inputDirs = fs.readdirSync(inputDir).filter(name => !name.startsWith('.'));
         for (const input of inputDirs) {
           const inputPath = path.join(inputDir, input);
-          const generateWitnessCmd = `node ${workspace}/${circuit}_js/generate_witness.js ${workspace}/${circuit}_js/${circuit}.wasm ${inputPath}/input.json ${inputPath}/witness.wtns`;
-          await execAsync(generateWitnessCmd);
-          const proveCmd = `zkit prove -c ${workspace}/${circuit}.r1cs -w ${inputPath}/witness.wtns -b ${inputPath}/proof.bin -s ${srs} -j ${inputPath}/proof.json -t rescue`;
-          await execAsync(proveCmd);
-          const verifyCmd = `zkit verify -p ${inputPath}/proof.bin -v ${workspace}/vk.bin -t rescue`;
-          await execAsync(verifyCmd);
+          const generateWitnessCmd = `node ${this.workspace}/${this.circuit}_js/generate_witness.js ${this.workspace}/${this.circuit}_js/${this.circuit}.wasm ${inputPath}/input.json ${inputPath}/witness.wtns`;
+          await this.execAsync(generateWitnessCmd);
+          const proveCmd = `zkit prove -c ${this.workspace}/${this.circuit}.r1cs -w ${inputPath}/witness.wtns -b ${inputPath}/proof.bin -s ${this.srs} -j ${inputPath}/proof.json -t rescue`;
+          await this.execAsync(proveCmd);
+          const verifyCmd = `zkit verify -p ${inputPath}/proof.bin -v ${this.workspace}/vk.bin -t rescue`;
+          await this.execAsync(verifyCmd);
         }
     }
 
-    static async exportAggregationVk(): Promise<void> {
+    async exportAggregationVk() {
         const inputDir = path.join(__dirname, "..", "input");
-        const inputDirs = fs.readdirSync(inputDir);
-        const oldProofList = path.join(workspace, 'old_proof_list.txt');
+        const inputDirs = fs.readdirSync(inputDir).filter(name => !name.startsWith('.'));
+        const oldProofList = path.join(this.workspace, 'old_proof_list.txt');
         fs.writeFileSync(oldProofList, '');
         let i = 0;
         for (const input of inputDirs) {
@@ -66,33 +72,33 @@ export class aggregation_Prover {
             fs.appendFileSync(oldProofList, `${proofBinPath}\n`);
             i++;
         }
-        await execAsync(`zkit export_aggregation_verification_key -c ${i} -i ${numInputs} -s ${bigSrs} -v ${workspace}/aggregation_vk.bin`);
+        await this.execAsync(`zkit export_aggregation_verification_key -c ${i} -i ${this.numInputs} -s ${this.bigSrs} -v ${this.workspace}/aggregation_vk.bin`);
     }
 
-    static async generateAggregationProof(): Promise<void> {
-        const oldProofList = path.join(workspace, 'old_proof_list.txt');
-        const aggregationProofPath = path.join(workspace, 'aggregation_proof.bin');
-        const aggregationProofJsonPath = path.join(workspace, 'aggregation_proof.json');
-        const generateAggregationProofCmd = `zkit aggregation_prove -s ${bigSrs} -f ${oldProofList} -v ${workspace}/vk.bin -n ${aggregationProofPath} -j ${aggregationProofJsonPath}`;
-        await execAsync(generateAggregationProofCmd);      
+    async generateAggregationProof() {
+        const oldProofList = path.join(this.workspace, 'old_proof_list.txt');
+        const aggregationProofPath = path.join(this.workspace, 'aggregation_proof.bin');
+        const aggregationProofJsonPath = path.join(this.workspace, 'aggregation_proof.json');
+        const generateAggregationProofCmd = `zkit aggregation_prove -s ${this.bigSrs} -f ${oldProofList} -v ${this.workspace}/vk.bin -n ${aggregationProofPath} -j ${aggregationProofJsonPath}`;
+        await this.execAsync(generateAggregationProofCmd);      
     }
 
-    static async verify(): Promise<void> {
-        const aggregationProofPath = path.join(workspace, 'aggregation_proof.bin');
-        const aggregationVerifyCmd = `zkit aggregation_verify -p ${aggregationProofPath} -v ${workspace}/aggregation_vk.bin`;
-        await execAsync(aggregationVerifyCmd);
+    async verify() {
+        const aggregationProofPath = path.join(this.workspace, 'aggregation_proof.bin');
+        const aggregationVerifyCmd = `zkit aggregation_verify -p ${aggregationProofPath} -v ${this.workspace}/aggregation_vk.bin`;
+        await this.execAsync(aggregationVerifyCmd);
     }
 
-    static async generateVerifier(): Promise<void> {
-        const generateAggregationVerifierCmd = `zkit generate_aggregation_verifier -o ${workspace}/vk.bin -n ${workspace}/aggregation_vk.bin -i ${numInputs} -s ${curDir}/contracts/verifier.sol`;
-        await execAsync(generateAggregationVerifierCmd);
+    async generateVerifier() {
+        const generateAggregationVerifierCmd = `zkit generate_aggregation_verifier -o ${this.workspace}/vk.bin -n ${this.workspace}/aggregation_vk.bin -i ${this.numInputs} -s ${this.curDir}/contracts/verifier.sol`;
+        await this.execAsync(generateAggregationVerifierCmd);
     }
 
-    static async runVerifierTest(): Promise<void> {
+    async runVerifierTest() {
         const verifierFactory = await ethers.getContractFactory("KeysWithPlonkVerifier");
         const verifier = await verifierFactory.deploy();
         await verifier.deployed();
-        const aggregationProofJsonPath = path.join(workspace, 'aggregation_proof.json');
+        const aggregationProofJsonPath = path.join(this.workspace, 'aggregation_proof.json');
         const proof = require(aggregationProofJsonPath);
         expect(await verifier.verifyAggregatedProof(
             proof[0],
