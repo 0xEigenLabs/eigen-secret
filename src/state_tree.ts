@@ -162,6 +162,7 @@ export interface IStateTree {
     root(): any;
     find(key: any): Promise<any>;
     insert(key: any, value: any): Promise<StateTreeCircuitInput>;
+    commit(): void;
 }
 
 export class StateTree implements IStateTree {
@@ -180,6 +181,8 @@ export class StateTree implements IStateTree {
     root(): any {
         return this.tree.root;
     }
+
+    commit() {}
 
     static get index(): bigint {
         return BigInt("0x" + _randomBytes(31).toString("hex"))

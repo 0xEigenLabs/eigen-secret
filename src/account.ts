@@ -227,9 +227,6 @@ export class AccountCircuit {
     proofId: number;
     outputNCs: bigint[];
 
-    dataTreeRoot: bigint;
-    siblingsAC: bigint[];
-
     aliasHash: bigint;
     accountPubKey: bigint[];
     signingPubKey: bigint[];
@@ -245,8 +242,6 @@ export class AccountCircuit {
     constructor(
         proofId: number,
         outputNCs: bigint[],
-        dataTreeRoot: bigint,
-        siblingsAC: bigint[],
         aliasHash: bigint,
         accountPubKey: bigint[],
         signingPubKey: bigint[],
@@ -259,8 +254,6 @@ export class AccountCircuit {
     ) {
         this.proofId = proofId;
         this.outputNCs = outputNCs;
-        this.dataTreeRoot = dataTreeRoot;
-        this.siblingsAC = siblingsAC;
         this.aliasHash = aliasHash;
         this.accountPubKey = accountPubKey;
         this.signingPubKey = signingPubKey;
@@ -280,7 +273,6 @@ export class AccountCircuit {
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
         aliasHash: bigint,
-        state: IStateTree
     ) {
         let eddsa = await buildEddsa();
         const F = eddsa.F;
@@ -313,19 +305,25 @@ export class AccountCircuit {
             aliasHash, accountPubKey[0],
             newAccountPubKey[0], newSigningPubKey1[0], newSigningPubKey2[0], nullifier1, nullifier2);
 
+        /*
         if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
             await state.insert(F.e(accountNC), 1);
         }
 
-        let leaf = await state.find(F.e(accountNC));
+        // FIXME: migration changes account
+        if (proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) {
+        }
+        */
+
+        //let leaf = await state.find(F.e(accountNC));
 
         console.log("msghash", F.toObject(msghash));
         let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
             [outputNC1, outputNC2],
-            F.toObject(state.root()),
-            siblingsPad(leaf.siblings, F),
+            //F.toObject(state.root()),
+            //siblingsPad(leaf.siblings, F),
             aliasHash,
             accountPubKey,
             signingPubKey,
@@ -337,7 +335,7 @@ export class AccountCircuit {
         );
     }
 
-    toCircuitInput() {
+    toCircuitInput(dataTreeRoot: bigint, siblingsAC: bigint[]) {
         let result = {
             proof_id: this.proofId,
             public_value: 0n,
@@ -345,7 +343,7 @@ export class AccountCircuit {
             num_input_notes: 0n,
             output_nc_1: this.outputNCs[0],
             output_nc_2: this.outputNCs[1],
-            data_tree_root: this.dataTreeRoot,
+            data_tree_root: dataTreeRoot,
             public_asset_id: 0n,
             alias_hash: this.aliasHash,
             account_note_npk: this.accountPubKey,
@@ -353,7 +351,7 @@ export class AccountCircuit {
             new_account_note_npk: this.newAccountPubKey,
             new_account_note_spk1: this.newSigningPubKey1,
             new_account_note_spk2: this.newSigningPubKey2,
-            siblings_ac: this.siblingsAC,
+            siblings_ac: siblingsAC,
             signatureR8: this.signatureR8,
             signatureS: this.signatureS,
             enabled: this.enabled

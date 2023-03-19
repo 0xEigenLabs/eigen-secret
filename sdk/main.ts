@@ -6,29 +6,40 @@ const createBlakeHash = require("blake-hash");
 const { buildEddsa, buildBabyJub } = require("circomlibjs");
 
 export class StateTreeClient implements IStateTree {
-    serverAddr: string;
-    constructor(serverAddr: string) {
+    serverAddr: string = "";
+    inserts: Map<string, string>;
+    finds: Array<string>;
+
+    constructor() {
+        this.inserts = new Map();
+        this.finds = new Array();
+    }
+
+    async init(serverAddr: string, F: any) {
         this.serverAddr = serverAddr;
     }
 
     root(): any {
-        //return this.tree.root;
-        return "";
-    }
-
-    static get index(): bigint {
-        //return BigInt("0x" + _randomBytes(32).toString("hex"))
-        return 0n;
+        // return this.tree.root;
+        return "root";
     }
 
     async find(_key: any) {
-        return "";
+        const eddsa = await buildEddsa();
+        let strKey = eddsa.F.toObject(_key);
+        this.finds.push(strKey);
+        return Promise.resolve(strKey)
     }
 
     async insert(_key: any, _value: any): Promise<StateTreeCircuitInput> {
-        return Promise.reject(null);
-        //return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
+        const eddsa = await buildEddsa();
+        let strKey = eddsa.F.toObject(_key);
+        let strValue = eddsa.F.toObject(_value);
+        this.inserts.set(strKey, strValue);
+        return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
     }
+
+    commit() {}
 }
 
 export class SecretSDK {
@@ -40,7 +51,7 @@ export class SecretSDK {
         this.alias = alias;
         this.signingKey = signingKey;
         this.accountKey = accountKey;
-        this.state = new StateTreeClient(serverAddr);
+        this.state = new StateTreeClient();
     }
 
     static async newSigningKey() {

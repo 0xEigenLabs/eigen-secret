@@ -8,7 +8,7 @@ import { ethers } from "ethers";
 import {signEOASignature} from "../src/utils";
 import { expect, assert } from "chai";
 
-describe('POST /txs', function() {
+describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
     const alias = "eigen.eth";
     before(async() => {
@@ -21,7 +21,7 @@ describe('POST /txs', function() {
         let pubKey = tmpKey.pubKey.pubKey;
         // TODO create proof for `createAccount` and `joinSplit`
         const response = await request(app)
-        .post('/txs')
+        .post('/transactions')
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -43,7 +43,7 @@ describe('POST /txs', function() {
 
     it('get tx', async() => {
         const response = await request(app)
-        .get('/txs/' + alias)
+        .get('/transactions/' + alias)
         .set('Accept', 'application/json');
 
         expect(response.status).to.eq(200);
@@ -60,7 +60,7 @@ describe('POST /txs', function() {
 
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
         const response = await request(app)
-        .post('/txs/leaves')
+        .post('/transactions/index')
         .send({
             alias: alias,
             timestamp: timestamp,

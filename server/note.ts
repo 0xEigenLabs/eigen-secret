@@ -39,7 +39,7 @@ export async function getIndices(cmt: Array<bigint>, alias: string) {
     let transaction: any;
     try {
         transaction = await sequelize.transaction();
-        let result = await NoteModel.bulkCreate(inserts, {transaction});
+        let result = await NoteModel.bulkCreate(inserts, { transaction });
         transaction.commit();
         return inserts;
     } catch (err: any) {

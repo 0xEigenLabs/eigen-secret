@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { Note } from "./note";
 import { SigningKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-import {  IStateTree, StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import { IStateTree, StateTree, N_LEVEL, siblingsPad } from "./state_tree";
 import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
@@ -23,9 +23,10 @@ export class JoinSplitInput {
     inputNotes: Note[];
     outputNotes: Note[];
     outputNCs: bigint[];
-    dataTreeRoot: bigint;
-    siblings: bigint[][];
-    siblingsAC: bigint[];
+    // here we lazly update the SMT
+    //dataTreeRoot: bigint;
+    //siblings: bigint[][];
+    //siblingsAC: bigint[];
     accountPrvKey: bigint;
     accountPubKey: bigint[];
     accountRequired: boolean;
@@ -45,9 +46,6 @@ export class JoinSplitInput {
         inputNotes: Note[],
         outputNotes: Note[],
         outputNCs: bigint[],
-        dataTreeRoot: bigint,
-        siblings: bigint[][],
-        siblingsAC: bigint[],
         accountPrvKey: bigint,
         accountPubKey: bigint[],
         signingPubKey: bigint[],
@@ -65,9 +63,6 @@ export class JoinSplitInput {
         this.inputNotes = inputNotes;
         this.outputNotes = outputNotes;
         this.outputNCs = outputNCs;
-        this.dataTreeRoot = dataTreeRoot;
-        this.siblings = siblings;
-        this.siblingsAC = siblingsAC;
         this.accountPubKey = accountPubKey;
         this.accountPrvKey = accountPrvKey;
         this.signingPubKey = signingPubKey;
@@ -78,7 +73,7 @@ export class JoinSplitInput {
     }
 
     // nomalize the input
-    toCircuitInput(babyJub: any) {
+    toCircuitInput(babyJub: any, dataTreeRoot: bigint, siblings: bigint[][], siblingsAC: bigint[]) {
         const F = babyJub.F;
         let inputJson = {
             proof_id: this.proofId,
@@ -87,7 +82,7 @@ export class JoinSplitInput {
             num_input_notes: BigInt(this.numInputNote),
             output_nc_1: this.outputNCs[0],
             output_nc_2: this.outputNCs[1],
-            data_tree_root: this.dataTreeRoot,
+            data_tree_root: dataTreeRoot,
             asset_id: this.assetId,
             public_asset_id: this.publicAssetId,
             alias_hash: this.aliasHash,
@@ -103,12 +98,12 @@ export class JoinSplitInput {
             output_note_owner: new Array<bigint[]>(2),
             output_note_nullifier: new Array<bigint>(2),
             output_note_account_required: new Array<bigint>(2),
-            siblings: this.siblings,
+            siblings: siblings,
             account_required: this.accountRequired,
             account_note_nk: this.accountPrvKey,
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
-            siblings_ac: this.siblingsAC,
+            siblings_ac: siblingsAC,
             signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
             signatureS: this.signatureS,
             enabled: this.enabled
@@ -141,16 +136,6 @@ export class JoinSplitCircuit {
     static readonly PROOF_ID_TYPE_WITHDRAW: number = 2;
     static readonly PROOF_ID_TYPE_SEND: number = 3;
 
-    /*
-    static async createSharedSecret(senderPvk: bigint): Promise<Buffer> {
-        let eddsa = await buildEddsa();
-        let babyJub = eddsa.babyJub;
-        let rawSharedKey = babyJub.mulPointEscalar(babyJub.Base8, senderPvk);
-        let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
-        return sharedKey;
-    }
-    */
-
     static async hashMsg(nc1: any, nc2: any, outputNote1: any, outputNote2: any, publicOwner: any, publicValue: any) {
         let poseidon = await buildPoseidon();
         let res = poseidon([
@@ -162,7 +147,6 @@ export class JoinSplitCircuit {
     static async createDepositInput(
         accountKey: SigningKey,
         signingKey: SigningKey,
-        state: IStateTree,
         acStateKey: bigint,
         proofId: number,
         aliasHash: bigint,
@@ -182,7 +166,6 @@ export class JoinSplitCircuit {
         let res = await JoinSplitCircuit.createProofInput(
             accountKey,
             signingKey,
-            state,
             acStateKey,
             proofId,
             aliasHash,
@@ -205,7 +188,6 @@ export class JoinSplitCircuit {
     static async createProofInput(
         accountKey: SigningKey,
         signingKey: SigningKey,
-        state: IStateTree,
         acStateKey: bigint,
         proofId: number,
         aliasHash: bigint,
@@ -261,23 +243,26 @@ export class JoinSplitCircuit {
 
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
+
+            /*
             await state.insert(outputNc1, nullifier1);
             await state.insert(outputNc2, nullifier2);
 
             let outputNoteLeaf = await state.find(outputNc1);
             let outputNoteLeaf2 = await state.find(outputNc2);
             let ac = await state.find(F.e(acStateKey));
-
+            */
             let ak = await accountKey.toCircuitInput(eddsa);
+
             let input = new JoinSplitInput(
                 proofId, 0n, 0n, assetId, publicAssetId, aliasHash,
                 numInputNote,
                 [firstNote, note],
                 [outputNote1, outputNote2],
                 [outputNc1, outputNc2],
-                F.toObject(state.root()),
-                [siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
-                siblingsPad(ac.siblings, F),
+                //F.toObject(state.root()),
+                //[siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
+                //siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
                 (await signingKey.toCircuitInput(eddsa))[0],
@@ -297,13 +282,11 @@ export class JoinSplitCircuit {
             }
             let inputNoteInUse: bigint[] = [1n, 1n];
             numInputNote = inputNotes.length;
-            // let startIndex = inputNotes[inputNotes.length - 1].index;
             for (let i = inputNotes.length; i < 2; i ++) {
                 inputNotes.push(
                     JoinSplitCircuit.fakeNote(F, owner, assetId, StateTree.index)
                 );
                 inputNoteInUse[i] = 0n;
-                // startIndex += 1;
             }
 
             let nc1 = await inputNotes[0].compress(babyJub);
@@ -341,18 +324,20 @@ export class JoinSplitCircuit {
 
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
+            /*
             await state.insert(outputNc1, nullifier1);
             await state.insert(outputNc2, nullifier2);
             let outputNoteLeaf = await state.find(outputNc1);
             let outputNoteLeaf2 = await state.find(outputNc2);
             let ac = await state.find(F.e(acStateKey));
+            */
             let ak = accountKey.toCircuitInput(eddsa);
             let input = new JoinSplitInput(
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
-                F.toObject(state.root()),
-                [siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
-                siblingsPad(ac.siblings, F),
+                //F.toObject(state.root()),
+                //[siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
+                //siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
                 (signingKey.toCircuitInput(eddsa))[0],

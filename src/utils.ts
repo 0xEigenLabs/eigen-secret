@@ -197,7 +197,7 @@ const baseResp = function(errno: ErrCode, message: string, data: string) {
 }
 const succ = function(data: any) {
   data = JSON.parse(JSON.stringify(data, (key, value) =>
-    typeof value === 'bigint'? value.toString() : value
+    typeof value === "bigint"? value.toString() : value
   ));
   return baseResp(0, "", data);
 }

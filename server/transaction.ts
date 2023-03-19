@@ -112,7 +112,7 @@ export async function getTxByAccountId(req: any, res: any) {
     return res.json(utils.succ(result));
 }
 
-export async function fetchIndices(req: any, res: any) {
+export async function updateStateTree(req: any, res: any) {
     const alias = req.body.alias;
     const ethAddress = req.body.ethAddress;
     const timestamp = req.body.timestamp;
@@ -124,10 +124,15 @@ export async function fetchIndices(req: any, res: any) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
     }
 
-    const commitments = req.body.commitments;
+    const inserts = req.body.inserts;
+    const finds = req.body.finds;
+
+    /*
     let result = await getIndices(commitments, alias);
     if (!result) {
         return res.json(utils.err(utils.ErrCode.DBCreateError, "Generate index error"));
     }
+    */
+    let result: any;
     return res.json(utils.succ(result));
 }
