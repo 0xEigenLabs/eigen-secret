@@ -6,7 +6,7 @@ import { Note } from "./note";
 import { AccountCircuit, SigningKey, EigenAddress } from "./account";
 import { JoinSplitCircuit, JoinSplitInput } from "./join_split";
 import { strict as assert } from "assert";
-import { StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import { WorldState, N_LEVEL, siblingsPad } from "./state_tree";
 import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
@@ -173,8 +173,7 @@ export class UpdateStatusCircuit {
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
-        aliasHash: bigint,
-        state: StateTree
+        aliasHash: bigint
     ) {
         let accountInput = await AccountCircuit.createProofInput(
             proofId,
@@ -183,9 +182,19 @@ export class UpdateStatusCircuit {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            aliasHash,
-            state);
-        const siblings_zero = Array.from({ length: 2 }, () => Array.from({ length: 20 }, () => BigInt(0)));
+            aliasHash
+        );
+        const siblings_zero = new Array(20).fill(0n);
+
+        // FIXME hardcoded value
+        let nc1 = 0n;
+        let nf1 = 0n;
+        if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
+            nc1 = accountInput.accountNC;
+            nf1 = 1n;
+        }
+        let leaves = await WorldState.updateState(nc1, nf1, 0n, 0n, accountInput.accountNC)
+
         return new UpdateStatusInput(
             accountInput.proofId,
             0n,
@@ -197,9 +206,9 @@ export class UpdateStatusCircuit {
             [],
             [],
             accountInput.outputNCs,
-            accountInput.dataTreeRoot,
+            leaves.dataTreeRoot,
             siblings_zero,
-            accountInput.siblingsAC,
+            leaves.siblingsAC,
             0n,
             accountInput.accountPubKey,
             accountInput.signingPubKey,
@@ -215,7 +224,6 @@ export class UpdateStatusCircuit {
     static async createJoinSplitInput(
         accountKey: SigningKey,
         signingKey: SigningKey,
-        state: StateTree,
         acStateKey: bigint,
         proofId: number,
         aliasHash: bigint,
@@ -231,7 +239,6 @@ export class UpdateStatusCircuit {
         let joinSplitInput = await JoinSplitCircuit.createProofInput(
             accountKey,
             signingKey,
-            state,
             acStateKey,
             proofId,
             aliasHash,
@@ -242,11 +249,19 @@ export class UpdateStatusCircuit {
             recipientPrivateOutput,
             noteRecipent,
             confirmedAndPendingInputNotes,
-            accountRequired);
+            accountRequired
+        );
         let babyJub = await buildBabyjub();
         const F = babyJub.F;
         let inputList = new Array<UpdateStatusInput>(0);
         for (let i=0; i<joinSplitInput.length; i++) {
+            let leaves = await WorldState.updateState(
+                joinSplitInput[i].outputNCs[0],
+                joinSplitInput[i].outputNCs[1],
+                joinSplitInput[i].outputNotes[0].inputNullifier,
+                joinSplitInput[i].outputNotes[1].inputNullifier,
+                acStateKey
+            );
             let input = new UpdateStatusInput(
                 joinSplitInput[i].proofId,
                 joinSplitInput[i].publicValue,
@@ -258,9 +273,9 @@ export class UpdateStatusCircuit {
                 joinSplitInput[i].inputNotes,
                 joinSplitInput[i].outputNotes,
                 joinSplitInput[i].outputNCs,
-                joinSplitInput[i].dataTreeRoot,
-                joinSplitInput[i].siblings,
-                joinSplitInput[i].siblingsAC,
+                leaves.dataTreeRoot,
+                leaves.siblings,
+                leaves.siblingsAC,
                 joinSplitInput[i].accountPrvKey,
                 joinSplitInput[i].accountPubKey,
                 joinSplitInput[i].signingPubKey,

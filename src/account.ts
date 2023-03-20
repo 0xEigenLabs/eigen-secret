@@ -5,7 +5,7 @@ const buildPoseidon = require("circomlibjs").buildPoseidon;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { IStateTree, siblingsPad } from "./state_tree";
+import { siblingsPad } from "./state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
 
@@ -239,6 +239,9 @@ export class AccountCircuit {
     signatureS: bigint;
     enabled: bigint;
 
+    // aux
+    accountNC: bigint;
+
     constructor(
         proofId: number,
         outputNCs: bigint[],
@@ -250,6 +253,7 @@ export class AccountCircuit {
         newSigningPubKey2: bigint[],
         signatureR8: bigint[],
         signatureS: bigint,
+        accountNC: bigint,
         enabled: bigint = 1n
     ) {
         this.proofId = proofId;
@@ -262,6 +266,7 @@ export class AccountCircuit {
         this.newSigningPubKey2 = newSigningPubKey2;
         this.signatureR8 = signatureR8;
         this.signatureS = signatureS;
+        this.accountNC = accountNC;
         this.enabled = enabled;
     }
 
@@ -272,7 +277,7 @@ export class AccountCircuit {
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
-        aliasHash: bigint,
+        aliasHash: bigint
     ) {
         let eddsa = await buildEddsa();
         const F = eddsa.F;
@@ -315,15 +320,15 @@ export class AccountCircuit {
         }
         */
 
-        //let leaf = await state.find(F.e(accountNC));
+        // let leaf = await state.find(F.e(accountNC));
 
         console.log("msghash", F.toObject(msghash));
         let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
             [outputNC1, outputNC2],
-            //F.toObject(state.root()),
-            //siblingsPad(leaf.siblings, F),
+            // F.toObject(state.root()),
+            // siblingsPad(leaf.siblings, F),
             aliasHash,
             accountPubKey,
             signingPubKey,
@@ -331,11 +336,12 @@ export class AccountCircuit {
             newSigningPubKey1,
             newSigningPubKey2,
             [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
-            sig.S
+            sig.S,
+            accountNC
         );
     }
 
-    toCircuitInput(dataTreeRoot: bigint, siblingsAC: bigint[]) {
+    toCircuitInput(leaves: any) {
         let result = {
             proof_id: this.proofId,
             public_value: 0n,
@@ -343,7 +349,7 @@ export class AccountCircuit {
             num_input_notes: 0n,
             output_nc_1: this.outputNCs[0],
             output_nc_2: this.outputNCs[1],
-            data_tree_root: dataTreeRoot,
+            data_tree_root: leaves.dataTreeRoot,
             public_asset_id: 0n,
             alias_hash: this.aliasHash,
             account_note_npk: this.accountPubKey,
@@ -351,7 +357,7 @@ export class AccountCircuit {
             new_account_note_npk: this.newAccountPubKey,
             new_account_note_spk1: this.newSigningPubKey1,
             new_account_note_spk2: this.newSigningPubKey2,
-            siblings_ac: siblingsAC,
+            siblings_ac: leaves.siblingsAC,
             signatureR8: this.signatureR8,
             signatureS: this.signatureS,
             enabled: this.enabled

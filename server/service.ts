@@ -13,7 +13,7 @@ import "dotenv/config";
 import * as utils from "../src/utils";
 import bodyParser from "body-parser";
 import { createAccount } from "./account";
-import { createTx, getTxByAccountId, updateStateTree} from "./transaction";
+import { createTx, getTxByAccountId, updateStateTree } from "./transaction";
 
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);

@@ -1,45 +1,19 @@
 import { SigningKey } from "../src/account";
 import { ethers } from "ethers";
 import { AccountCircuit } from "../src/account";
-import { IStateTree, StateTreeCircuitInput } from "../src/state_tree";
+import { StateTreeCircuitInput } from "../src/state_tree";
 const createBlakeHash = require("blake-hash");
 const { buildEddsa, buildBabyJub } = require("circomlibjs");
 
-export class StateTreeClient implements IStateTree {
+export class StateTreeClient {
     serverAddr: string = "";
-    inserts: Map<string, string>;
-    finds: Array<string>;
 
-    constructor() {
-        this.inserts = new Map();
-        this.finds = new Array();
-    }
-
-    async init(serverAddr: string, F: any) {
+    constructor(serverAddr: string) {
         this.serverAddr = serverAddr;
     }
 
-    root(): any {
-        // return this.tree.root;
-        return "root";
+    async updateStateTree() {
     }
-
-    async find(_key: any) {
-        const eddsa = await buildEddsa();
-        let strKey = eddsa.F.toObject(_key);
-        this.finds.push(strKey);
-        return Promise.resolve(strKey)
-    }
-
-    async insert(_key: any, _value: any): Promise<StateTreeCircuitInput> {
-        const eddsa = await buildEddsa();
-        let strKey = eddsa.F.toObject(_key);
-        let strValue = eddsa.F.toObject(_value);
-        this.inserts.set(strKey, strValue);
-        return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
-    }
-
-    commit() {}
 }
 
 export class SecretSDK {
@@ -51,7 +25,7 @@ export class SecretSDK {
         this.alias = alias;
         this.signingKey = signingKey;
         this.accountKey = accountKey;
-        this.state = new StateTreeClient();
+        this.state = new StateTreeClient(serverAddr);
     }
 
     static async newSigningKey() {
@@ -87,8 +61,7 @@ export class SecretSDK {
             newAccountPubKey[0],
             newSigningPubKey1[0],
             newSigningPubKey2[0],
-            aliasHash,
-            this.state
+            aliasHash
         );
     }
 

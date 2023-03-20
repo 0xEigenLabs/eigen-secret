@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { Note } from "./note";
 import { SigningKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-import { IStateTree, StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import { DoLog, StateTree, N_LEVEL, siblingsPad } from "./state_tree";
 import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
@@ -24,9 +24,9 @@ export class JoinSplitInput {
     outputNotes: Note[];
     outputNCs: bigint[];
     // here we lazly update the SMT
-    //dataTreeRoot: bigint;
-    //siblings: bigint[][];
-    //siblingsAC: bigint[];
+    // dataTreeRoot: bigint;
+    // siblings: bigint[][];
+    // siblingsAC: bigint[];
     accountPrvKey: bigint;
     accountPubKey: bigint[];
     accountRequired: boolean;
@@ -73,8 +73,9 @@ export class JoinSplitInput {
     }
 
     // nomalize the input
-    toCircuitInput(babyJub: any, dataTreeRoot: bigint, siblings: bigint[][], siblingsAC: bigint[]) {
+    toCircuitInput(babyJub: any, leaves: any) {
         const F = babyJub.F;
+        console.log("leaves: ", leaves);
         let inputJson = {
             proof_id: this.proofId,
             public_value: this.publicValue,
@@ -82,7 +83,7 @@ export class JoinSplitInput {
             num_input_notes: BigInt(this.numInputNote),
             output_nc_1: this.outputNCs[0],
             output_nc_2: this.outputNCs[1],
-            data_tree_root: dataTreeRoot,
+            data_tree_root: leaves.dataTreeRoot,
             asset_id: this.assetId,
             public_asset_id: this.publicAssetId,
             alias_hash: this.aliasHash,
@@ -98,12 +99,12 @@ export class JoinSplitInput {
             output_note_owner: new Array<bigint[]>(2),
             output_note_nullifier: new Array<bigint>(2),
             output_note_account_required: new Array<bigint>(2),
-            siblings: siblings,
+            siblings: leaves.siblings,
             account_required: this.accountRequired,
             account_note_nk: this.accountPrvKey,
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
-            siblings_ac: siblingsAC,
+            siblings_ac: leaves.siblingsAC,
             signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
             signatureS: this.signatureS,
             enabled: this.enabled
@@ -260,9 +261,9 @@ export class JoinSplitCircuit {
                 [firstNote, note],
                 [outputNote1, outputNote2],
                 [outputNc1, outputNc2],
-                //F.toObject(state.root()),
-                //[siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
-                //siblingsPad(ac.siblings, F),
+                // F.toObject(state.root()),
+                // [siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
+                // siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
                 (await signingKey.toCircuitInput(eddsa))[0],
@@ -335,9 +336,9 @@ export class JoinSplitCircuit {
             let input = new JoinSplitInput(
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
-                //F.toObject(state.root()),
-                //[siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
-                //siblingsPad(ac.siblings, F),
+                // F.toObject(state.root()),
+                // [siblingsPad(outputNoteLeaf.siblings, F), siblingsPad(outputNoteLeaf2.siblings, F)],
+                // siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
                 (signingKey.toCircuitInput(eddsa))[0],
@@ -382,6 +383,7 @@ export class JoinSplitCircuit {
         return poseidon.F.toObject(res);
     }
 
+    /*
     // TODO: test
     static async createProof(circuitPath: string, input: JoinSplitInput, F: any): Promise<Proof> {
         let wasm = path.join(circuitPath, "main_js", "main.wasm");
@@ -399,4 +401,5 @@ export class JoinSplitCircuit {
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkey, witnessBuffer);
         return Promise.resolve(parseProof(proof));
     }
+    */
 }

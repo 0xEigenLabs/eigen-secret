@@ -1,7 +1,8 @@
 import { randomBytes as _randomBytes } from "crypto";
-const { SMT, buildPoseidon } = require("circomlibjs");
+const { SMT, buildPoseidon, buildEddsa } = require("circomlibjs");
 const { getCurveFromName } = require("ffjavascript");
 const consola = require("consola");
+import SMTModel from "./state_tree_db";
 
 export function siblingsPad(siblings: any, F: any) {
   for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
@@ -158,14 +159,7 @@ export default class SMTDB {
     }
 }
 
-export interface IStateTree {
-    root(): any;
-    find(key: any): Promise<any>;
-    insert(key: any, value: any): Promise<StateTreeCircuitInput>;
-    commit(): void;
-}
-
-export class StateTree implements IStateTree {
+export class StateTree {
     tree: any;
     F: any;
 
@@ -181,8 +175,6 @@ export class StateTree implements IStateTree {
     root(): any {
         return this.tree.root;
     }
-
-    commit() {}
 
     static get index(): bigint {
         return BigInt("0x" + _randomBytes(31).toString("hex"))
@@ -215,5 +207,66 @@ export class StateTree implements IStateTree {
         const res = await this.tree.update(key, newValue);
         const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
+    }
+}
+
+// find: 1, insert: 2, update: 3, delete: 4.
+export class DoLog {
+    op: number = 0;
+    key: string = "";
+    value: string = "";
+    constructor(op: number, key: string, value: string = "") {
+        this.op = op;
+        this.key = key;
+        this.value = value;
+    }
+}
+
+export class WorldState {
+    static instance: StateTree;
+    private constructor() {}
+
+    public static async getInstance(): Promise<StateTree> {
+        if (!WorldState.instance) {
+            WorldState.instance = new StateTree();
+            await WorldState.instance.init(SMTModel);
+        }
+        return WorldState.instance;
+    }
+
+    public static async updateState(
+        outputNc1: bigint,
+        nullifier1: bigint,
+        outputNc2: bigint,
+        nullifier2: bigint,
+        acStateKey: bigint
+    ) {
+        const eddsa = await buildEddsa();
+        const F = eddsa.F;
+        let instance = await WorldState.getInstance();
+        console.log("11111111111111111111", outputNc1, outputNc2);
+        let siblings = [];
+        if (outputNc1 > 0n) {
+            await instance.insert(outputNc1, nullifier1);
+            console.log("insert", outputNc1, nullifier1);
+            let outputNoteLeaf = await instance.find(outputNc1);
+            siblings.push(siblingsPad(outputNoteLeaf.siblings, F));
+        }
+
+        if (outputNc2 > 0n) {
+            console.log("insert 2", outputNc2, nullifier2);
+            let outputNoteLeaf = await instance.find(outputNc1);
+            await instance.insert(outputNc2, nullifier2);
+            let outputNoteLeaf2 = await instance.find(outputNc2);
+            siblings.push(siblingsPad(outputNoteLeaf2.siblings, F));
+        }
+
+        let ac = await instance.find(F.e(acStateKey));
+
+        return {
+            dataTreeRoot: F.toObject(instance.root()),
+            siblings: siblings,
+            siblingsAC: siblingsPad(ac.siblings, F)
+        };
     }
 }
