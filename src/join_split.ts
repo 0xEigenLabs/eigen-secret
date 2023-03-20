@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { Note } from "./note";
 import { SigningKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-import { DoLog, StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import { StateTree, N_LEVEL, siblingsPad } from "./state_tree";
 import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");

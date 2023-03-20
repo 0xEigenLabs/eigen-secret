@@ -4,7 +4,7 @@ import { assert, expect } from "chai";
 import { ethers } from "ethers";
 import {  } from "../src/join_split";
 import { compress as accountCompress, AccountOrNullifierKey, SigningKey } from "../src/account";
-import { WorldState, DoLog } from "../src/state_tree";
+import { WorldState } from "../src/state_tree";
 import { JoinSplitCircuit } from "../src/join_split";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 import SMTModel from "../src/state_tree_db";

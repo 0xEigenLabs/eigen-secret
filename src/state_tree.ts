@@ -210,18 +210,6 @@ export class StateTree {
     }
 }
 
-// find: 1, insert: 2, update: 3, delete: 4.
-export class DoLog {
-    op: number = 0;
-    key: string = "";
-    value: string = "";
-    constructor(op: number, key: string, value: string = "") {
-        this.op = op;
-        this.key = key;
-        this.value = value;
-    }
-}
-
 export class WorldState {
     static instance: StateTree;
     private constructor() {}
