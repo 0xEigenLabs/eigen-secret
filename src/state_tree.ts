@@ -1,5 +1,5 @@
 import { randomBytes as _randomBytes } from "crypto";
-const { SMT, buildPoseidon, buildEddsa } = require("circomlibjs");
+const { newMemEmptyTrie, SMT, buildPoseidon, buildEddsa } = require("circomlibjs");
 const { getCurveFromName } = require("ffjavascript");
 const consola = require("consola");
 import SMTModel from "./state_tree_db";
@@ -151,7 +151,9 @@ export default class SMTDB {
                 // delete this.nodes[keyS];
                 keys.push(keyS);
             }
-            await this.model.destroy({ where: { key: keys } });
+            if (keys.length > 0) {
+                await this.model.destroy({ where: { key: keys } });
+            }
         } catch (err: any) {
             consola.log(err);
             throw new Error(err)
@@ -222,28 +224,35 @@ export class WorldState {
         return WorldState.instance;
     }
 
-    public static async updateState(
+    public static async updateStateTree(
         outputNc1: bigint,
         nullifier1: bigint,
         outputNc2: bigint,
         nullifier2: bigint,
         acStateKey: bigint
     ) {
+        console.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
         const eddsa = await buildEddsa();
         const F = eddsa.F;
         let instance = await WorldState.getInstance();
         let siblings = [];
-        console.log("updateState", outputNc1, outputNc2);
+        // insert all first, then find
         if (outputNc1 > 0n) {
-            let result = await instance.insert(outputNc1, nullifier1);
-            console.log("insert", outputNc1, nullifier1, result);
+            //console.log("insert", outputNc1, nullifier1);
+            await instance.insert(outputNc1, nullifier1);
+        }
+
+        if (outputNc2 > 0n) {
+            //console.log("insert 2", outputNc2, nullifier2);
+            await instance.insert(outputNc2, nullifier2);
+        }
+
+        if (outputNc1 > 0n) {
             let outputNoteLeaf = await instance.find(outputNc1);
             siblings.push(siblingsPad(outputNoteLeaf.siblings, F));
         }
 
         if (outputNc2 > 0n) {
-            console.log("insert 2", outputNc2, nullifier2);
-            await instance.insert(outputNc2, nullifier2);
             let outputNoteLeaf2 = await instance.find(outputNc2);
             siblings.push(siblingsPad(outputNoteLeaf2.siblings, F));
         }

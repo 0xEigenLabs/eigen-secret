@@ -306,23 +306,11 @@ export class AccountCircuit {
             nullifier1,
             nullifier2
         );
-        console.log(
-            aliasHash, accountPubKey[0],
-            newAccountPubKey[0], newSigningPubKey1[0], newSigningPubKey2[0], nullifier1, nullifier2);
+        //console.log(
+        //    aliasHash, accountPubKey[0],
+        //    newAccountPubKey[0], newSigningPubKey1[0], newSigningPubKey2[0], nullifier1, nullifier2
+        //);
 
-        /*
-        if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
-            await state.insert(F.e(accountNC), 1);
-        }
-
-        // FIXME: migration changes account
-        if (proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) {
-        }
-        */
-
-        // let leaf = await state.find(F.e(accountNC));
-
-        console.log("msghash", F.toObject(msghash));
         let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
@@ -362,7 +350,7 @@ export class AccountCircuit {
             signatureS: this.signatureS,
             enabled: this.enabled
         }
-        console.log(result);
+        // console.log(result);
         // fs.writeFileSync("circuits/main_update_state.input.json", JSON.stringify(result));
         return result;
     }

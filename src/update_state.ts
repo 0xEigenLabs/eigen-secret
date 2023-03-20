@@ -193,7 +193,7 @@ export class UpdateStatusCircuit {
             nc1 = accountInput.accountNC;
             nf1 = 1n;
         }
-        let leaves = await WorldState.updateState(nc1, nf1, 0n, 0n, accountInput.accountNC)
+        let leaves = await WorldState.updateStateTree(nc1, nf1, 0n, 0n, accountInput.accountNC)
 
         return new UpdateStatusInput(
             accountInput.proofId,
@@ -255,7 +255,7 @@ export class UpdateStatusCircuit {
         const F = babyJub.F;
         let inputList = new Array<UpdateStatusInput>(0);
         for (let i=0; i<joinSplitInput.length; i++) {
-            let leaves = await WorldState.updateState(
+            let leaves = await WorldState.updateStateTree(
                 joinSplitInput[i].outputNCs[0],
                 joinSplitInput[i].outputNCs[1],
                 joinSplitInput[i].outputNotes[0].inputNullifier,

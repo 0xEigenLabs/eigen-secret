@@ -58,7 +58,7 @@ describe("Account circuit test", function () {
         );
 
         //FIXME: nullifier hardcoded to 1
-        const leaves = await WorldState.updateState(
+        const leaves = await WorldState.updateStateTree(
             input.accountNC, 1n, 0n, 0n,
             input.accountNC,
         )
@@ -84,7 +84,7 @@ describe("Account circuit test", function () {
         );
 
         //FIXME: nullifier hardcoded to 1
-        const leaves2 = await WorldState.updateState(
+        const leaves2 = await WorldState.updateStateTree(
             0n, 0n, 0n, 0n,
             input.accountNC,
         )
