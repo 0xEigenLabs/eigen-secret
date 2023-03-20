@@ -159,7 +159,13 @@ export default class SMTDB {
     }
 }
 
-export class StateTree {
+export interface IStateTree {
+    root(): any;
+    find(key: any): Promise<any>;
+    insert(key: any, value: any): Promise<StateTreeCircuitInput>;
+}
+
+export class StateTree implements IStateTree {
     tree: any;
     F: any;
 

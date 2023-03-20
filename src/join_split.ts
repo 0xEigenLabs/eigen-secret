@@ -248,7 +248,6 @@ export class JoinSplitCircuit {
             /*
             await state.insert(outputNc1, nullifier1);
             await state.insert(outputNc2, nullifier2);
-
             let outputNoteLeaf = await state.find(outputNc1);
             let outputNoteLeaf2 = await state.find(outputNc2);
             let ac = await state.find(F.e(acStateKey));
