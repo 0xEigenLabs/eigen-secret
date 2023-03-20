@@ -184,7 +184,7 @@ export class UpdateStatusCircuit {
             newSigningPubKey2,
             aliasHash
         );
-        const siblings_zero = new Array(20).fill(0n);
+        const siblings_zero = Array.from({ length: 2 }, () => Array.from({ length: 20 }, () => BigInt(0)));;
 
         // FIXME hardcoded value
         let nc1 = 0n;

@@ -232,24 +232,23 @@ export class WorldState {
         const eddsa = await buildEddsa();
         const F = eddsa.F;
         let instance = await WorldState.getInstance();
-        console.log("11111111111111111111", outputNc1, outputNc2);
         let siblings = [];
+        console.log("updateState", outputNc1, outputNc2);
         if (outputNc1 > 0n) {
-            await instance.insert(outputNc1, nullifier1);
-            console.log("insert", outputNc1, nullifier1);
+            let result = await instance.insert(outputNc1, nullifier1);
+            console.log("insert", outputNc1, nullifier1, result);
             let outputNoteLeaf = await instance.find(outputNc1);
             siblings.push(siblingsPad(outputNoteLeaf.siblings, F));
         }
 
         if (outputNc2 > 0n) {
             console.log("insert 2", outputNc2, nullifier2);
-            let outputNoteLeaf = await instance.find(outputNc1);
             await instance.insert(outputNc2, nullifier2);
             let outputNoteLeaf2 = await instance.find(outputNc2);
             siblings.push(siblingsPad(outputNoteLeaf2.siblings, F));
         }
 
-        let ac = await instance.find(F.e(acStateKey));
+        let ac = await instance.find(acStateKey);
 
         return {
             dataTreeRoot: F.toObject(instance.root()),

@@ -57,15 +57,12 @@ describe("Account circuit test", function () {
             aliasHash,
         );
 
-        let nc1 = 0n;
-        if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
-            nc1 = input.accountNC;
-        }
         //FIXME: nullifier hardcoded to 1
         const leaves = await WorldState.updateState(
-            nc1, 1n, 0n, 0n,
+            input.accountNC, 1n, 0n, 0n,
             input.accountNC,
         )
+        console.log("leaves", leaves);
         await utils.executeCircuit(circuit, input.toCircuitInput(leaves));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
