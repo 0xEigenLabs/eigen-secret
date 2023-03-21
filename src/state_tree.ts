@@ -183,13 +183,13 @@ export class StateTree {
         return BigInt("0x" + _randomBytes(31).toString("hex"))
     }
 
-    async find(_key: any) {
+    async find(_key: bigint) {
         let key = this.tree.F.e(_key);
         let res = await this.tree.find(key);
         return res;
     }
 
-    async insert(_key: any, _value: any): Promise<StateTreeCircuitInput> {
+    async insert(_key: bigint, _value: bigint): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const value = this.tree.F.e(_value)
         const res = await this.tree.insert(key, value);
@@ -197,14 +197,14 @@ export class StateTree {
         return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
     }
 
-    async delete(_key: any): Promise<StateTreeCircuitInput> {
+    async delete(_key: bigint): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const res = await this.tree.delete(key);
         const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [1, 1], res, siblings, res.delKey, res.delValue);
     }
 
-    async update(_key: any, _newValue: any): Promise<StateTreeCircuitInput> {
+    async update(_key: bigint, _newValue: bigint): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const newValue = this.tree.F.e(_newValue);
         const res = await this.tree.update(key, newValue);

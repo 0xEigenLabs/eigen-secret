@@ -319,7 +319,7 @@ export class AccountCircuit {
 
         let state = await WorldState.getInstance();
         if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
-            await state.insert(F.e(accountNC), 1);
+            await state.insert(F.e(accountNC), 1n);
         }
 
         let leaf = await state.find(F.e(accountNC));
