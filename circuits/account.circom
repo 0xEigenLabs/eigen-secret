@@ -121,8 +121,7 @@ template Account(nLevel) {
     new_account_c.inputs[0] <== new_account_note_npk[0];
     new_account_c.inputs[1] <== new_account_note_npk[1];
 
-    // only when is_migrate = is_create = 0, nullifier = 0
-    component create_or_migrate = XOR();
+    component create_or_migrate = OR();
     create_or_migrate.a <== is_create;
     create_or_migrate.b <== is_migrate;
     var nullifier2 = create_or_migrate.out * new_account_c.out;

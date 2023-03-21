@@ -171,7 +171,7 @@ export class StateTree {
         const db = new SMTDB(F, model);
         const rt = await db.getRoot();
         this.tree = new SMT(db, rt, hash0, hash1, F);
-        //this.tree = await newMemEmptyTrie();
+        // this.tree = await newMemEmptyTrie();
         this.F = this.tree.F;
     }
 

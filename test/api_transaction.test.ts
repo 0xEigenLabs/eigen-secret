@@ -52,7 +52,7 @@ describe('POST /transactions', function() {
         assert(response.body.data[0].alias, alias)
     });
 
-    it.skip("fetchIndices", async() => {
+    it("update smt", async() => {
         let alias = "eigen.eth";
         let newEOAAccount = await ethers.Wallet.createRandom();
         let rawMessage = "Use Eigen Secret to shield your asset";
@@ -60,24 +60,22 @@ describe('POST /transactions', function() {
 
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
         const response = await request(app)
-        .post('/transactions/index')
+        .post('/statetree')
         .send({
             alias: alias,
             timestamp: timestamp,
             message: rawMessage,
             hexSignature: signature,
             ethAddress: newEOAAccount.address,
-            commitments: [
-                "0x123",
-                "0x234",
-                "0x1231",
-                "0x2342"
+            inserts: [
+                ["123", "456"]
             ],
+            finds: ["123"]
         })
         .set('Accept', 'application/json');
-        console.log(response.body);
+        console.log(response.body.data);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        assert(response.body.data[0].cmt, alias)
+        assert(response.body.data.finds[0], "456")
     })
 });

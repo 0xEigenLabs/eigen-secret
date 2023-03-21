@@ -12,6 +12,7 @@ export class StateTreeClient {
     }
 
     async updateStateTree() {
+
     }
 }
 

@@ -378,7 +378,7 @@ export class JoinSplitCircuit {
         const pvk = eddsa.pruneBuffer(createBlakeHash("blake512").update(nk.prvKey).digest().slice(0, 32));
         const ak = Scalar.shr(utils.leBuff2int(pvk), 3);
 
-        //console.log("calculateNullifier", nc, inputNoteInUse, ak);
+        // console.log("calculateNullifier", nc, inputNoteInUse, ak);
         let res = poseidon([
             nc,
             inputNoteInUse,

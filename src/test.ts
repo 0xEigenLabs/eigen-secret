@@ -24,7 +24,7 @@ include "${include_path}";
 component ${main} = ${template_name} (${params_string});
     `);
 
-  //console.log(temp_circuit.path, fs.readFileSync(temp_circuit.path, "utf8"))
+  // console.log(temp_circuit.path, fs.readFileSync(temp_circuit.path, "utf8"))
   return circom_wasm(temp_circuit.path, _opt);
 }
 

@@ -312,10 +312,6 @@ export class AccountCircuit {
             nullifier1,
             nullifier2
         );
-        //console.log(
-        //    aliasHash, accountPubKey[0],
-        //    newAccountPubKey[0], newSigningPubKey1[0], newSigningPubKey2[0], nullifier1, nullifier2
-        //);
 
         let state = await WorldState.getInstance();
         if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {

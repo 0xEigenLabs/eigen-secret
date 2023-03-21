@@ -31,7 +31,7 @@ app.use(cors(issueOptions));
 
 app.post("/accounts/:ethAddress", createAccount);
 app.post("/transactions", createTx);
-app.post("/transactions/statetree", updateStateTree);
+app.post("/statetree", updateStateTree);
 app.get("/transactions/:alias", getTxByAccountId);
 app.get("/ping", (req, resp) => {
   resp.json(utils.succ("pong"));
