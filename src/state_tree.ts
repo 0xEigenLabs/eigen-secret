@@ -171,6 +171,7 @@ export class StateTree {
         const db = new SMTDB(F, model);
         const rt = await db.getRoot();
         this.tree = new SMT(db, rt, hash0, hash1, F);
+        //this.tree = await newMemEmptyTrie();
         this.F = this.tree.F;
     }
 
@@ -218,9 +219,11 @@ export class WorldState {
 
     public static async getInstance(): Promise<StateTree> {
         if (!WorldState.instance) {
+            console.log("creating");
             WorldState.instance = new StateTree();
             await WorldState.instance.init(SMTModel);
         }
+        console.log("resuing");
         return WorldState.instance;
     }
 
@@ -238,23 +241,19 @@ export class WorldState {
         let siblings = [];
         // insert all first, then find
         if (outputNc1 > 0n) {
-            //console.log("insert", outputNc1, nullifier1);
-            await instance.insert(outputNc1, nullifier1);
+            let result = await instance.insert(outputNc1, nullifier1);
+            siblings.push(result.siblings);
+            console.log("insert", outputNc1, nullifier1, result);
+            let sib = await instance.find(outputNc1)
+            console.log("sib", sib);
         }
 
         if (outputNc2 > 0n) {
-            //console.log("insert 2", outputNc2, nullifier2);
-            await instance.insert(outputNc2, nullifier2);
-        }
-
-        if (outputNc1 > 0n) {
-            let outputNoteLeaf = await instance.find(outputNc1);
-            siblings.push(siblingsPad(outputNoteLeaf.siblings, F));
-        }
-
-        if (outputNc2 > 0n) {
-            let outputNoteLeaf2 = await instance.find(outputNc2);
-            siblings.push(siblingsPad(outputNoteLeaf2.siblings, F));
+            let result = await instance.insert(outputNc2, nullifier2);
+            siblings.push(result.siblings);
+            console.log("insert 2", outputNc2, nullifier2, result);
+            let sib = await instance.find(outputNc2)
+            console.log("sib", sib);
         }
 
         let ac = await instance.find(acStateKey);

@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { Note } from "./note";
 import { SigningKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-import { StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import { WorldState, StateTree, N_LEVEL, siblingsPad } from "./state_tree";
 import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
@@ -24,9 +24,9 @@ export class JoinSplitInput {
     outputNotes: Note[];
     outputNCs: bigint[];
     // here we lazly update the SMT
-    // dataTreeRoot: bigint;
-    // siblings: bigint[][];
-    // siblingsAC: bigint[];
+    dataTreeRoot: bigint;
+    siblings: bigint[][];
+    siblingsAC: bigint[];
     accountPrvKey: bigint;
     accountPubKey: bigint[];
     accountRequired: boolean;
@@ -46,6 +46,9 @@ export class JoinSplitInput {
         inputNotes: Note[],
         outputNotes: Note[],
         outputNCs: bigint[],
+         dataTreeRoot: bigint,
+        siblings: bigint[][],
+        siblingsAC: bigint[],
         accountPrvKey: bigint,
         accountPubKey: bigint[],
         signingPubKey: bigint[],
@@ -63,6 +66,9 @@ export class JoinSplitInput {
         this.inputNotes = inputNotes;
         this.outputNotes = outputNotes;
         this.outputNCs = outputNCs;
+        this.dataTreeRoot = dataTreeRoot;
+        this.siblings = siblings;
+        this.siblingsAC = siblingsAC;
         this.accountPubKey = accountPubKey;
         this.accountPrvKey = accountPrvKey;
         this.signingPubKey = signingPubKey;
@@ -73,7 +79,7 @@ export class JoinSplitInput {
     }
 
     // nomalize the input
-    toCircuitInput(babyJub: any, leaves: any) {
+    toCircuitInput(babyJub: any) {
         const F = babyJub.F;
         let inputJson = {
             proof_id: this.proofId,
@@ -82,7 +88,7 @@ export class JoinSplitInput {
             num_input_notes: BigInt(this.numInputNote),
             output_nc_1: this.outputNCs[0],
             output_nc_2: this.outputNCs[1],
-            data_tree_root: leaves.dataTreeRoot,
+            data_tree_root: this.dataTreeRoot,
             asset_id: this.assetId,
             public_asset_id: this.publicAssetId,
             alias_hash: this.aliasHash,
@@ -98,12 +104,12 @@ export class JoinSplitInput {
             output_note_owner: new Array<bigint[]>(2),
             output_note_nullifier: new Array<bigint>(2),
             output_note_account_required: new Array<bigint>(2),
-            siblings: leaves.siblings,
+            siblings: this.siblings,
             account_required: this.accountRequired,
             account_note_nk: this.accountPrvKey,
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
-            siblings_ac: leaves.siblingsAC,
+            siblings_ac: this.siblingsAC,
             signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
             signatureS: this.signatureS,
             enabled: this.enabled
@@ -124,7 +130,7 @@ export class JoinSplitInput {
             inputJson.output_note_nullifier[i] = this.outputNotes[i].inputNullifier;
             inputJson.output_note_account_required[i] = BigInt(this.outputNotes[i].accountRequired);
         }
-        // console.log(inputJson)
+        console.log(inputJson)
         // fs.writeFileSync("./circuits/main_update_state.input.json", JSON.stringify(inputJson))
         return inputJson;
     }
@@ -244,6 +250,14 @@ export class JoinSplitCircuit {
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
 
+            let state = await WorldState.getInstance();
+            await state.insert(outputNc1, nullifier1);
+            await state.insert(outputNc2, nullifier2);
+
+            let noteInput1 = await state.find(outputNc1);
+            let noteInput2 = await state.find(outputNc2);
+            let ac = await state.find(F.e(acStateKey));
+
             let ak = await accountKey.toCircuitInput(eddsa);
 
             let input = new JoinSplitInput(
@@ -252,6 +266,9 @@ export class JoinSplitCircuit {
                 [firstNote, note],
                 [outputNote1, outputNote2],
                 [outputNc1, outputNc2],
+                F.toObject(state.root()),
+                [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
+                siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
                 (await signingKey.toCircuitInput(eddsa))[0],
@@ -311,10 +328,21 @@ export class JoinSplitCircuit {
 
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
+            let state = await WorldState.getInstance();
+            await state.insert(outputNc1, nullifier1);
+            await state.insert(outputNc2, nullifier2);
+
+            let noteInput1 = await state.find(outputNc1);
+            let noteInput2 = await state.find(outputNc2);
+             let ac = await state.find(F.e(acStateKey));
+
             let ak = accountKey.toCircuitInput(eddsa);
             let input = new JoinSplitInput(
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
+                F.toObject(state.root()),
+                [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
+                siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
                 (signingKey.toCircuitInput(eddsa))[0],

@@ -58,14 +58,7 @@ describe("Test JoinSplit Circuit", function () {
         );
 
         for (const input of inputs) {
-            const leaves = await WorldState.updateStateTree(
-                input.outputNCs[0],
-                input.outputNCs[1],
-                input.outputNotes[0].inputNullifier,
-                input.outputNotes[1].inputNullifier,
-                acStateKey
-            );
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, leaves));
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
         }
         console.log("test send tx")
         let confirmedNote: Note[] = [];
@@ -95,15 +88,7 @@ describe("Test JoinSplit Circuit", function () {
         );
         console.log("get SMT", inputs2.length);
         for (const input of inputs2) {
-            const leaves = await WorldState.updateStateTree(
-                input.outputNCs[0],
-                input.outputNCs[1],
-                input.outputNotes[0].inputNullifier,
-                input.outputNotes[1].inputNullifier,
-                acStateKey
-            );
-            console.log("test input-------", input, leaves);
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, leaves));
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
         }
     })
     //TODO add unit test for withdraw

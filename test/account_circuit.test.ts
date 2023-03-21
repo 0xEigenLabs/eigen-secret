@@ -58,12 +58,7 @@ describe("Account circuit test", function () {
         );
 
         //FIXME: nullifier hardcoded to 1
-        const leaves = await WorldState.updateStateTree(
-            input.accountNC, 1n, 0n, 0n,
-            input.accountNC,
-        )
-        console.log("leaves", leaves);
-        await utils.executeCircuit(circuit, input.toCircuitInput(leaves));
+        await utils.executeCircuit(circuit, input.toCircuitInput());
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = await (new SigningKey()).newKey(undefined);
@@ -83,12 +78,7 @@ describe("Account circuit test", function () {
             aliasHash,
         );
 
-        //FIXME: nullifier hardcoded to 1
-        const leaves2 = await WorldState.updateStateTree(
-            0n, 0n, 0n, 0n,
-            input.accountNC,
-        )
-        await utils.executeCircuit(circuit, input.toCircuitInput(leaves2));
+        await utils.executeCircuit(circuit, input.toCircuitInput());
     })
 
     // TODO test alias-address migrating and joinsplit

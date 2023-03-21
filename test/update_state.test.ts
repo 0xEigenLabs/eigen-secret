@@ -90,8 +90,8 @@ describe("Test JoinSplit Circuit", function () {
         signer = accountRequired? signingKey: accountKey;
         acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
 
-        //await worldState.insert(F.e(acStateKey), 1);
-        WorldState.updateStateTree(acStateKey, 1n, 0n, 0n, acStateKey);
+        let state = await WorldState.getInstance();
+        await state.insert(F.e(acStateKey), 1);
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(

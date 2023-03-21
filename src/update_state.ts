@@ -193,7 +193,6 @@ export class UpdateStatusCircuit {
             nc1 = accountInput.accountNC;
             nf1 = 1n;
         }
-        let leaves = await WorldState.updateStateTree(nc1, nf1, 0n, 0n, accountInput.accountNC)
 
         return new UpdateStatusInput(
             accountInput.proofId,
@@ -206,9 +205,9 @@ export class UpdateStatusCircuit {
             [],
             [],
             accountInput.outputNCs,
-            leaves.dataTreeRoot,
+            accountInput.dataTreeRoot,
             siblings_zero,
-            leaves.siblingsAC,
+            accountInput.siblingsAC,
             0n,
             accountInput.accountPubKey,
             accountInput.signingPubKey,
@@ -255,13 +254,6 @@ export class UpdateStatusCircuit {
         const F = babyJub.F;
         let inputList = new Array<UpdateStatusInput>(0);
         for (let i=0; i<joinSplitInput.length; i++) {
-            let leaves = await WorldState.updateStateTree(
-                joinSplitInput[i].outputNCs[0],
-                joinSplitInput[i].outputNCs[1],
-                joinSplitInput[i].outputNotes[0].inputNullifier,
-                joinSplitInput[i].outputNotes[1].inputNullifier,
-                acStateKey
-            );
             let input = new UpdateStatusInput(
                 joinSplitInput[i].proofId,
                 joinSplitInput[i].publicValue,
@@ -273,9 +265,9 @@ export class UpdateStatusCircuit {
                 joinSplitInput[i].inputNotes,
                 joinSplitInput[i].outputNotes,
                 joinSplitInput[i].outputNCs,
-                leaves.dataTreeRoot,
-                leaves.siblings,
-                leaves.siblingsAC,
+                joinSplitInput[i].dataTreeRoot,
+                joinSplitInput[i].siblings,
+                joinSplitInput[i].siblingsAC,
                 joinSplitInput[i].accountPrvKey,
                 joinSplitInput[i].accountPubKey,
                 joinSplitInput[i].signingPubKey,

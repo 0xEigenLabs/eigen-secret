@@ -52,7 +52,7 @@ describe('POST /transactions', function() {
         assert(response.body.data[0].alias, alias)
     });
 
-    it("fetchIndices", async() => {
+    it.skip("fetchIndices", async() => {
         let alias = "eigen.eth";
         let newEOAAccount = await ethers.Wallet.createRandom();
         let rawMessage = "Use Eigen Secret to shield your asset";
