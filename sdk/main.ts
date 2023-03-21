@@ -1,6 +1,5 @@
-import { SigningKey } from "../src/account";
 import { ethers } from "ethers";
-import { AccountCircuit } from "../src/account";
+import { SigningKey, AccountCircuit } from "../src/account";
 import { StateTreeCircuitInput } from "../src/state_tree";
 const createBlakeHash = require("blake-hash");
 const { buildEddsa, buildBabyJub } = require("circomlibjs");

@@ -227,6 +227,7 @@ export class WorldState {
         return WorldState.instance;
     }
 
+    /*
     public static async updateStateTree(
         outputNc1: bigint,
         nullifier1: bigint,
@@ -264,4 +265,5 @@ export class WorldState {
             siblingsAC: siblingsPad(ac.siblings, F)
         };
     }
+    */
 }
