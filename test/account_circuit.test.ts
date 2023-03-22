@@ -58,7 +58,8 @@ describe("Account circuit test", function () {
         );
 
         //FIXME: nullifier hardcoded to 1
-        await utils.executeCircuit(circuit, input.toCircuitInput());
+        let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
+        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = await (new SigningKey()).newKey(undefined);
@@ -78,8 +79,25 @@ describe("Account circuit test", function () {
             aliasHash,
         );
 
-        await utils.executeCircuit(circuit, input.toCircuitInput());
-    })
+        proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.accountNC);
+        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
 
-    // TODO test alias-address migrating and joinsplit
+        proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
+
+        newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
+        newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
+        input = await AccountCircuit.createProofInput(
+            proofId,
+            newAccountKey,
+            signingKey,
+            newAccountPubKey,
+            newSigningPubKey1,
+            newSigningPubKey2,
+            aliasHash,
+        );
+
+        proof = await WorldState.updateStateTree(0n, 0n, 0n, 0n, input.accountNC);
+        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
+    })
 });

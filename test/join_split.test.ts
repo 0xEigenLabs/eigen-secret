@@ -37,7 +37,7 @@ describe("Test JoinSplit Circuit", function () {
         signingKey = await (new SigningKey()).newKey(undefined);
         signer = accountRequired? signingKey: accountKey;
         acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
-        await (await WorldState.getInstance()).insert(F.e(acStateKey), 1n);
+        await (await WorldState.getInstance()).insert(acStateKey, 1n);
     })
 
     it("JoinSplit deposit and send test", async () => {
@@ -58,7 +58,15 @@ describe("Test JoinSplit Circuit", function () {
         );
 
         for (const input of inputs) {
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
+            const proof = await WorldState.updateStateTree(
+                input.outputNCs[0],
+                input.outputNotes[0].inputNullifier,
+                input.outputNCs[1],
+                input.outputNotes[1].inputNullifier,
+                acStateKey
+            );
+            console.log(proof);
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
         console.log("test send tx")
         let confirmedNote: Note[] = [];
@@ -88,8 +96,14 @@ describe("Test JoinSplit Circuit", function () {
         );
         console.log("get SMT", inputs2.length);
         for (const input of inputs2) {
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
+            const proof = await WorldState.updateStateTree(
+                input.outputNCs[0],
+                input.outputNotes[0].inputNullifier,
+                input.outputNCs[1],
+                input.outputNotes[1].inputNullifier,
+                acStateKey
+            );
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
     })
-    //TODO add unit test for withdraw
 });

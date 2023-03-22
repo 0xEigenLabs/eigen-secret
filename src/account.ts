@@ -5,7 +5,7 @@ const buildPoseidon = require("circomlibjs").buildPoseidon;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { WorldState, siblingsPad } from "./state_tree";
+import { siblingsPad } from "./state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
 
@@ -226,8 +226,8 @@ export class AccountCircuit {
     proofId: number;
     outputNCs: bigint[];
 
-    dataTreeRoot: bigint;
-    siblingsAC: bigint[];
+    // dataTreeRoot: bigint;
+    // siblingsAC: bigint[];
 
     aliasHash: bigint;
     accountPubKey: bigint[];
@@ -243,12 +243,13 @@ export class AccountCircuit {
 
     // aux
     accountNC: bigint;
+    newAccountNC: bigint;
 
     constructor(
         proofId: number,
         outputNCs: bigint[],
-        dataTreeRoot: bigint,
-        siblingsAC: bigint[],
+        // dataTreeRoot: bigint,
+        // siblingsAC: bigint[],
         aliasHash: bigint,
         accountPubKey: bigint[],
         signingPubKey: bigint[],
@@ -258,10 +259,11 @@ export class AccountCircuit {
         signatureR8: bigint[],
         signatureS: bigint,
         accountNC: bigint,
+        newAccountNC: bigint,
         enabled: bigint = 1n
     ) {
-        this.dataTreeRoot = dataTreeRoot;
-        this.siblingsAC = siblingsAC;
+        // this.dataTreeRoot = dataTreeRoot;
+        // this.siblingsAC = siblingsAC;
         this.proofId = proofId;
         this.outputNCs = outputNCs;
         this.aliasHash = aliasHash;
@@ -273,6 +275,7 @@ export class AccountCircuit {
         this.signatureR8 = signatureR8;
         this.signatureS = signatureS;
         this.accountNC = accountNC;
+        this.newAccountNC = newAccountNC;
         this.enabled = enabled;
     }
 
@@ -295,6 +298,7 @@ export class AccountCircuit {
         signingPubKey = [F.toObject(signingPubKey[0]), F.toObject(signingPubKey[1])];
 
         let accountNC = await rawCompress(accountPubKey, signingPubKey, aliasHash);
+        let newAccountNC = await rawCompress(newAccountPubKey, signingPubKey, aliasHash);
         let outputNC1 = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
         let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
 
@@ -313,19 +317,29 @@ export class AccountCircuit {
             nullifier2
         );
 
+        /*
         let state = await WorldState.getInstance();
         if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
             await state.insert(F.e(accountNC), 1n);
         }
+        if (proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) {
+            await state.insert(F.e(newAccountNC), 1n);
+        }
 
         let leaf = await state.find(F.e(accountNC));
+        */
+
+        let tmpAccountNC = accountNC;
+        if (proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) {
+            tmpAccountNC = newAccountNC;
+        }
 
         let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
             [outputNC1, outputNC2],
-            F.toObject(state.root()),
-            siblingsPad(leaf.siblings, F),
+            // F.toObject(state.root()),
+            // siblingsPad(leaf.siblings, F),
             aliasHash,
             accountPubKey,
             signingPubKey,
@@ -334,11 +348,12 @@ export class AccountCircuit {
             newSigningPubKey2,
             [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
             sig.S,
-            accountNC
+            accountNC,
+            tmpAccountNC
         );
     }
 
-    toCircuitInput() {
+    toCircuitInput(proof: any) {
         let result = {
             proof_id: this.proofId,
             public_value: 0n,
@@ -346,7 +361,8 @@ export class AccountCircuit {
             num_input_notes: 0n,
             output_nc_1: this.outputNCs[0],
             output_nc_2: this.outputNCs[1],
-            data_tree_root: this.dataTreeRoot,
+            data_tree_root: proof.dataTreeRoot,
+            siblings_ac: proof.siblingsAC,
             public_asset_id: 0n,
             alias_hash: this.aliasHash,
             account_note_npk: this.accountPubKey,
@@ -354,7 +370,6 @@ export class AccountCircuit {
             new_account_note_npk: this.newAccountPubKey,
             new_account_note_spk1: this.newSigningPubKey1,
             new_account_note_spk2: this.newSigningPubKey2,
-            siblings_ac: this.siblingsAC,
             signatureR8: this.signatureR8,
             signatureS: this.signatureS,
             enabled: this.enabled

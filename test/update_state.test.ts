@@ -64,7 +64,10 @@ describe("Test JoinSplit Circuit", function () {
             newSigningPubKey2,
             aliasHash,
         );
-        await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
+        let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
+        // copy
+        console.log(proof);
+        await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = await (new SigningKey()).newKey(undefined);
@@ -83,15 +86,18 @@ describe("Test JoinSplit Circuit", function () {
             newSigningPubKey2,
             aliasHash,
         );
-        await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
+
+        proof = await WorldState.updateStateTree(0n, 0n, 0n, 0n, input.accountNC);
+        await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
     })
 
     it("JoinSplit deposit and send update_state test", async () => {
         signer = accountRequired? signingKey: accountKey;
         acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
 
-        let state = await WorldState.getInstance();
-        await state.insert(F.e(acStateKey), 1n);
+        //let state = await WorldState.getInstance();
+        //await state.insert(F.e(acStateKey), 1n);
+        await WorldState.updateStateTree(acStateKey, 1n, 0n, 0n, acStateKey);
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
@@ -110,7 +116,14 @@ describe("Test JoinSplit Circuit", function () {
             accountRequired
         );
         for (const input of inputs) {
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
+            const proof = await WorldState.updateStateTree(
+                input.outputNCs[0],
+                input.outputNotes[0].inputNullifier,
+                input.outputNCs[1],
+                input.outputNotes[1].inputNullifier,
+                acStateKey
+            );
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
         console.log("test send tx")
         let confirmedNote: Note[] = [];
@@ -139,7 +152,14 @@ describe("Test JoinSplit Circuit", function () {
             accountRequired
         );
         for (const input of inputs2) {
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub));
+            const proof = await WorldState.updateStateTree(
+                input.outputNCs[0],
+                input.outputNotes[0].inputNullifier,
+                input.outputNCs[1],
+                input.outputNotes[1].inputNullifier,
+                acStateKey
+            );
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
     })
 

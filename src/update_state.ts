@@ -25,9 +25,9 @@ export class UpdateStatusInput {
     inputNotes: Note[];
     outputNotes: Note[];
     outputNCs: bigint[];
-    dataTreeRoot: bigint;
-    siblings: bigint[][];
-    siblingsAC: bigint[];
+    // dataTreeRoot: bigint;
+    // siblings: bigint[][];
+    // siblingsAC: bigint[];
     accountPrvKey: bigint;
     accountPubKey: bigint[];
     accountRequired: boolean;
@@ -37,6 +37,9 @@ export class UpdateStatusInput {
     newAccountPubKey: bigint[];
     newSigningPubKey1: bigint[];
     newSigningPubKey2: bigint[];
+
+    // tmp
+    accountNC: bigint;
 
     public constructor(
         proofId: number,
@@ -49,9 +52,9 @@ export class UpdateStatusInput {
         inputNotes: Note[],
         outputNotes: Note[],
         outputNCs: bigint[],
-        dataTreeRoot: bigint,
-        siblings: bigint[][],
-        siblingsAC: bigint[],
+        // dataTreeRoot: bigint,
+        // siblings: bigint[][],
+        // siblingsAC: bigint[],
         accountPrvKey: bigint,
         accountPubKey: bigint[],
         signingPubKey: bigint[],
@@ -60,8 +63,10 @@ export class UpdateStatusInput {
         signatureS: bigint,
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
-        newSigningPubKey2: bigint[]
+        newSigningPubKey2: bigint[],
+        accountNC: bigint
     ) {
+        this.accountNC = accountNC;
         this.proofId = proofId;
         this.publicOwner = publicOwner;
         this.publicValue = publicValue;
@@ -72,9 +77,9 @@ export class UpdateStatusInput {
         this.inputNotes = inputNotes;
         this.outputNotes = outputNotes;
         this.outputNCs = outputNCs;
-        this.dataTreeRoot = dataTreeRoot;
-        this.siblings = siblings;
-        this.siblingsAC = siblingsAC;
+        // this.dataTreeRoot = dataTreeRoot;
+        // this.siblings = siblings;
+        // this.siblingsAC = siblingsAC;
         this.accountPubKey = accountPubKey;
         this.accountPrvKey = accountPrvKey;
         this.signingPubKey = signingPubKey;
@@ -87,7 +92,7 @@ export class UpdateStatusInput {
     }
 
     // nomalize the input
-    toCircuitInput(babyJub: any) {
+    toCircuitInput(babyJub: any, proof: any) {
         const F = babyJub.F;
         let inputJson = {
             proof_id: this.proofId,
@@ -96,7 +101,9 @@ export class UpdateStatusInput {
             num_input_notes: BigInt(this.numInputNote),
             output_nc_1: this.outputNCs[0],
             output_nc_2: this.outputNCs[1],
-            data_tree_root: this.dataTreeRoot,
+            data_tree_root: proof.dataTreeRoot,
+            siblings: proof.siblings,
+            siblings_ac: proof.siblingsAC,
             asset_id: this.assetId,
             public_asset_id: this.publicAssetId,
             alias_hash: this.aliasHash,
@@ -112,12 +119,10 @@ export class UpdateStatusInput {
             output_note_owner: new Array<bigint[]>(2),
             output_note_nullifier: new Array<bigint>(2),
             output_note_account_required: new Array<bigint>(2),
-            siblings: this.siblings,
             account_required: this.accountRequired,
             account_note_nk: this.accountPrvKey,
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
-            siblings_ac: this.siblingsAC,
             signatureR8: this.signatureR8,
             signatureS: this.signatureS,
             new_account_note_npk: this.newAccountPubKey,
@@ -184,16 +189,6 @@ export class UpdateStatusCircuit {
             newSigningPubKey2,
             aliasHash
         );
-        const siblings_zero = Array.from({ length: 2 }, () => Array.from({ length: 20 }, () => BigInt(0)));
-
-        // FIXME hardcoded value
-        let nc1 = 0n;
-        let nf1 = 0n;
-        if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
-            nc1 = accountInput.accountNC;
-            nf1 = 1n;
-        }
-
         return new UpdateStatusInput(
             accountInput.proofId,
             0n,
@@ -205,9 +200,6 @@ export class UpdateStatusCircuit {
             [],
             [],
             accountInput.outputNCs,
-            accountInput.dataTreeRoot,
-            siblings_zero,
-            accountInput.siblingsAC,
             0n,
             accountInput.accountPubKey,
             accountInput.signingPubKey,
@@ -216,7 +208,8 @@ export class UpdateStatusCircuit {
             accountInput.signatureS,
             newAccountPubKey,
             newSigningPubKey1,
-            newSigningPubKey2
+            newSigningPubKey2,
+            accountInput.accountNC
         );
     }
 
@@ -265,16 +258,13 @@ export class UpdateStatusCircuit {
                 joinSplitInput[i].inputNotes,
                 joinSplitInput[i].outputNotes,
                 joinSplitInput[i].outputNCs,
-                joinSplitInput[i].dataTreeRoot,
-                joinSplitInput[i].siblings,
-                joinSplitInput[i].siblingsAC,
                 joinSplitInput[i].accountPrvKey,
                 joinSplitInput[i].accountPubKey,
                 joinSplitInput[i].signingPubKey,
                 joinSplitInput[i].accountRequired,
                 [F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
                 joinSplitInput[i].signatureS,
-                [0n, 0n], [0n, 0n], [0n, 0n]
+                [0n, 0n], [0n, 0n], [0n, 0n], 0n
             );
             inputList.push(input);
         }

@@ -219,15 +219,14 @@ export class WorldState {
 
     public static async getInstance(): Promise<StateTree> {
         if (!WorldState.instance) {
-            console.log("creating");
+            consola.log("creating");
             WorldState.instance = new StateTree();
             await WorldState.instance.init(SMTModel);
         }
-        console.log("resuing");
+        consola.log("resuing");
         return WorldState.instance;
     }
 
-    /*
     public static async updateStateTree(
         outputNc1: bigint,
         nullifier1: bigint,
@@ -235,7 +234,7 @@ export class WorldState {
         nullifier2: bigint,
         acStateKey: bigint
     ) {
-        console.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
+        consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
         const eddsa = await buildEddsa();
         const F = eddsa.F;
         let instance = await WorldState.getInstance();
@@ -243,18 +242,29 @@ export class WorldState {
         // insert all first, then find
         if (outputNc1 > 0n) {
             let result = await instance.insert(outputNc1, nullifier1);
-            siblings.push(result.siblings);
-            console.log("insert", outputNc1, nullifier1, result);
-            let sib = await instance.find(outputNc1)
-            console.log("sib", sib);
+            consola.log(result);
         }
 
         if (outputNc2 > 0n) {
             let result = await instance.insert(outputNc2, nullifier2);
-            siblings.push(result.siblings);
-            console.log("insert 2", outputNc2, nullifier2, result);
+            consola.log(result);
+        }
+
+        if (outputNc1 > 0n) {
+            let sib = await instance.find(outputNc1)
+            siblings.push(siblingsPad(sib.siblings, F));
+        }
+        if (outputNc2 > 0n) {
             let sib = await instance.find(outputNc2)
-            console.log("sib", sib);
+            siblings.push(siblingsPad(sib.siblings, F));
+        }
+
+        if (siblings.length < 2) {
+            for (let i = siblings.length; i < 2; i ++) {
+                siblings.push(
+                    new Array(N_LEVEL).fill(0n)
+                );
+            }
         }
 
         let ac = await instance.find(acStateKey);
@@ -265,5 +275,4 @@ export class WorldState {
             siblingsAC: siblingsPad(ac.siblings, F)
         };
     }
-    */
 }
