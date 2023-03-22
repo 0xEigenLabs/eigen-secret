@@ -5,7 +5,7 @@ const buildPoseidon = require("circomlibjs").buildPoseidon;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { StateTree, siblingsPad } from "./state_tree";
+import { WorldState, siblingsPad } from "./state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
 
@@ -26,7 +26,6 @@ export class EigenAddress implements Address {
         if (pubKey.startsWith(this.protocol)) {
             pubKey = pubKey.substring(this.protocol.length);
         }
-        // let babyJub = await buildBabyjub();
         let bPubKey = Buffer.from(pubKey, "hex");
         let pPubKey = babyJub.unpackPoint(bPubKey);
         return pPubKey;
@@ -242,6 +241,9 @@ export class AccountCircuit {
     signatureS: bigint;
     enabled: bigint;
 
+    // aux
+    accountNC: bigint;
+
     constructor(
         proofId: number,
         outputNCs: bigint[],
@@ -255,12 +257,13 @@ export class AccountCircuit {
         newSigningPubKey2: bigint[],
         signatureR8: bigint[],
         signatureS: bigint,
+        accountNC: bigint,
         enabled: bigint = 1n
     ) {
-        this.proofId = proofId;
-        this.outputNCs = outputNCs;
         this.dataTreeRoot = dataTreeRoot;
         this.siblingsAC = siblingsAC;
+        this.proofId = proofId;
+        this.outputNCs = outputNCs;
         this.aliasHash = aliasHash;
         this.accountPubKey = accountPubKey;
         this.signingPubKey = signingPubKey;
@@ -269,6 +272,7 @@ export class AccountCircuit {
         this.newSigningPubKey2 = newSigningPubKey2;
         this.signatureR8 = signatureR8;
         this.signatureS = signatureS;
+        this.accountNC = accountNC;
         this.enabled = enabled;
     }
 
@@ -279,8 +283,7 @@ export class AccountCircuit {
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
-        aliasHash: bigint,
-        state: StateTree
+        aliasHash: bigint
     ) {
         let eddsa = await buildEddsa();
         const F = eddsa.F;
@@ -309,17 +312,14 @@ export class AccountCircuit {
             nullifier1,
             nullifier2
         );
-        console.log(
-            aliasHash, accountPubKey[0],
-            newAccountPubKey[0], newSigningPubKey1[0], newSigningPubKey2[0], nullifier1, nullifier2);
 
+        let state = await WorldState.getInstance();
         if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
-            await state.insert(F.e(accountNC), 1);
+            await state.insert(F.e(accountNC), 1n);
         }
 
         let leaf = await state.find(F.e(accountNC));
 
-        console.log("msghash", F.toObject(msghash));
         let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
@@ -333,7 +333,8 @@ export class AccountCircuit {
             newSigningPubKey1,
             newSigningPubKey2,
             [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
-            sig.S
+            sig.S,
+            accountNC
         );
     }
 
@@ -358,6 +359,7 @@ export class AccountCircuit {
             signatureS: this.signatureS,
             enabled: this.enabled
         }
+        // console.log(result);
         // fs.writeFileSync("circuits/main_update_state.input.json", JSON.stringify(result));
         return result;
     }

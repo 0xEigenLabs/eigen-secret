@@ -1,17 +1,31 @@
-import { SigningKey } from "../src/account";
 import { ethers } from "ethers";
-import { AccountCircuit } from "../src/account";
+import { SigningKey, AccountCircuit } from "../src/account";
+import { StateTreeCircuitInput } from "../src/state_tree";
 const createBlakeHash = require("blake-hash");
 const { buildEddsa, buildBabyJub } = require("circomlibjs");
+
+export class StateTreeClient {
+    serverAddr: string = "";
+
+    constructor(serverAddr: string) {
+        this.serverAddr = serverAddr;
+    }
+
+    async updateStateTree() {
+
+    }
+}
 
 export class SecretSDK {
     alias: string;
     accountKey: SigningKey;
     signingKey: SigningKey;
-    constructor(alias: string, accountKey: SigningKey, signingKey: SigningKey) {
+    state: StateTreeClient;
+    constructor(alias: string, accountKey: SigningKey, signingKey: SigningKey, serverAddr: string) {
         this.alias = alias;
         this.signingKey = signingKey;
         this.accountKey = accountKey;
+        this.state = new StateTreeClient(serverAddr);
     }
 
     static async newSigningKey() {
@@ -40,7 +54,6 @@ export class SecretSDK {
         let newSigningPubKey2 = newSigningKey2.toCircuitInput(eddsa);
         const aliasHash = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
 
-        let worldState: any;
         let input = await AccountCircuit.createProofInput(
             proofId,
             this.accountKey,
@@ -48,8 +61,7 @@ export class SecretSDK {
             newAccountPubKey[0],
             newSigningPubKey1[0],
             newSigningPubKey2[0],
-            aliasHash,
-            worldState
+            aliasHash
         );
     }
 

@@ -2,7 +2,7 @@ const { Sequelize, DataTypes, Model } = require("sequelize");
 import sequelize from "../src/db";
 import consola from "consola";
 import * as utils from "../src/utils";
-import { StateTree } from "../src/state_tree";
+import { siblingsPad, WorldState, StateTree } from "../src/state_tree";
 import { getIndices } from "./note";
 
 class TransactionModel extends Model {}
@@ -112,7 +112,7 @@ export async function getTxByAccountId(req: any, res: any) {
     return res.json(utils.succ(result));
 }
 
-export async function fetchIndices(req: any, res: any) {
+export async function updateStateTree(req: any, res: any) {
     const alias = req.body.alias;
     const ethAddress = req.body.ethAddress;
     const timestamp = req.body.timestamp;
@@ -124,7 +124,24 @@ export async function fetchIndices(req: any, res: any) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
     }
 
-    const commitments = req.body.commitments;
-    let result = await getIndices(commitments, alias);
+    const inserts = req.body.inserts;
+    const finds = req.body.finds;
+    let instance = await WorldState.getInstance();
+    let resultInsert = [];
+    let resultFound = [];
+    for (const ins of inserts) {
+        let result = await instance.insert(ins[0], ins[1]);
+        resultInsert.push(result);
+    }
+    for (const key of finds) {
+        let result = await instance.find(key)
+        // not padded
+        resultFound.push(result);
+    }
+    let result = {
+        "inserts": resultInsert,
+        "finds": resultFound
+    }
+
     return res.json(utils.succ(result));
 }

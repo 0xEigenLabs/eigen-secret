@@ -6,7 +6,7 @@ import { Note } from "./note";
 import { AccountCircuit, SigningKey, EigenAddress } from "./account";
 import { JoinSplitCircuit, JoinSplitInput } from "./join_split";
 import { strict as assert } from "assert";
-import { StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import { WorldState, N_LEVEL, siblingsPad } from "./state_tree";
 import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
@@ -173,8 +173,7 @@ export class UpdateStatusCircuit {
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
-        aliasHash: bigint,
-        state: StateTree
+        aliasHash: bigint
     ) {
         let accountInput = await AccountCircuit.createProofInput(
             proofId,
@@ -183,9 +182,18 @@ export class UpdateStatusCircuit {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            aliasHash,
-            state);
+            aliasHash
+        );
         const siblings_zero = Array.from({ length: 2 }, () => Array.from({ length: 20 }, () => BigInt(0)));
+
+        // FIXME hardcoded value
+        let nc1 = 0n;
+        let nf1 = 0n;
+        if (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE) {
+            nc1 = accountInput.accountNC;
+            nf1 = 1n;
+        }
+
         return new UpdateStatusInput(
             accountInput.proofId,
             0n,
@@ -215,7 +223,6 @@ export class UpdateStatusCircuit {
     static async createJoinSplitInput(
         accountKey: SigningKey,
         signingKey: SigningKey,
-        state: StateTree,
         acStateKey: bigint,
         proofId: number,
         aliasHash: bigint,
@@ -231,7 +238,6 @@ export class UpdateStatusCircuit {
         let joinSplitInput = await JoinSplitCircuit.createProofInput(
             accountKey,
             signingKey,
-            state,
             acStateKey,
             proofId,
             aliasHash,
@@ -242,7 +248,8 @@ export class UpdateStatusCircuit {
             recipientPrivateOutput,
             noteRecipent,
             confirmedAndPendingInputNotes,
-            accountRequired);
+            accountRequired
+        );
         let babyJub = await buildBabyjub();
         const F = babyJub.F;
         let inputList = new Array<UpdateStatusInput>(0);

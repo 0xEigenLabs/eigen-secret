@@ -1,7 +1,8 @@
 import { randomBytes as _randomBytes } from "crypto";
-const { SMT, buildPoseidon } = require("circomlibjs");
+const { newMemEmptyTrie, SMT, buildPoseidon, buildEddsa } = require("circomlibjs");
 const { getCurveFromName } = require("ffjavascript");
 const consola = require("consola");
+import SMTModel from "./state_tree_db";
 
 export function siblingsPad(siblings: any, F: any) {
   for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
@@ -108,7 +109,7 @@ export default class SMTDB {
         // return this.nodes[keyS];
         let item = await this.model.findOne({ where: { key: keyS } });
         if (!item) {
-            return null;
+            return undefined;
         }
         return this._normalize(item.value, false);
     }
@@ -150,7 +151,9 @@ export default class SMTDB {
                 // delete this.nodes[keyS];
                 keys.push(keyS);
             }
-            await this.model.destroy({ where: { key: keys } });
+            if (keys.length > 0) {
+                await this.model.destroy({ where: { key: keys } });
+            }
         } catch (err: any) {
             consola.log(err);
             throw new Error(err)
@@ -168,6 +171,7 @@ export class StateTree {
         const db = new SMTDB(F, model);
         const rt = await db.getRoot();
         this.tree = new SMT(db, rt, hash0, hash1, F);
+        // this.tree = await newMemEmptyTrie();
         this.F = this.tree.F;
     }
 
@@ -176,16 +180,16 @@ export class StateTree {
     }
 
     static get index(): bigint {
-        return BigInt("0x" + _randomBytes(32).toString("hex"))
+        return BigInt("0x" + _randomBytes(31).toString("hex"))
     }
 
-    async find(_key: any) {
+    async find(_key: bigint) {
         let key = this.tree.F.e(_key);
         let res = await this.tree.find(key);
         return res;
     }
 
-    async insert(_key: any, _value: any): Promise<StateTreeCircuitInput> {
+    async insert(_key: bigint, _value: bigint): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const value = this.tree.F.e(_value)
         const res = await this.tree.insert(key, value);
@@ -193,18 +197,73 @@ export class StateTree {
         return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
     }
 
-    async delete(_key: any): Promise<StateTreeCircuitInput> {
+    async delete(_key: bigint): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const res = await this.tree.delete(key);
         const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [1, 1], res, siblings, res.delKey, res.delValue);
     }
 
-    async update(_key: any, _newValue: any): Promise<StateTreeCircuitInput> {
+    async update(_key: bigint, _newValue: bigint): Promise<StateTreeCircuitInput> {
         const key = this.tree.F.e(_key);
         const newValue = this.tree.F.e(_newValue);
         const res = await this.tree.update(key, newValue);
         const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
     }
+}
+
+export class WorldState {
+    static instance: StateTree;
+    private constructor() {}
+
+    public static async getInstance(): Promise<StateTree> {
+        if (!WorldState.instance) {
+            console.log("creating");
+            WorldState.instance = new StateTree();
+            await WorldState.instance.init(SMTModel);
+        }
+        console.log("resuing");
+        return WorldState.instance;
+    }
+
+    /*
+    public static async updateStateTree(
+        outputNc1: bigint,
+        nullifier1: bigint,
+        outputNc2: bigint,
+        nullifier2: bigint,
+        acStateKey: bigint
+    ) {
+        console.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
+        const eddsa = await buildEddsa();
+        const F = eddsa.F;
+        let instance = await WorldState.getInstance();
+        let siblings = [];
+        // insert all first, then find
+        if (outputNc1 > 0n) {
+            let result = await instance.insert(outputNc1, nullifier1);
+            siblings.push(result.siblings);
+            console.log("insert", outputNc1, nullifier1, result);
+            let sib = await instance.find(outputNc1)
+            console.log("sib", sib);
+        }
+
+        if (outputNc2 > 0n) {
+            let result = await instance.insert(outputNc2, nullifier2);
+            siblings.push(result.siblings);
+            console.log("insert 2", outputNc2, nullifier2, result);
+            let sib = await instance.find(outputNc2)
+            console.log("sib", sib);
+        }
+
+        let ac = await instance.find(acStateKey);
+
+        return {
+            dataTreeRoot: F.toObject(instance.root()),
+            siblings: siblings,
+            siblingsAC: siblingsPad(ac.siblings, F)
+        };
+    }
+    */
 }

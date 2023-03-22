@@ -24,7 +24,6 @@ export class Note {
     }
 
     get pending(): boolean {
-        console.log(this.index);
         return this.index === undefined;
     }
 

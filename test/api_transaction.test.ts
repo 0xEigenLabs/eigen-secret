@@ -8,11 +8,10 @@ import { ethers } from "ethers";
 import {signEOASignature} from "../src/utils";
 import { expect, assert } from "chai";
 
-describe('POST /txs', function() {
+describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
     const alias = "eigen.eth";
     before(async() => {
-
         let newEOAAccount = await ethers.Wallet.createRandom();
         let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
@@ -22,7 +21,7 @@ describe('POST /txs', function() {
         let pubKey = tmpKey.pubKey.pubKey;
         // TODO create proof for `createAccount` and `joinSplit`
         const response = await request(app)
-        .post('/txs')
+        .post('/transactions')
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -42,9 +41,9 @@ describe('POST /txs', function() {
         expect(response.body.data["id"]).to.gt(0);
     });
 
-    it('responds with json', async() => {
+    it('get tx', async() => {
         const response = await request(app)
-        .get('/txs/' + alias)
+        .get('/transactions/' + alias)
         .set('Accept', 'application/json');
 
         expect(response.status).to.eq(200);
@@ -52,4 +51,31 @@ describe('POST /txs', function() {
         console.log(response.body);
         assert(response.body.data[0].alias, alias)
     });
+
+    it("update smt", async() => {
+        let alias = "eigen.eth";
+        let newEOAAccount = await ethers.Wallet.createRandom();
+        let rawMessage = "Use Eigen Secret to shield your asset";
+        let timestamp = Math.floor(Date.now()/1000).toString();
+
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        const response = await request(app)
+        .post('/statetree')
+        .send({
+            alias: alias,
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: newEOAAccount.address,
+            inserts: [
+                ["123", "456"]
+            ],
+            finds: ["123"]
+        })
+        .set('Accept', 'application/json');
+        console.log(response.body.data);
+        expect(response.status).to.eq(200);
+        expect(response.body.errno).to.eq(0);
+        assert(response.body.data.finds[0], "456")
+    })
 });

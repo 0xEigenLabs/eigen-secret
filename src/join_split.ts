@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { Note } from "./note";
 import { SigningKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-import { StateTree, N_LEVEL, siblingsPad } from "./state_tree";
+import { WorldState, StateTree, N_LEVEL, siblingsPad } from "./state_tree";
 import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
@@ -23,6 +23,7 @@ export class JoinSplitInput {
     inputNotes: Note[];
     outputNotes: Note[];
     outputNCs: bigint[];
+    // here we lazly update the SMT
     dataTreeRoot: bigint;
     siblings: bigint[][];
     siblingsAC: bigint[];
@@ -45,7 +46,7 @@ export class JoinSplitInput {
         inputNotes: Note[],
         outputNotes: Note[],
         outputNCs: bigint[],
-        dataTreeRoot: bigint,
+         dataTreeRoot: bigint,
         siblings: bigint[][],
         siblingsAC: bigint[],
         accountPrvKey: bigint,
@@ -141,16 +142,6 @@ export class JoinSplitCircuit {
     static readonly PROOF_ID_TYPE_WITHDRAW: number = 2;
     static readonly PROOF_ID_TYPE_SEND: number = 3;
 
-    /*
-    static async createSharedSecret(senderPvk: bigint): Promise<Buffer> {
-        let eddsa = await buildEddsa();
-        let babyJub = eddsa.babyJub;
-        let rawSharedKey = babyJub.mulPointEscalar(babyJub.Base8, senderPvk);
-        let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
-        return sharedKey;
-    }
-    */
-
     static async hashMsg(nc1: any, nc2: any, outputNote1: any, outputNote2: any, publicOwner: any, publicValue: any) {
         let poseidon = await buildPoseidon();
         let res = poseidon([
@@ -162,7 +153,6 @@ export class JoinSplitCircuit {
     static async createDepositInput(
         accountKey: SigningKey,
         signingKey: SigningKey,
-        state: StateTree,
         acStateKey: bigint,
         proofId: number,
         aliasHash: bigint,
@@ -182,7 +172,6 @@ export class JoinSplitCircuit {
         let res = await JoinSplitCircuit.createProofInput(
             accountKey,
             signingKey,
-            state,
             acStateKey,
             proofId,
             aliasHash,
@@ -205,7 +194,6 @@ export class JoinSplitCircuit {
     static async createProofInput(
         accountKey: SigningKey,
         signingKey: SigningKey,
-        state: StateTree,
         acStateKey: bigint,
         proofId: number,
         aliasHash: bigint,
@@ -239,7 +227,7 @@ export class JoinSplitCircuit {
         let inputList = new Array<JoinSplitInput>(0);
         // Merge all the confirmed notes and public input and output into 2 notes.
         // Assume a is pending utxo and a.val is greater than 0, [a] is confirmed utxo, and [[a]] is spent input.
-        // Given sequence, <[[o]], [a], [b], [c], d>, we firstly filter all the confirmed notes,
+        // Given a sequence, <[[o]], [a], [b], [c], d>, we firstly filter all the confirmed notes,
         // and begin to merge [a] and [b], outputs [a'] with 0 value and [b'] with a+b'value,
         // then merge [b'] and [c], to get [c'],  [c'] and d to [d].
         for (const note of confirmedNote) {
@@ -261,14 +249,17 @@ export class JoinSplitCircuit {
 
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
-            await state.insert(outputNc1, 2);
-            await state.insert(outputNc2, 2);
+
+            let state = await WorldState.getInstance();
+            await state.insert(outputNc1, nullifier1);
+            await state.insert(outputNc2, nullifier2);
 
             let noteInput1 = await state.find(outputNc1);
             let noteInput2 = await state.find(outputNc2);
             let ac = await state.find(F.e(acStateKey));
 
             let ak = await accountKey.toCircuitInput(eddsa);
+
             let input = new JoinSplitInput(
                 proofId, 0n, 0n, assetId, publicAssetId, aliasHash,
                 numInputNote,
@@ -297,21 +288,20 @@ export class JoinSplitCircuit {
             }
             let inputNoteInUse: bigint[] = [1n, 1n];
             numInputNote = inputNotes.length;
-            // let startIndex = inputNotes[inputNotes.length - 1].index;
             for (let i = inputNotes.length; i < 2; i ++) {
                 inputNotes.push(
                     JoinSplitCircuit.fakeNote(F, owner, assetId, StateTree.index)
                 );
                 inputNoteInUse[i] = 0n;
-                // startIndex += 1;
             }
 
             let nc1 = await inputNotes[0].compress(babyJub);
             let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, inputNoteInUse[0], accountKey);
-            let secret = F.toObject(F.random()); // FIXME: shared secret
+            let secret = F.toObject(F.random());
             let outputNote1 = new Note(
                 recipientPrivateOutput,
-                secret, noteRecipent,
+                secret,
+                noteRecipent,
                 assetId,
                 nullifier1,
                 false,
@@ -319,8 +309,6 @@ export class JoinSplitCircuit {
             );
             let outputNc1 = await outputNote1.compress(babyJub);
 
-            let nc2 = 0n;
-            let outputNc2 = 0n;
             let outputNotes = [outputNote1];
             let outputNCs = [outputNc1];
             const totalInputNoteValue = inputNotes.reduce((sum, n) => sum + n.val, 0n);
@@ -328,24 +316,26 @@ export class JoinSplitCircuit {
                 (totalInputNoteValue - recipientPrivateOutput) : 0n;
 
             assert(inputNotes[1]);
-            nc2 = await inputNotes[1].compress(babyJub);
+            let nc2 = await inputNotes[1].compress(babyJub);
             let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, inputNoteInUse[1], accountKey);
             let outputNote2: Note = new Note(
-                change,
-                secret, owner, assetId, nullifier2, false,
+                change, secret, owner, assetId, nullifier2, false,
                 StateTree.index
             );
             outputNotes.push(outputNote2);
-            outputNc2 = await outputNote2.compress(babyJub);
+            let outputNc2 = await outputNote2.compress(babyJub);
             outputNCs.push(outputNc2);
 
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
-            await state.insert(outputNc1, inputNotes.length);
-            await state.insert(outputNc2, inputNotes.length);
+            let state = await WorldState.getInstance();
+            await state.insert(outputNc1, nullifier1);
+            await state.insert(outputNc2, nullifier2);
+
             let noteInput1 = await state.find(outputNc1);
             let noteInput2 = await state.find(outputNc2);
-            let ac = await state.find(F.e(acStateKey));
+             let ac = await state.find(F.e(acStateKey));
+
             let ak = accountKey.toCircuitInput(eddsa);
             let input = new JoinSplitInput(
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
@@ -388,7 +378,7 @@ export class JoinSplitCircuit {
         const pvk = eddsa.pruneBuffer(createBlakeHash("blake512").update(nk.prvKey).digest().slice(0, 32));
         const ak = Scalar.shr(utils.leBuff2int(pvk), 3);
 
-        console.log("calculateNullifier", nc, inputNoteInUse, ak);
+        // console.log("calculateNullifier", nc, inputNoteInUse, ak);
         let res = poseidon([
             nc,
             inputNoteInUse,
@@ -397,6 +387,7 @@ export class JoinSplitCircuit {
         return poseidon.F.toObject(res);
     }
 
+    /*
     // TODO: test
     static async createProof(circuitPath: string, input: JoinSplitInput, F: any): Promise<Proof> {
         let wasm = path.join(circuitPath, "main_js", "main.wasm");
@@ -414,4 +405,5 @@ export class JoinSplitCircuit {
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkey, witnessBuffer);
         return Promise.resolve(parseProof(proof));
     }
+    */
 }
