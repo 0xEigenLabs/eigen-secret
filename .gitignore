@@ -11,11 +11,11 @@ coverage
 coverage.json
 typechain
 typechain-types
+verifier.sol
 
 # Hardhat files
 cache
 artifacts
-test/*.js
 scripts/*.js
 circuits/*_js
 circuits/*.ptau

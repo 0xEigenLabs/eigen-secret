@@ -2,9 +2,8 @@ import { test, utils } from "../index";
 import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
-import {  } from "../src/join_split";
 import { compress as accountCompress, AccountOrNullifierKey, SigningKey, AccountCircuit } from "../src/account";
-import { StateTree } from "../src/state_tree";
+import { WorldState } from "../src/state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 import SMTModel from "../src/state_tree_db";
 
@@ -20,7 +19,6 @@ describe("Account circuit test", function () {
     let F: any;
     let accountKey: AccountOrNullifierKey;
     let signingKey: SigningKey;
-    let worldState: any;
     let aliasHash: bigint = 123n;
     let acStateKey: any;
     let assetId: number = 1;
@@ -33,8 +31,6 @@ describe("Account circuit test", function () {
             "Account", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {});
         accountKey = await (new SigningKey()).newKey(undefined);
         signingKey = await (new SigningKey()).newKey(undefined);
-        worldState = new StateTree(); // account and joinsplit share same SMT.
-        await worldState.init(SMTModel);
     })
 
     it("Account create test", async () => {
@@ -59,9 +55,11 @@ describe("Account circuit test", function () {
             newSigningPubKey1,
             newSigningPubKey2,
             aliasHash,
-            worldState
         );
-        await utils.executeCircuit(circuit, input.toCircuitInput());
+
+        //FIXME: nullifier hardcoded to 1
+        let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
+        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = await (new SigningKey()).newKey(undefined);
@@ -79,10 +77,27 @@ describe("Account circuit test", function () {
             newSigningPubKey1,
             newSigningPubKey2,
             aliasHash,
-            worldState
         );
-        await utils.executeCircuit(circuit, input.toCircuitInput());
-    })
 
-    // TODO test alias-address migrating and joinsplit
+        proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.accountNC);
+        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
+
+        proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
+
+        newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
+        newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
+        input = await AccountCircuit.createProofInput(
+            proofId,
+            newAccountKey,
+            signingKey,
+            newAccountPubKey,
+            newSigningPubKey1,
+            newSigningPubKey2,
+            aliasHash,
+        );
+
+        proof = await WorldState.updateStateTree(0n, 0n, 0n, 0n, input.accountNC);
+        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
+    })
 });
