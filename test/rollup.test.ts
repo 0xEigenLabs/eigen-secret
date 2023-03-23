@@ -1,4 +1,5 @@
-const {BigNumber, ContractFactory, ethers} = require("ethers");
+import { ethers } from "hardhat";
+const {BigNumber, ContractFactory} = require("ethers");
 const hre = require('hardhat')
 const assert = require('assert');
 const cls = require("circomlibjs");
@@ -17,8 +18,10 @@ describe.only("Rollup Contract Test", () => {
     let testToken:any;
     let poseidonContract2Inputs: any;
     let poseidonContract3Inputs: any;
+    let poseidonContract6Inputs: any;
     let poseidonContract8Inputs: any;
     let factory: any;
+    let SpongePoseidonFactory:any;
 
     before(async function () {
         accounts = await hre.ethers.getSigners()
@@ -35,8 +38,8 @@ describe.only("Rollup Contract Test", () => {
             accounts[0]
         );
         const CF3 = new ethers.ContractFactory(
-            cls.poseidonContract.generateABI(8),
-            cls.poseidonContract.createCode(8),
+            cls.poseidonContract.generateABI(6),
+            cls.poseidonContract.createCode(6),
             accounts[0]
         );
         console.log("hihi")
@@ -44,7 +47,15 @@ describe.only("Rollup Contract Test", () => {
         console.log("poseidonContract2Inputs address:", poseidonContract2Inputs.address);
         poseidonContract3Inputs = await CF2.deploy();
         console.log("poseidonContract3Inputs address:", poseidonContract3Inputs.address);
-        poseidonContract8Inputs = await CF3.deploy();
+        poseidonContract6Inputs = await CF3.deploy();
+        console.log("poseidonContract6Inputs address:", poseidonContract6Inputs.address);
+        SpongePoseidonFactory = await ethers.getContractFactory("SpongePoseidon", {
+            libraries: {
+              PoseidonUnit6L: poseidonContract6Inputs.address,
+            },
+          });
+        poseidonContract8Inputs = await SpongePoseidonFactory.deploy();
+        await poseidonContract8Inputs.deployed();
         console.log("poseidonContract8Inputs address:", poseidonContract8Inputs.address);
 
         factory = await ethers.getContractFactory("TokenRegistry");
