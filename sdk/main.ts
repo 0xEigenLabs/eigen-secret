@@ -4,6 +4,7 @@ const createBlakeHash = require("blake-hash");
 const { buildEddsa, buildBabyJub } = require("circomlibjs");
 import { signEOASignature } from "../src/utils";
 import { JoinSplitCircuit } from "../src/join_split";
+import { UpdateStatusCircuit } from "../src/update_state";
 import { Prover } from "../src/prover";
 import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey, aliasHashDigest } from "../src/account";
 const path = require("path");
@@ -93,7 +94,7 @@ export class SecretSDK {
         const aliasHash = await aliasHashDigest(ctx.alias);
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
         const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
-        let inputs = await JoinSplitCircuit.createDepositInput(
+        let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             ctx.accountKey,
             ctx.signingKey,
             acStateKey,
@@ -103,6 +104,7 @@ export class SecretSDK {
             assetId,
             BigInt(value),
             ctx.signingKey.pubKey,
+            BigInt(value),
             new EigenAddress(receiver),
             [],
             accountRequired
@@ -126,12 +128,88 @@ export class SecretSDK {
         return proof;
     }
 
-    send(sender: string, receiver: string, value: string, assetId: number) {
+    async send(ctx: any, receiver: string, value: string, assetId: number) {
+        let eddsa = await buildEddsa();
+        let F = eddsa.F;
+        let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
+        let accountRequired = false;
+        const aliasHash = await aliasHashDigest(ctx.alias);
+        const signer = accountRequired? ctx.signingKey: ctx.accountKey;
+        const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
+        let inputs = await UpdateStatusCircuit.createJoinSplitInput(
+            ctx.accountKey,
+            ctx.signingKey,
+            acStateKey,
+            proofId,
+            aliasHash,
+            assetId,
+            0,
+            0n,
+            undefined,
+            BigInt(value),
+            new EigenAddress(receiver),
+            [],
+            accountRequired
+        );
 
+        let proof: string[] = [];
+        for (const input of inputs) {
+            const proof = await this.state.updateStateTree(
+                ctx,
+                input.outputNCs[0],
+                input.outputNotes[0].inputNullifier,
+                input.outputNCs[1],
+                input.outputNotes[1].inputNullifier,
+                acStateKey
+            );
+            console.log(proof);
+            let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
+            let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput, F);
+            proof.push(Prover.serialize(proofAndPublicSignals));
+        }
+        return proof;
     }
 
-    withdraw(sender: string, receiver: string, value: string, assetId: number) {
+    async withdraw(ctx: any, receiver: string, value: string, assetId: number) {
+        let eddsa = await buildEddsa();
+        let F = eddsa.F;
+        let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
+        let accountRequired = false;
+        const aliasHash = await aliasHashDigest(ctx.alias);
+        const signer = accountRequired? ctx.signingKey: ctx.accountKey;
+        const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
+        let inputs = await UpdateStatusCircuit.createJoinSplitInput(
+            ctx.accountKey,
+            ctx.signingKey,
+            acStateKey,
+            proofId,
+            aliasHash,
+            assetId,
+            assetId,
+            BigInt(value),
+            new EigenAddress(receiver),
+            0n,
+            ctx.accountKey.pubKey,
+            [],
+            accountRequired
+        );
 
+        let proof: string[] = [];
+        for (const input of inputs) {
+            const proof = await this.state.updateStateTree(
+                ctx,
+                input.outputNCs[0],
+                input.outputNotes[0].inputNullifier,
+                input.outputNCs[1],
+                input.outputNotes[1].inputNullifier,
+                acStateKey
+            );
+            console.log(proof);
+            let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
+            let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput, F);
+            proof.push(Prover.serialize(proofAndPublicSignals));
+        }
+        return proof;
     }
 
     // create proof for account operation, create, migrate or update
