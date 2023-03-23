@@ -65,8 +65,6 @@ describe("Test JoinSplit Circuit", function () {
             aliasHash,
         );
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
-        // copy
-        console.log(proof);
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
@@ -125,7 +123,6 @@ describe("Test JoinSplit Circuit", function () {
             );
             await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
-        console.log("test send tx")
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
             confirmedNote.push(inp.outputNotes[0]); // after depositing, all balance becomes private value
@@ -161,17 +158,51 @@ describe("Test JoinSplit Circuit", function () {
             );
             await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
+
+        // create a withdraw proof
+        proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
+        confirmedNote = [];
+        for (const inp of inputs2) {
+            assert(inp.outputNotes[1].val === 5n);
+            //confirmedNote.push(inp.outputNotes[0]);
+            confirmedNote.push(inp.outputNotes[1]);
+        }
+        let withrawReceiver = await (new SigningKey()).newKey(undefined);
+        let inputs3 = await UpdateStatusCircuit.createJoinSplitInput(
+            accountKey,
+            signingKey,
+            acStateKey,
+            proofId,
+            aliasHash,
+            assetId,
+            assetId,
+            2n, // public value
+            withrawReceiver.pubKey, // public owner
+            0n, // receiver private value
+            accountKey.pubKey,
+            confirmedNote,
+            accountRequired
+        );
+        for (const input of inputs3) {
+            const proof = await WorldState.updateStateTree(
+                input.outputNCs[0],
+                input.outputNotes[0].inputNullifier,
+                input.outputNCs[1],
+                input.outputNotes[1].inputNullifier,
+                acStateKey
+            );
+            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+        }
     })
 
     it("update_state verify proof test", async () => {
         let inputJson = path.join(__dirname, "..", "circuits/main_update_state.input.json");
         const input = JSON.parse(readFileSync(inputJson));
         let circuitPath = path.join(__dirname, "..", "circuits");
-        let proofAndPublicSignals = Prover.updateState(circuitPath, input, F);
-        console.log((await proofAndPublicSignals).publicSignals);
+        let proofAndPublicSignals = await Prover.updateState(circuitPath, input, F);
 
-        const proof = (await proofAndPublicSignals).proof;
-        const publicSignals = (await proofAndPublicSignals).publicSignals;
+        const proof = proofAndPublicSignals.proof;
+        const publicSignals = proofAndPublicSignals.publicSignals;
 
         let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey");
         const vKey = await snarkjs.zKey.exportVerificationKey(zkey);

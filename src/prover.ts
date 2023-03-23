@@ -18,10 +18,25 @@ export class Prover {
         );
 
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkey, witnessBuffer);
+        console.log("proof", proof, publicSignals)
         const proofAndPublicSignals = {
             proof,
             publicSignals
         };
         return proofAndPublicSignals;
+    }
+
+    static async verify(proofAndPublicSignals: any) {
+        const proof = proofAndPublicSignals.proof;
+        const publicSignals = proofAndPublicSignals.publicSignals;
+
+        let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey");
+        const vKey = await snarkjs.zKey.exportVerificationKey(zkey);
+        const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
+        return res;
+    }
+
+    static serialize(proofAndPublicSignals: any) {
+        return JSON.stringify(proofAndPublicSignals)
     }
 }

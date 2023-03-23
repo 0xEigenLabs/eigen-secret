@@ -227,6 +227,7 @@ export class WorldState {
         return WorldState.instance;
     }
 
+    // TODO add transaction
     public static async updateStateTree(
         outputNc1: bigint,
         nullifier1: bigint,
