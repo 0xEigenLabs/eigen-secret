@@ -200,7 +200,7 @@ export async function accountDigest(
     ]);
 }
 
-export async function aliashHashDigest(aliasHash: bigint) {
+export async function aliasHashDigest(aliasHash: bigint) {
     let poseidon = await buildPoseidon();
     let result = poseidon([
         aliasHash
@@ -302,7 +302,7 @@ export class AccountCircuit {
         let outputNC1 = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
         let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
 
-        let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? (await aliashHashDigest(aliasHash)): 0;
+        let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? (await aliasHashDigest(aliasHash)): 0;
         let nullifier2 = (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE ||
             proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) ?
             (await newAccountDigest(newAccountPubKey)): 0;

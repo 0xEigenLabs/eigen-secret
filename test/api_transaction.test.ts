@@ -67,15 +67,18 @@ describe('POST /transactions', function() {
             message: rawMessage,
             hexSignature: signature,
             ethAddress: newEOAAccount.address,
-            inserts: [
-                ["123", "456"]
-            ],
-            finds: ["123"]
+            newStates: [
+                "1233",
+                "1",
+                "111",
+                "456",
+                "111"
+            ]
         })
         .set('Accept', 'application/json');
         console.log(response.body.data);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        assert(response.body.data.finds[0], "456")
+        assert(response.body.data.dataTreeRoot, "11789410253405726493196100626786015322476180488220624361762052237583743243512")
     })
 });

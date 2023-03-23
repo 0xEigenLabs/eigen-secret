@@ -65,8 +65,6 @@ describe("Test JoinSplit Circuit", function () {
             aliasHash,
         );
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
-        // copy
-        console.log(proof);
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
@@ -167,11 +165,11 @@ describe("Test JoinSplit Circuit", function () {
         let inputJson = path.join(__dirname, "..", "circuits/main_update_state.input.json");
         const input = JSON.parse(readFileSync(inputJson));
         let circuitPath = path.join(__dirname, "..", "circuits");
-        let proofAndPublicSignals = Prover.updateState(circuitPath, input, F);
-        console.log((await proofAndPublicSignals).publicSignals);
+        let proofAndPublicSignals = await Prover.updateState(circuitPath, input, F);
+        console.log(proofAndPublicSignals.publicSignals);
 
-        const proof = (await proofAndPublicSignals).proof;
-        const publicSignals = (await proofAndPublicSignals).publicSignals;
+        const proof = proofAndPublicSignals.proof;
+        const publicSignals = proofAndPublicSignals.publicSignals;
 
         let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey");
         const vKey = await snarkjs.zKey.exportVerificationKey(zkey);

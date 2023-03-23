@@ -124,24 +124,13 @@ export async function updateStateTree(req: any, res: any) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
     }
 
-    const inserts = req.body.inserts;
-    const finds = req.body.finds;
-    let instance = await WorldState.getInstance();
-    let resultInsert = [];
-    let resultFound = [];
-    for (const ins of inserts) {
-        let result = await instance.insert(ins[0], ins[1]);
-        resultInsert.push(result);
-    }
-    for (const key of finds) {
-        let result = await instance.find(key)
-        // not padded
-        resultFound.push(result);
-    }
-    let result = {
-        "inserts": resultInsert,
-        "finds": resultFound
-    }
-
-    return res.json(utils.succ(result));
+    const newState = req.body.newStates;
+    let proof = await WorldState.updateStateTree(
+        (newState[0]),
+        (newState[1]),
+        (newState[2]),
+        (newState[3]),
+        (newState[4])
+    );
+    return res.json(utils.succ(proof));
 }
