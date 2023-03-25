@@ -22,6 +22,10 @@ NoteModel.init({
         allowNull: false,
         unique: true
     },
+    pubKey: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     content: {
         type: DataTypes.TEXT,
         allowNull: false,
@@ -48,6 +52,6 @@ export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
     );
 }
 
-export async function getNotes(alias: string, state: Array<NoteModel>) {
+export async function getDBNotes(alias: string, state: Array<NoteModel>) {
     return await NoteModel.findAll({ where: { alias: alias, state: state } })
 }

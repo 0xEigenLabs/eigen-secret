@@ -13,14 +13,16 @@ import { NoteState } from "../server/note";
 describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
     const alias = "eigen.eth";
+    let tmpKey: any;
+    let pubKey: any;
     before(async() => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
 
-        let tmpKey = await (new SigningKey()).newKey(undefined);
-        let pubKey = tmpKey.pubKey.pubKey;
+        tmpKey = await (new SigningKey()).newKey(undefined);
+        pubKey = tmpKey.pubKey.pubKey;
         const response = await request(app)
         .post('/transactions')
         .send({
@@ -82,12 +84,24 @@ describe('POST /transactions', function() {
         console.log(response.body.data);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        assert(response.body.data.proof.dataTreeRoot, "11789410253405726493196100626786015322476180488220624361762052237583743243512")
-        let encryptedNotes = response.body.data.encryptedNotes;
+        assert(response.body.data.dataTreeRoot, "11789410253405726493196100626786015322476180488220624361762052237583743243512")
 
+        const responseNote = await request(app)
+        .post('/notes/get')
+        .send({
+            alias: alias,
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: newEOAAccount.address
+        })
+        .set('Accept', 'application/json');
+
+        let encryptedNotes = responseNote.body.data;
+        console.log(pubKey);
         // update notes
         const response2 = await request(app)
-        .post('/transactions/notes')
+        .post('/notes/update')
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -98,11 +112,13 @@ describe('POST /transactions', function() {
                 {
                     index: encryptedNotes[0].index,
                     content: encryptedNotes[0].content,
+                    pubKey: pubKey,
                     state: NoteState.SPENT
                 },
                 {
                     index: encryptedNotes[1].index,
                     content: encryptedNotes[1].content,
+                    pubKey: pubKey,
                     state: NoteState.SPENT
                 }
             ]

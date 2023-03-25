@@ -3,16 +3,12 @@ import sequelize from "../src/db";
 import consola from "consola";
 import * as utils from "../src/utils";
 import { siblingsPad, WorldState, StateTree } from "../src/state_tree";
-import { NoteModel, NoteState, updateDBNotes, getNotes } from "./note";
+import { NoteModel, NoteState, updateDBNotes, getDBNotes } from "./note";
 
 class TransactionModel extends Model {}
 TransactionModel.init({
     // Model attributes are defined here
     alias: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    pubKey: {
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -86,13 +82,12 @@ export async function createTx(req: any, res: any) {
     let transaction: any;
     try {
         transaction = await sequelize.transaction();
-        let isAliasAvailable = await TransactionModel.findOne({ where: { alias: alias, pubKey: pubKey } } );
+        let isAliasAvailable = await TransactionModel.findOne({ where: { alias: alias } } );
         console.log(isAliasAvailable);
 
         if (isAliasAvailable === null) {
             let result = await TransactionModel.create({
                 alias: alias,
-                pubKey: pubKey,
                 noteIndex: noteIndex,
                 note2Index: note2Index,
                 proof: proof,
@@ -106,12 +101,14 @@ export async function createTx(req: any, res: any) {
                     {
                         alias: alias,
                         index: noteIndex,
+                        pubKey: pubKey,
                         content: content,
                         state: NoteState.CREATING
                     },
                     {
                         alias: alias,
                         index: note2Index,
+                        pubKey: pubKey,
                         content: content2,
                         state: NoteState.CREATING
                     }
@@ -156,13 +153,15 @@ export async function updateStateTree(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
-
+consola.log("11111");
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
     }
 
+    // TODO: once updated, must be synchonized with circuits on chain
     const newState = req.body.newStates;
+consola.log("111", newState);
     let proof = await WorldState.updateStateTree(
         (newState[0]),
         (newState[1]),
@@ -170,14 +169,26 @@ export async function updateStateTree(req: any, res: any) {
         (newState[3]),
         (newState[4])
     );
+consola.log("111", proof);
+    // TODO handle exception
+    return res.json(utils.succ(proof));
+}
 
-    // get the confirmed note list
-    let notes = await getNotes(alias, [NoteState.CREATING, NoteState.PROVED]);
-    let result = {
-        proof: proof,
-        encryptedNotes: notes
+export async function getNotes(req: any, res: any) {
+    const alias = req.body.alias;
+    const ethAddress = req.body.ethAddress;
+    const timestamp = req.body.timestamp;
+    const rawMessage = req.body.message;
+    const hexSignature = req.body.hexSignature;
+
+    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
+    if (!validAdddr) {
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
     }
-    return res.json(utils.succ(result));
+
+    // get the confirmed note list, TODO: handle exception
+    let notes = await getDBNotes(alias, [NoteState.CREATING, NoteState.PROVED]);
+    return res.json(utils.succ(notes));
 }
 
 export async function updateNotes(req: any, res: any) {
@@ -199,6 +210,7 @@ export async function updateNotes(req: any, res: any) {
         insertings.push({
             alias: alias,
             index: item.index,
+            pubKey: item.pubKey,
             content: item.content,
             state: NoteState[item.state]
         })

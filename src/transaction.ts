@@ -15,7 +15,7 @@ class TxData {
     }
 }
 
-class Transaction {
+export class Transaction {
     notes: Array<Note>;
     sender: SigningKey;
 
