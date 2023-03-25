@@ -327,7 +327,6 @@ export class JoinSplitCircuit {
                 throw new Error(`Insufficient balance to public value: ${change}, ${publicValue}`);
             }
             change = change >= publicValue ? (change - publicValue) : 0n;
-console.log("totalInputNoteValue, recipientPrivateOutput", totalInputNoteValue, recipientPrivateOutput);
             assert(inputNotes[1]);
             let nc2 = await inputNotes[1].compress(babyJub);
             let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, inputNoteInUse[1], accountKey);

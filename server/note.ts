@@ -3,15 +3,16 @@ import sequelize from "../src/db";
 const consola = require("consola");
 import { StateTree } from "../src/state_tree";
 
-class NoteModel extends Model {}
+export class NoteModel extends Model {}
+
+export enum NoteState {
+    CREATING = 1,
+    CONFIRMING,
+    SETTLED,
+}
 
 NoteModel.init({
     // Model attributes are defined here
-    cmt: {
-        type: DataTypes.BIGINT,
-        allowNull: false,
-        unique: true
-    },
     alias: {
         type: DataTypes.STRING,
         allowNull: false
@@ -20,6 +21,15 @@ NoteModel.init({
         type: DataTypes.BIGINT,
         allowNull: false,
         unique: true
+    },
+    content: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        unique: true
+    },
+    state: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     }
 }, {
     // Other model options go here
@@ -27,26 +37,15 @@ NoteModel.init({
     modelName: "NoteModel" // We need to choose the model name
 });
 
-export async function getIndices(cmt: Array<bigint>, alias: string) {
-    let inserts = new Array(cmt.length).fill({}).map(
-        (v, i) => (
-            {
-                index: StateTree.index,
-                alias: alias,
-                cmt: cmt[i]
-            }
-        ));
-    let transaction: any;
-    try {
-        transaction = await sequelize.transaction();
-        let result = await NoteModel.bulkCreate(inserts, { transaction });
-        transaction.commit();
-        return inserts;
-    } catch (err: any) {
-        consola.log(err);
-        if (transaction) {
-            transaction.rollback();
+export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
+    return await NoteModel.bulkCreate(
+        notes, { transaction },
+        {
+            updateOnDuplicate: ["alias", "index"]
         }
-        return null;
-    }
+    );
+}
+
+export async function getNotes(alias: string, state: Array<NoteModel>) {
+    await NoteModel.findAll({ where: { alias: alias, state: state } })
 }

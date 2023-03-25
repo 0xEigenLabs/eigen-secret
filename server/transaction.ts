@@ -3,7 +3,7 @@ import sequelize from "../src/db";
 import consola from "consola";
 import * as utils from "../src/utils";
 import { siblingsPad, WorldState, StateTree } from "../src/state_tree";
-import { getIndices } from "./note";
+import { NoteModel, NoteState, updateDBNotes, getNotes } from "./note";
 
 class TransactionModel extends Model {}
 TransactionModel.init({
@@ -16,8 +16,12 @@ TransactionModel.init({
         type: DataTypes.STRING,
         allowNull: false
     },
-    content: {
-        type: DataTypes.TEXT,
+    noteIndex: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    note2Index: {
+        type: DataTypes.STRING,
         allowNull: false
     },
     proof: {
@@ -49,9 +53,13 @@ export async function createTx(req: any, res: any) {
     consola.log("create tx");
     const alias = req.body.alias;
     const pubKey = req.body.pubKey;
-    const content = req.body.content;
     const proof = req.body.proof;
     const publicInput = req.body.publicInput;
+    const noteIndex = req.body.noteIndex;
+    const note2Index = req.body.note2Index;
+
+    const content = req.body.content;
+    const content2 = req.body.content2;
 
     const ethAddress = req.body.ethAddress;
     const timestamp = req.body.timestamp;
@@ -60,8 +68,11 @@ export async function createTx(req: any, res: any) {
 
     if (!utils.hasValue(alias) ||
         !utils.hasValue(pubKey) ||
-        !utils.hasValue(content) ||
+        !utils.hasValue(noteIndex) ||
+        !utils.hasValue(note2Index) ||
         !utils.hasValue(proof) ||
+        !utils.hasValue(content) ||
+        !utils.hasValue(content2) ||
         !utils.hasValue(publicInput)
     ) {
         consola.error("missing one or more arguments");
@@ -82,11 +93,38 @@ export async function createTx(req: any, res: any) {
             let result = await TransactionModel.create({
                 alias: alias,
                 pubKey: pubKey,
-                content: content,
+                noteIndex: noteIndex,
+                note2Index: note2Index,
                 proof: proof,
                 publicInput: publicInput,
                 status: TransactionModelStatus.CREATED
             }, { transaction });
+
+            // update Notes
+            let result2 = await updateDBNotes(
+                [
+                    {
+                        alias: alias,
+                        index: noteIndex,
+                        content: content,
+                        state: NoteState.CREATING
+                    },
+                    {
+                        alias: alias,
+                        index: note2Index,
+                        content: content2,
+                        state: NoteState.CREATING
+                    }
+                ],
+                transaction
+            );
+            if (!result || !result2) {
+                consola.log(
+                    result,
+                    result2
+                );
+                throw new Error("Update database error");
+            }
             await transaction.commit();
             return res.json(utils.succ(result))
         }
@@ -132,5 +170,52 @@ export async function updateStateTree(req: any, res: any) {
         (newState[3]),
         (newState[4])
     );
-    return res.json(utils.succ(proof));
+
+    // get the confirmed note list
+    let notes = await getNotes(alias, [NoteState.CREATING, NoteState.CONFIRMING]);
+
+    let result = {
+        proof: proof,
+        encryptedNotes: notes
+    }
+
+    return res.json(utils.succ(result));
+}
+
+export async function updateNotes(req: any, res: any) {
+    const alias = req.body.alias;
+    const ethAddress = req.body.ethAddress;
+    const timestamp = req.body.timestamp;
+    const rawMessage = req.body.message;
+    const hexSignature = req.body.hexSignature;
+
+    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
+    if (!validAdddr) {
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
+    }
+
+    const notes = req.body.notes;
+    // get the confirmed note list
+    let insertings: Array<NoteModel> = [];
+    notes.forEach((item: any) => {
+        insertings.push({
+            alias: alias,
+            index: item.index,
+            state: NoteState[item.state]
+        })
+    });
+
+    let result: any;
+    let transaction: any;
+    try {
+        transaction = await sequelize.transaction();
+        result = await updateDBNotes(notes, transaction);
+        transaction.commit();
+    } catch (err: any) {
+        if (transaction) {
+            transaction.rollback();
+        }
+        return res.json(utils.err(utils.ErrCode.InvalidInput, err.toString()));
+    }
+    return res.json(utils.succ(result));
 }
