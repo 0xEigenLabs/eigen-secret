@@ -57,10 +57,10 @@ export async function createTx(req: any, res: any) {
     const publicInput = req.body.publicInput;
     const noteIndex = req.body.noteIndex;
     const note2Index = req.body.note2Index;
-
     const content = req.body.content;
     const content2 = req.body.content2;
 
+    // context
     const ethAddress = req.body.ethAddress;
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
@@ -137,7 +137,7 @@ export async function createTx(req: any, res: any) {
     }
 }
 
-export async function getTxByAccountId(req: any, res: any) {
+export async function getTxByAlias(req: any, res: any) {
     const alias = req.params.alias;
     console.log(alias);
     let result: any;
@@ -172,13 +172,11 @@ export async function updateStateTree(req: any, res: any) {
     );
 
     // get the confirmed note list
-    let notes = await getNotes(alias, [NoteState.CREATING, NoteState.CONFIRMING]);
-
+    let notes = await getNotes(alias, [NoteState.CREATING, NoteState.PROVED]);
     let result = {
         proof: proof,
         encryptedNotes: notes
     }
-
     return res.json(utils.succ(result));
 }
 
@@ -201,6 +199,7 @@ export async function updateNotes(req: any, res: any) {
         insertings.push({
             alias: alias,
             index: item.index,
+            content: item.content,
             state: NoteState[item.state]
         })
     });
@@ -209,9 +208,10 @@ export async function updateNotes(req: any, res: any) {
     let transaction: any;
     try {
         transaction = await sequelize.transaction();
-        result = await updateDBNotes(notes, transaction);
+        result = await updateDBNotes(insertings, transaction);
         transaction.commit();
     } catch (err: any) {
+        console.log(err)
         if (transaction) {
             transaction.rollback();
         }

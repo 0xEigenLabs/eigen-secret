@@ -7,8 +7,8 @@ export class NoteModel extends Model {}
 
 export enum NoteState {
     CREATING = 1,
-    CONFIRMING,
-    SETTLED,
+    PROVED,
+    SPENT,
 }
 
 NoteModel.init({
@@ -18,7 +18,7 @@ NoteModel.init({
         allowNull: false
     },
     index: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.STRING,
         allowNull: false,
         unique: true
     },
@@ -38,14 +38,16 @@ NoteModel.init({
 });
 
 export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
+    console.log("updateDBNotes", notes);
     return await NoteModel.bulkCreate(
-        notes, { transaction },
+        notes,
         {
+            transaction: transaction,
             updateOnDuplicate: ["alias", "index"]
         }
     );
 }
 
 export async function getNotes(alias: string, state: Array<NoteModel>) {
-    await NoteModel.findAll({ where: { alias: alias, state: state } })
+    return await NoteModel.findAll({ where: { alias: alias, state: state } })
 }

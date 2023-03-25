@@ -13,7 +13,7 @@ import "dotenv/config";
 import * as utils from "../src/utils";
 import bodyParser from "body-parser";
 import { createAccount } from "./account";
-import { createTx, getTxByAccountId, updateStateTree } from "./transaction";
+import { createTx, getTxByAlias, updateStateTree, updateNotes } from "./transaction";
 
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);
@@ -32,7 +32,8 @@ app.use(cors(issueOptions));
 app.post("/accounts/:ethAddress", createAccount);
 app.post("/transactions", createTx);
 app.post("/statetree", updateStateTree);
-app.get("/transactions/:alias", getTxByAccountId);
+app.get("/transactions/:alias", getTxByAlias);
+app.post("/transactions/notes", updateNotes);
 app.get("/ping", (req, resp) => {
   resp.json(utils.succ("pong"));
 })

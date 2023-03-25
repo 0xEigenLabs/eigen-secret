@@ -7,6 +7,8 @@ import sequelize from "../src/db";
 import { ethers } from "ethers";
 import {signEOASignature} from "../src/utils";
 import { expect, assert } from "chai";
+import { StateTree } from "../src/state_tree";
+import { NoteState } from "../server/note";
 
 describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
@@ -19,7 +21,6 @@ describe('POST /transactions', function() {
 
         let tmpKey = await (new SigningKey()).newKey(undefined);
         let pubKey = tmpKey.pubKey.pubKey;
-        // TODO create proof for `createAccount` and `joinSplit`
         const response = await request(app)
         .post('/transactions')
         .send({
@@ -30,8 +31,11 @@ describe('POST /transactions', function() {
             ethAddress: newEOAAccount.address,
             pubKey: pubKey,
             content: "0x12",
+            content2: "0x123",
+            noteIndex: StateTree.index.toString(),
+            note2Index: StateTree.index.toString(),
             proof: "0x12",
-            publicInput: "{\"root\": 0x1}"
+            publicInput: "{\"root\": \"11\"}"
         })
         .set('Accept', 'application/json');
 
@@ -46,19 +50,18 @@ describe('POST /transactions', function() {
         .get('/transactions/' + alias)
         .set('Accept', 'application/json');
 
+        console.log(response.body);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        console.log(response.body);
         assert(response.body.data[0].alias, alias)
     });
 
     it("update smt", async() => {
-        let alias = "eigen.eth";
         let newEOAAccount = await ethers.Wallet.createRandom();
         let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
-
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+
         const response = await request(app)
         .post('/statetree')
         .send({
@@ -79,6 +82,35 @@ describe('POST /transactions', function() {
         console.log(response.body.data);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        assert(response.body.data.dataTreeRoot, "11789410253405726493196100626786015322476180488220624361762052237583743243512")
+        assert(response.body.data.proof.dataTreeRoot, "11789410253405726493196100626786015322476180488220624361762052237583743243512")
+        let encryptedNotes = response.body.data.encryptedNotes;
+
+        // update notes
+        const response2 = await request(app)
+        .post('/transactions/notes')
+        .send({
+            alias: alias,
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: newEOAAccount.address,
+            notes: [
+                {
+                    index: encryptedNotes[0].index,
+                    content: encryptedNotes[0].content,
+                    state: NoteState.SPENT
+                },
+                {
+                    index: encryptedNotes[1].index,
+                    content: encryptedNotes[1].content,
+                    state: NoteState.SPENT
+                }
+            ]
+        })
+        .set('Accept', 'application/json');
+        console.log(response2.body.data);
+        expect(response2.status).to.eq(200);
+        expect(response2.body.errno).to.eq(0);
+
     })
 });
