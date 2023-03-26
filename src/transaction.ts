@@ -15,7 +15,6 @@ export class TxData {
     }
 
     get toString(): string {
-        console.log("content", this.content);
         let obj = {
             pubKey: this.pubKey.pubKey,
             content: this.content
@@ -43,7 +42,6 @@ export class Transaction {
         let tmpKey = await (new SigningKey()).newKey(undefined);
         let tes = [];
         for (let note of this.notes) {
-            console.log(note._owner);
             let sharedKey = tmpKey.makeSharedKey(eddsa, note._owner);
             tes.push(
                 new TxData(tmpKey.pubKey, note.encrypt(sharedKey))
