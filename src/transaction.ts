@@ -6,12 +6,26 @@ import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
 const buildEddsa = require("circomlibjs").buildEddsa;
 
-class TxData {
+export class TxData {
     pubKey: EigenAddress;
-    content: Buffer;
-    constructor(pk: EigenAddress, cd: Buffer) {
+    content: string;
+    constructor(pk: EigenAddress, cd: string) {
         this.pubKey = pk;
         this.content = cd;
+    }
+
+    get toString(): string {
+        console.log("content", this.content);
+        let obj = {
+            pubKey: this.pubKey.pubKey,
+            content: this.content
+        }
+        return JSON.stringify(obj)
+    }
+
+    static toObj(objStr: any): TxData {
+        let obj = JSON.parse(objStr);
+        return new TxData(new EigenAddress(obj.pubKey), obj.content)
     }
 }
 
@@ -29,6 +43,7 @@ export class Transaction {
         let tmpKey = await (new SigningKey()).newKey(undefined);
         let tes = [];
         for (let note of this.notes) {
+            console.log(note._owner);
             let sharedKey = tmpKey.makeSharedKey(eddsa, note._owner);
             tes.push(
                 new TxData(tmpKey.pubKey, note.encrypt(sharedKey))

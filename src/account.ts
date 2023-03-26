@@ -96,7 +96,11 @@ export class SigningKey implements IKey {
     makeSharedKey: MakeSharedKey = (eddsa: any, receiver: EigenAddress) => {
         let babyJub = eddsa.babyJub;
         let receiverPoint = receiver.unpack(babyJub);
-        let rawSharedKey = babyJub.mulPointEscalar(receiverPoint, this.prvKey);
+
+        const sBuff = eddsa.pruneBuffer(createBlakeHash("blake512").update(Buffer.from(this.prvKey)).digest());
+        let s = Scalar.fromRprLE(sBuff, 0, 32);
+        let prvKey = Scalar.shr(s, 3);
+        let rawSharedKey = babyJub.mulPointEscalar(receiverPoint, prvKey);
         let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
         return sharedKey;
     }

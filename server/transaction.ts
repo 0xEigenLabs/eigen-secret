@@ -49,6 +49,7 @@ export async function createTx(req: any, res: any) {
     consola.log("create tx");
     const alias = req.body.alias;
     const pubKey = req.body.pubKey;
+    const pubKey2 = req.body.pubKey2;
     const proof = req.body.proof;
     const publicInput = req.body.publicInput;
     const noteIndex = req.body.noteIndex;
@@ -64,6 +65,7 @@ export async function createTx(req: any, res: any) {
 
     if (!utils.hasValue(alias) ||
         !utils.hasValue(pubKey) ||
+        !utils.hasValue(pubKey2) ||
         !utils.hasValue(noteIndex) ||
         !utils.hasValue(note2Index) ||
         !utils.hasValue(proof) ||
@@ -82,8 +84,9 @@ export async function createTx(req: any, res: any) {
     let transaction: any;
     try {
         transaction = await sequelize.transaction();
-        let isAliasAvailable = await TransactionModel.findOne({ where: { alias: alias } } );
-        console.log(isAliasAvailable);
+        let isAliasAvailable = await TransactionModel.findOne(
+            { where: { alias: alias, noteIndex: noteIndex, note2Index: note2Index } }
+        );
 
         if (isAliasAvailable === null) {
             let result = await TransactionModel.create({
@@ -108,7 +111,7 @@ export async function createTx(req: any, res: any) {
                     {
                         alias: alias,
                         index: note2Index,
-                        pubKey: pubKey,
+                        pubKey: pubKey2,
                         content: content2,
                         state: NoteState.CREATING
                     }
@@ -136,12 +139,11 @@ export async function createTx(req: any, res: any) {
 
 export async function getTxByAlias(req: any, res: any) {
     const alias = req.params.alias;
-    console.log(alias);
     let result: any;
     try {
         result = await TransactionModel.findAll({ where: { alias: alias } });
     } catch (err: any) {
-        console.log(err)
+        consola.log(err)
         return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
     }
     return res.json(utils.succ(result));
@@ -153,7 +155,6 @@ export async function updateStateTree(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
-consola.log("11111");
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
@@ -161,15 +162,13 @@ consola.log("11111");
 
     // TODO: once updated, must be synchonized with circuits on chain
     const newState = req.body.newStates;
-consola.log("111", newState);
     let proof = await WorldState.updateStateTree(
-        (newState[0]),
-        (newState[1]),
-        (newState[2]),
-        (newState[3]),
-        (newState[4])
+        BigInt(newState.outputNc1),
+        BigInt(newState.nullifier1),
+        BigInt(newState.outputNc2),
+        BigInt(newState.nullifier2),
+        BigInt(newState.acStateKey)
     );
-consola.log("111", proof);
     // TODO handle exception
     return res.json(utils.succ(proof));
 }
@@ -207,12 +206,13 @@ export async function updateNotes(req: any, res: any) {
     // get the confirmed note list
     let insertings: Array<NoteModel> = [];
     notes.forEach((item: any) => {
+        console.log("item", item);
         insertings.push({
             alias: alias,
             index: item.index,
             pubKey: item.pubKey,
             content: item.content,
-            state: NoteState[item.state]
+            state: item.state
         })
     });
 
@@ -223,7 +223,7 @@ export async function updateNotes(req: any, res: any) {
         result = await updateDBNotes(insertings, transaction);
         transaction.commit();
     } catch (err: any) {
-        console.log(err)
+        consola.log(err)
         if (transaction) {
             transaction.rollback();
         }

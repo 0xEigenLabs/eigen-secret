@@ -40,6 +40,7 @@ export class UpdateStatusInput {
 
     // tmp
     accountNC: bigint;
+    newAccountNC: bigint;
 
     public constructor(
         proofId: number,
@@ -64,9 +65,11 @@ export class UpdateStatusInput {
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
-        accountNC: bigint
+        accountNC: bigint,
+        newAccountNC: bigint
     ) {
         this.accountNC = accountNC;
+        this.newAccountNC = newAccountNC;
         this.proofId = proofId;
         this.publicOwner = publicOwner;
         this.publicValue = publicValue;
@@ -168,9 +171,9 @@ export class UpdateStatusInput {
         fs.writeFileSync("./circuits/main_update_state.input.json",
                          JSON.stringify(
                              inputJson,
-                             (key, value) => typeof value === 'bigint'
-                                 ? value.toString()
-                                 : value // return everything else unchanged
+                             (key, value) => typeof value === "bigint" ?
+                                 value.toString() :
+                                 value // return everything else unchanged
                          ));
         return inputJson;
     }
@@ -215,7 +218,8 @@ export class UpdateStatusCircuit {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            accountInput.accountNC
+            accountInput.accountNC,
+            accountInput.newAccountNC
         );
     }
 
@@ -270,7 +274,7 @@ export class UpdateStatusCircuit {
                 joinSplitInput[i].accountRequired,
                 [F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
                 joinSplitInput[i].signatureS,
-                [0n, 0n], [0n, 0n], [0n, 0n], 0n
+                [0n, 0n], [0n, 0n], [0n, 0n], 0n, 0n
             );
             inputList.push(input);
         }

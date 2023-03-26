@@ -17,11 +17,15 @@ export class Aes256gcm {
         // Hint: Larger inputs (it's GCM, after all!) should use the stream API
         let enc = cipher.update(str, "utf8", "base64");
         enc += cipher.final("base64");
-        return [enc, iv, cipher.getAuthTag()];
+        let hexIV = iv.toString("hex");
+        let hexTag = cipher.getAuthTag().toString("hex");
+        return [enc, hexIV, hexTag];
     }
 
     // decrypt decodes base64-encoded ciphertext into a utf8-encoded string
-    decrypt(enc: any, iv: any, authTag: any): any {
+    decrypt(enc: any, _iv: string, _authTag: string): any {
+        let iv = new Buffer(_iv, "hex");
+        let authTag = new Buffer(_authTag, "hex");
         const decipher = crypto.createDecipheriv(this.ALGO, this.key, iv);
         decipher.setAuthTag(authTag);
         let str = decipher.update(enc, "base64", "utf8");

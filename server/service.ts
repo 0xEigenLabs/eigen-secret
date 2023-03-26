@@ -32,7 +32,7 @@ app.use(cors(issueOptions));
 app.post("/accounts/:ethAddress", createAccount);
 app.post("/transactions", createTx);
 app.post("/statetree", updateStateTree);
-app.get("/transactions/:alias", getTxByAlias); //TODO: get not allowed
+app.get("/transactions/:alias", getTxByAlias); // TODO: get not allowed
 app.post("/notes/update", updateNotes);
 app.post("/notes/get", getNotes);
 app.get("/ping", (req, resp) => {

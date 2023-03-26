@@ -2,13 +2,14 @@ const request = require('supertest');
 const express = require('express');
 const consola = require("consola");
 import app from "../server/service";
-import { SigningKey } from "../src/account";
+import { EigenAddress, SigningKey } from "../src/account";
 import sequelize from "../src/db";
 import { ethers } from "ethers";
 import {signEOASignature} from "../src/utils";
 import { expect, assert } from "chai";
 import { StateTree } from "../src/state_tree";
 import { NoteState } from "../server/note";
+import { TxData } from "../src/transaction";
 
 describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
@@ -32,6 +33,7 @@ describe('POST /transactions', function() {
             hexSignature: signature,
             ethAddress: newEOAAccount.address,
             pubKey: pubKey,
+            pubKey2: pubKey,
             content: "0x12",
             content2: "0x123",
             noteIndex: StateTree.index.toString(),
@@ -46,6 +48,20 @@ describe('POST /transactions', function() {
         expect(response.body.errno).to.eq(0);
         expect(response.body.data["id"]).to.gt(0);
     });
+
+    it("txdata test", () => {
+        let tx = new TxData(
+            new EigenAddress("eig:8f7b33b85594ec857744ac10374122203ec0cb327a2423586cd5f666a0022e1b"),
+            "abc,cdf,123"
+        );
+
+        let objStr = tx.toString;
+
+        let tx2 = TxData.toObj(objStr);
+        console.log(tx, tx2)
+        expect(tx2.pubKey.pubKey).eq(tx.pubKey.pubKey);
+        expect(tx2.content.toString()).eq(tx.content.toString());
+    })
 
     it('get tx', async() => {
         const response = await request(app)
@@ -72,13 +88,13 @@ describe('POST /transactions', function() {
             message: rawMessage,
             hexSignature: signature,
             ethAddress: newEOAAccount.address,
-            newStates: [
-                "1233",
-                "1",
-                "111",
-                "456",
-                "111"
-            ]
+            newStates: {
+                outputNc1: "1233",
+                nullifier1: "1",
+                outputNc2: "111",
+                nullifier2: "456",
+                acStateKey: "111"
+            }
         })
         .set('Accept', 'application/json');
         console.log(response.body.data);
