@@ -57,7 +57,7 @@ export class StateTreeClient {
         };
         let response = await axios.request(options);
         console.log(response);
-        return response.data.newStates;
+        return response.data.data;
     }
 }
 

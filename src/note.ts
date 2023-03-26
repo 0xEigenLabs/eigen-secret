@@ -67,26 +67,33 @@ export class Note {
             val: this.val,
             secret: this.secret,
             assetId: this.assetId,
-            owner: this.owner,
+            owner: this._owner.pubKey,
             inputNullifier: this.inputNullifier,
             accountRequired: this.accountRequired,
             index: this.index
-        });
-        return aes.encrypt(data)
+        }, (_, v) => typeof v === "bigint" ? v.toString() : v);
+        // console.log("encrypt", data);
+        let cipher = aes.encrypt(data)
+        return cipher.join(",")
     }
 
-    static decrypt(cipherData: any, secret: any): Note {
+    static decrypt(_cipherData: string, secret: any): Note {
         let aes = new Aes256gcm(secret);
+        let cipherData = _cipherData.split(",");
+        if (cipherData.length != 3) {
+            throw new Error(`Invalid cipher: ${_cipherData}`)
+        }
         let jsonData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
         let data = JSON.parse(jsonData);
+        // console.log("cipher", cipherData, data);
         let n = new Note(
-            data.val,
-            data.secret,
+            BigInt(data.val),
+            BigInt(data.secret),
+            new EigenAddress(data.owner),
             data.assetId,
-            data.owner,
-            data.inputNullifier,
+            BigInt(data.inputNullifier),
             data.accountRequired,
-            data.index
+            BigInt(data.index)
         );
         return n;
     }
