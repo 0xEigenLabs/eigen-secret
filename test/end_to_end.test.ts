@@ -127,7 +127,7 @@ describe('POST /transactions', function() {
         let notes: Array<Note> = [];
         if (encryptedNotes) {
             encryptedNotes.forEach((item: DBNote) => {
-                let sharedKey = signingKey.makeSharedKey(eddsa, item.pubKey);
+                let sharedKey = signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }
