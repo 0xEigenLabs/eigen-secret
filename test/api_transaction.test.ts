@@ -13,7 +13,7 @@ import { TxData } from "../src/transaction";
 
 describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
-    const alias = "eigen.eth";
+    const alias = "api.eigen.eth";
     let tmpKey: any;
     let pubKey: any;
     before(async() => {

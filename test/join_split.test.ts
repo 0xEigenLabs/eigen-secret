@@ -67,7 +67,6 @@ describe("Test JoinSplit Circuit", function () {
             console.log(proof);
             await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
-        console.log("test send tx")
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
             confirmedNote.push(inp.outputNotes[0]); // after depositing, all balance becomes private value
@@ -75,7 +74,6 @@ describe("Test JoinSplit Circuit", function () {
         }
 
         // create a send proof
-        console.log("sending----------------------------------------------");
         let noteReceiver = await (new SigningKey()).newKey(undefined);
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let inputs2 = await JoinSplitCircuit.createProofInput(
