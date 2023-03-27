@@ -47,7 +47,6 @@ template UpdateState(nLevel) {
     enabled_account_circuit.in[0] <== proof_id;
     enabled_account_circuit.in[1] <== 10;
     //log("enabled_account_circuit");
-    log(enabled_account_circuit.out);
 
     component account_circuit = Account(nLevel);
     account_circuit.enabled <== enabled_account_circuit.out;

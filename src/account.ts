@@ -96,7 +96,11 @@ export class SigningKey implements IKey {
     makeSharedKey: MakeSharedKey = (eddsa: any, receiver: EigenAddress) => {
         let babyJub = eddsa.babyJub;
         let receiverPoint = receiver.unpack(babyJub);
-        let rawSharedKey = babyJub.mulPointEscalar(receiverPoint, this.prvKey);
+
+        const sBuff = eddsa.pruneBuffer(createBlakeHash("blake512").update(Buffer.from(this.prvKey)).digest());
+        let s = Scalar.fromRprLE(sBuff, 0, 32);
+        let prvKey = Scalar.shr(s, 3);
+        let rawSharedKey = babyJub.mulPointEscalar(receiverPoint, prvKey);
         let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
         return sharedKey;
     }
@@ -200,7 +204,7 @@ export async function accountDigest(
     ]);
 }
 
-export async function aliashHashDigest(aliasHash: bigint) {
+export async function aliasHashDigest(aliasHash: bigint) {
     let poseidon = await buildPoseidon();
     let result = poseidon([
         aliasHash
@@ -302,7 +306,7 @@ export class AccountCircuit {
         let outputNC1 = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
         let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
 
-        let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? (await aliashHashDigest(aliasHash)): 0;
+        let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? (await aliasHashDigest(aliasHash)): 0;
         let nullifier2 = (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE ||
             proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) ?
             (await newAccountDigest(newAccountPubKey)): 0;

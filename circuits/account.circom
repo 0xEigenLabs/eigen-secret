@@ -54,8 +54,8 @@ template Account(nLevel) {
     signal input siblings_ac[nLevel];
 
     //log("proof_id account");
-    log(proof_id);
-    log(enabled);
+    //log(proof_id);
+    //log(enabled);
     enabled * public_owner === 0;
     enabled * public_value === 0;
     enabled * num_input_notes === 0;

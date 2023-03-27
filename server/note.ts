@@ -3,23 +3,37 @@ import sequelize from "../src/db";
 const consola = require("consola");
 import { StateTree } from "../src/state_tree";
 
-class NoteModel extends Model {}
+export class NoteModel extends Model {}
+
+export enum NoteState {
+    CREATING = 1,
+    PROVED,
+    SPENT,
+}
 
 NoteModel.init({
     // Model attributes are defined here
-    cmt: {
-        type: DataTypes.BIGINT,
-        allowNull: false,
-        unique: true
-    },
     alias: {
         type: DataTypes.STRING,
         allowNull: false
     },
     index: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.STRING,
         allowNull: false,
         unique: true
+    },
+    pubKey: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    content: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        unique: true
+    },
+    state: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     }
 }, {
     // Other model options go here
@@ -27,26 +41,19 @@ NoteModel.init({
     modelName: "NoteModel" // We need to choose the model name
 });
 
-export async function getIndices(cmt: Array<bigint>, alias: string) {
-    let inserts = new Array(cmt.length).fill({}).map(
-        (v, i) => (
-            {
-                index: StateTree.index,
-                alias: alias,
-                cmt: cmt[i]
-            }
-        ));
-    let transaction: any;
-    try {
-        transaction = await sequelize.transaction();
-        let result = await NoteModel.bulkCreate(inserts, { transaction });
-        transaction.commit();
-        return inserts;
-    } catch (err: any) {
-        consola.log(err);
-        if (transaction) {
-            transaction.rollback();
+export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
+    console.log("updateDBNotes", notes);
+    let tmpResult = await getDBNotes(notes[0].alias, [NoteState.CREATING, NoteState.PROVED, NoteState.SPENT])
+    console.log(tmpResult)
+    return await NoteModel.bulkCreate(
+        notes,
+        {
+            transaction: transaction,
+            updateOnDuplicate: ["index", "content"]
         }
-        return null;
-    }
+    );
+}
+
+export async function getDBNotes(alias: string, state: Array<NoteState>) {
+    return await NoteModel.findAll({ where: { alias: alias, state: state } })
 }

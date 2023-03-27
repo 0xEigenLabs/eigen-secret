@@ -195,10 +195,15 @@ const require_env_variables = (envVars: Array<string>) => {
 const baseResp = function(errno: ErrCode, message: string, data: string) {
   return { errno: errno, message: message, data: data };
 }
-const succ = function(data: any) {
-  data = JSON.parse(JSON.stringify(data, (key, value) =>
+
+const prepareJson = function(data: any) {
+  return JSON.parse(JSON.stringify(data, (key, value) =>
     typeof value === "bigint"? value.toString() : value
   ));
+}
+
+const succ = function(data: any) {
+  data = prepareJson(data);
   return baseResp(0, "", data);
 }
 const err = function(errno: ErrCode, message: string) {
@@ -239,5 +244,5 @@ async function upsert(modelObj: any, newItem: any, condition: any, connection: a
     return { item, created: false };
 }
 
-export { baseResp, succ, err, hasValue, require_env_variables, upsert };
+export { baseResp, succ, err, hasValue, require_env_variables, upsert, prepareJson };
 

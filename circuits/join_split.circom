@@ -61,8 +61,6 @@ template JoinSplit(nLevel) {
 
     // TODO check: xx_note_account_required in [0, 1];
     //log("proof_id JoinSplit");
-    log(proof_id);
-    log(enabled);
 
     //account_required is 0 or 1
     signal aux0;
@@ -134,7 +132,7 @@ template JoinSplit(nLevel) {
     is_public_no.in[1] <== public_value;
     is_public_no.in[2] <== public_owner;
 
-    component valid_public = XOR();
+    component valid_public = OR();
     valid_public.a <== is_public_yes.out;
     valid_public.b <== is_public_no.out;
     enabled * (valid_public.out - 1) === 0;

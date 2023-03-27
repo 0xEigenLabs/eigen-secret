@@ -3,7 +3,7 @@ import sequelize from "../src/db";
 import consola from "consola";
 import * as utils from "../src/utils";
 import { siblingsPad, WorldState, StateTree } from "../src/state_tree";
-import { getIndices } from "./note";
+import { NoteModel, NoteState, updateDBNotes, getDBNotes } from "./note";
 
 class TransactionModel extends Model {}
 TransactionModel.init({
@@ -12,12 +12,12 @@ TransactionModel.init({
         type: DataTypes.STRING,
         allowNull: false
     },
-    pubKey: {
+    noteIndex: {
         type: DataTypes.STRING,
         allowNull: false
     },
-    content: {
-        type: DataTypes.TEXT,
+    note2Index: {
+        type: DataTypes.STRING,
         allowNull: false
     },
     proof: {
@@ -49,10 +49,15 @@ export async function createTx(req: any, res: any) {
     consola.log("create tx");
     const alias = req.body.alias;
     const pubKey = req.body.pubKey;
-    const content = req.body.content;
+    const pubKey2 = req.body.pubKey2;
     const proof = req.body.proof;
     const publicInput = req.body.publicInput;
+    const noteIndex = req.body.noteIndex;
+    const note2Index = req.body.note2Index;
+    const content = req.body.content;
+    const content2 = req.body.content2;
 
+    // context
     const ethAddress = req.body.ethAddress;
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
@@ -60,8 +65,12 @@ export async function createTx(req: any, res: any) {
 
     if (!utils.hasValue(alias) ||
         !utils.hasValue(pubKey) ||
-        !utils.hasValue(content) ||
+        !utils.hasValue(pubKey2) ||
+        !utils.hasValue(noteIndex) ||
+        !utils.hasValue(note2Index) ||
         !utils.hasValue(proof) ||
+        !utils.hasValue(content) ||
+        !utils.hasValue(content2) ||
         !utils.hasValue(publicInput)
     ) {
         consola.error("missing one or more arguments");
@@ -75,18 +84,47 @@ export async function createTx(req: any, res: any) {
     let transaction: any;
     try {
         transaction = await sequelize.transaction();
-        let isAliasAvailable = await TransactionModel.findOne({ where: { alias: alias, pubKey: pubKey } } );
-        console.log(isAliasAvailable);
+        let isAliasAvailable = await TransactionModel.findOne(
+            { where: { alias: alias, noteIndex: noteIndex, note2Index: note2Index } }
+        );
 
         if (isAliasAvailable === null) {
             let result = await TransactionModel.create({
                 alias: alias,
-                pubKey: pubKey,
-                content: content,
+                noteIndex: noteIndex,
+                note2Index: note2Index,
                 proof: proof,
                 publicInput: publicInput,
                 status: TransactionModelStatus.CREATED
             }, { transaction });
+
+            // update Notes
+            let result2 = await updateDBNotes(
+                [
+                    {
+                        alias: alias,
+                        index: noteIndex,
+                        pubKey: pubKey,
+                        content: content,
+                        state: NoteState.CREATING
+                    },
+                    {
+                        alias: alias,
+                        index: note2Index,
+                        pubKey: pubKey2,
+                        content: content2,
+                        state: NoteState.CREATING
+                    }
+                ],
+                transaction
+            );
+            if (!result || !result2) {
+                consola.log(
+                    result,
+                    result2
+                );
+                throw new Error("Update database error");
+            }
             await transaction.commit();
             return res.json(utils.succ(result))
         }
@@ -99,14 +137,13 @@ export async function createTx(req: any, res: any) {
     }
 }
 
-export async function getTxByAccountId(req: any, res: any) {
+export async function getTxByAlias(req: any, res: any) {
     const alias = req.params.alias;
-    console.log(alias);
     let result: any;
     try {
         result = await TransactionModel.findAll({ where: { alias: alias } });
     } catch (err: any) {
-        console.log(err)
+        consola.log(err)
         return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
     }
     return res.json(utils.succ(result));
@@ -118,30 +155,79 @@ export async function updateStateTree(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
+    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
+    if (!validAdddr) {
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
+    }
+
+    // TODO: once updated, must be synchonized with circuits on chain
+    const newState = req.body.newStates;
+    let proof = await WorldState.updateStateTree(
+        BigInt(newState.outputNc1),
+        BigInt(newState.nullifier1),
+        BigInt(newState.outputNc2),
+        BigInt(newState.nullifier2),
+        BigInt(newState.acStateKey)
+    );
+    // TODO handle exception
+    return res.json(utils.succ(proof));
+}
+
+export async function getNotes(req: any, res: any) {
+    const alias = req.body.alias;
+    const ethAddress = req.body.ethAddress;
+    const timestamp = req.body.timestamp;
+    const rawMessage = req.body.message;
+    const hexSignature = req.body.hexSignature;
 
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
     }
 
-    const inserts = req.body.inserts;
-    const finds = req.body.finds;
-    let instance = await WorldState.getInstance();
-    let resultInsert = [];
-    let resultFound = [];
-    for (const ins of inserts) {
-        let result = await instance.insert(ins[0], ins[1]);
-        resultInsert.push(result);
-    }
-    for (const key of finds) {
-        let result = await instance.find(key)
-        // not padded
-        resultFound.push(result);
-    }
-    let result = {
-        "inserts": resultInsert,
-        "finds": resultFound
+    // get the confirmed note list, TODO: handle exception
+    let notes = await getDBNotes(alias, [NoteState.CREATING, NoteState.PROVED]);
+    return res.json(utils.succ(notes));
+}
+
+export async function updateNotes(req: any, res: any) {
+    const alias = req.body.alias;
+    const ethAddress = req.body.ethAddress;
+    const timestamp = req.body.timestamp;
+    const rawMessage = req.body.message;
+    const hexSignature = req.body.hexSignature;
+
+    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
+    if (!validAdddr) {
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
     }
 
+    const notes = req.body.notes;
+    // get the confirmed note list
+    let insertings: Array<NoteModel> = [];
+    notes.forEach((item: any) => {
+        console.log("item", item);
+        insertings.push({
+            alias: alias,
+            index: item.index,
+            pubKey: item.pubKey,
+            content: item.content,
+            state: item.state
+        })
+    });
+
+    let result: any;
+    let transaction: any;
+    try {
+        transaction = await sequelize.transaction();
+        result = await updateDBNotes(insertings, transaction);
+        transaction.commit();
+    } catch (err: any) {
+        consola.log(err)
+        if (transaction) {
+            transaction.rollback();
+        }
+        return res.json(utils.err(utils.ErrCode.InvalidInput, err.toString()));
+    }
     return res.json(utils.succ(result));
 }

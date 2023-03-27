@@ -3,7 +3,7 @@ import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
 import {  } from "../src/join_split";
-import { compress as accountCompress, AccountOrNullifierKey, SigningKey } from "../src/account";
+import { compress as accountCompress, SigningKey } from "../src/account";
 import { WorldState } from "../src/state_tree";
 import { JoinSplitCircuit } from "../src/join_split";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
@@ -13,12 +13,11 @@ const path = require("path");
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 
 describe("Test JoinSplit Circuit", function () {
-
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
     let F: any;
-    let accountKey: AccountOrNullifierKey;
+    let accountKey: SigningKey;
     let signingKey: SigningKey;
     let aliasHash: bigint = 123n;
     let acStateKey: any;
@@ -68,7 +67,6 @@ describe("Test JoinSplit Circuit", function () {
             console.log(proof);
             await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
-        console.log("test send tx")
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
             confirmedNote.push(inp.outputNotes[0]); // after depositing, all balance becomes private value
@@ -76,7 +74,6 @@ describe("Test JoinSplit Circuit", function () {
         }
 
         // create a send proof
-        console.log("sending----------------------------------------------");
         let noteReceiver = await (new SigningKey()).newKey(undefined);
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let inputs2 = await JoinSplitCircuit.createProofInput(
