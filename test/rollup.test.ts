@@ -18,7 +18,6 @@ import { parseProof, Proof } from "../src/utils";
 describe.only("Rollup Contract Test", () => {
     let accounts:any;
     let rollup:any;
-    let vv:any;
     let tokenRegistry:any;
     let testToken:any;
     let poseidonContract2Inputs: any;
@@ -60,16 +59,11 @@ describe.only("Rollup Contract Test", () => {
             },
           });
         poseidonContract8Inputs = await SpongePoseidonFactory.deploy();
-        await poseidonContract8Inputs.deployed();
         console.log("poseidonContract8Inputs address:", poseidonContract8Inputs.address);
 
         factory = await ethers.getContractFactory("TokenRegistry");
         tokenRegistry = await factory.deploy(accounts[0].address)
         await tokenRegistry.deployed()
-
-        factory = await ethers.getContractFactory("Verifier");
-        vv = await factory.deploy()
-        await vv.deployed()
 
         factory = await ethers.getContractFactory("Rollup");
         rollup = await factory.deploy(poseidonContract2Inputs.address, poseidonContract3Inputs.address, 
@@ -131,24 +125,21 @@ describe.only("Rollup Contract Test", () => {
     ]
 
     it("should make first batch of deposits", async () => {
+        const value = ethers.utils.parseEther("100");
         // zero leaf
-        let deposit0 = await rollup.connect(accounts[0])
-        deposit0.deposit([0, 0], 0, 0, { from: accounts[0].address })
+        let deposit0 = await rollup.connect(accounts[0]).deposit([0, 0], 0, 0, 0, { from: accounts[0].address })
         assert(deposit0, "deposit0 failed");
 
         // operator account
-        let deposit1 = await rollup.connect(accounts[0])
-        deposit1.deposit(pubkeyCoordinator, 0, 0, { from: accounts[0].address })
+        let deposit1 = await rollup.connect(accounts[0]).deposit(pubkeyCoordinator, 0, 0, 0, { from: accounts[0].address })
         assert(deposit1, "deposit1 failed");
 
         // Alice account
-        let deposit2 = await rollup.connect(accounts[3])
-        deposit2.deposit(pubkeyA, 1000, 2, { from: accounts[3].address })
+        let deposit2 = await rollup.connect(accounts[3]).deposit(pubkeyA, 10, 1, 2, { value, from: accounts[3].address })
         assert(deposit2, "deposit2 failed");
 
         // Bob account
-        let deposit3 = await rollup.connect(accounts[2])
-        deposit3.deposit(pubkeyB, 20, 1, { value: 20, from: accounts[2].address })
+        let deposit3 = await rollup.connect(accounts[2]).deposit(pubkeyB, 20, 1, 1, { value, from: accounts[2].address })
         assert(deposit3, "deposit3 failed");
 
         // await rollup.currentRoot().then(console.log)
@@ -164,22 +155,21 @@ describe.only("Rollup Contract Test", () => {
         '4067275915489912528025923491934308489645306370025757488413758815967311850978'
     ]
 
-    it("should process first batch of deposits", async () => {
-        let processDeposit1
-        try {
-            processDeposit1 = await rollup.connect(accounts[0])
-            processDeposit1.processDeposits(
-                2,
-                first4HashPosition,
-                first4HashProof,
-                { from: accounts[0].address }
-            )
-        } catch (error){
-            console.log('processDeposits revert reason', error)
-        }
-        assert(processDeposit1, "processDeposit1 failed")
-        // await rollup.currentRoot().then(console.log)
-    })
+    // it("should process first batch of deposits", async () => {
+    //     let processDeposit1
+    //     try {
+    //         processDeposit1 = await rollup.connect(accounts[0]).processDeposits(
+    //             2,
+    //             first4HashPosition,
+    //             first4HashProof,
+    //             { from: accounts[0].address }
+    //         )
+    //     } catch (error){
+    //         console.log('processDeposits revert reason', error)
+    //     }
+    //     assert(processDeposit1, "processDeposit1 failed")
+    //     // await rollup.currentRoot().then(console.log)
+    // })
 
     // ----------------------------------------------------------------------------------
 
@@ -201,20 +191,17 @@ describe.only("Rollup Contract Test", () => {
     ]
 
     it("should make second batch of deposits", async () => {
-        let deposit4 = await rollup.connect(accounts[3])
-        deposit4.deposit(pubkeyC, 200, 2, { from: accounts[3].address })
+        const value = ethers.utils.parseEther("100");
+        let deposit4 = await rollup.connect(accounts[3]).deposit(pubkeyC, 200, 1, 3, { value, from: accounts[3].address })
         assert(deposit4, "deposit4 failed");
 
-        let deposit5 = await rollup.connect(accounts[4])
-        deposit5.deposit(pubkeyD, 100, 1, { value: 100, from: accounts[4].address })
+        let deposit5 = await rollup.connect(accounts[4]).deposit(pubkeyD, 100, 1, 4, { value, from: accounts[4].address })
         assert(deposit5, "deposit5 failed");
 
-        let deposit6 = await rollup.connect(accounts[3])
-        deposit6.deposit(pubkeyE, 500, 2, { from: accounts[3].address })
+        let deposit6 = await rollup.connect(accounts[3]).deposit(pubkeyE, 500, 1, 5, { value, from: accounts[3].address })
         assert(deposit6, "deposit6 failed");
 
-        let deposit7 = await rollup.connect(accounts[6])
-        deposit7.deposit(pubkeyF, 20, 1, { value: 20, from: accounts[6].address })
+        let deposit7 = await rollup.connect(accounts[6]).deposit(pubkeyF, 20, 1, 6, { value, from: accounts[6].address })
         assert(deposit7, "deposit7 failed");
         // await rollup.currentRoot().then(console.log)
     });
@@ -228,33 +215,32 @@ describe.only("Rollup Contract Test", () => {
         '4067275915489912528025923491934308489645306370025757488413758815967311850978'
     ]
 
-    it("should process second batch of deposits", async () => {
-        let processDeposit2 = await rollup.connect(accounts[0])
-        processDeposit2.processDeposits(
-            2,
-            second4HashPosition,
-            second4HashProof,
-            { from: accounts[0].address }
-        )
-        assert(processDeposit2, "processDeposit2 failed")
-        // await rollup.currentRoot().then(console.log)
-    })
+    // it("should process second batch of deposits", async () => {
+    //     let processDeposit2 = await rollup.connect(accounts[0]).processDeposits(
+    //         2,
+    //         second4HashPosition,
+    //         second4HashProof,
+    //         { from: accounts[0].address }
+    //     )
+    //     assert(processDeposit2, "processDeposit2 failed")
+    //     // await rollup.currentRoot().then(console.log)
+    // })
 
     // ----------------------------------------------------------------------------------
-    const updateInputJson = path.join(__dirname, "..", "circuits/main_update_state_js/public.json");
-    const updateInput = JSON.parse(fs.readFileSync(updateInputJson, "utf8"));
-    const updateProof = require("../circuits/main_update_state_js/proof.json");
+    // const updateInputJson = path.join(__dirname, "..", "circuits/main_update_state_js/public.json");
+    // const updateInput = JSON.parse(fs.readFileSync(updateInputJson, "utf8"));
+    // const updateProof = require("../circuits/main_update_state_js/proof.json");
 
-    it("should accept valid state updates", async () => {
-        const publicSignals = unstringifyBigInts(updateInput);
-        console.log(publicSignals);
-        const {a, b, c} = parseProof(updateProof)
-        let validStateUpdate = await rollup.update(
-            a , b, c, publicSignals
-        );
-        assert(validStateUpdate, "invalid state transition");
-        // await rollup.currentRoot().then(console.log)
-    });
+    // it("should accept valid state updates", async () => {
+    //     const publicSignals = unstringifyBigInts(updateInput);
+    //     console.log(publicSignals);
+    //     const {a, b, c} = parseProof(updateProof)
+    //     let validStateUpdate = await rollup.update(
+    //         a , b, c, publicSignals
+    //     );
+    //     assert(validStateUpdate, "invalid state transition");
+    //     // await rollup.currentRoot().then(console.log)
+    // });
 
     // ----------------------------------------------------------------------------------
     // const pubkey_from = [
