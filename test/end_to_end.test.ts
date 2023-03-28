@@ -341,7 +341,7 @@ describe('POST /transactions', function() {
 
             let txInput = new Transaction(input.inputNotes, signingKey);
             let txInputData = await txInput.encrypt();
-            assert(txInputData, encryptedNotes);
+            assert(txInputData[0].content, encryptedNotes[0].content);
 
             // create tx
             const responseTx = await request(app)

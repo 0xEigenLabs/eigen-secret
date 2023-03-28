@@ -2,78 +2,78 @@ import { ethers } from "hardhat";
 const {BigNumber, ContractFactory} = require("ethers");
 const hre = require('hardhat')
 const assert = require('assert');
-const cls = require("circomlibjs");
+const {buildEddsa} = require("circomlibjs");
 const path = require("path");
 const fs = require("fs");
 const unstringifyBigInts = require("ffjavascript").utils.unstringifyBigInts;
 import { parseProof, Proof } from "../src/utils";
-// var rollup = artifacts.require("rollup");
-// var TokenRegistry = artifacts.require("TokenRegistry")
-// var TestToken = artifacts.require("TestToken")
+import { deploySpongePoseidon, deployPoseidons, deployPoseidonFacade } from "./deploy_poseidons.util";
+import { SigningKey } from "../src/account";
+import { Contract } from "ethers";
 
 /*
     Here we want to test the smart contract's deposit functionality.
 */
-
-describe.only("Rollup Contract Test", () => {
+describe("Rollup Contract Test", () => {
     let accounts:any;
     let rollup:any;
     let tokenRegistry:any;
     let testToken:any;
-    let poseidonContract2Inputs: any;
-    let poseidonContract3Inputs: any;
-    let poseidonContract6Inputs: any;
-    let poseidonContract8Inputs: any;
     let factory: any;
-    let SpongePoseidonFactory:any;
+    let spongePoseidon: Contract;
+    let poseidonContracts: Array<Contract>;
+    let coordinator: SigningKey;
+    let pubkeyCoordinator: any;
+    let eddsa: any;
+    let F: any;
+    let babyJub;
+
+    let eigenAccount: Array<SigningKey>;
+    let pubkeyEigenAccount: any;
 
     before(async function () {
         accounts = await hre.ethers.getSigners()
-        console.log("hi")
+        eddsa = await buildEddsa();
+        F = eddsa.F;
+        babyJub = eddsa.babyJub;
+        
+        //TODO: may not deploy all contract
+        const poseidonContracts = await deployPoseidons(
+            (
+                await ethers.getSigners()
+            )[0],
+            new Array(6).fill(6).map((_, i) => i + 1)
+        );
 
-        const CF1 = new ethers.ContractFactory(
-            cls.poseidonContract.generateABI(2),
-            cls.poseidonContract.createCode(2),
-            accounts[0]
-          );
-        const CF2 = new ethers.ContractFactory(
-            cls.poseidonContract.generateABI(3),
-            cls.poseidonContract.createCode(3),
-            accounts[0]
-        );
-        const CF3 = new ethers.ContractFactory(
-            cls.poseidonContract.generateABI(6),
-            cls.poseidonContract.createCode(6),
-            accounts[0]
-        );
-        console.log("hihi")
-        poseidonContract2Inputs = await CF1.deploy();
-        console.log("poseidonContract2Inputs address:", poseidonContract2Inputs.address);
-        poseidonContract3Inputs = await CF2.deploy();
-        console.log("poseidonContract3Inputs address:", poseidonContract3Inputs.address);
-        poseidonContract6Inputs = await CF3.deploy();
-        console.log("poseidonContract6Inputs address:", poseidonContract6Inputs.address);
-        SpongePoseidonFactory = await ethers.getContractFactory("SpongePoseidon", {
-            libraries: {
-              PoseidonUnit6L: poseidonContract6Inputs.address,
-            },
-          });
-        poseidonContract8Inputs = await SpongePoseidonFactory.deploy();
-        console.log("poseidonContract8Inputs address:", poseidonContract8Inputs.address);
+        spongePoseidon = await deploySpongePoseidon(poseidonContracts[5].address);
 
         factory = await ethers.getContractFactory("TokenRegistry");
         tokenRegistry = await factory.deploy(accounts[0].address)
         await tokenRegistry.deployed()
 
         factory = await ethers.getContractFactory("Rollup");
-        rollup = await factory.deploy(poseidonContract2Inputs.address, poseidonContract3Inputs.address, 
-            poseidonContract8Inputs.address, tokenRegistry.address);
+        rollup = await factory.deploy(poseidonContracts[1].address, poseidonContracts[2].address,
+            spongePoseidon.address, tokenRegistry.address);
         await rollup.deployed();
         console.log("rollup address:", rollup.address);
 
         factory = await ethers.getContractFactory("TestToken");
         testToken = await factory.connect(accounts[3]).deploy();
         await testToken.deployed();
+
+        let coordinator = await (new SigningKey()).newKey(undefined);
+        let tmpCoor = coordinator.pubKey.unpack(babyJub);
+        pubkeyCoordinator = [F.toObject(tmpCoor[0]), F.toObject(tmpCoor[1])];
+
+        pubkeyEigenAccount = [];
+        eigenAccount = [];
+        for (var i = 0; i < 20; i ++) {
+            let tmp = await (new SigningKey()).newKey(undefined);
+            let tmpP = tmp.pubKey.unpack(babyJub);
+            let tmpPub = [F.toObject(tmpP[0]), F.toObject(tmpP[1])];
+            eigenAccount.push(tmp);
+            pubkeyEigenAccount.push(tmpPub);
+        }
     });
 
     // ----------------------------------------------------------------------------------
@@ -111,19 +111,6 @@ describe.only("Rollup Contract Test", () => {
 
     // ----------------------------------------------------------------------------------
 
-    const pubkeyCoordinator = [
-        '1891156797631087029347893674931101305929404954783323547727418062433377377293',
-        '14780632341277755899330141855966417738975199657954509255716508264496764475094'
-    ]
-    const pubkeyA = [
-        '16854128582118251237945641311188171779416930415987436835484678881513179891664',
-        '8120635095982066718009530894702312232514551832114947239433677844673807664026'
-    ]
-    const pubkeyB = [
-        '17184842423611758403179882610130949267222244268337186431253958700190046948852',
-        '14002865450927633564331372044902774664732662568242033105218094241542484073498'
-    ]
-
     it("should make first batch of deposits", async () => {
         const value = ethers.utils.parseEther("100");
         // zero leaf
@@ -135,14 +122,15 @@ describe.only("Rollup Contract Test", () => {
         assert(deposit1, "deposit1 failed");
 
         // Alice account
-        let deposit2 = await rollup.connect(accounts[3]).deposit(pubkeyA, 10, 1, 2, { value, from: accounts[3].address })
+        let deposit2 = await rollup.connect(accounts[3]).deposit(pubkeyCoordinator[0], 10, 1, 2, { value, from: accounts[3].address })
         assert(deposit2, "deposit2 failed");
 
         // Bob account
-        let deposit3 = await rollup.connect(accounts[2]).deposit(pubkeyB, 20, 1, 1, { value, from: accounts[2].address })
+        let deposit3 = await rollup.connect(accounts[2]).deposit(pubkeyEigenAccount[1], 20, 1, 1, { value, from: accounts[2].address })
         assert(deposit3, "deposit3 failed");
 
-        // await rollup.currentRoot().then(console.log)
+        let root = await rollup.dataTreeRoot();
+        console.log("root", root);
 	});
 
     // ----------------------------------------------------------------------------------
@@ -155,21 +143,21 @@ describe.only("Rollup Contract Test", () => {
         '4067275915489912528025923491934308489645306370025757488413758815967311850978'
     ]
 
-    // it("should process first batch of deposits", async () => {
-    //     let processDeposit1
-    //     try {
-    //         processDeposit1 = await rollup.connect(accounts[0]).processDeposits(
-    //             2,
-    //             first4HashPosition,
-    //             first4HashProof,
-    //             { from: accounts[0].address }
-    //         )
-    //     } catch (error){
-    //         console.log('processDeposits revert reason', error)
-    //     }
-    //     assert(processDeposit1, "processDeposit1 failed")
-    //     // await rollup.currentRoot().then(console.log)
-    // })
+    it.skip("should process first batch of deposits", async () => {
+        let processDeposit1
+        try {
+            processDeposit1 = await rollup.connect(accounts[0]).processDeposits(
+                2,
+                first4HashPosition,
+                first4HashProof,
+                { from: accounts[0].address }
+            )
+        } catch (error){
+            console.log('processDeposits revert reason', error)
+        }
+        assert(processDeposit1, "processDeposit1 failed")
+        // await rollup.currentRoot().then(console.log)
+    })
 
     // ----------------------------------------------------------------------------------
 

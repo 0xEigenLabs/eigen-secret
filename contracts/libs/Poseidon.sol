@@ -55,7 +55,7 @@ library SpongePoseidon {
         );
 
         uint32 restLength = length - HASH_FN_BATCH_SIZE;
-        if (restLength > BATCH_SIZE) {
+        if (restLength > 0) {
             uint32 r = restLength % BATCH_SIZE;
             uint32 diff = 0;
             if (r != 0) {
