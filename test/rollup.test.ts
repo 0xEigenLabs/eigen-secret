@@ -1,7 +1,8 @@
 import { ethers } from "hardhat";
 const {BigNumber, ContractFactory} = require("ethers");
 const hre = require('hardhat')
-const assert = require('assert');
+//const assert = require('assert');
+import { expect, assert } from "chai";
 const {buildEddsa} = require("circomlibjs");
 const path = require("path");
 const fs = require("fs");
@@ -10,6 +11,7 @@ import { parseProof, Proof } from "../src/utils";
 import { deploySpongePoseidon, deployPoseidons, deployPoseidonFacade } from "./deploy_poseidons.util";
 import { SigningKey } from "../src/account";
 import { Contract } from "ethers";
+import { WorldState } from "../src/state_tree";
 
 /*
     Here we want to test the smart contract's deposit functionality.
@@ -122,7 +124,7 @@ describe("Rollup Contract Test", () => {
         assert(deposit1, "deposit1 failed");
 
         // Alice account
-        let deposit2 = await rollup.connect(accounts[3]).deposit(pubkeyCoordinator[0], 10, 1, 2, { value, from: accounts[3].address })
+        let deposit2 = await rollup.connect(accounts[3]).deposit(pubkeyEigenAccount[0], 10, 1, 2, { value, from: accounts[3].address })
         assert(deposit2, "deposit2 failed");
 
         // Bob account
@@ -130,26 +132,24 @@ describe("Rollup Contract Test", () => {
         assert(deposit3, "deposit3 failed");
 
         let root = await rollup.dataTreeRoot();
-        console.log("root", root);
+        expect(root).to.eq(0n);
+        let queueNumber = await rollup.queueNumber();
+        expect(queueNumber).to.eq(4n);
 	});
 
     // ----------------------------------------------------------------------------------
 
-    // first4Hash is the pendingDeposits in sol
-    const first4Hash = '15746898236136636561403648879339919593421034102197162753778420002381731361410';
-    const first4HashPosition = [0, 0]
-    const first4HashProof = [
-        '10979797660762940206903140898034771814264102460382043487394926534432430816033',
-        '4067275915489912528025923491934308489645306370025757488413758815967311850978'
-    ]
-
     it.skip("should process first batch of deposits", async () => {
-        let processDeposit1
+        let processDeposit1: any;
+        // create 4 notes for above deposit.
+        let keys: any;
+        let values: any;
+        let siblings: any;
         try {
             processDeposit1 = await rollup.connect(accounts[0]).processDeposits(
-                2,
-                first4HashPosition,
-                first4HashProof,
+                keys,
+                values,
+                siblings,
                 { from: accounts[0].address }
             )
         } catch (error){
@@ -196,12 +196,6 @@ describe("Rollup Contract Test", () => {
 
 
     // ----------------------------------------------------------------------------------
-
-    let second4HashPosition = [1, 0]
-    let second4HashProof = [
-        first4Hash,
-        '4067275915489912528025923491934308489645306370025757488413758815967311850978'
-    ]
 
     // it("should process second batch of deposits", async () => {
     //     let processDeposit2 = await rollup.connect(accounts[0]).processDeposits(
