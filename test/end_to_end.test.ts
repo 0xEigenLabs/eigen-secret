@@ -77,8 +77,8 @@ describe('POST /transactions', function() {
             newSigningPubKey2,
             aliasHash,
         );
-        assert(input.newAccountNC, acStateKey);
-        
+        assert(input.newAccountNC == acStateKey, "Invalid accountNC");
+
         signer = accountRequired? signingKey: accountKey;
         acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
 

@@ -9,6 +9,7 @@ contract ITokenRegistry {
     uint256 public numTokens;
     mapping(address => bool) public pendingTokens;
     mapping(uint256 => address) public registeredTokens;
+    // TODO: should limit the ability of coordinator
     modifier onlyCoordinator(){
         assert (msg.sender == coordinator);
         _;
