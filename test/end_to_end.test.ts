@@ -50,8 +50,8 @@ describe('POST /transactions', function() {
         accountKey = await (new SigningKey()).newKey(undefined);
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(alias).digest().slice(0, 32));
         aliasHash = uint8Array2Bigint(aliasHashBuffer);
-
-        signer = accountRequired? signingKey: accountKey;
+        let _accountRequired = true;
+        signer = _accountRequired? signingKey: accountKey;
         acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
 
         // 1. create account
@@ -68,7 +68,6 @@ describe('POST /transactions', function() {
         let newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
 
-        // TODO: account commitment should be same as acStateKey
         let input = await UpdateStatusCircuit.createAccountInput(
             proofId,
             accountKey,
@@ -78,7 +77,11 @@ describe('POST /transactions', function() {
             newSigningPubKey2,
             aliasHash,
         );
-        console.log("should equal", input.newAccountNC, acStateKey);
+        assert(input.newAccountNC, acStateKey);
+        
+        signer = accountRequired? signingKey: accountKey;
+        acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
+
         let tmpInput = prepareJson({
             alias: alias,
             timestamp: timestamp,
@@ -338,7 +341,7 @@ describe('POST /transactions', function() {
 
             let txInput = new Transaction(input.inputNotes, signingKey);
             let txInputData = await txInput.encrypt();
-            //TODO txInputData should be equal to encryptedNotes
+            assert(txInputData[0].content, encryptedNotes[0].content);
 
             // create tx
             const responseTx = await request(app)
