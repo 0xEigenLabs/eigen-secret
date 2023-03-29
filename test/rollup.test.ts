@@ -7,7 +7,7 @@ const {buildEddsa} = require("circomlibjs");
 const path = require("path");
 const fs = require("fs");
 const unstringifyBigInts = require("ffjavascript").utils.unstringifyBigInts;
-import { parseProof, Proof } from "../src/utils";
+import { parseProof, Proof, signEOASignature } from "../src/utils";
 import { deploySpongePoseidon, deployPoseidons, deployPoseidonFacade } from "./deploy_poseidons.util";
 import { SigningKey } from "../src/account";
 import { Contract } from "ethers";
@@ -32,6 +32,8 @@ describe("Rollup Contract Test", () => {
 
     let eigenAccount: Array<SigningKey>;
     let pubkeyEigenAccount: any;
+    const rawMessage = "Use Eigen Secret to shield your asset";
+    const alias = "contract.eigen.eth"
 
     before(async function () {
         accounts = await hre.ethers.getSigners()
@@ -111,11 +113,14 @@ describe("Rollup Contract Test", () => {
         assert(approveToken, "approveToken failed")
     });
 
-    // ----------------------------------------------------------------------------------
 
+    // ----------------------------------------------------------------------------------
     it("should make first batch of deposits", async () => {
         const value = ethers.utils.parseEther("100");
         // zero leaf
+        let timestamp = Math.floor(Date.now()/1000).toString();
+        let signature = await signEOASignature(accounts[0], rawMessage, accounts[0].address, alias, timestamp);
+
         let deposit0 = await rollup.connect(accounts[0]).deposit([0, 0], 0, 0, 0, { from: accounts[0].address })
         assert(deposit0, "deposit0 failed");
 
