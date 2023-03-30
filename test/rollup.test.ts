@@ -12,7 +12,7 @@ import { AccountCircuit, aliasHashDigest, compress as accountCompress, EigenAddr
 import { JoinSplitCircuit } from "../src/join_split";
 import { Prover } from "../src/prover";
 import { Contract } from "ethers";
-import { WorldState } from "../src/state_tree";
+import { siblingsPad, WorldState } from "../src/state_tree";
 const createBlakeHash = require("blake-hash");
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
 import { NoteModel, NoteState, updateDBNotes, getDBNotes } from "../server/note";
@@ -27,7 +27,7 @@ describe("Rollup Contract Test", () => {
     let testToken:any;
     let factory: any;
     let spongePoseidon: Contract;
-    let poseidonContracts: Array<Contract>;
+    let poseidonContracts: any;
     let eddsa: any;
     let F: any;
     let babyJub: any;
@@ -57,7 +57,7 @@ describe("Rollup Contract Test", () => {
         aliasHash = uint8Array2Bigint(aliasHashBuffer);
 
         //TODO: may not deploy all contract
-        const poseidonContracts = await deployPoseidons(
+        poseidonContracts = await deployPoseidons(
             (
                 await ethers.getSigners()
             )[0],
@@ -71,6 +71,7 @@ describe("Rollup Contract Test", () => {
         await tokenRegistry.deployed()
 
         factory = await ethers.getContractFactory("Rollup");
+        console.log("con:::::", poseidonContracts[1].address, poseidonContracts[2].address);
         rollup = await factory.deploy(poseidonContracts[1].address, poseidonContracts[2].address,
             spongePoseidon.address, tokenRegistry.address);
         await rollup.deployed();
@@ -276,12 +277,13 @@ describe("Rollup Contract Test", () => {
                 let value = await instance.find(key);
                 assert(value.found);
                 valuesFound.push(value.foundValue)
-                siblings.push(value.siblings);
+                siblings.push(siblingsPad(value.siblings, F));
             }
 
             let processDeposit1: any;
             // create 4 notes for above deposit.
             try {
+                console.log(siblings);
                 processDeposit1 = await rollup.connect(EOAAccounts[0]).processDeposits(
                     keysFound,
                     valuesFound,

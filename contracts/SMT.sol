@@ -21,7 +21,7 @@ contract Poseidon3Unit {
 contract SMT {
 
   Poseidon2Unit insPoseidon2Unit;
-  Poseidon3Unit insPoseidon3Unit;  
+  Poseidon3Unit insPoseidon3Unit;
 
   /**
    * @dev Load poseidon smart contract

@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 import "./UpdateStateVerifier.sol";
 import "./WithdrawVerifier.sol";
 import "./SMT.sol";
+import "hardhat/console.sol";
 
 contract ITokenRegistry {
     address public coordinator;
@@ -91,7 +92,7 @@ contract Rollup is SMT {
         address _poseidon3ContractAddr,
         address _poseidon8ContractAddr,
         address _tokenRegistryAddr
-    ) SMT(_poseidon2ContractAddr, _poseidon2ContractAddr) public {
+    ) SMT(_poseidon2ContractAddr, _poseidon3ContractAddr) public {
         insPoseidon2 = IPoseidon2(_poseidon2ContractAddr);
         insPoseidon3 = IPoseidon3(_poseidon3ContractAddr);
         insPoseidon8 = IPoseidon8(_poseidon8ContractAddr);
