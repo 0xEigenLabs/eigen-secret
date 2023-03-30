@@ -71,7 +71,6 @@ describe("Rollup Contract Test", () => {
         await tokenRegistry.deployed()
 
         factory = await ethers.getContractFactory("Rollup");
-        console.log("con:::::", poseidonContracts[1].address, poseidonContracts[2].address);
         rollup = await factory.deploy(poseidonContracts[1].address, poseidonContracts[2].address,
             spongePoseidon.address, tokenRegistry.address);
         await rollup.deployed();
@@ -200,31 +199,21 @@ describe("Rollup Contract Test", () => {
         }
     });
 
-        // ----------------------------------------------------------------------------------
-
         it("should set rollup address", async () => {
             let setrollup = await tokenRegistry.connect(EOAAccounts[0]).setRollupNC(rollup.address);
             assert(setrollup, 'setRollupNC failed')
         });
-
-        // ----------------------------------------------------------------------------------
-
-
-        // const tokenContractAddr = "0xaD6D458402F60fD3Bd25163575031ACDce07538D"
 
         it("should register token", async () => {
             let registerToken = await rollup.connect(EOAAccounts[1]).registerToken(testToken.address, { from: EOAAccounts[1].address })
             assert(registerToken, "token registration failed");
         });
 
-        // ----------------------------------------------------------------------------------
-
         it("should approve token", async () => {
             let approveToken = await rollup.connect(EOAAccounts[0]).approveToken(testToken.address, { from: EOAAccounts[0].address })
             assert(approveToken, "token registration failed");
         });
 
-        // ----------------------------------------------------------------------------------
         it("should approve rollup on TestToken", async () => {
             let approveToken = await testToken.connect(EOAAccounts[3]).approve(
                 rollup.address, 1700,
@@ -233,11 +222,8 @@ describe("Rollup Contract Test", () => {
             assert(approveToken, "approveToken failed")
         });
 
-
-        // ----------------------------------------------------------------------------------
-        it("should make first batch of deposits", async () => {
+        it("should make first batch of account creation", async () => {
             const value = ethers.utils.parseEther("100");
-            // create account 0
 
             let keys = [];
             // zero leaf
@@ -253,13 +239,13 @@ describe("Rollup Contract Test", () => {
             // Alice account
             res = await createAccountFunc(1);
             keys.push(res[1][0]);
-            let deposit2 = await rollup.connect(EOAAccounts[1]).deposit(pubkeyEigenAccountKey[0], 10, 1, 2, { value, from: EOAAccounts[1].address })
+            let deposit2 = await rollup.connect(EOAAccounts[1]).deposit(pubkeyEigenAccountKey[1], 10, 1, 2, { value, from: EOAAccounts[1].address })
             assert(deposit2, "deposit2 failed");
 
             // Bob account
             res = await createAccountFunc(2);
             keys.push(res[1][0]);
-            let deposit3 = await rollup.connect(EOAAccounts[2]).deposit(pubkeyEigenAccountKey[1], 20, 1, 1, { value, from: EOAAccounts[2].address })
+            let deposit3 = await rollup.connect(EOAAccounts[2]).deposit(pubkeyEigenAccountKey[2], 20, 1, 1, { value, from: EOAAccounts[2].address })
             assert(deposit3, "deposit3 failed");
 
             let root = await rollup.dataTreeRoot();
@@ -283,7 +269,6 @@ describe("Rollup Contract Test", () => {
             let processDeposit1: any;
             // create 4 notes for above deposit.
             try {
-                console.log(siblings);
                 processDeposit1 = await rollup.connect(EOAAccounts[0]).processDeposits(
                     keysFound,
                     valuesFound,
@@ -294,57 +279,61 @@ describe("Rollup Contract Test", () => {
                 console.log('processDeposits revert reason', error)
             }
             assert(processDeposit1, "processDeposit1 failed")
-            // await rollup.currentRoot().then(console.log)
+            await rollup.dataTreeRoot().then(console.log)
         })
 
         // ----------------------------------------------------------------------------------
 
-        const pubkeyC = [
-            '1490516688743074134051356933225925590384196958316705484247698997141718773914',
-            '18202685495984068498143988518836859608946904107634495463490807754016543014696'
-        ]
-        const pubkeyD = [
-            '605092525880098299702143583094084591591734458242948998084437633961875265263',
-            '5467851481103094839636181114653589464420161012539785001778836081994475360535'
-        ]
-        const pubkeyE = [
-            '6115308589625576351618964952901291926887010055096213039283160928208018634120',
-            '7748831575696937538520365609095562313470874985327756362863958469935920020098'
-        ]
-        const pubkeyF = [
-            '8497552053649025231196693001489376949137425670153512736866407813496427593491',
-            '2919902478295208415664305012229488283720319044050523257046455410971412405951'
-        ]
+        it("should make second batch of deposits", async () => {
+            const pubkeyC = pubkeyEigenAccountKey[3];
+            const pubkeyD = pubkeyEigenAccountKey[4];
+            const pubkeyE = pubkeyEigenAccountKey[5];
+            const pubkeyF = pubkeyEigenAccountKey[6];
 
-        it.skip("should make second batch of deposits", async () => {
             const value = ethers.utils.parseEther("100");
+            let keys = [];
+            let res = await createAccountFunc(3);
+            keys.push(res[1][0]);
             let deposit4 = await rollup.connect(EOAAccounts[3]).deposit(pubkeyC, 200, 1, 3, { value, from: EOAAccounts[3].address })
             assert(deposit4, "deposit4 failed");
 
+            res = await createAccountFunc(4);
+            keys.push(res[1][0]);
             let deposit5 = await rollup.connect(EOAAccounts[4]).deposit(pubkeyD, 100, 1, 4, { value, from: EOAAccounts[4].address })
             assert(deposit5, "deposit5 failed");
 
+            res = await createAccountFunc(5);
+            keys.push(res[1][0]);
             let deposit6 = await rollup.connect(EOAAccounts[3]).deposit(pubkeyE, 500, 1, 5, { value, from: EOAAccounts[3].address })
             assert(deposit6, "deposit6 failed");
 
+            res = await createAccountFunc(6);
+            keys.push(res[1][0]);
             let deposit7 = await rollup.connect(EOAAccounts[6]).deposit(pubkeyF, 20, 1, 6, { value, from: EOAAccounts[6].address })
             assert(deposit7, "deposit7 failed");
-            // await rollup.currentRoot().then(console.log)
+            await rollup.dataTreeRoot().then(console.log)
+            let keysFound = []
+            let valuesFound = [];
+            let siblings = [];
+            let instance = await WorldState.getInstance();
+            for (const key of keys) {
+                keysFound.push(key);
+                let value = await instance.find(key);
+                assert(value.found);
+                valuesFound.push(value.foundValue)
+                siblings.push(siblingsPad(value.siblings, F));
+            }
+
+            // create 4 notes for above deposit.
+            let processDeposit2 = await rollup.connect(EOAAccounts[0]).processDeposits(
+                keysFound,
+                valuesFound,
+                siblings,
+                { from: EOAAccounts[0].address }
+            )
+            assert(processDeposit2, "processDeposit2 failed")
+            await rollup.dataTreeRoot().then(console.log)
         });
-
-
-        // ----------------------------------------------------------------------------------
-
-        // it("should process second batch of deposits", async () => {
-        //     let processDeposit2 = await rollup.connect(EOAAccounts[0]).processDeposits(
-        //         2,
-        //         second4HashPosition,
-        //         second4HashProof,
-        //         { from: EOAAccounts[0].address }
-        //     )
-        //     assert(processDeposit2, "processDeposit2 failed")
-        //     // await rollup.currentRoot().then(console.log)
-        // })
 
         // ----------------------------------------------------------------------------------
         // const updateInputJson = path.join(__dirname, "..", "circuits/main_update_state_js/public.json");

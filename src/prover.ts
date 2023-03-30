@@ -18,7 +18,7 @@ export class Prover {
         );
 
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkey, witnessBuffer);
-        console.log("proof", proof, publicSignals)
+        // console.log("proof", proof, publicSignals)
         const proofAndPublicSignals = {
             proof,
             publicSignals

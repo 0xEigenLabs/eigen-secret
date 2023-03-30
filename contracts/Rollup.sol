@@ -3,7 +3,6 @@ pragma solidity ^0.8.16;
 import "./UpdateStateVerifier.sol";
 import "./WithdrawVerifier.sol";
 import "./SMT.sol";
-import "hardhat/console.sol";
 
 contract ITokenRegistry {
     address public coordinator;
