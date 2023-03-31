@@ -18,7 +18,9 @@ import { Prover } from "../src/prover";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 import { Transaction } from "../src/transaction";
 const { buildEddsa } = require("circomlibjs");
+import { RollupHelper } from "./rollup.helper";
 const path = require("path");
+const hre = require('hardhat')
 
 describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
@@ -29,14 +31,18 @@ describe('POST /transactions', function() {
     let F: any;
     let newEOAAccount: any;
     const rawMessage = "Use Eigen Secret to shield your asset";
-    let signingKey: SigningKey;
-    let accountKey: SigningKey;
     let aliasHash: any;
     const accountRequired = false;
     let signer: any;
     let acStateKey: any;
-    const assetId = 1;
+    let assetId = 0;
+    let rollupHelper: any;
+    let userAccounts: any;
     before("end2end deposit", async() => {
+        userAccounts = await hre.ethers.getSigners()
+        rollupHelper = new RollupHelper(userAccounts);
+        await rollupHelper.initialize();
+        assetId = (await rollupHelper.deploy()).toNumber();
         newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
@@ -46,8 +52,8 @@ describe('POST /transactions', function() {
         F = eddsa.F;
         const value = 10;
 
-        signingKey = await (new SigningKey()).newKey(undefined);
-        accountKey = await (new SigningKey()).newKey(undefined);
+        let signingKey = rollupHelper.eigenSigningKeys[0][0];
+        let accountKey = rollupHelper.eigenAccountKey[0];
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(alias).digest().slice(0, 32));
         aliasHash = uint8Array2Bigint(aliasHashBuffer);
         let _accountRequired = true;
@@ -60,11 +66,11 @@ describe('POST /transactions', function() {
         let newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
 
-        let newSigningKey1 = await (new SigningKey()).newKey(undefined);
+        let newSigningKey1 = rollupHelper.eigenSigningKeys[0][1]
         let newSigningPubKey1 = newSigningKey1.pubKey.unpack(babyJub);
         newSigningPubKey1 = [F.toObject(newSigningPubKey1[0]), F.toObject(newSigningPubKey1[1])];
 
-        let newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        let newSigningKey2 = rollupHelper.eigenSigningKeys[0][2]
         let newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
 
@@ -96,14 +102,14 @@ describe('POST /transactions', function() {
                 acStateKey: acStateKey
             }
         });
-        console.log("tmpInput", tmpInput, acStateKey);
+        //console.log("tmpInput", tmpInput, acStateKey);
         const response = await request(app)
         .post('/statetree')
         .send(
             tmpInput
         )
         .set('Accept', 'application/json');
-        console.log(response.body);
+        //console.log(response.body);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
         let singleProof = response.body.data;
@@ -123,7 +129,7 @@ describe('POST /transactions', function() {
             ethAddress: newEOAAccount.address
         })
         .set('Accept', 'application/json');
-        console.log(responseNote.body.data);
+        //console.log(responseNote.body.data);
         let encryptedNotes = responseNote.body.data;
 
         // decrypt
@@ -135,7 +141,9 @@ describe('POST /transactions', function() {
             });
         }
 
-        console.log("note: ", notes);
+        //console.log("note: ", notes);
+
+        await rollupHelper.deposit(0, assetId, value);
         // create notes
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
@@ -168,14 +176,14 @@ describe('POST /transactions', function() {
                     acStateKey: acStateKey
                 }
             });
-            console.log("tmpInput", tmpInput);
+            //console.log("tmpInput", tmpInput);
             const response = await request(app)
             .post('/statetree')
             .send(
                 tmpInput
             )
             .set('Accept', 'application/json');
-            console.log(response.body);
+            //console.log(response.body);
             expect(response.status).to.eq(200);
             expect(response.body.errno).to.eq(0);
 
@@ -210,7 +218,7 @@ describe('POST /transactions', function() {
                 publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
             })
             .set('Accept', 'application/json');
-            console.log(responseTx.body);
+            //console.log(responseTx.body);
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
             // TODO: call contract and deposit
@@ -252,7 +260,7 @@ describe('POST /transactions', function() {
                 ]
             }))
             .set('Accept', 'application/json');
-            console.log(responseSt.body.data);
+            //console.log(responseSt.body.data);
             expect(responseSt.status).to.eq(200);
             expect(responseSt.body.errno).to.eq(0);
         }
@@ -261,12 +269,15 @@ describe('POST /transactions', function() {
     it("end2end send", async() => {
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        let signingKey = rollupHelper.eigenSigningKeys[0][0];
+        let accountKey = rollupHelper.eigenAccountKey[0];
+        console.log(accountKey, signingKey);
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let accountRequired = false;
         const value = 5;
 
-        let receiver = await (new SigningKey()).newKey(undefined);
+        let receiver = rollupHelper.eigenAccountKey[1];
         let pubKey = receiver.pubKey.pubKey;
 
         // 1. first transaction
@@ -280,7 +291,7 @@ describe('POST /transactions', function() {
             ethAddress: newEOAAccount.address
         })
         .set('Accept', 'application/json');
-        console.log(responseNote.body.data);
+        //console.log(responseNote.body.data);
         let encryptedNotes = responseNote.body.data;
 
         // decrypt
@@ -327,7 +338,7 @@ describe('POST /transactions', function() {
                 }
             }))
             .set('Accept', 'application/json');
-            console.log(response.body.data);
+            //console.log(response.body.data);
             expect(response.status).to.eq(200);
             expect(response.body.errno).to.eq(0);
 
@@ -403,7 +414,7 @@ describe('POST /transactions', function() {
                 ]
             }))
             .set('Accept', 'application/json');
-            console.log(responseSt.body.data);
+            //console.log(responseSt.body.data);
             expect(responseSt.status).to.eq(200);
             expect(responseSt.body.errno).to.eq(0);
         }

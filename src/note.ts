@@ -21,6 +21,7 @@ export class Note {
         this.inputNullifier = inputNullifier;
         this.accountRequired = accountRequired;
         this.index = index;
+        console.log("note", this);
     }
 
     get pending(): boolean {
