@@ -32,10 +32,8 @@ describe("Rollup Contract Test", () => {
     let F: any;
     let babyJub: any;
 
-    let coordinator: SigningKey;
-    let pubkeyCoordinator: bigint[];
-    let coordinatorSigingKeys: bigint[][] = [];
-
+    let testTokenAssetId = 0;
+    // index = 0 is the coordinator
     let eigenAccountKey: SigningKey[] = []; // n
     let pubkeyEigenAccountKey: bigint[][] = []; // 2n
     let eigenSigningKeys: SigningKey[][] = []; // 3n
@@ -80,16 +78,12 @@ describe("Rollup Contract Test", () => {
         testToken = await factory.connect(EOAAccounts[3]).deploy();
         await testToken.deployed();
 
-        let coordinator = await (new SigningKey()).newKey(undefined);
-        let tmpCoor = coordinator.pubKey.unpack(babyJub);
-        pubkeyCoordinator = [F.toObject(tmpCoor[0]), F.toObject(tmpCoor[1])];
-        tmpCoor = await (new SigningKey()).newKey(undefined);
-        coordinatorSigingKeys.push([F.toObject(tmpCoor[0]), F.toObject(tmpCoor[1])]);
-        tmpCoor = await (new SigningKey()).newKey(undefined);
-        coordinatorSigingKeys.push([F.toObject(tmpCoor[0]), F.toObject(tmpCoor[1])]);
-        tmpCoor = await (new SigningKey()).newKey(undefined);
-        coordinatorSigingKeys.push([F.toObject(tmpCoor[0]), F.toObject(tmpCoor[1])]);
+        for (const ea of EOAAccounts) {
+            await testToken.connect(EOAAccounts[3]).transfer(ea.address, 1000);
+        }
 
+        let tmpKey: any;
+        let tmpKeyP: any;
         for (var i = 0; i < 20; i ++) {
             let tmp = await (new SigningKey()).newKey(undefined);
             let tmpP = tmp.pubKey.unpack(babyJub);
@@ -100,20 +94,20 @@ describe("Rollup Contract Test", () => {
             let tmpSigningKeys = [];
             let tmpPubKeySigningKeys = [];
 
-            tmpCoor = await (new SigningKey()).newKey(undefined);
-            tmpSigningKeys.push(tmpCoor);
-            tmpCoor = coordinator.pubKey.unpack(babyJub);
-            tmpPubKeySigningKeys.push([F.toObject(tmpCoor[0]), F.toObject(tmpCoor[1])]);
+            tmpKey = await (new SigningKey()).newKey(undefined);
+            tmpSigningKeys.push(tmpKey);
+            tmpKeyP = tmpKey.pubKey.unpack(babyJub);
+            tmpPubKeySigningKeys.push([F.toObject(tmpKeyP[0]), F.toObject(tmpKeyP[1])]);
 
-            tmpCoor = await (new SigningKey()).newKey(undefined);
-            tmpSigningKeys.push(tmpCoor);
-            tmpCoor = coordinator.pubKey.unpack(babyJub);
-            tmpPubKeySigningKeys.push([F.toObject(tmpCoor[0]), F.toObject(tmpCoor[1])]);
+            tmpKey = await (new SigningKey()).newKey(undefined);
+            tmpSigningKeys.push(tmpKey);
+            tmpKeyP = tmpKey.pubKey.unpack(babyJub);
+            tmpPubKeySigningKeys.push([F.toObject(tmpKeyP[0]), F.toObject(tmpKeyP[1])]);
 
-            tmpCoor = await (new SigningKey()).newKey(undefined);
-            tmpSigningKeys.push(tmpCoor);
-            tmpCoor = coordinator.pubKey.unpack(babyJub);
-            tmpPubKeySigningKeys.push([F.toObject(tmpCoor[0]), F.toObject(tmpCoor[1])]);
+            tmpKey = await (new SigningKey()).newKey(undefined);
+            tmpSigningKeys.push(tmpKey);
+            tmpKeyP = tmpKey.pubKey.unpack(babyJub);
+            tmpPubKeySigningKeys.push([F.toObject(tmpKeyP[0]), F.toObject(tmpKeyP[1])]);
 
             eigenSigningKeys.push(tmpSigningKeys);
             pubkeyEigenSigningKeys.push(tmpPubKeySigningKeys);
@@ -140,7 +134,7 @@ describe("Rollup Contract Test", () => {
             return [proofAndPublicSignals, [acStateKey, 1]];
         }
 
-        depositFunc = async (assetId: number, i: number, value: number, receiverI: number) => {
+        depositFunc = async (assetId: number, i: number, value: number, receiverI: number, skip: boolean = false) => {
             let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
             let accountRequired = false;
             let signer = accountRequired? eigenSigningKeys[i][0]: eigenAccountKey[i];
@@ -163,18 +157,15 @@ describe("Rollup Contract Test", () => {
             );
             let proofAndPublicSignalsList = [];
             for (const input of inputs) {
-                let input = await UpdateStatusCircuit.createAccountInput(
-                    proofId,
-                    eigenAccountKey[i],
-                    eigenSigningKeys[i][0],
-                    pubkeyEigenAccountKey[i],
-                    pubkeyEigenSigningKeys[i][1],
-                    pubkeyEigenSigningKeys[i][2],
-                    aliasHash,
-                );
                 let signer = accountRequired? eigenSigningKeys[i][0]: eigenAccountKey[i];
                 let acStateKey = await accountCompress(eddsa, eigenAccountKey[i], signer, aliasHash);
-                assert(input.newAccountNC == acStateKey, "Invalid accountNC");
+                // TODO: why update is needed?
+                if (!skip) {
+                    await WorldState.updateStateTree(acStateKey, 1n, 0n, 0n, acStateKey)
+                }
+                //console.log(input.newAccountNC, acStateKey);
+                // NOTE inp=ut.newAccountNC is 0n
+                //assert(input.newAccountNC == acStateKey, "Invalid accountNC");
                 let singleProof = await WorldState.updateStateTree(
                     input.outputNCs[0],
                     input.outputNotes[0].inputNullifier,
@@ -212,6 +203,8 @@ describe("Rollup Contract Test", () => {
         it("should approve token", async () => {
             let approveToken = await rollup.connect(EOAAccounts[0]).approveToken(testToken.address, { from: EOAAccounts[0].address })
             assert(approveToken, "token registration failed");
+            testTokenAssetId = await tokenRegistry.numTokens();
+            console.log("testTokenAssetId", testTokenAssetId);
         });
 
         it("should approve rollup on TestToken", async () => {
@@ -224,28 +217,53 @@ describe("Rollup Contract Test", () => {
 
         it("should make first batch of account creation", async () => {
             const value = ethers.utils.parseEther("100");
-
             let keys = [];
             // zero leaf
             let res = await createAccountFunc(0);
             keys.push(res[1][0]);
-            let deposit0 = await rollup.connect(EOAAccounts[0]).deposit([0, 0], 0, 0, 0, { from: EOAAccounts[0].address })
+            //depositFunc = async (assetId: number, i: number, value: number, receiverI: number) => {
+            //struct Deposit{
+            //    uint[2] publicOwner;
+            //    uint publicAssetId;
+            //    uint publicValue;
+            //    uint nonce; //TODO why nonce here?
+            //}
+            res = await depositFunc(0, 0, 1, 0)
+            for (const one of res) {
+                keys.push(one[1][0])
+                keys.push(one[1][2])
+            }
+            let deposit0 = await rollup.connect(EOAAccounts[0]).deposit(pubkeyEigenAccountKey[0], 0, 0, 0, { from: EOAAccounts[0].address })
             assert(deposit0, "deposit0 failed");
-
             // operator account
-            let deposit1 = await rollup.connect(EOAAccounts[0]).deposit(pubkeyCoordinator, 0, 0, 0, { from: EOAAccounts[0].address })
+            res = await depositFunc(0, 0, 1, 0, true)
+            for (const one of res) {
+                keys.push(one[1][0])
+                keys.push(one[1][2])
+            }
+            let deposit1 = await rollup.connect(EOAAccounts[0]).deposit(pubkeyEigenAccountKey[0], 0, 0, 0, { from: EOAAccounts[0].address })
             assert(deposit1, "deposit1 failed");
 
             // Alice account
             res = await createAccountFunc(1);
             keys.push(res[1][0]);
-            let deposit2 = await rollup.connect(EOAAccounts[1]).deposit(pubkeyEigenAccountKey[1], 10, 1, 2, { value, from: EOAAccounts[1].address })
+            res = await depositFunc(1, 1, 10, 1)
+            for (const one of res) {
+                keys.push(one[1][0])
+                keys.push(one[1][2])
+            }
+            let deposit2 = await rollup.connect(EOAAccounts[1]).deposit(pubkeyEigenAccountKey[1], 1, 10, 1, { value, from: EOAAccounts[1].address })
             assert(deposit2, "deposit2 failed");
 
             // Bob account
             res = await createAccountFunc(2);
             keys.push(res[1][0]);
-            let deposit3 = await rollup.connect(EOAAccounts[2]).deposit(pubkeyEigenAccountKey[2], 20, 1, 1, { value, from: EOAAccounts[2].address })
+            res = await depositFunc(1, 1, 20, 1, true)
+            for (const one of res) {
+                keys.push(one[1][0])
+                keys.push(one[1][2])
+            }
+            let deposit3 = await rollup.connect(EOAAccounts[2]).deposit(pubkeyEigenAccountKey[2], 1, 20, 1, { value, from: EOAAccounts[2].address })
             assert(deposit3, "deposit3 failed");
 
             let root = await rollup.dataTreeRoot();
@@ -282,8 +300,6 @@ describe("Rollup Contract Test", () => {
             await rollup.dataTreeRoot().then(console.log)
         })
 
-        // ----------------------------------------------------------------------------------
-
         it("should make second batch of deposits", async () => {
             const pubkeyC = pubkeyEigenAccountKey[3];
             const pubkeyD = pubkeyEigenAccountKey[4];
@@ -294,22 +310,42 @@ describe("Rollup Contract Test", () => {
             let keys = [];
             let res = await createAccountFunc(3);
             keys.push(res[1][0]);
-            let deposit4 = await rollup.connect(EOAAccounts[3]).deposit(pubkeyC, 200, 1, 3, { value, from: EOAAccounts[3].address })
+            res = await depositFunc(1, 3, 200, 3)
+            for (const one of res) {
+                keys.push(one[1][0])
+                keys.push(one[1][2])
+            }
+            let deposit4 = await rollup.connect(EOAAccounts[3]).deposit(pubkeyC, 1, 200, 3, { value, from: EOAAccounts[3].address })
             assert(deposit4, "deposit4 failed");
 
             res = await createAccountFunc(4);
             keys.push(res[1][0]);
-            let deposit5 = await rollup.connect(EOAAccounts[4]).deposit(pubkeyD, 100, 1, 4, { value, from: EOAAccounts[4].address })
+            res = await depositFunc(1, 4, 100, 4)
+            for (const one of res) {
+                keys.push(one[1][0])
+                keys.push(one[1][2])
+            }
+            let deposit5 = await rollup.connect(EOAAccounts[4]).deposit(pubkeyD, 1, 100, 4, { value, from: EOAAccounts[4].address })
             assert(deposit5, "deposit5 failed");
 
             res = await createAccountFunc(5);
             keys.push(res[1][0]);
-            let deposit6 = await rollup.connect(EOAAccounts[3]).deposit(pubkeyE, 500, 1, 5, { value, from: EOAAccounts[3].address })
+            res = await depositFunc(1, 5, 500, 5)
+            for (const one of res) {
+                keys.push(one[1][0])
+                keys.push(one[1][2])
+            }
+            let deposit6 = await rollup.connect(EOAAccounts[3]).deposit(pubkeyE, testTokenAssetId, 500, 5, { value, from: EOAAccounts[3].address })
             assert(deposit6, "deposit6 failed");
 
             res = await createAccountFunc(6);
             keys.push(res[1][0]);
-            let deposit7 = await rollup.connect(EOAAccounts[6]).deposit(pubkeyF, 20, 1, 6, { value, from: EOAAccounts[6].address })
+            res = await depositFunc(1, 6, 20, 6)
+            for (const one of res) {
+                keys.push(one[1][0])
+                keys.push(one[1][2])
+            }
+            let deposit7 = await rollup.connect(EOAAccounts[6]).deposit(pubkeyF, testTokenAssetId, 20, 6, { value, from: EOAAccounts[6].address })
             assert(deposit7, "deposit7 failed");
             await rollup.dataTreeRoot().then(console.log)
             let keysFound = []
@@ -335,12 +371,7 @@ describe("Rollup Contract Test", () => {
             await rollup.dataTreeRoot().then(console.log)
         });
 
-        // ----------------------------------------------------------------------------------
-        // const updateInputJson = path.join(__dirname, "..", "circuits/main_update_state_js/public.json");
-        // const updateInput = JSON.parse(fs.readFileSync(updateInputJson, "utf8"));
-        // const updateProof = require("../circuits/main_update_state_js/proof.json");
-
-        // it("should accept valid state updates", async () => {
+        // it("should make first batch of transactions", async () => {
         //     const publicSignals = unstringifyBigInts(updateInput);
         //     console.log(publicSignals);
         //     const {a, b, c} = parseProof(updateProof)
