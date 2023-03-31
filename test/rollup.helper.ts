@@ -193,7 +193,7 @@ export class RollupHelper {
                 proof.a,
                 proof.b,
                 proof.c,
-                proofAndPublicSignal.publicSignal,
+                proofAndPublicSignal.publicSignals,
                 { from: this.userAccounts[i].address }
             )
         } catch (error) {
