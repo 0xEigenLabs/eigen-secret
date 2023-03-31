@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 import "./UpdateStateVerifier.sol";
 import "./WithdrawVerifier.sol";
 import "./SMT.sol";
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 contract ITokenRegistry {
     address public coordinator;
@@ -130,8 +130,6 @@ contract Rollup is SMT {
                 "token deposit must be greater than 0");
                 address tokenContractAddress = tokenRegistry.registeredTokens(publicAssetId);
                 tokenContract = IERC20(tokenContractAddress);
-                console.log(11111111111111111111111, tokenContract.balanceOf(msg.sender));
-                //console.log(tokenContract.allowance(coordinator, msg.sender));
                 require(
                     tokenContract.transferFrom(msg.sender, address(this), publicValue),
                     "token transfer not approved"

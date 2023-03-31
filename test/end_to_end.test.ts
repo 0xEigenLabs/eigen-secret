@@ -74,6 +74,9 @@ describe('POST /transactions', function() {
         let newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
 
+        let keysFound = []
+        let valuesFound = [];
+        let siblings = [];
         let input = await UpdateStatusCircuit.createAccountInput(
             proofId,
             accountKey,
@@ -109,10 +112,19 @@ describe('POST /transactions', function() {
             tmpInput
         )
         .set('Accept', 'application/json');
-        //console.log(response.body);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
+
         let singleProof = response.body.data;
+
+        keysFound.push(acStateKey);
+        valuesFound.push(1n);
+        let tmpSiblings = [];
+        for (const sib of singleProof.siblings[0]) {
+            tmpSiblings.push(BigInt(sib));
+        }
+        siblings.push(tmpSiblings);
+
         let circuitInput = input.toCircuitInput(babyJub, singleProof);
         let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput, F);
 
@@ -120,15 +132,15 @@ describe('POST /transactions', function() {
         let receiver = accountKey;
 
         const responseNote = await request(app)
-        .post('/notes/get')
-        .send({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address
-        })
-        .set('Accept', 'application/json');
+            .post('/notes/get')
+            .send({
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: newEOAAccount.address
+            })
+            .set('Accept', 'application/json');
         //console.log(responseNote.body.data);
         let encryptedNotes = responseNote.body.data;
 
@@ -161,6 +173,7 @@ describe('POST /transactions', function() {
             notes,
             accountRequired
         );
+
         for (const input of inputs) {
             let tmpInput = prepareJson({
                 alias: alias,
@@ -178,12 +191,12 @@ describe('POST /transactions', function() {
             });
             //console.log("tmpInput", tmpInput);
             const response = await request(app)
-            .post('/statetree')
-            .send(
-                tmpInput
-            )
-            .set('Accept', 'application/json');
-            //console.log(response.body);
+                .post('/statetree')
+                .send(
+                    tmpInput
+                )
+                .set('Accept', 'application/json');
+            console.log(response.body.data);
             expect(response.status).to.eq(200);
             expect(response.body.errno).to.eq(0);
 
@@ -191,6 +204,18 @@ describe('POST /transactions', function() {
             let singleProof = response.body.data;
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput, F);
+
+            keysFound.push(input.outputNCs[0]);
+            valuesFound.push(input.outputNotes[0].inputNullifier);
+            keysFound.push(input.outputNCs[1]);
+            valuesFound.push(input.outputNotes[1].inputNullifier);
+            for (const item of singleProof.siblings) {
+                let tmpSiblings = [];
+                for (const sib of item) {
+                    tmpSiblings.push(BigInt(sib));
+                }
+                siblings.push(tmpSiblings);
+            }
 
             // output transaction
             let transaction = new Transaction(input.outputNotes, signingKey);
@@ -264,6 +289,8 @@ describe('POST /transactions', function() {
             expect(responseSt.status).to.eq(200);
             expect(responseSt.body.errno).to.eq(0);
         }
+
+        await rollupHelper.processDeposits(0, keysFound, valuesFound, siblings);
     })
 
     it("end2end send", async() => {
@@ -273,11 +300,12 @@ describe('POST /transactions', function() {
         let accountKey = rollupHelper.eigenAccountKey[0];
         console.log(accountKey, signingKey);
 
+        let proof = [];
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let accountRequired = false;
         const value = 5;
 
-        let receiver = rollupHelper.eigenAccountKey[1];
+        let receiver = rollupHelper.eigenAccountKey[0];
         let pubKey = receiver.pubKey.pubKey;
 
         // 1. first transaction
@@ -375,7 +403,9 @@ describe('POST /transactions', function() {
             .set('Accept', 'application/json');
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
-            // TODO: call contract and deposit
+            // call contract and deposit
+            console.log(proofAndPublicSignals);
+            await rollupHelper.update(0, proofAndPublicSignals);
 
             // settle down the spent notes
             const responseSt = await request(app)
