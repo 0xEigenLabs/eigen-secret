@@ -21,6 +21,7 @@ const { buildEddsa } = require("circomlibjs");
 import { RollupHelper } from "./rollup.helper";
 const path = require("path");
 const hre = require('hardhat')
+import { poseidonSponge } from "../src/sponge_poseidon";
 
 describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
@@ -34,9 +35,8 @@ describe('POST /transactions', function() {
     let aliasHash: any;
     const accountRequired = false;
     let signer: any;
-    let acStateKey: any;
     let assetId = 0;
-    let rollupHelper: any;
+    let rollupHelper: RollupHelper;
     let userAccounts: any;
     before("end2end deposit", async() => {
         userAccounts = await hre.ethers.getSigners()
@@ -58,7 +58,7 @@ describe('POST /transactions', function() {
         aliasHash = uint8Array2Bigint(aliasHashBuffer);
         let _accountRequired = true;
         signer = _accountRequired? signingKey: accountKey;
-        acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
+        let acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
 
         // 1. create account
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
@@ -246,7 +246,9 @@ describe('POST /transactions', function() {
             //console.log(responseTx.body);
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
-            // TODO: call contract and deposit
+
+            // call contract and deposit
+            await rollupHelper.update(0, proofAndPublicSignals);
 
             // settle down the spent notes
             const responseSt = await request(app)
@@ -298,11 +300,12 @@ describe('POST /transactions', function() {
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
         let accountKey = rollupHelper.eigenAccountKey[0];
-        console.log(accountKey, signingKey);
+        let accountRequired = false;
+        signer = accountRequired? signingKey: accountKey;
+        let acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
 
         let proof = [];
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
-        let accountRequired = false;
         const value = 5;
 
         let receiver = rollupHelper.eigenAccountKey[0];
@@ -403,8 +406,8 @@ describe('POST /transactions', function() {
             .set('Accept', 'application/json');
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
+
             // call contract and deposit
-            console.log(proofAndPublicSignals);
             await rollupHelper.update(0, proofAndPublicSignals);
 
             // settle down the spent notes
@@ -448,5 +451,210 @@ describe('POST /transactions', function() {
             expect(responseSt.status).to.eq(200);
             expect(responseSt.body.errno).to.eq(0);
         }
+    })
+
+    it("should accept valid withdrawals", async() => {
+        let timestamp = Math.floor(Date.now()/1000).toString();
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        let signingKey = rollupHelper.eigenSigningKeys[0][0];
+        let accountKey = rollupHelper.eigenAccountKey[0];
+
+        let proof = [];
+        let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
+        let accountRequired = false;
+        signer = accountRequired? signingKey: accountKey;
+        let acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
+        const value = 5;
+
+        let receiver = rollupHelper.eigenAccountKey[0];
+        let pubKey = receiver.pubKey.pubKey;
+
+        // 1. first transaction
+        const responseNote = await request(app)
+        .post('/notes/get')
+        .send({
+            alias: alias,
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: newEOAAccount.address
+        })
+        .set('Accept', 'application/json');
+        //console.log(responseNote.body.data);
+        let encryptedNotes = responseNote.body.data;
+
+        // decrypt
+        let notes: Array<Note> = [];
+        if (encryptedNotes) {
+            encryptedNotes.forEach((item: DBNote) => {
+                let sharedKey = signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
+                notes.push(Note.decrypt(item.content, sharedKey));
+            });
+        }
+        assert(notes.length > 0, "Invalid notes");
+
+        // create notes
+        let inputs = await UpdateStatusCircuit.createJoinSplitInput(
+            accountKey,
+            signingKey,
+            acStateKey,
+            proofId,
+            aliasHash,
+            assetId,
+            assetId,
+            BigInt(value),
+            signingKey.pubKey,
+            0n,
+            signingKey.pubKey,
+            notes,
+            accountRequired
+        );
+        let lastProof: any;
+        let lastSiblings: any;
+        for (const input of inputs) {
+            const response = await request(app)
+            .post('/statetree')
+            .send(prepareJson({
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: newEOAAccount.address,
+                newStates: {
+                    outputNc1: input.outputNCs[0],
+                    nullifier1: input.outputNotes[0].inputNullifier,
+                    outputNc2: input.outputNCs[1],
+                    nullifier2: input.outputNotes[1].inputNullifier,
+                    acStateKey: acStateKey
+                }
+            }))
+            .set('Accept', 'application/json');
+            //console.log(response.body.data);
+            expect(response.status).to.eq(200);
+            expect(response.body.errno).to.eq(0);
+
+            // generate proof
+            let singleProof = response.body.data;
+            let circuitInput = input.toCircuitInput(babyJub, singleProof);
+            let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput, F);
+
+            let transaction = new Transaction(input.outputNotes, signingKey);
+            let txdata = await transaction.encrypt();
+
+            let txInput = new Transaction(input.inputNotes, signingKey);
+            let txInputData = await txInput.encrypt();
+            assert(txInputData[0].content, encryptedNotes[0].content);
+
+            // create tx
+            const responseTx = await request(app)
+            .post('/transactions')
+            .send({
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: newEOAAccount.address,
+                pubKey: txdata[0].pubKey.pubKey,
+                pubKey2: txdata[1].pubKey.pubKey,
+                content: txdata[0].content,
+                content2: txdata[1].content,
+                noteIndex:  input.outputNotes[0].index.toString(),
+                note2Index: input.outputNotes[1].index.toString(),
+                proof: Prover.serialize(proofAndPublicSignals.proof),
+                publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
+            })
+            .set('Accept', 'application/json');
+            expect(responseTx.status).to.eq(200);
+            expect(responseTx.body.errno).to.eq(0);
+
+            // call contract and deposit
+            await rollupHelper.update(0, proofAndPublicSignals);
+            lastProof = proofAndPublicSignals;
+            lastSiblings = singleProof.siblings;
+
+            // settle down the spent notes
+            const responseSt = await request(app)
+            .post('/notes/update')
+            .send(prepareJson({
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: newEOAAccount.address,
+                notes: [
+                    {
+                        index: encryptedNotes[0].index,
+                        pubKey: pubKey,
+                        content: encryptedNotes[0].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        index: encryptedNotes[1].index,
+                        pubKey: pubKey,
+                        content: encryptedNotes[1].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        index: input.outputNotes[0].index,
+                        pubKey: pubKey,
+                        content: txdata[0].content,
+                        state: NoteState.PROVED
+                    },
+                    {
+                        index: input.outputNotes[1].index,
+                        pubKey: pubKey,
+                        content: txdata[1].content,
+                        state: NoteState.PROVED
+                    },
+                ]
+            }))
+            .set('Accept', 'application/json');
+            //console.log(responseSt.body.data);
+            expect(responseSt.status).to.eq(200);
+            expect(responseSt.body.errno).to.eq(0);
+        }
+
+        let xy = rollupHelper.pubkeyEigenSigningKeys[0][0];
+        // last tx
+        const txInfo = {
+            publicValue: value, // lastProof.publicSignals[1]
+            publicOwner: xy, //lastProof.publicSignals[2]
+            outputNc1: lastProof.publicSignals[4],
+            outputNc2: lastProof.publicSignals[5],
+            dataTreeRoot: lastProof.publicSignals[6],
+            publicAssetId: assetId // lastProof.publicSignals[7]
+        }
+
+        let msg = await poseidonSponge(
+            [
+                txInfo.publicValue,
+                txInfo.publicOwner[0],
+                txInfo.publicOwner[1],
+                txInfo.outputNc1,
+                txInfo.outputNc2,
+                txInfo.dataTreeRoot,
+                txInfo.publicAssetId,
+            ]
+        );
+
+        let sig = await signingKey.sign(eddsa.F.e(msg));
+        let input = {
+            enabled: 1,
+            Ax: xy[0],
+            Ay: xy[1],
+            M: msg,
+            R8x: F.toObject(sig.R8[0]),
+            R8y: F.toObject(sig.R8[1]),
+            S: sig.S,
+        }
+        let proofAndPublicSignals = await Prover.withdraw(circuitPath, input, eddsa.F);
+        await rollupHelper.withdraw(
+            0,
+            1,
+            txInfo,
+            proofAndPublicSignals
+        );
+
+        //TODO balance test
     })
 });

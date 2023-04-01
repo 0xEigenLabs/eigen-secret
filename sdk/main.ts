@@ -238,7 +238,7 @@ export class SecretSDK {
         // let circuitPath = path.join(__dirname, "..", "circuits");
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, input, F);
 
-        if (!Prover.verify(proofAndPublicSignals)) {
+        if (!Prover.verifyState(proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
         return Prover.serialize(proofAndPublicSignals);
@@ -269,7 +269,7 @@ export class SecretSDK {
         // let circuitPath = path.join(__dirname, "..", "circuits");
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, input, F);
 
-        if (!Prover.verify(proofAndPublicSignals)) {
+        if (!Prover.verifyState(proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
         return Prover.serialize(proofAndPublicSignals);
@@ -300,7 +300,7 @@ export class SecretSDK {
         // let circuitPath = path.join(__dirname, "..", "circuits");
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, input, F);
 
-        if (!Prover.verify(proofAndPublicSignals)) {
+        if (!Prover.verifyState(proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
         return Prover.serialize(proofAndPublicSignals);

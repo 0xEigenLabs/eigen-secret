@@ -82,9 +82,19 @@ export class RollupHelper {
         this.tokenRegistry = await factoryTR.deploy(this.userAccounts[0].address)
         await this.tokenRegistry.deployed()
 
-        let factoryR = await ethers.getContractFactory("Rollup");
-        this.rollup = await factoryR.deploy(this.poseidonContracts[1].address, this.poseidonContracts[2].address,
-            this.spongePoseidon.address, this.tokenRegistry.address);
+        let factoryR = await ethers.getContractFactory(
+            "Rollup",
+            {
+                libraries: {
+                    SpongePoseidon: this.spongePoseidon.address,
+                }
+            }
+        );
+        this.rollup = await factoryR.deploy(
+            this.poseidonContracts[1].address,
+            this.poseidonContracts[2].address,
+            this.tokenRegistry.address,
+        );
         await this.rollup.deployed();
         console.log("rollup address:", this.rollup.address);
 
@@ -194,6 +204,27 @@ export class RollupHelper {
                 proof.b,
                 proof.c,
                 proofAndPublicSignal.publicSignals,
+                { from: this.userAccounts[i].address }
+            )
+        } catch (error) {
+            console.log('processDeposits revert reason', error)
+        }
+        assert(processDeposit1, "processDeposit1 failed")
+        await this.rollup.dataTreeRoot().then(console.log)
+    }
+
+    async withdraw(i: number, receiverI: number, txInfo: any, proofAndPublicSignal: any) {
+        let processDeposit1: any;
+        // create 4 notes for above deposit.
+        let proof = parseProof(proofAndPublicSignal.proof);
+        console.log(txInfo, this.userAccounts[receiverI].address, proof);
+        try {
+            processDeposit1 = await this.rollup.connect(this.userAccounts[i]).withdraw(
+                txInfo,
+                this.userAccounts[receiverI].address,
+                proof.a,
+                proof.b,
+                proof.c,
                 { from: this.userAccounts[i].address }
             )
         } catch (error) {

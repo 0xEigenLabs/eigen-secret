@@ -179,7 +179,7 @@ describe("Test JoinSplit Circuit", function () {
             2n, // public value
             withrawReceiver.pubKey, // public owner
             0n, // receiver private value
-            accountKey.pubKey,
+            signingKey.pubKey,
             confirmedNote,
             accountRequired
         );
