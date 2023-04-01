@@ -95,7 +95,7 @@ module.exports = {
         },
         scope: {
           description:
-            'What is the scope of this change (e.g. component or file name)',
+            'What is the scope of this change (e.g. component or filename)',
         },
         subject: {
           description:
@@ -127,4 +127,4 @@ module.exports = {
       },
     },
   }
-  
+
