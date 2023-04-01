@@ -206,6 +206,7 @@ export class JoinSplitCircuit {
         confirmedAndPendingInputNotes: Array<Note>,
         accountRequired: boolean
     ) {
+        console.log("createProofInput", publicAssetId, publicValue, publicOwner);
         let eddsa = await buildEddsa();
         const F = eddsa.F;
         const babyJub = eddsa.babyJub;
@@ -248,7 +249,7 @@ export class JoinSplitCircuit {
             let outputNc2 = await outputNote2.compress(babyJub);
 
             let sig = await JoinSplitCircuit.calculateSignature(
-                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
+                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, 0n, 0n);
 
             /*
             let state = await WorldState.getInstance();
@@ -263,7 +264,7 @@ export class JoinSplitCircuit {
             let ak = await accountKey.toCircuitInput(eddsa);
 
             let input = new JoinSplitInput(
-                proofId, 0n, 0n, assetId, publicAssetId, aliasHash,
+                JoinSplitCircuit.PROOF_ID_TYPE_SEND, 0n, 0n, assetId, 0, aliasHash,
                 numInputNote,
                 [firstNote, note],
                 [outputNote1, outputNote2],
@@ -351,6 +352,7 @@ export class JoinSplitCircuit {
              */
 
             let ak = accountKey.toCircuitInput(eddsa);
+            console.log("publicValue", publicValue);
             let input = new JoinSplitInput(
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
@@ -365,7 +367,7 @@ export class JoinSplitCircuit {
             );
             inputList.push(input);
         }
-
+        console.log("createProofInput end", inputList);
         return Promise.resolve(inputList);
     }
 
@@ -400,24 +402,4 @@ export class JoinSplitCircuit {
         ]);
         return poseidon.F.toObject(res);
     }
-
-    /*
-    // TODO: test
-    static async createProof(circuitPath: string, input: JoinSplitInput, F: any): Promise<Proof> {
-        let wasm = path.join(circuitPath, "main_js", "main.wasm");
-        let zkey = path.join(circuitPath, "circuit_final.zkey");
-        const wc = require(`${circuitPath}/main_js/witness_calculator`);
-        const buffer = fs.readFileSync(wasm);
-        const witnessCalculator = await wc(buffer);
-
-        let inputJson = input.toCircuitInput(F);
-        const witnessBuffer = await witnessCalculator.calculateWTNSBin(
-            inputJson,
-            0
-        );
-
-        const { proof, publicSignals } = await snarkjs.groth16.prove(zkey, witnessBuffer);
-        return Promise.resolve(parseProof(proof));
-    }
-    */
 }

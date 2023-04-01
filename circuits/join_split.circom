@@ -208,7 +208,7 @@ template JoinSplit(nLevel) {
     ac.spk <== signer_pk;
     ac.alias_hash <== alias_hash;
 
-    // FIXME: the key is the merkle path, and the value is is commitment
+    // FIXME: the key is the merkle path, and the value is commitment
     component ams = Membership(nLevel);
     ams.enabled <== enabled;
     ams.key <== ac.out;

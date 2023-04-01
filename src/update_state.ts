@@ -167,7 +167,7 @@ export class UpdateStatusInput {
             }
         }
 
-        console.log(inputJson)
+        // console.log(inputJson)
         fs.writeFileSync("./circuits/main_update_state.input.json",
                          JSON.stringify(
                              inputJson,

@@ -89,42 +89,10 @@ export async function createTx(req: any, res: any) {
         );
 
         if (isAliasAvailable === null) {
-            let result = await TransactionModel.create({
-                alias: alias,
-                noteIndex: noteIndex,
-                note2Index: note2Index,
-                proof: proof,
-                publicInput: publicInput,
-                status: TransactionModelStatus.CREATED
-            }, { transaction });
-
-            // update Notes
-            let result2 = await updateDBNotes(
-                [
-                    {
-                        alias: alias,
-                        index: noteIndex,
-                        pubKey: pubKey,
-                        content: content,
-                        state: NoteState.CREATING
-                    },
-                    {
-                        alias: alias,
-                        index: note2Index,
-                        pubKey: pubKey2,
-                        content: content2,
-                        state: NoteState.CREATING
-                    }
-                ],
-                transaction
+            let result = await createTxInternal(
+                alias, pubKey, pubKey2, content, content2,
+                noteIndex, note2Index, proof, publicInput, transaction
             );
-            if (!result || !result2) {
-                consola.log(
-                    result,
-                    result2
-                );
-                throw new Error("Update database error");
-            }
             await transaction.commit();
             return res.json(utils.succ(result))
         }
@@ -135,6 +103,57 @@ export async function createTx(req: any, res: any) {
         }
         return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
     }
+}
+
+export async function createTxInternal(
+    alias: string,
+    pubKey: string,
+    pubKey2: string,
+    content: string,
+    content2: string,
+    noteIndex: string,
+    note2Index: string,
+    proof: any,
+    publicInput: any,
+    transaction: any
+) {
+    let result = await TransactionModel.create({
+        alias: alias,
+        noteIndex: noteIndex,
+        note2Index: note2Index,
+        proof: proof,
+        publicInput: publicInput,
+        status: TransactionModelStatus.CREATED
+    }, { transaction });
+
+    // update Notes
+    let result2 = await updateDBNotes(
+        [
+            {
+                alias: alias,
+                index: noteIndex,
+                pubKey: pubKey,
+                content: content,
+                state: NoteState.CREATING
+            },
+            {
+                alias: alias,
+                index: note2Index,
+                pubKey: pubKey2,
+                content: content2,
+                state: NoteState.CREATING
+            }
+        ],
+        transaction
+    );
+    if (!result || !result2) {
+        consola.log(
+            result,
+            result2
+        );
+        throw new Error("Update database error");
+    }
+    return result;
 }
 
 export async function getTxByAlias(req: any, res: any) {
