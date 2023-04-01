@@ -402,24 +402,4 @@ export class JoinSplitCircuit {
         ]);
         return poseidon.F.toObject(res);
     }
-
-    /*
-    // TODO: test
-    static async createProof(circuitPath: string, input: JoinSplitInput, F: any): Promise<Proof> {
-        let wasm = path.join(circuitPath, "main_js", "main.wasm");
-        let zkey = path.join(circuitPath, "circuit_final.zkey");
-        const wc = require(`${circuitPath}/main_js/witness_calculator`);
-        const buffer = fs.readFileSync(wasm);
-        const witnessCalculator = await wc(buffer);
-
-        let inputJson = input.toCircuitInput(F);
-        const witnessBuffer = await witnessCalculator.calculateWTNSBin(
-            inputJson,
-            0
-        );
-
-        const { proof, publicSignals } = await snarkjs.groth16.prove(zkey, witnessBuffer);
-        return Promise.resolve(parseProof(proof));
-    }
-    */
 }

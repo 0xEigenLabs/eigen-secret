@@ -204,7 +204,7 @@ describe("Test JoinSplit Circuit", function () {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
-        let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey");
+        let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey.16");
         const vKey = await snarkjs.zKey.exportVerificationKey(zkey);
         const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
         assert.equal(res, true)
