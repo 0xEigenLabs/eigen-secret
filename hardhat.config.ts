@@ -16,6 +16,8 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+require("./tasks/index");
+
 module.exports = {
   solidity: '0.8.16',
   typechain: {
