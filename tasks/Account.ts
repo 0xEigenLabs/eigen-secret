@@ -7,7 +7,6 @@ const path = require("path");
 const circuitPath = path.join(__dirname, "../circuits/");
 require('dotenv').config()
 
-const eddsa = buildEddsa();
 const assetId = 1;
 const rawMessage = "Use Eigen Secret to shield your asset";
 
@@ -19,6 +18,7 @@ task('createAccount', 'createAccount and first transaction depositing to itself'
         let [admin, user] = await ethers.getSigners();
         // const newEOAAccount = ethers.Wallet.createRandom();
         const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
+        const eddsa = await buildEddsa();
         let signingKey = await (new SigningKey()).newKey(undefined);
         let accountKey = await (new SigningKey()).newKey(undefined);
         let newAccountKey = accountKey;
@@ -35,9 +35,10 @@ task('createAccount', 'createAccount and first transaction depositing to itself'
           accountKey: accountKey
         };
         let proofAndPublicSignals = await secretSDK.createAccount(ctx, newSigningKey1, newSigningKey2);
-        let _pPubKey:EigenAddress = accountKey.pubKey;
+        let _pPubKey = accountKey.pubKey;
         let pPubKey = _pPubKey.unpack(eddsa.babyJub);
-        let receiver = Buffer.from(pPubKey[0]).toString("hex");
+        let pPubKey1 = eddsa.babyJub.packPoint(pPubKey);
+        let receiver = "eig:" + Buffer.from(pPubKey1).toString("hex");
         let proof = await secretSDK.deposit(ctx, receiver, value, assetId);
         return {proofAndPublicSignals, proof}
 	})

@@ -238,7 +238,7 @@ export class SecretSDK {
             accountRequired
         );
 
-        let proof: string[] = [];
+        let _proof: string[] = [];
         for (const input of inputs) {
             const proof = await this.state.updateStateTree(
                 ctx,
@@ -251,7 +251,7 @@ export class SecretSDK {
             console.log(proof);
             let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput, F);
-            proof.push(Prover.serialize(proofAndPublicSignals));
+            _proof.push(Prover.serialize(proofAndPublicSignals));
             let transaction = new Transaction(input.outputNotes, ctx.signingKey);
             let txdata = await transaction.encrypt();
 
@@ -286,7 +286,7 @@ export class SecretSDK {
             ]
             await this.note.updateNote(ctx, _notes);
         }
-        return proof;
+        return _proof;
     }
 
     async send(ctx: any, receiver: string, value: string, assetId: number) {
@@ -397,7 +397,11 @@ export class SecretSDK {
             newSigningPubKey2,
             aliasHash
         );
-        let smtProof = await this.state.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.accountNC);
+        // let smtProof = await this.state.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.accountNC);
+        let accountRequired = false;
+        let signer = accountRequired? this.signingKey: this.accountKey;
+        let acStateKey = await accountCompress(eddsa, this.accountKey, signer, aliasHash);
+        let smtProof = await this.state.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
         let circuitInput = input.toCircuitInput(eddsa.babyJub, smtProof);
         // create final proof
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput, F);
