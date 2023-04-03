@@ -1,4 +1,4 @@
-import { task } from 'hardhat/config'
+import { task } from 'hardhat/config';
 import { uint8Array2Bigint, signEOASignature, prepareJson } from "../src/utils";
 import { aliasHashDigest, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
 const { buildEddsa } = require("circomlibjs");
