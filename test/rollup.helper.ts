@@ -11,11 +11,12 @@ import { AccountCircuit, aliasHashDigest, compress as accountCompress, EigenAddr
 import { JoinSplitCircuit } from "../src/join_split";
 import { Prover } from "../src/prover";
 import { Contract } from "ethers";
-import { siblingsPad, WorldState } from "../src/state_tree";
+import { WorldState } from "../src/state_tree";
+import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "../src/state_tree_circuit";
 const createBlakeHash = require("blake-hash");
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
-import { NoteModel, NoteState, updateDBNotes, getDBNotes } from "../server/note";
-import { Note } from "../src/note";
+import { NoteModel, updateDBNotes, getDBNotes } from "../server/note";
+import { Note, NoteState } from "../src/note";
 import { Transaction } from "../src/transaction";
 import { createTxInternal } from "../server/transaction";
 import sequelize from "../src/db";

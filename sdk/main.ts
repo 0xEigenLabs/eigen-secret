@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { StateTreeCircuitInput } from "../src/state_tree";
+import { StateTreeCircuitInput } from "../src/state_tree_circuit";
 const createBlakeHash = require("blake-hash");
 const { buildEddsa, buildBabyJub } = require("circomlibjs");
 import { uint8Array2Bigint, signEOASignature, prepareJson } from "../src/utils";
@@ -8,7 +8,7 @@ import { UpdateStatusCircuit } from "../src/update_state";
 import { Prover } from "../src/prover";
 import { Note } from "../src/note";
 import { Transaction } from "../src/transaction";
-import { NoteState, NoteModel as DBNote } from "../server/note";
+import { NoteState } from "../src/note";
 import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey, aliasHashDigest } from "../src/account";
 const path = require("path");
 const axios = require("axios").default;
@@ -217,7 +217,7 @@ export class SecretSDK {
         let notes: Array<Note> = [];
         let encryptedNotes = await this.note.getNote(ctx);
         if (encryptedNotes) {
-            encryptedNotes.forEach((item: DBNote) => {
+            encryptedNotes.forEach((item: any) => {
                 let sharedKey = ctx.signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
@@ -398,7 +398,7 @@ export class SecretSDK {
             aliasHash
         );
         // let smtProof = await this.state.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.accountNC);
-        let accountRequired = false;
+        let accountRequired = true;
         let signer = accountRequired? this.signingKey: this.accountKey;
         let acStateKey = await accountCompress(eddsa, this.accountKey, signer, aliasHash);
         let smtProof = await this.state.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);

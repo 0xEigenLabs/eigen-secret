@@ -35,12 +35,9 @@ task('createAccount', 'createAccount and first transaction depositing to itself'
           accountKey: accountKey
         };
         let proofAndPublicSignals = await secretSDK.createAccount(ctx, newSigningKey1, newSigningKey2);
-        let _pPubKey = accountKey.pubKey;
-        let pPubKey = _pPubKey.unpack(eddsa.babyJub);
-        let pPubKey1 = eddsa.babyJub.packPoint(pPubKey);
-        let receiver = "eig:" + Buffer.from(pPubKey1).toString("hex");
+        let receiver = accountKey.pubKey.pubKey;
         let proof = await secretSDK.deposit(ctx, receiver, value, assetId);
-        return {proofAndPublicSignals, proof}
+        console.log("CreateAccount done, proof: ", proofAndPublicSignals, proof);
 	})
 
 // task('processDeposit', 'process user deposit')

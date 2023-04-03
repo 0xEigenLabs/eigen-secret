@@ -2,6 +2,12 @@ const buildPoseidon = require("circomlibjs").buildPoseidon;
 import { Aes256gcm } from "./aes_gcm";
 import { EigenAddress } from "./account";
 
+export enum NoteState {
+    CREATING = 1,
+    PROVED,
+    SPENT,
+}
+
 export class Note {
     val: bigint;
     secret: bigint;
@@ -21,7 +27,6 @@ export class Note {
         this.inputNullifier = inputNullifier;
         this.accountRequired = accountRequired;
         this.index = index;
-        console.log("note", this);
     }
 
     get pending(): boolean {
