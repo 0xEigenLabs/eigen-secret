@@ -5,7 +5,8 @@ on:
   push:
     branches: [ main, zkpay_dev ]
   pull_request:
-    branches: [ main, zkpay_dev ]
+    branches:
+      - "**"
 
 jobs:
   build-test:
