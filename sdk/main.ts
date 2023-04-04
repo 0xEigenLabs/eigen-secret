@@ -12,6 +12,7 @@ import { NoteState } from "../src/note";
 import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey, aliasHashDigest } from "../src/account";
 const path = require("path");
 const axios = require("axios").default;
+import { expect, assert } from "chai";
 
 export class StateTreeClient {
     serverAddr: any;
@@ -301,6 +302,16 @@ export class SecretSDK {
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
         const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
+        let notes: Array<Note> = [];
+        let encryptedNotes = await this.note.getNote(ctx);
+        if (encryptedNotes) {
+            encryptedNotes.forEach((item: any) => {
+                let sharedKey = ctx.signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
+                notes.push(Note.decrypt(item.content, sharedKey));
+            });
+        }
+        let _receiver = new EigenAddress(receiver);
+        let receiverPubKey = _receiver.pubKey;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             ctx.accountKey,
             ctx.signingKey,
@@ -312,12 +323,12 @@ export class SecretSDK {
             0n,
             undefined,
             BigInt(value),
-            new EigenAddress(receiver),
-            [],
+            _receiver,
+            notes,
             accountRequired
         );
 
-        let proof: string[] = [];
+        let _proof: string[] = [];
         for (const input of inputs) {
             const proof = await this.state.updateStateTree(
                 ctx,
@@ -327,12 +338,44 @@ export class SecretSDK {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            // console.log(proof);
             let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput, F);
-            proof.push(Prover.serialize(proofAndPublicSignals));
+            _proof.push(Prover.serialize(proofAndPublicSignals));
+            let transaction = new Transaction(input.outputNotes, ctx.signingKey);
+            let txdata = await transaction.encrypt();
+
+            let txInput = new Transaction(input.inputNotes, ctx.signingKey);
+            let txInputData = await txInput.encrypt();
+            await this.trans.createTx(ctx, txdata, input, proofAndPublicSignals);
+            let _notes = [
+                {
+                    index: encryptedNotes[0].index,
+                    pubKey: receiverPubKey,
+                    content: encryptedNotes[0].content,
+                    state: NoteState.SPENT
+                },
+                {
+                    index: encryptedNotes[1].index,
+                    pubKey: receiverPubKey,
+                    content: encryptedNotes[1].content,
+                    state: NoteState.SPENT
+                },
+                {
+                    index: input.outputNotes[0].index,
+                    pubKey: receiverPubKey,
+                    content: txdata[0].content,
+                    state: NoteState.PROVED
+                },
+                {
+                    index: input.outputNotes[1].index,
+                    pubKey: receiverPubKey,
+                    content: txdata[1].content,
+                    state: NoteState.PROVED
+                },
+            ]
+            await this.note.updateNote(ctx, _notes);
         }
-        return proof;
+        return _proof;
     }
 
     async withdraw(ctx: any, receiver: string, value: string, assetId: number) {
@@ -344,6 +387,17 @@ export class SecretSDK {
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
         const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
+        let notes: Array<Note> = [];
+        let encryptedNotes = await this.note.getNote(ctx);
+        if (encryptedNotes) {
+            encryptedNotes.forEach((item: any) => {
+                let sharedKey = ctx.signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
+                notes.push(Note.decrypt(item.content, sharedKey));
+            });
+        }
+        assert(notes.length > 0, "Invalid notes");
+        let _receiver = new EigenAddress(receiver);
+        let receiverPubKey = _receiver.pubKey;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             ctx.accountKey,
             ctx.signingKey,
@@ -353,14 +407,14 @@ export class SecretSDK {
             assetId,
             assetId,
             BigInt(value),
-            new EigenAddress(receiver),
+            ctx.signingKey.pubKey,
             0n,
-            ctx.accountKey.pubKey,
-            [],
+            ctx.signingKey.pubKey,
+            notes,
             accountRequired
         );
 
-        let proof: string[] = [];
+        let _proof: string[] = [];
         for (const input of inputs) {
             const proof = await this.state.updateStateTree(
                 ctx,
@@ -373,9 +427,42 @@ export class SecretSDK {
             // console.log(proof);
             let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput, F);
-            proof.push(Prover.serialize(proofAndPublicSignals));
+            _proof.push(Prover.serialize(proofAndPublicSignals));
+            let transaction = new Transaction(input.outputNotes, ctx.signingKey);
+            let txdata = await transaction.encrypt();
+
+            let txInput = new Transaction(input.inputNotes, ctx.signingKey);
+            let txInputData = await txInput.encrypt();
+            await this.trans.createTx(ctx, txdata, input, proofAndPublicSignals);
+            let _notes = [
+                {
+                    index: encryptedNotes[0].index,
+                    pubKey: receiverPubKey,
+                    content: encryptedNotes[0].content,
+                    state: NoteState.SPENT
+                },
+                {
+                    index: encryptedNotes[1].index,
+                    pubKey: receiverPubKey,
+                    content: encryptedNotes[1].content,
+                    state: NoteState.SPENT
+                },
+                {
+                    index: input.outputNotes[0].index,
+                    pubKey: receiverPubKey,
+                    content: txdata[0].content,
+                    state: NoteState.PROVED
+                },
+                {
+                    index: input.outputNotes[1].index,
+                    pubKey: receiverPubKey,
+                    content: txdata[1].content,
+                    state: NoteState.PROVED
+                },
+            ]
+            await this.note.updateNote(ctx, _notes);
         }
-        return proof;
+        return _proof;
     }
 
     // create proof for account operation, create, migrate or update

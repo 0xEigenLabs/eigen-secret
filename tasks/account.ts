@@ -13,7 +13,7 @@ const rawMessage = "Use Eigen Secret to shield your asset";
 task('createAccount', 'createAccount and first transaction depositing to itself')
     .addParam('alias', 'user alias')
     .addParam('value', 'first deposit value')
-	  .setAction(async ({ alias, index, value }, {ethers}) => {
+	  .setAction(async ({ alias, value }, {ethers}) => {
         let timestamp = Math.floor(Date.now()/1000).toString();
         let [admin, user] = await ethers.getSigners();
         // const newEOAAccount = ethers.Wallet.createRandom();
@@ -38,10 +38,12 @@ task('createAccount', 'createAccount and first transaction depositing to itself'
         let receiver = accountKey.pubKey.pubKey;
         let proof = await secretSDK.deposit(ctx, receiver, value, assetId);
         console.log("CreateAccount done, proof: ", proofAndPublicSignals, proof);
+
+        let proof1 = await secretSDK.send(ctx, receiver, "5", assetId);
+        console.log("end2end send done, proof: ", proof1);
+
+        let proof2 = await secretSDK.withdraw(ctx, receiver, "5", assetId);
+        console.log("withdraw done, proof: ", proof2);
+
 	})
 
-// task('processDeposit', 'process user deposit')
-
-// task('deposit', 'user deposit')
-
-// task('withdraw', 'user withdraw')
