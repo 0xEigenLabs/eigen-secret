@@ -54,7 +54,7 @@ module.exports = {
     },
     tpolygon: {
       url: "https://rpc-mumbai.maticvigil.com/",
-      accounts: [process.env.DEVNET_PRIVKEY]
+      accounts: [process.env.PRIVATE_KEY]
     }
   },
   gasReporter: {
