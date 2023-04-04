@@ -17,6 +17,7 @@ const deploy = async() => {
     let factoryTR = await ethers.getContractFactory("TokenRegistry");
     let tokenRegistry = await factoryTR.deploy(admin.address)
     await tokenRegistry.deployed()
+    console.log("tokenRegistry deployed to:", tokenRegistry.address);
 
     let factoryR = await ethers.getContractFactory(
         "Rollup",
@@ -32,17 +33,16 @@ const deploy = async() => {
         tokenRegistry.address,
     );
     await rollup.deployed();
-    console.log("Done");
+    console.log("rollup deployed to:", rollup.address);
 }
 
 
 const deployTestToken = async() => {
     let [admin] = await ethers.getSigners();
-
     let factoryTT = await ethers.getContractFactory("TestToken");
     let testToken = await factoryTT.connect(admin).deploy();
     await testToken.deployed();
-    console.log("Done");
+    console.log("TestToken deployed to:", testToken.address);
 }
 
 
@@ -52,8 +52,6 @@ async function main() {
     console.log("Done");
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
     console.error(error);
     process.exitCode = 1;
