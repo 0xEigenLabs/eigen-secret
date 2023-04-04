@@ -10,7 +10,7 @@ import { expect, assert } from "chai";
 import { StateTree } from "../src/state_tree";
 import { NoteModel as DBNote } from "../server/note";
 import { Note, NoteState } from "../src/note";
-import { aliasHashDigest, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
+import { compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
 import { JoinSplitCircuit } from "../src/join_split";
 import { AccountCircuit } from "../src/account";
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";

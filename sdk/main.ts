@@ -88,13 +88,13 @@ export class NoteClient {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
-            data: {
+            data: prepareJson({
                 alias: alias,
                 timestamp: timestamp,
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: ethAddress
-            }
+            })
         };
         let response = await axios.request(options);
         // console.log(response);
@@ -116,14 +116,14 @@ export class NoteClient {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
-            data: {
+            data: prepareJson({
                 alias: alias,
                 timestamp: timestamp,
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: ethAddress,
                 notes
-            }
+            })
         };
         let response = await axios.request(options);
         // console.log(response);
@@ -153,7 +153,7 @@ export class TransactionClient {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
-            data: {
+            data: prepareJson({
                 alias: alias,
                 timestamp: timestamp,
                 message: rawMessage,
@@ -167,7 +167,7 @@ export class TransactionClient {
                 note2Index: input.outputNotes[1].index.toString(),
                 proof: Prover.serialize(proofAndPublicSignals.proof),
                 publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
-            }
+            })
         };
         let response = await axios.request(options);
         console.log(response);
@@ -210,8 +210,10 @@ export class SecretSDK {
         let F = eddsa.F;
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let accountRequired = false;
+        console.log("alias: ", ctx.alias, this.alias);
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(ctx.alias).digest().slice(0, 32));
-        const aliasHash = await aliasHashDigest(aliasHashBuffer);
+        const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
+
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
         const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
@@ -295,7 +297,7 @@ export class SecretSDK {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let accountRequired = false;
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(ctx.alias).digest().slice(0, 32));
-        const aliasHash = await aliasHashDigest(aliasHashBuffer);
+        const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
         const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
@@ -338,7 +340,7 @@ export class SecretSDK {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(ctx.alias).digest().slice(0, 32));
-        const aliasHash = await aliasHashDigest(aliasHashBuffer);
+        const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
         const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
@@ -398,7 +400,7 @@ export class SecretSDK {
             aliasHash
         );
         // let smtProof = await this.state.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.accountNC);
-        let accountRequired = true;
+        let accountRequired = false;
         let signer = accountRequired? this.signingKey: this.accountKey;
         let acStateKey = await accountCompress(eddsa, this.accountKey, signer, aliasHash);
         let smtProof = await this.state.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);

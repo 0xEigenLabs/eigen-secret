@@ -157,7 +157,6 @@ export class AccountOrNullifierKey implements IKey {
     }
 }
 
-
 export async function compress(
     eddsa: any,
     accountKey: SigningKey,

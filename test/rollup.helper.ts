@@ -7,7 +7,7 @@ const fs = require("fs");
 const unstringifyBigInts = require("ffjavascript").utils.unstringifyBigInts;
 import { uint8Array2Bigint, prepareJson, parseProof, Proof, signEOASignature } from "../src/utils";
 import { deploySpongePoseidon, deployPoseidons, deployPoseidonFacade } from "./deploy_poseidons.util";
-import { AccountCircuit, aliasHashDigest, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
+import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
 import { JoinSplitCircuit } from "../src/join_split";
 import { Prover } from "../src/prover";
 import { Contract } from "ethers";
