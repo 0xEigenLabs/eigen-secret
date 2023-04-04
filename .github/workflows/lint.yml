@@ -1,9 +1,13 @@
 name: Lint sol&js
 on:
   push:
-    branches: [ zkpay_dev ]
+    branches: 
+      - main
+      - zkpay_dev
   pull_request:
-    branches: [ zkpay_dev ]
+    branches:
+      - main
+      - zkpay_dev
 
 jobs:  
   lint_contract:

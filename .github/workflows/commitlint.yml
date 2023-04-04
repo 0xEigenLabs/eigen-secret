@@ -1,9 +1,13 @@
 name: Eigen Lint Commit Messages
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - main
+      - zkpay_dev
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - zkpay_dev
 
 jobs:
   commitlint:
