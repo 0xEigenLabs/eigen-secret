@@ -163,7 +163,7 @@ export class TransactionClient {
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
                 content2: txdata[1].content,
-                noteIndex:  input.outputNotes[0].index.toString(),
+                noteIndex: input.outputNotes[0].index.toString(),
                 note2Index: input.outputNotes[1].index.toString(),
                 proof: Prover.serialize(proofAndPublicSignals.proof),
                 publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
@@ -263,13 +263,14 @@ export class SecretSDK {
             let _notes = [
                 {
                     index: input.inputNotes[0].index,
-                    pubKey: txInputData[0].pubKey.pubKey, //it's the first depositing, so the init public key is a random
+                    // it's the first depositing, so the init public key is a random
+                    pubKey: txInputData[0].pubKey.pubKey,
                     content: txInputData[0].content,
                     state: NoteState.SPENT
                 },
                 {
                     index: input.inputNotes[1].index,
-                    pubKey: txInputData[1].pubKey.pubKey, //same as above
+                    pubKey: txInputData[1].pubKey.pubKey, // same as above
                     content: txInputData[1].content,
                     state: NoteState.SPENT
                 },

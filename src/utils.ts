@@ -188,7 +188,7 @@ export async function signEOASignature(
     return await EOAAccount.signMessage(strRawMessage)
 }
 
-const require_env_variables = (envVars: Array<string>) => {
+const requireEnvVariables = (envVars: Array<string>) => {
   for (const envVar of envVars) {
     if (!process.env[envVar]) {
       throw new Error(`Error: set your '${envVar}' environmental variable `);
@@ -249,5 +249,5 @@ async function upsert(modelObj: any, newItem: any, condition: any, connection: a
     return { item, created: false };
 }
 
-export { baseResp, succ, err, hasValue, require_env_variables, upsert, prepareJson };
+export { baseResp, succ, err, hasValue, requireEnvVariables, upsert, prepareJson };
 
