@@ -1,13 +1,12 @@
 import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat"
+import "@typechain/hardhat";
 import { task, HardhatUserConfig } from "hardhat/config";
 import { resolve } from "path";
 
 import { config as dotenvConfig } from "dotenv";
-dotenvConfig({ path: resolve(__dirname, "./.env") });
-require("./tasks/index");
 import { requireEnvVariables } from "./src/utils";
 
+dotenvConfig({ path: resolve(__dirname, "./.env") });
 //requireEnvVariables(["API_KEY", "PRIVATE_KEY"]);
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -48,6 +47,7 @@ module.exports = {
   },
   defaultNetwork: "hardhat",
   networks: {
+    hardhat: {},
     goerli: {
       url: "https://goerli.infura.io/v3/" + process.env.API_KEY,
       accounts: [process.env.PRIVATE_KEY],

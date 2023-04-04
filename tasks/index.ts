@@ -1,1 +1,1 @@
-import './account'
+import './account';

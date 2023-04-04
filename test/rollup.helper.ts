@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-const {BigNumber, ContractFactory} = require("ethers");
+const {BigNumber, ContractFactory, Contract} = require("ethers");
 import { expect, assert } from "chai";
 const {buildEddsa} = require("circomlibjs");
 const path = require("path");
@@ -10,7 +10,6 @@ import { deploySpongePoseidon, deployPoseidons, deployPoseidonFacade } from "./d
 import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
 import { JoinSplitCircuit } from "../src/join_split";
 import { Prover } from "../src/prover";
-import { Contract } from "ethers";
 import { WorldState } from "../src/state_tree";
 import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "../src/state_tree_circuit";
 const createBlakeHash = require("blake-hash");
