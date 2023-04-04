@@ -2,7 +2,8 @@ import { expect, assert } from "chai";
 import path = require("path");
 import { test, utils } from "../index";
 const cls = require("circomlibjs");
-import { StateTree, StateTreeCircuitInput, N_LEVEL, siblingsPad } from "../src/state_tree";
+import { StateTree } from "../src/state_tree";
+import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "../src/state_tree_circuit";
 const { ethers } = require("hardhat");
 import SMTModel from "../src/state_tree_db";
 

@@ -1,10 +1,13 @@
 import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat"
+import "@typechain/hardhat";
 import { task, HardhatUserConfig } from "hardhat/config";
 import { resolve } from "path";
 
 import { config as dotenvConfig } from "dotenv";
+import { requireEnvVariables } from "./src/utils";
+
 dotenvConfig({ path: resolve(__dirname, "./.env") });
+//requireEnvVariables(["API_KEY", "PRIVATE_KEY"]);
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -16,8 +19,17 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+
 module.exports = {
-  solidity: '0.8.16',
+  solidity: {
+    version: '0.8.16',
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
   typechain: {
     outDir: 'typechain',
     target: 'ethers-v5',
@@ -31,6 +43,18 @@ module.exports = {
     // Obtain one at https://etherscan.io/
     apiKey: {
       ropsten: '8HHE3RBH3MZ29E9I9XYP8VP6D9SQIINUIU'
+    }
+  },
+  defaultNetwork: "hardhat",
+  networks: {
+    hardhat: {},
+    goerli: {
+      url: "https://goerli.infura.io/v3/" + process.env.API_KEY,
+      accounts: [process.env.PRIVATE_KEY],
+    },
+    tpolygon: {
+      url: "https://rpc-mumbai.maticvigil.com/",
+      accounts: [process.env.PRIVATE_KEY]
     }
   },
   gasReporter: {

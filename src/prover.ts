@@ -12,7 +12,7 @@ export class Prover {
         const buffer = fs.readFileSync(wasm);
         const witnessCalculator = await wc(buffer);
 
-        console.log("prover input", input);
+        // console.log("prover input", input);
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(
             input,
             0
@@ -44,7 +44,7 @@ export class Prover {
         const buffer = fs.readFileSync(wasm);
         const witnessCalculator = await wc(buffer);
 
-        console.log("withdraw prover input", input);
+        // console.log("withdraw prover input", input);
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(
             input,
             0

@@ -5,8 +5,9 @@ import { ethers } from "ethers";
 import { Note } from "./note";
 import { SigningKey, EigenAddress, EthAddress } from "./account";
 import { strict as assert } from "assert";
-import { StateTree, N_LEVEL, siblingsPad } from "./state_tree";
-import { parseProof, Proof } from "./utils";
+import { StateTree } from "./state_tree";
+import { N_LEVEL, siblingsPad } from "./state_tree_circuit";
+import { parseProof, Proof, index } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");
 const snarkjs = require("snarkjs");
@@ -242,10 +243,10 @@ export class JoinSplitCircuit {
             numInputNote = 2;
             let secret = F.toObject(F.random());
             let outputNote1: Note = new Note(
-                0n, secret, owner, assetId, nullifier1, false, StateTree.index);
+                0n, secret, owner, assetId, nullifier1, false, index());
             let outputNc1 = await outputNote1.compress(babyJub);
             let outputNote2: Note = new Note(
-                firstNote.val + note.val, secret, owner, assetId, nullifier2, false, StateTree.index);
+                firstNote.val + note.val, secret, owner, assetId, nullifier2, false, index());
             let outputNc2 = await outputNote2.compress(babyJub);
 
             let sig = await JoinSplitCircuit.calculateSignature(
@@ -293,7 +294,7 @@ export class JoinSplitCircuit {
             numInputNote = inputNotes.length;
             for (let i = inputNotes.length; i < 2; i ++) {
                 inputNotes.push(
-                    JoinSplitCircuit.fakeNote(F, owner, assetId, StateTree.index)
+                    JoinSplitCircuit.fakeNote(F, owner, assetId, index())
                 );
                 inputNoteInUse[i] = 0n;
             }
@@ -308,7 +309,7 @@ export class JoinSplitCircuit {
                 assetId,
                 nullifier1,
                 false,
-                StateTree.index
+                index()
             );
             let outputNc1 = await outputNote1.compress(babyJub);
 
@@ -333,7 +334,7 @@ export class JoinSplitCircuit {
             let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, inputNoteInUse[1], accountKey);
             let outputNote2: Note = new Note(
                 change, secret, owner, assetId, nullifier2, false,
-                StateTree.index
+                index()
             );
             outputNotes.push(outputNote2);
             let outputNc2 = await outputNote2.compress(babyJub);

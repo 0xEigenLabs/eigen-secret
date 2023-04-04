@@ -5,10 +5,10 @@ import app from "../server/service";
 import { EigenAddress, SigningKey } from "../src/account";
 import sequelize from "../src/db";
 import { ethers } from "ethers";
-import {signEOASignature} from "../src/utils";
+import { signEOASignature, index } from "../src/utils";
 import { expect, assert } from "chai";
 import { StateTree } from "../src/state_tree";
-import { NoteState } from "../server/note";
+import { NoteState } from "../src/note";
 import { TxData } from "../src/transaction";
 
 describe('POST /transactions', function() {
@@ -36,8 +36,8 @@ describe('POST /transactions', function() {
             pubKey2: pubKey,
             content: "0x12",
             content2: "0x123",
-            noteIndex: StateTree.index.toString(),
-            note2Index: StateTree.index.toString(),
+            noteIndex: index().toString(),
+            note2Index: index().toString(),
             proof: "0x12",
             publicInput: "{\"root\": \"11\"}"
         })

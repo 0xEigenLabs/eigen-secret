@@ -2,8 +2,10 @@ const { Sequelize, DataTypes, Model } = require("sequelize");
 import sequelize from "../src/db";
 import consola from "consola";
 import * as utils from "../src/utils";
-import { siblingsPad, WorldState, StateTree } from "../src/state_tree";
-import { NoteModel, NoteState, updateDBNotes, getDBNotes } from "./note";
+import { WorldState, StateTree } from "../src/state_tree";
+import { siblingsPad } from "../src/state_tree_circuit";
+import { NoteModel, updateDBNotes, getDBNotes } from "./note";
+import { NoteState } from "../src/note";
 
 class TransactionModel extends Model {}
 TransactionModel.init({

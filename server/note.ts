@@ -2,14 +2,9 @@ const { Sequelize, DataTypes, Model } = require("sequelize");
 import sequelize from "../src/db";
 const consola = require("consola");
 import { StateTree } from "../src/state_tree";
+import { NoteState } from "../src/note";
 
 export class NoteModel extends Model {}
-
-export enum NoteState {
-    CREATING = 1,
-    PROVED,
-    SPENT,
-}
 
 NoteModel.init({
     // Model attributes are defined here

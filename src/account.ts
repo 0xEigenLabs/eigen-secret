@@ -5,7 +5,7 @@ const buildPoseidon = require("circomlibjs").buildPoseidon;
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { siblingsPad } from "./state_tree";
+import { siblingsPad } from "./state_tree_circuit";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
 
@@ -156,7 +156,6 @@ export class AccountOrNullifierKey implements IKey {
         return [bigint2Tuple(pPub[0]), bigint2Tuple(pPub[1])];
     }
 }
-
 
 export async function compress(
     eddsa: any,

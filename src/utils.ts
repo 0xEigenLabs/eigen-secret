@@ -1,8 +1,13 @@
 import { Buffer } from "buffer";
 import { BigNumberish } from "ethers";
-import { N_LEVEL } from "./state_tree";
+import { N_LEVEL } from "./state_tree_circuit";
 import { ethers } from "ethers";
 import consola from "consola";
+import { randomBytes as _randomBytes } from "crypto";
+
+export function index() {
+    return BigInt("0x" + _randomBytes(31).toString("hex"))
+}
 
 export function arrayChunk(array: Array<number>, chunkSize: number): any {
   return Array(Math.ceil(array.length / chunkSize)).map((_, index) => index * chunkSize)
@@ -183,7 +188,7 @@ export async function signEOASignature(
     return await EOAAccount.signMessage(strRawMessage)
 }
 
-const require_env_variables = (envVars: Array<string>) => {
+const requireEnvVariables = (envVars: Array<string>) => {
   for (const envVar of envVars) {
     if (!process.env[envVar]) {
       throw new Error(`Error: set your '${envVar}' environmental variable `);
@@ -244,5 +249,5 @@ async function upsert(modelObj: any, newItem: any, condition: any, connection: a
     return { item, created: false };
 }
 
-export { baseResp, succ, err, hasValue, require_env_variables, upsert, prepareJson };
+export { baseResp, succ, err, hasValue, requireEnvVariables, upsert, prepareJson };
 
