@@ -49,4 +49,4 @@ jobs:
       - name: Generate circuits
         run: git submodule update --init #bash -x scripts/zkit_zktx.sh
       - name: Start test
-        run: DB_NAME=1 DB_USER=2 DB_HOST=3 DB_DRIVER="sqlite" DB_PASSWORD=4 API_KEY="c8d8f358d6224ba08c0311716f028878" PRIVATE_KEY="0000000000000000000000000000000000000000000000000000000000000000" npm run test
+        run: npm run test
