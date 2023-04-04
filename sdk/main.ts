@@ -371,7 +371,7 @@ export class SecretSDK {
                     pubKey: receiverPubKey,
                     content: txdata[1].content,
                     state: NoteState.PROVED
-                },
+                }
             ]
             await this.note.updateNote(ctx, _notes);
         }
@@ -458,7 +458,7 @@ export class SecretSDK {
                     pubKey: receiverPubKey,
                     content: txdata[1].content,
                     state: NoteState.PROVED
-                },
+                }
             ]
             await this.note.updateNote(ctx, _notes);
         }
