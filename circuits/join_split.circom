@@ -8,7 +8,6 @@ include "../node_modules/circomlib/circuits/comparators.circom";
 include "../node_modules/circomlib/circuits/gates.circom";
 include "state_tree.circom";
 include "account.circom";
-include "nullifier_function.circom";
 include "note_compressor.circom";
 include "if_gadgets.circom";
 include "digest.circom";
