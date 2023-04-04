@@ -7,18 +7,17 @@ on:
   pull_request:
     branches: [ main, zkpay_dev ]
 
-env:
-  DB_NAME: 1
-  DB_USER: 2
-  DB_HOST: 3
-  DB_DRIVER: sqlite
-  DB_PASSWORD: 4
-  API_KEY: "c8d8f358d6224ba08c0311716f028878"
-  PRIVATE_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
-
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    env:
+      DB_NAME: 1
+      DB_USER: 2
+      DB_HOST: 3
+      DB_DRIVER: sqlite
+      DB_PASSWORD: 4
+      API_KEY: "c8d8f358d6224ba08c0311716f028878"
+      PRIVATE_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
 
     strategy:
       matrix:
