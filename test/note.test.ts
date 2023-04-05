@@ -24,7 +24,7 @@ describe("Test NoteCompressor", function () {
     })
 
     it("Note compress test", async () => {
-        let key = await (new SigningKey()).newKey(undefined);
+        let key = new SigningKey(eddsa);
         let note = new Note(1n, 2n, key.pubKey, 4, 5n, true, index());
         let wtns = await utils.executeCircuit(circuit, note.toCircuitInput(babyJub));
         await circuit.assertOut(wtns, { out: await note.compress(babyJub) });

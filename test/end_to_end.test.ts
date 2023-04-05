@@ -57,7 +57,7 @@ describe('POST /transactions', function() {
         aliasHash = uint8Array2Bigint(aliasHashBuffer);
         let _accountRequired = true;
         signer = _accountRequired? signingKey: accountKey;
-        let acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
+        let acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
         // 1. create account
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
@@ -88,7 +88,7 @@ describe('POST /transactions', function() {
         assert(input.newAccountNC == acStateKey, "Invalid accountNC");
 
         signer = accountRequired? signingKey: accountKey;
-        acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
+        acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
         let tmpInput = prepareJson({
             alias: alias,
@@ -147,14 +147,14 @@ describe('POST /transactions', function() {
         let notes: Array<Note> = [];
         if (encryptedNotes) {
             encryptedNotes.forEach((item: DBNote) => {
-                let sharedKey = signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
+                let sharedKey = signingKey.makeSharedKey(new EigenAddress(item.pubKey));
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }
 
         //console.log("note: ", notes);
-
-        await rollupHelper.deposit(0, assetId, value);
+        let nonce = 0; // get nonce from metamask
+        await rollupHelper.deposit(0, assetId, value, nonce);
         // create notes
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
@@ -301,7 +301,7 @@ describe('POST /transactions', function() {
         let accountKey = rollupHelper.eigenAccountKey[0];
         let accountRequired = false;
         signer = accountRequired? signingKey: accountKey;
-        let acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
+        let acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
         let proof = [];
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
@@ -328,7 +328,7 @@ describe('POST /transactions', function() {
         let notes: Array<Note> = [];
         if (encryptedNotes) {
             encryptedNotes.forEach((item: DBNote) => {
-                let sharedKey = signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
+                let sharedKey = signingKey.makeSharedKey(new EigenAddress(item.pubKey));
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }
@@ -462,7 +462,7 @@ describe('POST /transactions', function() {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
         signer = accountRequired? signingKey: accountKey;
-        let acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
+        let acStateKey = await accountCompress(accountKey, signer, aliasHash);
         const value = 5;
 
         let receiver = rollupHelper.eigenAccountKey[0];
@@ -486,7 +486,7 @@ describe('POST /transactions', function() {
         let notes: Array<Note> = [];
         if (encryptedNotes) {
             encryptedNotes.forEach((item: DBNote) => {
-                let sharedKey = signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
+                let sharedKey = signingKey.makeSharedKey(new EigenAddress(item.pubKey));
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }

@@ -1,29 +1,28 @@
-import { task } from 'hardhat/config';
-import { uint8Array2Bigint, signEOASignature, prepareJson } from "../src/utils";
-import { aliasHashDigest, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
-const { buildEddsa } = require("circomlibjs");
-import {SecretSDK} from "../sdk/main";
+import { task } from "hardhat/config";
+import { signEOASignature } from "../src/utils";
+import { SigningKey } from "../src/account";
+import { SecretSDK } from "../sdk/main";
 const path = require("path");
 const circuitPath = path.join(__dirname, "../circuits/");
-require('dotenv').config()
+require("dotenv").config()
+const { buildEddsa } = require("circomlibjs");
 
 const assetId = 1;
 const rawMessage = "Use Eigen Secret to shield your asset";
 
-task('create-account', 'Create account and first transaction depositing to itself')
-    .addParam('alias', 'user alias', "Bob")
-    .addParam('value', 'first deposit value', "10")
-	  .setAction(async ({ alias, value }, {ethers}) => {
+task("create-account", "Create account and first transaction depositing to itself")
+    .addParam("alias", "user alias", "Bob")
+    .addParam("value", "first deposit value", "10")
+    .setAction(async ({ alias, value }, { ethers }) => {
+        let eddsa = await buildEddsa();
         let timestamp = Math.floor(Date.now()/1000).toString();
-        let [admin, user] = await ethers.getSigners();
+        let [user] = await ethers.getSigners();
         // const newEOAAccount = ethers.Wallet.createRandom();
         const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-        const eddsa = await buildEddsa();
-        let signingKey = await (new SigningKey()).newKey(undefined);
-        let accountKey = await (new SigningKey()).newKey(undefined);
-        let newAccountKey = accountKey;
-        let newSigningKey1 = await (new SigningKey()).newKey(undefined);
-        let newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        let signingKey = new SigningKey(eddsa, undefined);
+        let accountKey = new SigningKey(eddsa, undefined);
+        let newSigningKey1 = new SigningKey(eddsa, undefined);
+        let newSigningKey2 = new SigningKey(eddsa, undefined);
         let secretSDK = new SecretSDK(alias, accountKey, signingKey, "http://127.0.0.1:3000", circuitPath);
         const ctx = {
           alias: alias,
@@ -44,5 +43,5 @@ task('create-account', 'Create account and first transaction depositing to itsel
 
         let proof2 = await secretSDK.withdraw(ctx, receiver, "5", assetId);
         console.log("withdraw done, proof: ", proof2);
-	})
+    })
 

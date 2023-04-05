@@ -256,7 +256,7 @@ export class JoinSplitCircuit {
             let ac = await state.find(F.e(acStateKey));
             */
 
-            let ak = await accountKey.toCircuitInput(eddsa);
+            let ak = await accountKey.toCircuitInput();
 
             let input = new JoinSplitInput(
                 JoinSplitCircuit.PROOF_ID_TYPE_SEND, 0n, 0n, assetId, 0, aliasHash,
@@ -269,7 +269,7 @@ export class JoinSplitCircuit {
                 // siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
-                (await signingKey.toCircuitInput(eddsa))[0],
+                (await signingKey.toCircuitInput())[0],
                 accountRequired,
                 sig
             );
@@ -346,7 +346,7 @@ export class JoinSplitCircuit {
              let ac = await state.find(F.e(acStateKey));
              */
 
-            let ak = accountKey.toCircuitInput(eddsa);
+            let ak = accountKey.toCircuitInput();
             console.log("publicValue", publicValue);
             let input = new JoinSplitInput(
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
@@ -356,7 +356,7 @@ export class JoinSplitCircuit {
                 // siblingsPad(ac.siblings, F),
                 ak[1][0],
                 ak[0],
-                (signingKey.toCircuitInput(eddsa))[0],
+                (signingKey.toCircuitInput())[0],
                 accountRequired,
                 sig
             );

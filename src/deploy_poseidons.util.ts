@@ -5,8 +5,8 @@ import { Contract } from "ethers";
 export async function deploySpongePoseidon(ethers: any, poseidon6ContractAddress: string): Promise<Contract> {
   const SpongePoseidonFactory = await ethers.getContractFactory("SpongePoseidon", {
     libraries: {
-      PoseidonUnit6L: poseidon6ContractAddress,
-    },
+      PoseidonUnit6L: poseidon6ContractAddress
+    }
   });
 
   const spongePoseidon = await SpongePoseidonFactory.deploy();
@@ -63,8 +63,8 @@ export async function deployPoseidonFacade(ethers: any, account: any): Promise<C
       PoseidonUnit4L: poseidonContracts[3].address,
       PoseidonUnit5L: poseidonContracts[4].address,
       PoseidonUnit6L: poseidonContracts[5].address,
-      SpongePoseidon: spongePoseidon.address,
-    },
+      SpongePoseidon: spongePoseidon.address
+    }
   });
 
   const poseidonFacade = await PoseidonFacade.deploy();

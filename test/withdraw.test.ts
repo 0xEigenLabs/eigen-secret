@@ -27,7 +27,7 @@ describe("Test withdraw", async() => {
         // generate 8 accounts
         let F = poseidon.F
 
-        let signingKey = await (new SigningKey()).newKey(undefined);
+        let signingKey = new SigningKey(eddsa);
         let rawMsg = F.e(11);
 
         var msg = poseidon([rawMsg])

@@ -1,15 +1,14 @@
 import { ethers } from "hardhat";
-const {BigNumber, ContractFactory, Contract} = require("ethers");
+const { ContractFactory, Contract } = require("ethers");
 import { expect, assert } from "chai";
 const {buildEddsa} = require("circomlibjs");
 const path = require("path");
 const fs = require("fs");
 import { uint8Array2Bigint, prepareJson, parseProof, Proof, signEOASignature } from "../src/utils";
-import { deploySpongePoseidon, deployPoseidons } from "./deploy_poseidons.util";
+import { deploySpongePoseidon, deployPoseidons } from "../src/deploy_poseidons.util";
 import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
 import { JoinSplitCircuit } from "../src/join_split";
 import { Prover } from "../src/prover";
-import { WorldState } from "../server/state_tree";
 import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "../src/state_tree";
 const createBlakeHash = require("blake-hash");
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
@@ -20,7 +19,7 @@ import { NoteModel, updateDBNotes, getDBNotes } from "../server/note";
 */
 
 export class RollupHelper {
-    userAccounts:any;
+    userAccounts: Array<any>;
     rollup:any;
     tokenRegistry:any;
     testToken:any;
@@ -35,7 +34,6 @@ export class RollupHelper {
     eigenSigningKeys: SigningKey[][] = []; // 3n
     pubkeyEigenSigningKeys: bigint[][][] = []; // 3n * 2
 
-    rawMessage: string = "Use Eigen Secret to shield your asset";
     circuitPath: string = path.join(__dirname, "../circuits/");
     alias: string = "contract.eigen.eth"
     aliasHash: any;
@@ -44,7 +42,7 @@ export class RollupHelper {
     sendFunc: any;
 
     constructor(
-        userAccounts: any,
+        userAccounts: Array<any>,
     ) {
         this.userAccounts = userAccounts;
         this.rollup = undefined;
@@ -103,7 +101,7 @@ export class RollupHelper {
         const F = this.eddsa.F;
         const babyJub = this.eddsa.babyJub;
         for (var i = 0; i < 20; i ++) {
-            let tmp = await (new SigningKey()).newKey(undefined);
+            let tmp = new SigningKey(this.eddsa);
             let tmpP = tmp.pubKey.unpack(babyJub);
             let tmpPub = [F.toObject(tmpP[0]), F.toObject(tmpP[1])];
             this.eigenAccountKey.push(tmp);
@@ -112,17 +110,17 @@ export class RollupHelper {
             let tmpSigningKeys = [];
             let tmpPubKeySigningKeys = [];
 
-            tmpKey = await (new SigningKey()).newKey(undefined);
+            tmpKey = new SigningKey(this.eddsa);
             tmpSigningKeys.push(tmpKey);
             tmpKeyP = tmpKey.pubKey.unpack(babyJub);
             tmpPubKeySigningKeys.push([F.toObject(tmpKeyP[0]), F.toObject(tmpKeyP[1])]);
 
-            tmpKey = await (new SigningKey()).newKey(undefined);
+            tmpKey = new SigningKey(this.eddsa);
             tmpSigningKeys.push(tmpKey);
             tmpKeyP = tmpKey.pubKey.unpack(babyJub);
             tmpPubKeySigningKeys.push([F.toObject(tmpKeyP[0]), F.toObject(tmpKeyP[1])]);
 
-            tmpKey = await (new SigningKey()).newKey(undefined);
+            tmpKey = new SigningKey(this.eddsa);
             tmpSigningKeys.push(tmpKey);
             tmpKeyP = tmpKey.pubKey.unpack(babyJub);
             tmpPubKeySigningKeys.push([F.toObject(tmpKeyP[0]), F.toObject(tmpKeyP[1])]);
@@ -151,8 +149,7 @@ export class RollupHelper {
         return await this.tokenRegistry.numTokens();
     }
 
-    async deposit(index: number, assetId: number, value: number) {
-        assert(value <= 1000, "value should less than 1000");
+    async deposit(index: number, assetId: number, value: number, nonce: number) {
         let approveToken = await this.testToken.connect(this.userAccounts[index]).approve(
             this.rollup.address, value,
             {from: this.userAccounts[index].address}
@@ -162,7 +159,7 @@ export class RollupHelper {
             this.pubkeyEigenAccountKey[index],
             assetId,
             value,
-            0, //TODO: use nonce
+            nonce,
             { from: this.userAccounts[index].address }
         )
         assert(deposit0, "deposit0 failed");

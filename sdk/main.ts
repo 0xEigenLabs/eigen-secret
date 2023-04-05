@@ -199,7 +199,8 @@ export class SecretSDK {
     }
 
     static async newSigningKey() {
-        return await (new SigningKey()).newKey(undefined)
+        let eddsa = await buildEddsa();
+        return new SigningKey(eddsa)
     }
 
     // create proof for general transaction
@@ -212,12 +213,12 @@ export class SecretSDK {
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
 
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
-        const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
+        const acStateKey = await accountCompress(ctx.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
         let encryptedNotes = await this.note.getNote(ctx);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
-                let sharedKey = ctx.signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
+                let sharedKey = ctx.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }
@@ -296,12 +297,12 @@ export class SecretSDK {
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(ctx.alias).digest().slice(0, 32));
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
-        const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
+        const acStateKey = await accountCompress(ctx.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
         let encryptedNotes = await this.note.getNote(ctx);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
-                let sharedKey = ctx.signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
+                let sharedKey = ctx.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }
@@ -380,12 +381,12 @@ export class SecretSDK {
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(ctx.alias).digest().slice(0, 32));
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
-        const acStateKey = await accountCompress(eddsa, ctx.accountKey, signer, aliasHash);
+        const acStateKey = await accountCompress(ctx.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
         let encryptedNotes = await this.note.getNote(ctx);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
-                let sharedKey = ctx.signingKey.makeSharedKey(eddsa, new EigenAddress(item.pubKey));
+                let sharedKey = ctx.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }
@@ -484,7 +485,7 @@ export class SecretSDK {
         // let smtProof = await this.state.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.accountNC);
         let accountRequired = false;
         let signer = accountRequired? this.signingKey: this.accountKey;
-        let acStateKey = await accountCompress(eddsa, this.accountKey, signer, aliasHash);
+        let acStateKey = await accountCompress(this.accountKey, signer, aliasHash);
         let smtProof = await this.state.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
         let circuitInput = input.toCircuitInput(eddsa.babyJub, smtProof);
         // create final proof
@@ -498,9 +499,9 @@ export class SecretSDK {
     async updateAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
-        let newAccountPubKey = this.accountKey.toCircuitInput(eddsa);
-        let newSigningPubKey1 = newSigningKey.toCircuitInput(eddsa);
-        let newSigningPubKey2 = newSigningKey2.toCircuitInput(eddsa);
+        let newAccountPubKey = this.accountKey.toCircuitInput();
+        let newSigningPubKey1 = newSigningKey.toCircuitInput();
+        let newSigningPubKey2 = newSigningKey2.toCircuitInput();
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         let aliasHash = uint8Array2Bigint(aliasHashBuffer);
         let input = await AccountCircuit.createProofInput(
@@ -527,9 +528,9 @@ export class SecretSDK {
     async migrateAccount(ctx: any, newAccountKey: SigningKey, oldSigningKey: SigningKey, oldSigningKey2: SigningKey) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
-        let newAccountPubKey = this.accountKey.toCircuitInput(eddsa);
-        let newSigningPubKey1 = oldSigningKey.toCircuitInput(eddsa);
-        let newSigningPubKey2 = oldSigningKey2.toCircuitInput(eddsa);
+        let newAccountPubKey = this.accountKey.toCircuitInput();
+        let newSigningPubKey1 = oldSigningKey.toCircuitInput();
+        let newSigningPubKey2 = oldSigningKey2.toCircuitInput();
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         let aliasHash = uint8Array2Bigint(aliasHashBuffer);
         let input = await AccountCircuit.createProofInput(

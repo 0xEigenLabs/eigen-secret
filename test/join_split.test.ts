@@ -31,10 +31,10 @@ describe("Test JoinSplit Circuit", function () {
         let third = path.join(__dirname, "../third-party");
         circuit = await test.genTempMain("circuits/join_split.circom",
             "JoinSplit", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {include: third});
-        accountKey = await (new SigningKey()).newKey(undefined);
-        signingKey = await (new SigningKey()).newKey(undefined);
+        accountKey = new SigningKey(eddsa);
+        signingKey = new SigningKey(eddsa);
         signer = accountRequired? signingKey: accountKey;
-        acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
+        acStateKey = await accountCompress(accountKey, signer, aliasHash);
         await (await WorldState.getInstance()).insert(acStateKey, 1n);
     })
 
@@ -73,7 +73,7 @@ describe("Test JoinSplit Circuit", function () {
         }
 
         // create a send proof
-        let noteReceiver = await (new SigningKey()).newKey(undefined);
+        let noteReceiver = new SigningKey(eddsa);
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let inputs2 = await JoinSplitCircuit.createProofInput(
             accountKey,

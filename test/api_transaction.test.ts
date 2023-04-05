@@ -9,19 +9,22 @@ import { expect, assert } from "chai";
 import { StateTree } from "../src/state_tree";
 import { NoteState } from "../src/note";
 import { TxData } from "../src/transaction";
+const { buildEddsa } = require("circomlibjs");
 
 describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
     const alias = "api.eigen.eth";
     let tmpKey: any;
     let pubKey: any;
+    let eddsa: any;
     before(async() => {
+        eddsa = await buildEddsa();
         let newEOAAccount = await ethers.Wallet.createRandom();
         let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
 
-        tmpKey = await (new SigningKey()).newKey(undefined);
+        tmpKey = new SigningKey(eddsa);
         pubKey = tmpKey.pubKey.pubKey;
         const response = await request(app)
         .post('/transactions')

@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { Contract } from "ethers";
 import { expect } from "chai";
 const cls = require("circomlibjs");
-import { deployPoseidonFacade } from "./deploy_poseidons.util";
+import { deployPoseidonFacade } from "../src/deploy_poseidons.util";
 import { poseidonSponge } from "../src/sponge_poseidon";
 
 describe("poseidon", () => {

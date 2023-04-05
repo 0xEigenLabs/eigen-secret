@@ -1,13 +1,13 @@
-import { task } from 'hardhat/config';
-import { deploySpongePoseidon, deployPoseidons } from "../test/deploy_poseidons.util";
+import { task } from "hardhat/config";
+import { deploySpongePoseidon, deployPoseidons } from "../src/deploy_poseidons.util";
 
 const defaultContractFile = ".contract.json";
 const fs = require("fs");
 
-task('deploy', 'Deploy all smart contract')
-      .addParam('testTokenAddress', 'test token address, default none', '')
-      .addParam('contractFile', '[output] contract address', defaultContractFile)
-	  .setAction(async ({ testTokenAddress, contractFile }, {ethers}) => {
+task("deploy", "Deploy all smart contract")
+      .addParam("testTokenAddress", "test token address, default none", "")
+      .addParam("contractFile", "[output] contract address", defaultContractFile)
+      .setAction(async ({ testTokenAddress, contractFile }, { ethers }) => {
     let [admin] = await ethers.getSigners();
     let poseidonContracts = await deployPoseidons(
         ethers,
@@ -30,7 +30,7 @@ task('deploy', 'Deploy all smart contract')
         "Rollup",
         {
             libraries: {
-                SpongePoseidon: spongePoseidon.address,
+                SpongePoseidon: spongePoseidon.address
             }
         }
     );
@@ -40,7 +40,7 @@ task('deploy', 'Deploy all smart contract')
     let rollup = await factoryR.deploy(
         poseidonContracts[0].address,
         poseidonContracts[1].address,
-        tokenRegistry.address,
+        tokenRegistry.address
     );
     await rollup.deployed();
     console.log("rollup deployed to:", rollup.address);
