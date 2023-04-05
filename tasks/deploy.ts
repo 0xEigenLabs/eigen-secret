@@ -1,13 +1,16 @@
-import { ethers } from "hardhat";
-import { RollupHelper } from "../test/rollup.helper";
-import { deploySpongePoseidon, deployPoseidons, deployPoseidonFacade } from "../test/deploy_poseidons.util";
+import { task } from 'hardhat/config';
+import { deploySpongePoseidon, deployPoseidons } from "../test/deploy_poseidons.util";
 
-const contractFile = ".contract.json";
+const defaultContractFile = ".contract.json";
 const fs = require("fs");
 
-const deploy = async() => {
+task('deploy', 'Deploy all smart contract')
+      .addParam('testTokenAddress', 'test token address, default none', '')
+      .addParam('contractFile', '[output] contract address', defaultContractFile)
+	  .setAction(async ({ testTokenAddress, contractFile }, {ethers}) => {
     let [admin] = await ethers.getSigners();
     let poseidonContracts = await deployPoseidons(
+        ethers,
         admin,
         [2, 3, 6]
     );
@@ -15,7 +18,7 @@ const deploy = async() => {
     console.log("Using account ", admin.address);
     contractJson.set("admin", admin.address);
 
-    let spongePoseidon = await deploySpongePoseidon(poseidonContracts[2].address);
+    let spongePoseidon = await deploySpongePoseidon(ethers, poseidonContracts[2].address);
     contractJson.set("spongePoseidon", spongePoseidon.address);
     let factoryTR = await ethers.getContractFactory("TokenRegistry");
     let tokenRegistry = await factoryTR.deploy(admin.address)
@@ -43,23 +46,15 @@ const deploy = async() => {
     console.log("rollup deployed to:", rollup.address);
     contractJson.set("rollup", rollup.address);
 
-    let factoryTT = await ethers.getContractFactory("TestToken");
-    let testToken = await factoryTT.connect(admin).deploy();
-    await testToken.deployed();
-    console.log("TestToken deployed to:", testToken.address);
-    contractJson.set("testToken", testToken.address);
+    if (testTokenAddress == "-") {
+        let factoryTT = await ethers.getContractFactory("TestToken");
+        let testToken = await factoryTT.connect(admin).deploy();
+        await testToken.deployed();
+        console.log("TestToken deployed to:", testToken.address);
+        testTokenAddress = testToken.address;
+    }
+    contractJson.set("testToken", testTokenAddress);
 
     console.log(contractJson);
     fs.writeFileSync(contractFile, JSON.stringify(Object.fromEntries(contractJson)))
-}
-
-
-async function main() {
-    await deploy();
-    console.log("Done");
-}
-
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
+})

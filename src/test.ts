@@ -25,11 +25,11 @@ component ${main} = ${template_name} (${params_string});
     `);
 
   // console.log(temp_circuit.path, fs.readFileSync(temp_circuit.path, "utf8"))
-  return circom_wasm(temp_circuit.path, _opt);
+  return tester(temp_circuit.path, _opt);
 }
 
 export function genMain(main_circuit_file: string, template_file: string, template_name: string,
-    publics: string = "", params: any = [], tester: any = circom_wasm) {
+    publics: string = "", params: any = []) {
   const include_path = path.parse(template_file).base;
   const params_string = JSON.stringify(params).slice(1, -1);
 

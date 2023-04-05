@@ -1,6 +1,5 @@
 import { Buffer } from "buffer";
 import { BigNumberish } from "ethers";
-import { N_LEVEL } from "./state_tree";
 import { ethers } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
@@ -43,13 +42,13 @@ export function getWitnessValue(witness: any, symbols: any, varName: string) {
 }
 
 export function getWitnessMap(witness: any, symbols: Map<string, any>, arrName: string): any {
-  return Object.entries(symbols).filter(([index, symbol]) => index.startsWith(arrName))
+  return Object.entries(symbols).filter(([index, _]) => index.startsWith(arrName))
     .map(([index, symbol]) => Object.assign({}, symbol, { "name": index, "value": witness[symbol["varIdx"]] }));
 }
 
 export function getWitnessArray(witness: any, symbols: Map<string, any>, arrName: string): any {
-  return Object.entries(symbols).filter(([index, symbol]) => index.startsWith(`${arrName}[`))
-    .map(([index, symbol]) => witness[symbol["varIdx"]]);
+  return Object.entries(symbols).filter(([index, _]) => index.startsWith(`${arrName}[`))
+    .map(([_, symbol]) => witness[symbol["varIdx"]]);
 }
 
 export function getWitnessBuffer(witness: any, symbols: Map<string, any>, arrName: string, varSize: number = 1) {

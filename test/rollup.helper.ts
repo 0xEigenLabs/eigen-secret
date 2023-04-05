@@ -4,9 +4,8 @@ import { expect, assert } from "chai";
 const {buildEddsa} = require("circomlibjs");
 const path = require("path");
 const fs = require("fs");
-const unstringifyBigInts = require("ffjavascript").utils.unstringifyBigInts;
 import { uint8Array2Bigint, prepareJson, parseProof, Proof, signEOASignature } from "../src/utils";
-import { deploySpongePoseidon, deployPoseidons, deployPoseidonFacade } from "./deploy_poseidons.util";
+import { deploySpongePoseidon, deployPoseidons } from "./deploy_poseidons.util";
 import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
 import { JoinSplitCircuit } from "../src/join_split";
 import { Prover } from "../src/prover";
@@ -15,10 +14,6 @@ import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "../src/s
 const createBlakeHash = require("blake-hash");
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
 import { NoteModel, updateDBNotes, getDBNotes } from "../server/note";
-import { Note, NoteState } from "../src/note";
-import { Transaction } from "../src/transaction";
-import { createTxInternal } from "../server/transaction";
-import sequelize from "../src/db";
 
 /*
     Here we want to test the smart contract's deposit functionality.
@@ -69,11 +64,12 @@ export class RollupHelper {
         this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
 
         this.poseidonContracts = await deployPoseidons(
+            ethers,
             this.userAccounts[0],
             [2, 3, 6]
         );
 
-        this.spongePoseidon = await deploySpongePoseidon(this.poseidonContracts[2].address);
+        this.spongePoseidon = await deploySpongePoseidon(ethers, this.poseidonContracts[2].address);
         let factoryTR = await ethers.getContractFactory("TokenRegistry");
         this.tokenRegistry = await factoryTR.deploy(this.userAccounts[0].address)
         await this.tokenRegistry.deployed()
@@ -156,7 +152,7 @@ export class RollupHelper {
     }
 
     async deposit(index: number, assetId: number, value: number) {
-        assert(value <= 1000, "check the line 96");
+        assert(value <= 1000, "value should less than 1000");
         let approveToken = await this.testToken.connect(this.userAccounts[index]).approve(
             this.rollup.address, value,
             {from: this.userAccounts[index].address}

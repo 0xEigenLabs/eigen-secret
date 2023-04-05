@@ -1,9 +1,8 @@
-import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 const { poseidonContract } = require("circomlibjs");
 import { Contract } from "ethers";
 
-export async function deploySpongePoseidon(poseidon6ContractAddress: string): Promise<Contract> {
+export async function deploySpongePoseidon(ethers: any, poseidon6ContractAddress: string): Promise<Contract> {
   const SpongePoseidonFactory = await ethers.getContractFactory("SpongePoseidon", {
     libraries: {
       PoseidonUnit6L: poseidon6ContractAddress,
@@ -17,6 +16,7 @@ export async function deploySpongePoseidon(poseidon6ContractAddress: string): Pr
 }
 
 export async function deployPoseidons(
+  ethers: any,
   deployer: SignerWithAddress,
   poseidonSizeParams: number[]
 ): Promise<Contract[]> {
@@ -28,7 +28,7 @@ export async function deployPoseidons(
     }
   });
 
-  const deployPoseidon = async (params: number) => {
+  const deployPoseidon = async (ethers: any, params: number) => {
     const abi = poseidonContract.generateABI(params);
     const code = poseidonContract.createCode(params);
     const PoseidonElements = new ethers.ContractFactory(abi, code, deployer);
@@ -40,21 +40,20 @@ export async function deployPoseidons(
 
   const result: Contract[] = [];
   for (const size of poseidonSizeParams) {
-    result.push(await deployPoseidon(size));
+    result.push(await deployPoseidon(ethers, size));
   }
 
   return result;
 }
 
-export async function deployPoseidonFacade(): Promise<Contract> {
+export async function deployPoseidonFacade(ethers: any, account: any): Promise<Contract> {
   const poseidonContracts = await deployPoseidons(
-    (
-      await ethers.getSigners()
-    )[0],
-    new Array(6).fill(6).map((_, i) => i + 1)
+      ethers,
+      account,
+      new Array(6).fill(6).map((_, i) => i + 1)
   );
 
-  const spongePoseidon = await deploySpongePoseidon(poseidonContracts[5].address);
+  const spongePoseidon = await deploySpongePoseidon(ethers, poseidonContracts[5].address);
 
   const PoseidonFacade = await ethers.getContractFactory("PoseidonFacade", {
     libraries: {

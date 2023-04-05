@@ -1,16 +1,10 @@
 const { buildPoseidon, buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
-const { Buffer } = require("buffer");
-import { ethers } from "ethers";
 import { Note } from "./note";
-import { SigningKey, EigenAddress, EthAddress } from "./account";
+import { SigningKey, EigenAddress } from "./account";
 import { strict as assert } from "assert";
-import { N_LEVEL, siblingsPad, StateTree } from "./state_tree";
-import { parseProof, Proof, index } from "./utils";
+import { index } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
-const fs = require("fs");
-const snarkjs = require("snarkjs");
-const path = require("path");
 
 export class JoinSplitInput {
     proofId: number;
@@ -131,6 +125,7 @@ export class JoinSplitInput {
             inputJson.output_note_account_required[i] = BigInt(this.outputNotes[i].accountRequired);
         }
         // console.log(inputJson)
+        // const fs = require("fs");
         // fs.writeFileSync("./circuits/main_update_state.input.json", JSON.stringify(inputJson))
         return inputJson;
     }

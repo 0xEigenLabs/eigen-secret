@@ -3,7 +3,6 @@ const express = require('express');
 const createBlakeHash = require("blake-hash");
 const consola = require("consola");
 import app from "../server/service";
-import sequelize from "../src/db";
 import { ethers } from "ethers";
 import { uint8Array2Bigint, signEOASignature, prepareJson } from "../src/utils";
 import { expect, assert } from "chai";
@@ -126,7 +125,7 @@ describe('POST /transactions', function() {
         siblings.push(tmpSiblings);
 
         let circuitInput = input.toCircuitInput(babyJub, singleProof);
-        let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput, F);
+        let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
         // 1. first transaction depositing to itself
         let receiver = accountKey;
@@ -203,7 +202,7 @@ describe('POST /transactions', function() {
             // generate proof
             let singleProof = response.body.data;
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
-            let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput, F);
+            let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
             keysFound.push(input.outputNCs[0]);
             valuesFound.push(input.outputNotes[0].inputNullifier);
@@ -376,7 +375,7 @@ describe('POST /transactions', function() {
             // generate proof
             let singleProof = response.body.data;
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
-            let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput, F);
+            let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
             let transaction = new Transaction(input.outputNotes, signingKey);
             let txdata = await transaction.encrypt();
@@ -536,7 +535,7 @@ describe('POST /transactions', function() {
             // generate proof
             let singleProof = response.body.data;
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
-            let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput, F);
+            let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
             let transaction = new Transaction(input.outputNotes, signingKey);
             let txdata = await transaction.encrypt();
@@ -647,7 +646,7 @@ describe('POST /transactions', function() {
             R8y: F.toObject(sig.R8[1]),
             S: sig.S,
         }
-        let proofAndPublicSignals = await Prover.withdraw(circuitPath, input, eddsa.F);
+        let proofAndPublicSignals = await Prover.withdraw(circuitPath, input);
         await rollupHelper.withdraw(
             0,
             1,

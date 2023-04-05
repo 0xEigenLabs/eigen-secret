@@ -1,5 +1,7 @@
-import { randomBytes as _randomBytes } from "crypto";
-const { newMemEmptyTrie, SMT, buildPoseidon, buildEddsa } = require("circomlibjs");
+const {
+    // newMemEmptyTrie
+    SMT, buildPoseidon
+} = require("circomlibjs");
 const { getCurveFromName } = require("ffjavascript");
 const consola = require("consola");
 
@@ -33,7 +35,7 @@ export class StateTreeCircuitInput {
         this.newValue = tree.F.toObject(value);
     }
 
-    toNonMembershipUpdateInput(trere: any): any {
+    toNonMembershipUpdateInput(): any {
         return {
             oldRoot: this.oldRoot,
             newRoot: this.newRoot,
@@ -79,13 +81,11 @@ export default class SMTDB {
     }
 
     _key2str(k: any) {
-        const F = this.F;
         const keyS = this.F.toString(k);
         return keyS;
     }
 
     _normalize(n: any, join: boolean = true) {
-        const F = this.F;
         if (join) {
             let nn = new Array(n.length);
             for (let i=0; i<nn.length; i++) {

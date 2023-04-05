@@ -10,9 +10,9 @@ require('dotenv').config()
 const assetId = 1;
 const rawMessage = "Use Eigen Secret to shield your asset";
 
-task('createAccount', 'createAccount and first transaction depositing to itself')
-    .addParam('alias', 'user alias')
-    .addParam('value', 'first deposit value')
+task('create-account', 'Create account and first transaction depositing to itself')
+    .addParam('alias', 'user alias', "Bob")
+    .addParam('value', 'first deposit value', "10")
 	  .setAction(async ({ alias, value }, {ethers}) => {
         let timestamp = Math.floor(Date.now()/1000).toString();
         let [admin, user] = await ethers.getSigners();
@@ -44,6 +44,5 @@ task('createAccount', 'createAccount and first transaction depositing to itself'
 
         let proof2 = await secretSDK.withdraw(ctx, receiver, "5", assetId);
         console.log("withdraw done, proof: ", proof2);
-
 	})
 

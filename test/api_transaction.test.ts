@@ -3,7 +3,6 @@ const express = require('express');
 const consola = require("consola");
 import app from "../server/service";
 import { EigenAddress, SigningKey } from "../src/account";
-import sequelize from "../src/db";
 import { ethers } from "ethers";
 import { signEOASignature, index } from "../src/utils";
 import { expect, assert } from "chai";

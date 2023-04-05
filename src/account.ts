@@ -1,13 +1,10 @@
 import { ethers } from "ethers";
-const buildBabyjub = require("circomlibjs").buildBabyjub;
-const buildEddsa = require("circomlibjs").buildEddsa;
-const buildPoseidon = require("circomlibjs").buildPoseidon;
+const { buildEddsa, buildPoseidon } = require("circomlibjs");
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { siblingsPad } from "./state_tree";
-import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import { bigint2Array, bigint2Uint8Array, bigint2Tuple } from "./utils";
+import { getPublicKey, verify as k1Verify, Point } from "@noble/secp256k1";
+import { bigint2Tuple } from "./utils";
 
 type UnpackFunc = (babyJub: any) => [any, any];
 interface Address {
@@ -38,7 +35,7 @@ export class EthAddress implements Address {
     constructor(pubKey: string) {
         this.pubKey = pubKey;
     }
-    unpack: UnpackFunc = (babyJub: any) => {
+    unpack: UnpackFunc = (_: any) => {
         let pubKey = this.pubKey;
         if (pubKey.startsWith(this.protocol)) {
             pubKey = pubKey.substring(this.protocol.length);
@@ -82,7 +79,6 @@ export class SigningKey implements IKey {
     }
     sign: SignFunc = async (msghash: Uint8Array) => {
         let eddsa = await buildEddsa();
-        let F = eddsa.F;
         let result = eddsa.signPoseidon(this.prvKey, msghash);
         return {
             R8: [result.R8[0], result.R8[1]],
@@ -137,11 +133,11 @@ export class AccountOrNullifierKey implements IKey {
         return Promise.resolve(this);
     }
 
-    makeSharedKey: MakeSharedKey = (eddsa: any, receiver: EigenAddress) => {
+    makeSharedKey: MakeSharedKey = (_eddsa: any, _receiver: EigenAddress) => {
         throw new Error("Unimplemented")
     }
 
-    sign: SignFunc = async (msghash: Uint8Array) => {
+    sign: SignFunc = async (_msghash: Uint8Array) => {
         // let sig: Uint8Array = await k1Sign(msghash, this.prvKey, { canonical: true, der: false })
         // return Promise.resolve(sig);
         throw new Error("Unimplemented");

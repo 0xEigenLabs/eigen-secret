@@ -1,10 +1,8 @@
-const { newMemEmptyTrie, SMT, buildPoseidon, buildEddsa } = require("circomlibjs");
-const { getCurveFromName } = require("ffjavascript");
+const { buildEddsa } = require("circomlibjs");
 const consola = require("consola");
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad, StateTree } from "../src/state_tree";
-
-import sequelize from "../src/db";
-const { Sequelize, DataTypes, Model } = require("sequelize");
+import { N_LEVEL, siblingsPad, StateTree } from "../src/state_tree";
+const { DataTypes, Model } = require("sequelize");
+import sequelize from "../server/db";
 
 export class SMTModel extends Model {}
 

@@ -2,9 +2,9 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import { task, HardhatUserConfig } from "hardhat/config";
 import { resolve } from "path";
-
 import { config as dotenvConfig } from "dotenv";
 import { requireEnvVariables } from "./src/utils";
+require("./tasks/index");
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 //requireEnvVariables(["API_KEY", "PRIVATE_KEY"]);
@@ -18,7 +18,6 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     console.log(account.address);
   }
 });
-
 
 module.exports = {
   solidity: {

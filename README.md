@@ -7,11 +7,15 @@ Building on Private State Model and zkSnark.
 The circuits is written by Circom, proved by [eigen zkit](https://github.com/0xEigenLabs/eigen-zkvm/tree/main/zkit).
 
 
+## Usage
+
+```
+npx hardhat
+```
+
 ## Test
 
 ```
 npm run test test/update_state.test.ts
 cd circuits && ./run.sh main_update_state
 ```
-
-

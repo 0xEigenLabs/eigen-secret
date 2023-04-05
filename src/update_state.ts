@@ -1,17 +1,6 @@
-const { buildPoseidon, buildEddsa } = require("circomlibjs");
-const createBlakeHash = require("blake-hash");
-const { Buffer } = require("buffer");
-import { ethers } from "ethers";
 import { Note } from "./note";
 import { AccountCircuit, SigningKey, EigenAddress } from "./account";
-import { JoinSplitCircuit, JoinSplitInput } from "./join_split";
-import { strict as assert } from "assert";
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "./state_tree";
-import { parseProof, Proof } from "./utils";
-const { Scalar, utils } = require("ffjavascript");
-const fs = require("fs");
-const snarkjs = require("snarkjs");
-const path = require("path");
+import { JoinSplitCircuit } from "./join_split";
 const { buildBabyjub } = require("circomlibjs");
 
 export class UpdateStatusInput {
@@ -96,7 +85,6 @@ export class UpdateStatusInput {
 
     // nomalize the input
     toCircuitInput(babyJub: any, proof: any) {
-        const F = babyJub.F;
         let inputJson = {
             proof_id: this.proofId,
             public_value: this.publicValue,
@@ -168,6 +156,8 @@ export class UpdateStatusInput {
         }
 
         // console.log(inputJson)
+        /*
+        const fs = require("fs");
         fs.writeFileSync("./circuits/main_update_state.input.json",
                          JSON.stringify(
                              inputJson,
@@ -175,6 +165,7 @@ export class UpdateStatusInput {
                                  value.toString() :
                                  value // return everything else unchanged
                          ));
+        */
         return inputJson;
     }
 }

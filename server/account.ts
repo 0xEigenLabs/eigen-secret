@@ -1,6 +1,5 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
-const { ethers } = require("ethers");
-import sequelize from "../src/db";
+const { DataTypes, Model } = require("sequelize");
+import sequelize from "../server/db";
 import consola from "consola";
 import * as utils from "../src/utils";
 import { upsert } from "./common";

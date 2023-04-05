@@ -198,7 +198,7 @@ describe("Test JoinSplit Circuit", function () {
         let inputJson = path.join(__dirname, "..", "circuits/main_update_state.input.json");
         const input = JSON.parse(readFileSync(inputJson));
         let circuitPath = path.join(__dirname, "..", "circuits");
-        let proofAndPublicSignals = await Prover.updateState(circuitPath, input, F);
+        let proofAndPublicSignals = await Prover.updateState(circuitPath, input);
 
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
