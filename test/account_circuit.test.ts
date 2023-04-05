@@ -3,9 +3,8 @@ import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
 import { compress as accountCompress, AccountOrNullifierKey, SigningKey, AccountCircuit } from "../src/account";
-import { WorldState } from "../src/state_tree";
+import { WorldState } from "../server/state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import SMTModel from "../src/state_tree_db";
 
 const path = require("path");
 

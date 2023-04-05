@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { StateTreeCircuitInput } from "../src/state_tree_circuit";
+import { StateTreeCircuitInput } from "../src/state_tree";
 const createBlakeHash = require("blake-hash");
 const { buildEddsa, buildBabyJub } = require("circomlibjs");
 import { uint8Array2Bigint, signEOASignature, prepareJson } from "../src/utils";

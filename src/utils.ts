@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 import { BigNumberish } from "ethers";
-import { N_LEVEL } from "./state_tree_circuit";
+import { N_LEVEL } from "./state_tree";
 import { ethers } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
@@ -239,15 +239,5 @@ const hasValue = function(variable: any) {
   return true;
 };
 
-async function upsert(modelObj: any, newItem: any, condition: any, connection: any) {
-    const found = await modelObj.findOne({ where: condition });
-    if (!found) {
-        const item = await modelObj.create(newItem, connection);
-        return { item, created: true };
-    }
-    const item = modelObj.update(newItem, { where: condition }, connection);
-    return { item, created: false };
-}
-
-export { baseResp, succ, err, hasValue, requireEnvVariables, upsert, prepareJson };
+export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson };
 

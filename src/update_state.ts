@@ -6,7 +6,7 @@ import { Note } from "./note";
 import { AccountCircuit, SigningKey, EigenAddress } from "./account";
 import { JoinSplitCircuit, JoinSplitInput } from "./join_split";
 import { strict as assert } from "assert";
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "./state_tree_circuit";
+import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "./state_tree";
 import { parseProof, Proof } from "./utils";
 const { Scalar, utils } = require("ffjavascript");
 const fs = require("fs");

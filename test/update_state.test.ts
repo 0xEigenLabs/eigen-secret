@@ -3,7 +3,7 @@ import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
 import { compress as accountCompress, AccountOrNullifierKey, SigningKey } from "../src/account";
-import { WorldState } from "../src/state_tree";
+import { WorldState } from "../server/state_tree";
 import { JoinSplitCircuit } from "../src/join_split";
 import { AccountCircuit } from "../src/account";
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
@@ -12,7 +12,6 @@ import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/
 const path = require("path");
 const { readFileSync } = require("fs");
 const snarkjs = require("snarkjs");
-import SMTModel from "../src/state_tree_db";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 

@@ -1,8 +1,65 @@
+import { randomBytes as _randomBytes } from "crypto";
 const { newMemEmptyTrie, SMT, buildPoseidon, buildEddsa } = require("circomlibjs");
 const { getCurveFromName } = require("ffjavascript");
 const consola = require("consola");
-import SMTModel from "./state_tree_db";
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "./state_tree_circuit";
+
+export function siblingsPad(siblings: any, F: any) {
+  for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
+  while (siblings.length < N_LEVEL) siblings.push(0);
+  return siblings;
+}
+
+export const N_LEVEL = 20;
+export class StateTreeCircuitInput {
+    fnc: number[] = new Array(2);
+    oldRoot: any;
+    newRoot: any;
+    siblings: any[] = new Array(N_LEVEL);
+    oldKey: any;
+    oldValue: any;
+    isOld0: number = 0;
+    newKey: any;
+    newValue: any;
+
+    public constructor(tree: any, fnc: number[], res: any, siblings: any[], key: any, value: any) {
+        this.fnc = fnc;
+        this.oldRoot = tree.F.toObject(res.oldRoot);
+        this.newRoot = tree.F.toObject(tree.root);
+        this.siblings = siblings;
+        this.oldKey = res.isOld0 ? 0 : tree.F.toObject(res.oldKey);
+        this.oldValue = res.isOld0 ? 0 : tree.F.toObject(res.oldValue);
+        this.isOld0 = res.isOld0 ? 1 : 0;
+        this.newKey = tree.F.toObject(key);
+        this.newValue = tree.F.toObject(value);
+    }
+
+    toNonMembershipUpdateInput(trere: any): any {
+        return {
+            oldRoot: this.oldRoot,
+            newRoot: this.newRoot,
+            siblings: this.siblings,
+            oldKey: this.oldKey,
+            oldValue: this.oldValue,
+            isOld0: this.isOld0,
+            newKey: this.newKey,
+            newValue: this.newValue
+        };
+    }
+}
+
+export async function getHashes() {
+    const bn128 = await getCurveFromName("bn128", true);
+    const poseidon = await buildPoseidon();
+    return {
+        hash0: function(left: any, right: any) {
+            return poseidon([left, right]);
+        },
+        hash1: function(key: any, value: any) {
+            return poseidon([key, value, bn128.Fr.one]);
+        },
+        F: bn128.Fr
+    }
+}
 
 // NOTE: we never guarantee the atomic
 export default class SMTDB {
@@ -148,70 +205,5 @@ export class StateTree {
         const res = await this.tree.update(key, newValue);
         const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
-    }
-}
-
-export class WorldState {
-    static instance: StateTree;
-    private constructor() {}
-
-    public static async getInstance(): Promise<StateTree> {
-        if (!WorldState.instance) {
-            consola.log("creating");
-            WorldState.instance = new StateTree();
-            await WorldState.instance.init(SMTModel);
-        }
-        consola.log("resuing");
-        return WorldState.instance;
-    }
-
-    // TODO add transaction
-    public static async updateStateTree(
-        outputNc1: bigint,
-        nullifier1: bigint,
-        outputNc2: bigint,
-        nullifier2: bigint,
-        acStateKey: bigint
-    ) {
-        consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
-        const eddsa = await buildEddsa();
-        const F = eddsa.F;
-        let instance = await WorldState.getInstance();
-        let siblings = [];
-        // insert all first, then find
-        if (outputNc1 > 0n) {
-            let result = await instance.insert(outputNc1, nullifier1);
-            consola.log(result);
-        }
-
-        if (outputNc2 > 0n) {
-            let result = await instance.insert(outputNc2, nullifier2);
-            consola.log(result);
-        }
-
-        if (outputNc1 > 0n) {
-            let sib = await instance.find(outputNc1)
-            siblings.push(siblingsPad(sib.siblings, F));
-        }
-        if (outputNc2 > 0n) {
-            let sib = await instance.find(outputNc2)
-            siblings.push(siblingsPad(sib.siblings, F));
-        }
-
-        if (siblings.length < 2) {
-            for (let i = siblings.length; i < 2; i ++) {
-                siblings.push(
-                    new Array(N_LEVEL).fill(0n)
-                );
-            }
-        }
-
-        let ac = await instance.find(acStateKey);
-
-        return {
-            dataTreeRoot: F.toObject(instance.root()),
-            siblings: siblings,
-            siblingsAC: siblingsPad(ac.siblings, F)
-        };
     }
 }

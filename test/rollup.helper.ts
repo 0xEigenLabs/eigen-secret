@@ -10,8 +10,8 @@ import { deploySpongePoseidon, deployPoseidons, deployPoseidonFacade } from "./d
 import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
 import { JoinSplitCircuit } from "../src/join_split";
 import { Prover } from "../src/prover";
-import { WorldState } from "../src/state_tree";
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "../src/state_tree_circuit";
+import { WorldState } from "../server/state_tree";
+import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "../src/state_tree";
 const createBlakeHash = require("blake-hash");
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
 import { NoteModel, updateDBNotes, getDBNotes } from "../server/note";
@@ -68,16 +68,12 @@ export class RollupHelper {
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
 
-        //TODO: may not deploy all contract
         this.poseidonContracts = await deployPoseidons(
-            (
-                await ethers.getSigners()
-            )[0],
-            new Array(6).fill(6).map((_, i) => i + 1)
+            this.userAccounts[0],
+            [2, 3, 6]
         );
 
-        this.spongePoseidon = await deploySpongePoseidon(this.poseidonContracts[5].address);
-
+        this.spongePoseidon = await deploySpongePoseidon(this.poseidonContracts[2].address);
         let factoryTR = await ethers.getContractFactory("TokenRegistry");
         this.tokenRegistry = await factoryTR.deploy(this.userAccounts[0].address)
         await this.tokenRegistry.deployed()
@@ -91,8 +87,8 @@ export class RollupHelper {
             }
         );
         this.rollup = await factoryR.deploy(
+            this.poseidonContracts[0].address,
             this.poseidonContracts[1].address,
-            this.poseidonContracts[2].address,
             this.tokenRegistry.address,
         );
         await this.rollup.deployed();
@@ -179,7 +175,6 @@ export class RollupHelper {
 
     async processDeposits(i: number, keysFound: any, valuesFound: any, siblings: any) {
         let processDeposit1: any;
-        // create 4 notes for above deposit.
         try {
             processDeposit1 = await this.rollup.connect(this.userAccounts[i]).processDeposits(
                 keysFound,
@@ -196,7 +191,6 @@ export class RollupHelper {
 
     async update(i: number, proofAndPublicSignal: any) {
         let processDeposit1: any;
-        // create 4 notes for above deposit.
         let proof = parseProof(proofAndPublicSignal.proof);
         try {
             processDeposit1 = await this.rollup.connect(this.userAccounts[i]).update(
@@ -215,7 +209,6 @@ export class RollupHelper {
 
     async withdraw(i: number, receiverI: number, txInfo: any, proofAndPublicSignal: any) {
         let processDeposit1: any;
-        // create 4 notes for above deposit.
         let proof = parseProof(proofAndPublicSignal.proof);
         console.log(txInfo, this.userAccounts[receiverI].address, proof);
         try {

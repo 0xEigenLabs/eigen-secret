@@ -2,12 +2,11 @@ import { test, utils } from "../index";
 import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
-import {  } from "../src/join_split";
 import { compress as accountCompress, SigningKey } from "../src/account";
-import { WorldState } from "../src/state_tree";
+import { WorldState } from "../server/state_tree";
 import { JoinSplitCircuit } from "../src/join_split";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import SMTModel from "../src/state_tree_db";
+import { SMTModel } from "../server/state_tree";
 const path = require("path");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
