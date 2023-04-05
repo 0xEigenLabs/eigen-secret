@@ -22,3 +22,5 @@ circuits/*.ptau
 circuits/circuit_final.zkey
 
 contracts/main_*.sol
+
+circuits/*.input.json
