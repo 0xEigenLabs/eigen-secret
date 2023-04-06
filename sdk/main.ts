@@ -70,6 +70,35 @@ export class NoteClient {
         this.serverAddr = serverAddr;
     }
 
+    async getBalance(context: any){
+        const {
+            alias,
+            ethAddress,
+            rawMessage,
+            timestamp,
+            signature
+        } = context;
+
+        let options = {
+            method: "POST",
+            url: this.serverAddr + "/notes/getBalance",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: prepareJson({
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: ethAddress
+            })
+        };
+        let response = await axios.request(options);
+        // console.log(response);
+        return response.data.data;
+    }
+
     async getNote(context: any) {
         const {
             alias,
@@ -203,6 +232,31 @@ export class SecretSDK {
         return new SigningKey(eddsa)
     }
 
+    async getBalance(ctx: any, assetId: number) {
+        let notes: Array<Note> = [];
+        let encryptedNotes = await this.note.getBalance(ctx);
+        if (encryptedNotes) {
+            encryptedNotes.forEach((item: any) => {
+                let sharedKey = ctx.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
+                notes.push(Note.decrypt(item.content, sharedKey));
+            });
+        }
+        let balance = 0n;
+        let _notes:Array<Note> = [];
+        for (let i = 0; i < notes.length; i ++) {
+            if (notes[i].assetId == assetId){
+                _notes.push(notes[i]);
+            };
+        }
+        for (let i = 0; i < 2; i ++) {
+            if(_notes[i]._owner.pubKey == ctx.accountKey.pubKey.pubKey){
+                let tmpValue = _notes[i].val;
+                balance = balance + tmpValue;
+            }
+        }
+        return balance;
+    }
+    
     // create proof for general transaction
     async deposit(ctx: any, receiver: string, value: string, assetId: number) {
         let eddsa = await buildEddsa();

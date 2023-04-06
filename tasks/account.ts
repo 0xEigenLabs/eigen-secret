@@ -36,9 +36,14 @@ task("create-account", "Create account and first transaction depositing to itsel
         let proofAndPublicSignals = await secretSDK.createAccount(ctx, newSigningKey1, newSigningKey2);
         let receiver = accountKey.pubKey.pubKey;
         let proof = await secretSDK.deposit(ctx, receiver, value, assetId);
+        let balance1 = await secretSDK.getBalance(ctx, assetId);
+        console.log("test1-after deposit")
+        console.log(balance1)
         console.log("CreateAccount done, proof: ", proofAndPublicSignals, proof);
-
-        let proof1 = await secretSDK.send(ctx, receiver, "5", assetId);
+        let proof1 = await secretSDK.send(ctx, receiver, "2", assetId);
+        let balance2 = await secretSDK.getBalance(ctx, assetId);
+        console.log("test2-after send")
+        console.log(balance2)
         console.log("end2end send done, proof: ", proof1);
 
         let proof2 = await secretSDK.withdraw(ctx, receiver, "5", assetId);
