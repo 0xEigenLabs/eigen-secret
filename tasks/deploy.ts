@@ -46,7 +46,7 @@ task("deploy", "Deploy all smart contract")
     console.log("rollup deployed to:", rollup.address);
     contractJson.set("rollup", rollup.address);
 
-    if (testTokenAddress == "-") {
+    if (testTokenAddress == "") {
         let factoryTT = await ethers.getContractFactory("TestToken");
         let testToken = await factoryTT.connect(admin).deploy();
         await testToken.deployed();
