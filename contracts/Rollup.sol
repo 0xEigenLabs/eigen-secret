@@ -72,7 +72,9 @@ contract Rollup is SMT {
         uint outputNc2;
         uint dataTreeRoot;
         uint publicAssetId;
-        //uint[] siblings;
+        uint[] keys;
+        uint[] values;
+        uint[][] siblings;
     }
 
     event RegisteredToken(uint publicAssetId, address tokenContract);
@@ -240,9 +242,17 @@ contract Rollup is SMT {
 
         require(publicAssetId > 0, "Invalid tokenType");
         require(
-            dataTreeRoot == inDataTreeRoot, // && dataTreeRoot == smtVerifier(txInfo.siblings, key, value, 0, 0, false, false, 20),
+            dataTreeRoot == inDataTreeRoot,
             "Invalid dataTreeRoot"
         );
+
+        for (uint i = 0; i < txInfo.keys.length; i ++) {
+            require(
+                dataTreeRoot == smtVerifier(txInfo.siblings[i], txInfo.keys[i], txInfo.values[i], 0, 0, false, false, 20),
+                "Invalid merkle proof"
+            );
+        }
+        
         require(nullifierRoots[inDataTreeRoot], "Invalid data tree root");
         require(withdrawVerifier.verifyProof(a, b, c, input), "The eddsa signature is not valid");
         // transfer token on tokenContract

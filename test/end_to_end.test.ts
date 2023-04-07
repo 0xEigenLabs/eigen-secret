@@ -511,6 +511,10 @@ describe('POST /transactions', function() {
         );
         let lastProof: any;
         let lastSiblings: any;
+        let keysFound = [];
+        let valuesFound = [];
+        let siblings = [];
+
         for (const input of inputs) {
             const response = await request(app)
             .post('/statetree')
@@ -567,6 +571,18 @@ describe('POST /transactions', function() {
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
 
+            keysFound.push(input.outputNCs[0]);
+            valuesFound.push(input.outputNotes[0].inputNullifier);
+            keysFound.push(input.outputNCs[1]);
+            valuesFound.push(input.outputNotes[1].inputNullifier);
+            for (const item of singleProof.siblings) {
+                let tmpSiblings = [];
+                for (const sib of item) {
+                    tmpSiblings.push(BigInt(sib));
+                }
+                siblings.push(tmpSiblings);
+            }
+
             // call contract and deposit
             await rollupHelper.update(0, proofAndPublicSignals);
             lastProof = proofAndPublicSignals;
@@ -622,7 +638,10 @@ describe('POST /transactions', function() {
             outputNc1: lastProof.publicSignals[4],
             outputNc2: lastProof.publicSignals[5],
             dataTreeRoot: lastProof.publicSignals[6],
-            publicAssetId: assetId // lastProof.publicSignals[7]
+            publicAssetId: assetId, // lastProof.publicSignals[7]
+            keys: keysFound,
+            values: valuesFound,
+            siblings: siblings
         }
 
         let msg = await poseidonSponge(
