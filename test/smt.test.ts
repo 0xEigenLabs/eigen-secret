@@ -2,9 +2,9 @@ import { expect, assert } from "chai";
 import path = require("path");
 import { test, utils } from "../index";
 const cls = require("circomlibjs");
-import { StateTree, StateTreeCircuitInput, N_LEVEL, siblingsPad } from "../src/state_tree";
+import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad, StateTree } from "../src/state_tree";
 const { ethers } = require("hardhat");
-import SMTModel from "../src/state_tree_db";
+import { SMTModel } from "../server/state_tree";
 
 describe("Test SMT Membership Query", function () {
     this.timeout(1000 * 1000);

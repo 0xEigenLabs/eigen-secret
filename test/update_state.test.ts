@@ -3,7 +3,7 @@ import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
 import { compress as accountCompress, AccountOrNullifierKey, SigningKey } from "../src/account";
-import { WorldState } from "../src/state_tree";
+import { WorldState } from "../server/state_tree";
 import { JoinSplitCircuit } from "../src/join_split";
 import { AccountCircuit } from "../src/account";
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
@@ -12,7 +12,6 @@ import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/
 const path = require("path");
 const { readFileSync } = require("fs");
 const snarkjs = require("snarkjs");
-import SMTModel from "../src/state_tree_db";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 
@@ -22,7 +21,7 @@ describe("Test JoinSplit Circuit", function () {
     let eddsa: any;
     let babyJub: any;
     let F: any;
-    let accountKey: AccountOrNullifierKey;
+    let accountKey: SigningKey;
     let signingKey: SigningKey;
     let aliasHash: bigint = 123n;
     let acStateKey: any;
@@ -37,8 +36,8 @@ describe("Test JoinSplit Circuit", function () {
         let third = path.join(__dirname, "../third-party");
         circuit = await test.genTempMain("circuits/update_state.circom",
             "UpdateState", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {include: third});
-        accountKey = await (new SigningKey()).newKey(undefined);
-        signingKey = await (new SigningKey()).newKey(undefined);
+        accountKey = new SigningKey(eddsa);
+        signingKey = new SigningKey(eddsa);
     })
 
     it("Account create update_state test", async () => {
@@ -47,11 +46,11 @@ describe("Test JoinSplit Circuit", function () {
         let newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
 
-        let newSigningKey1 = await (new SigningKey()).newKey(undefined);
+        let newSigningKey1 = new SigningKey(eddsa);
         let newSigningPubKey1 = newSigningKey1.pubKey.unpack(babyJub);
         newSigningPubKey1 = [F.toObject(newSigningPubKey1[0]), F.toObject(newSigningPubKey1[1])];
 
-        let newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        let newSigningKey2 = new SigningKey(eddsa);
         let newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
 
@@ -68,11 +67,11 @@ describe("Test JoinSplit Circuit", function () {
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
-        newAccountKey = await (new SigningKey()).newKey(undefined);
+        newAccountKey = new SigningKey(eddsa);
         newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
 
-        newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        newSigningKey2 = new SigningKey(eddsa);
         newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         input = await UpdateStatusCircuit.createAccountInput(
@@ -91,7 +90,7 @@ describe("Test JoinSplit Circuit", function () {
 
     it("JoinSplit deposit and send update_state test", async () => {
         signer = accountRequired? signingKey: accountKey;
-        acStateKey = await accountCompress(eddsa, accountKey, signer, aliasHash);
+        acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
         //let state = await WorldState.getInstance();
         //await state.insert(F.e(acStateKey), 1n);
@@ -130,7 +129,7 @@ describe("Test JoinSplit Circuit", function () {
         }
 
         // create a send proof
-        let noteReceiver = await (new SigningKey()).newKey(undefined);
+        let noteReceiver = new SigningKey(eddsa);
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
 
         let inputs2 = await UpdateStatusCircuit.createJoinSplitInput(
@@ -167,7 +166,7 @@ describe("Test JoinSplit Circuit", function () {
             //confirmedNote.push(inp.outputNotes[0]);
             confirmedNote.push(inp.outputNotes[1]);
         }
-        let withrawReceiver = await (new SigningKey()).newKey(undefined);
+        let withrawReceiver = new SigningKey(eddsa);
         let inputs3 = await UpdateStatusCircuit.createJoinSplitInput(
             accountKey,
             signingKey,
@@ -199,7 +198,7 @@ describe("Test JoinSplit Circuit", function () {
         let inputJson = path.join(__dirname, "..", "circuits/main_update_state.input.json");
         const input = JSON.parse(readFileSync(inputJson));
         let circuitPath = path.join(__dirname, "..", "circuits");
-        let proofAndPublicSignals = await Prover.updateState(circuitPath, input, F);
+        let proofAndPublicSignals = await Prover.updateState(circuitPath, input);
 
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;

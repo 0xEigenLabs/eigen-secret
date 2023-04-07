@@ -1,18 +1,16 @@
-import { UpdateStatusInput } from "./update_state";
-import { parseProof } from "./utils";
 const path = require("path");
 const fs = require("fs");
 const snarkjs = require("snarkjs");
 
 export class Prover {
-    static async updateState(circuitPath: string, input: any, F: any) {
+    static async updateState(circuitPath: string, input: any) {
         let wasm = path.join(circuitPath, "main_update_state_js", "main_update_state.wasm");
         let zkey = path.join(circuitPath, "circuit_final.zkey.16");
         const wc = require(`${circuitPath}/main_update_state_js/witness_calculator`);
         const buffer = fs.readFileSync(wasm);
         const witnessCalculator = await wc(buffer);
 
-        console.log("prover input", input);
+        // console.log("prover input", input);
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(
             input,
             0
@@ -37,14 +35,14 @@ export class Prover {
         return res;
     }
 
-    static async withdraw(circuitPath: string, input: any, F: any) {
+    static async withdraw(circuitPath: string, input: any) {
         let wasm = path.join(circuitPath, "main_withdraw_js", "main_withdraw.wasm");
         let zkey = path.join(circuitPath, "circuit_final.zkey.14");
         const wc = require(`${circuitPath}/main_withdraw_js/witness_calculator`);
         const buffer = fs.readFileSync(wasm);
         const witnessCalculator = await wc(buffer);
 
-        console.log("withdraw prover input", input);
+        // console.log("withdraw prover input", input);
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(
             input,
             0

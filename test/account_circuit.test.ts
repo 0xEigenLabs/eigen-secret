@@ -3,9 +3,8 @@ import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
 import { compress as accountCompress, AccountOrNullifierKey, SigningKey, AccountCircuit } from "../src/account";
-import { WorldState } from "../src/state_tree";
+import { WorldState } from "../server/state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import SMTModel from "../src/state_tree_db";
 
 const path = require("path");
 
@@ -17,7 +16,7 @@ describe("Account circuit test", function () {
     let eddsa: any;
     let babyJub: any;
     let F: any;
-    let accountKey: AccountOrNullifierKey;
+    let accountKey: SigningKey;
     let signingKey: SigningKey;
     let aliasHash: bigint = 123n;
     let acStateKey: any;
@@ -29,8 +28,8 @@ describe("Account circuit test", function () {
         F = babyJub.F;
         circuit = await test.genTempMain("circuits/account.circom",
             "Account", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {});
-        accountKey = await (new SigningKey()).newKey(undefined);
-        signingKey = await (new SigningKey()).newKey(undefined);
+        accountKey = new SigningKey(eddsa);
+        signingKey = new SigningKey(eddsa);
     })
 
     it("Account create test", async () => {
@@ -39,11 +38,11 @@ describe("Account circuit test", function () {
         let newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
 
-        let newSigningKey1 = await (new SigningKey()).newKey(undefined);
+        let newSigningKey1 = new SigningKey(eddsa);
         let newSigningPubKey1 = newSigningKey1.pubKey.unpack(babyJub);
         newSigningPubKey1 = [F.toObject(newSigningPubKey1[0]), F.toObject(newSigningPubKey1[1])];
 
-        let newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        let newSigningKey2 = new SigningKey(eddsa);
         let newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
 
@@ -62,11 +61,11 @@ describe("Account circuit test", function () {
         await utils.executeCircuit(circuit, input.toCircuitInput(proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
-        newAccountKey = await (new SigningKey()).newKey(undefined);
+        newAccountKey = new SigningKey(eddsa);
         newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
 
-        newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        newSigningKey2 = new SigningKey(eddsa);
         newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         input = await AccountCircuit.createProofInput(
@@ -84,7 +83,7 @@ describe("Account circuit test", function () {
 
         proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
 
-        newSigningKey2 = await (new SigningKey()).newKey(undefined);
+        newSigningKey2 = new SigningKey(eddsa);
         newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         input = await AccountCircuit.createProofInput(

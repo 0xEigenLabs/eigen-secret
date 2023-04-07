@@ -1,9 +1,9 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
+const { Sequelize } = require("sequelize");
 require("dotenv").config();
-import { require_env_variables } from "./utils";
+import { requireEnvVariables } from "../src/utils";
 import consola from "consola";
 
-require_env_variables(["DB_NAME", "DB_USER", "DB_HOST", "DB_DRIVER", "DB_PASSWORD"]);
+requireEnvVariables(["DB_NAME", "DB_USER", "DB_HOST", "DB_DRIVER", "DB_PASSWORD"]);
 
 const dbName = process.env.DB_NAME as string
 const dbUser = process.env.DB_USER as string

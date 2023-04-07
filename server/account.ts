@@ -1,8 +1,8 @@
-const { Sequelize, DataTypes, Model } = require("sequelize");
-const { ethers } = require("ethers");
-import sequelize from "../src/db";
+const { DataTypes, Model } = require("sequelize");
+import sequelize from "../server/db";
 import consola from "consola";
 import * as utils from "../src/utils";
+import { upsert } from "./common";
 
 class AccountModel extends Model {}
 
@@ -65,7 +65,7 @@ export async function createAccount(req: any, res: any) {
     let transaction = await sequelize.transaction();
 
     try {
-        let insertResult = await utils.upsert(
+        let insertResult = await upsert(
             AccountModel,
             { alias, ethAddress, ethAddress2: "", ethAddress3: "" }, // new item
             { alias, ethAddress }, // condition

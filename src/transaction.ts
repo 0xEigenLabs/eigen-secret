@@ -39,10 +39,10 @@ export class Transaction {
 
     async encrypt(): Promise<Array<TxData>> {
         let eddsa = await buildEddsa();
-        let tmpKey = await (new SigningKey()).newKey(undefined);
+        let tmpKey = new SigningKey(eddsa);
         let tes = [];
         for (let note of this.notes) {
-            let sharedKey = tmpKey.makeSharedKey(eddsa, note._owner);
+            let sharedKey = tmpKey.makeSharedKey(note._owner);
             tes.push(
                 new TxData(tmpKey.pubKey, note.encrypt(sharedKey))
             )
@@ -52,9 +52,8 @@ export class Transaction {
 
     async decrypt(content: Array<TxData>): Promise<Array<Note>> {
         let result = [];
-        let eddsa = await buildEddsa();
         for (let data of content) {
-            let sharedKey = this.sender.makeSharedKey(eddsa, data.pubKey);
+            let sharedKey = this.sender.makeSharedKey(data.pubKey);
             result.push(
                 Note.decrypt(data.content, sharedKey)
             )

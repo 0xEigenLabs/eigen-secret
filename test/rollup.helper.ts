@@ -1,31 +1,25 @@
 import { ethers } from "hardhat";
-const {BigNumber, ContractFactory} = require("ethers");
+const { ContractFactory, Contract } = require("ethers");
 import { expect, assert } from "chai";
 const {buildEddsa} = require("circomlibjs");
 const path = require("path");
 const fs = require("fs");
-const unstringifyBigInts = require("ffjavascript").utils.unstringifyBigInts;
 import { uint8Array2Bigint, prepareJson, parseProof, Proof, signEOASignature } from "../src/utils";
-import { deploySpongePoseidon, deployPoseidons, deployPoseidonFacade } from "./deploy_poseidons.util";
-import { AccountCircuit, aliasHashDigest, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
+import { deploySpongePoseidon, deployPoseidons } from "../src/deploy_poseidons.util";
+import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
 import { JoinSplitCircuit } from "../src/join_split";
 import { Prover } from "../src/prover";
-import { Contract } from "ethers";
-import { siblingsPad, WorldState } from "../src/state_tree";
+import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "../src/state_tree";
 const createBlakeHash = require("blake-hash");
 import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
-import { NoteModel, NoteState, updateDBNotes, getDBNotes } from "../server/note";
-import { Note } from "../src/note";
-import { Transaction } from "../src/transaction";
-import { createTxInternal } from "../server/transaction";
-import sequelize from "../src/db";
+import { NoteModel, updateDBNotes, getDBNotes } from "../server/note";
 
 /*
     Here we want to test the smart contract's deposit functionality.
 */
 
 export class RollupHelper {
-    userAccounts:any;
+    userAccounts: Array<any>;
     rollup:any;
     tokenRegistry:any;
     testToken:any;
@@ -40,7 +34,6 @@ export class RollupHelper {
     eigenSigningKeys: SigningKey[][] = []; // 3n
     pubkeyEigenSigningKeys: bigint[][][] = []; // 3n * 2
 
-    rawMessage: string = "Use Eigen Secret to shield your asset";
     circuitPath: string = path.join(__dirname, "../circuits/");
     alias: string = "contract.eigen.eth"
     aliasHash: any;
@@ -49,7 +42,7 @@ export class RollupHelper {
     sendFunc: any;
 
     constructor(
-        userAccounts: any,
+        userAccounts: Array<any>,
     ) {
         this.userAccounts = userAccounts;
         this.rollup = undefined;
@@ -68,16 +61,13 @@ export class RollupHelper {
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
 
-        //TODO: may not deploy all contract
         this.poseidonContracts = await deployPoseidons(
-            (
-                await ethers.getSigners()
-            )[0],
-            new Array(6).fill(6).map((_, i) => i + 1)
+            ethers,
+            this.userAccounts[0],
+            [2, 3, 6]
         );
 
-        this.spongePoseidon = await deploySpongePoseidon(this.poseidonContracts[5].address);
-
+        this.spongePoseidon = await deploySpongePoseidon(ethers, this.poseidonContracts[2].address);
         let factoryTR = await ethers.getContractFactory("TokenRegistry");
         this.tokenRegistry = await factoryTR.deploy(this.userAccounts[0].address)
         await this.tokenRegistry.deployed()
@@ -91,8 +81,8 @@ export class RollupHelper {
             }
         );
         this.rollup = await factoryR.deploy(
+            this.poseidonContracts[0].address,
             this.poseidonContracts[1].address,
-            this.poseidonContracts[2].address,
             this.tokenRegistry.address,
         );
         await this.rollup.deployed();
@@ -111,7 +101,7 @@ export class RollupHelper {
         const F = this.eddsa.F;
         const babyJub = this.eddsa.babyJub;
         for (var i = 0; i < 20; i ++) {
-            let tmp = await (new SigningKey()).newKey(undefined);
+            let tmp = new SigningKey(this.eddsa);
             let tmpP = tmp.pubKey.unpack(babyJub);
             let tmpPub = [F.toObject(tmpP[0]), F.toObject(tmpP[1])];
             this.eigenAccountKey.push(tmp);
@@ -120,17 +110,17 @@ export class RollupHelper {
             let tmpSigningKeys = [];
             let tmpPubKeySigningKeys = [];
 
-            tmpKey = await (new SigningKey()).newKey(undefined);
+            tmpKey = new SigningKey(this.eddsa);
             tmpSigningKeys.push(tmpKey);
             tmpKeyP = tmpKey.pubKey.unpack(babyJub);
             tmpPubKeySigningKeys.push([F.toObject(tmpKeyP[0]), F.toObject(tmpKeyP[1])]);
 
-            tmpKey = await (new SigningKey()).newKey(undefined);
+            tmpKey = new SigningKey(this.eddsa);
             tmpSigningKeys.push(tmpKey);
             tmpKeyP = tmpKey.pubKey.unpack(babyJub);
             tmpPubKeySigningKeys.push([F.toObject(tmpKeyP[0]), F.toObject(tmpKeyP[1])]);
 
-            tmpKey = await (new SigningKey()).newKey(undefined);
+            tmpKey = new SigningKey(this.eddsa);
             tmpSigningKeys.push(tmpKey);
             tmpKeyP = tmpKey.pubKey.unpack(babyJub);
             tmpPubKeySigningKeys.push([F.toObject(tmpKeyP[0]), F.toObject(tmpKeyP[1])]);
@@ -159,8 +149,7 @@ export class RollupHelper {
         return await this.tokenRegistry.numTokens();
     }
 
-    async deposit(index: number, assetId: number, value: number) {
-        assert(value <= 1000, "check the line 96");
+    async deposit(index: number, assetId: number, value: number, nonce: number) {
         let approveToken = await this.testToken.connect(this.userAccounts[index]).approve(
             this.rollup.address, value,
             {from: this.userAccounts[index].address}
@@ -170,7 +159,7 @@ export class RollupHelper {
             this.pubkeyEigenAccountKey[index],
             assetId,
             value,
-            0, //TODO: use nonce
+            nonce,
             { from: this.userAccounts[index].address }
         )
         assert(deposit0, "deposit0 failed");
@@ -179,7 +168,6 @@ export class RollupHelper {
 
     async processDeposits(i: number, keysFound: any, valuesFound: any, siblings: any) {
         let processDeposit1: any;
-        // create 4 notes for above deposit.
         try {
             processDeposit1 = await this.rollup.connect(this.userAccounts[i]).processDeposits(
                 keysFound,
@@ -196,7 +184,6 @@ export class RollupHelper {
 
     async update(i: number, proofAndPublicSignal: any) {
         let processDeposit1: any;
-        // create 4 notes for above deposit.
         let proof = parseProof(proofAndPublicSignal.proof);
         try {
             processDeposit1 = await this.rollup.connect(this.userAccounts[i]).update(
@@ -215,7 +202,6 @@ export class RollupHelper {
 
     async withdraw(i: number, receiverI: number, txInfo: any, proofAndPublicSignal: any) {
         let processDeposit1: any;
-        // create 4 notes for above deposit.
         let proof = parseProof(proofAndPublicSignal.proof);
         console.log(txInfo, this.userAccounts[receiverI].address, proof);
         try {

@@ -52,14 +52,14 @@ describe("Test Account Compressor", function () {
     })
 
     it("AccountCompress Test", async() => {
-        let accountKey = await (new SigningKey()).newKey(undefined);
-        let signingKey = await (new SigningKey()).newKey(undefined);
+        let accountKey = new SigningKey(eddsa);
+        let signingKey = new SigningKey(eddsa);
         let aliasHash = 1n;
-        let hashed = await accountCompress(eddsa, accountKey, signingKey, aliasHash);
+        let hashed = await accountCompress(accountKey, signingKey, aliasHash);
 
         let wtns = await utils.executeCircuit(circuit, {
-            npk: (accountKey.toCircuitInput(eddsa))[0],
-            spk: (signingKey.toCircuitInput(eddsa))[0],
+            npk: (accountKey.toCircuitInput())[0],
+            spk: (signingKey.toCircuitInput())[0],
             alias_hash: aliasHash
         });
         await circuit.assertOut(wtns, { out: hashed });

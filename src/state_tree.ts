@@ -1,8 +1,9 @@
-import { randomBytes as _randomBytes } from "crypto";
-const { newMemEmptyTrie, SMT, buildPoseidon, buildEddsa } = require("circomlibjs");
+const {
+    // newMemEmptyTrie
+    SMT, buildPoseidon
+} = require("circomlibjs");
 const { getCurveFromName } = require("ffjavascript");
 const consola = require("consola");
-import SMTModel from "./state_tree_db";
 
 export function siblingsPad(siblings: any, F: any) {
   for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
@@ -34,7 +35,7 @@ export class StateTreeCircuitInput {
         this.newValue = tree.F.toObject(value);
     }
 
-    toNonMembershipUpdateInput(trere: any): any {
+    toNonMembershipUpdateInput(): any {
         return {
             oldRoot: this.oldRoot,
             newRoot: this.newRoot,
@@ -48,7 +49,7 @@ export class StateTreeCircuitInput {
     }
 }
 
-async function getHashes() {
+export async function getHashes() {
     const bn128 = await getCurveFromName("bn128", true);
     const poseidon = await buildPoseidon();
     return {
@@ -80,13 +81,11 @@ export default class SMTDB {
     }
 
     _key2str(k: any) {
-        const F = this.F;
         const keyS = this.F.toString(k);
         return keyS;
     }
 
     _normalize(n: any, join: boolean = true) {
-        const F = this.F;
         if (join) {
             let nn = new Array(n.length);
             for (let i=0; i<nn.length; i++) {
@@ -179,10 +178,6 @@ export class StateTree {
         return this.tree.root;
     }
 
-    static get index(): bigint {
-        return BigInt("0x" + _randomBytes(31).toString("hex"))
-    }
-
     async find(_key: bigint) {
         let key = this.tree.F.e(_key);
         let res = await this.tree.find(key);
@@ -210,70 +205,5 @@ export class StateTree {
         const res = await this.tree.update(key, newValue);
         const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
-    }
-}
-
-export class WorldState {
-    static instance: StateTree;
-    private constructor() {}
-
-    public static async getInstance(): Promise<StateTree> {
-        if (!WorldState.instance) {
-            consola.log("creating");
-            WorldState.instance = new StateTree();
-            await WorldState.instance.init(SMTModel);
-        }
-        consola.log("resuing");
-        return WorldState.instance;
-    }
-
-    // TODO add transaction
-    public static async updateStateTree(
-        outputNc1: bigint,
-        nullifier1: bigint,
-        outputNc2: bigint,
-        nullifier2: bigint,
-        acStateKey: bigint
-    ) {
-        consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
-        const eddsa = await buildEddsa();
-        const F = eddsa.F;
-        let instance = await WorldState.getInstance();
-        let siblings = [];
-        // insert all first, then find
-        if (outputNc1 > 0n) {
-            let result = await instance.insert(outputNc1, nullifier1);
-            consola.log(result);
-        }
-
-        if (outputNc2 > 0n) {
-            let result = await instance.insert(outputNc2, nullifier2);
-            consola.log(result);
-        }
-
-        if (outputNc1 > 0n) {
-            let sib = await instance.find(outputNc1)
-            siblings.push(siblingsPad(sib.siblings, F));
-        }
-        if (outputNc2 > 0n) {
-            let sib = await instance.find(outputNc2)
-            siblings.push(siblingsPad(sib.siblings, F));
-        }
-
-        if (siblings.length < 2) {
-            for (let i = siblings.length; i < 2; i ++) {
-                siblings.push(
-                    new Array(N_LEVEL).fill(0n)
-                );
-            }
-        }
-
-        let ac = await instance.find(acStateKey);
-
-        return {
-            dataTreeRoot: F.toObject(instance.root()),
-            siblings: siblings,
-            siblingsAC: siblingsPad(ac.siblings, F)
-        };
     }
 }

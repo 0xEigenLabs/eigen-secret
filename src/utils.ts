@@ -1,8 +1,12 @@
 import { Buffer } from "buffer";
 import { BigNumberish } from "ethers";
-import { N_LEVEL } from "./state_tree";
 import { ethers } from "ethers";
 import consola from "consola";
+import { randomBytes as _randomBytes } from "crypto";
+
+export function index() {
+    return BigInt("0x" + _randomBytes(31).toString("hex"))
+}
 
 export function arrayChunk(array: Array<number>, chunkSize: number): any {
   return Array(Math.ceil(array.length / chunkSize)).map((_, index) => index * chunkSize)
@@ -38,13 +42,13 @@ export function getWitnessValue(witness: any, symbols: any, varName: string) {
 }
 
 export function getWitnessMap(witness: any, symbols: Map<string, any>, arrName: string): any {
-  return Object.entries(symbols).filter(([index, symbol]) => index.startsWith(arrName))
+  return Object.entries(symbols).filter(([index, _]) => index.startsWith(arrName))
     .map(([index, symbol]) => Object.assign({}, symbol, { "name": index, "value": witness[symbol["varIdx"]] }));
 }
 
 export function getWitnessArray(witness: any, symbols: Map<string, any>, arrName: string): any {
-  return Object.entries(symbols).filter(([index, symbol]) => index.startsWith(`${arrName}[`))
-    .map(([index, symbol]) => witness[symbol["varIdx"]]);
+  return Object.entries(symbols).filter(([index, _]) => index.startsWith(`${arrName}[`))
+    .map(([_, symbol]) => witness[symbol["varIdx"]]);
 }
 
 export function getWitnessBuffer(witness: any, symbols: Map<string, any>, arrName: string, varSize: number = 1) {
@@ -183,7 +187,7 @@ export async function signEOASignature(
     return await EOAAccount.signMessage(strRawMessage)
 }
 
-const require_env_variables = (envVars: Array<string>) => {
+const requireEnvVariables = (envVars: Array<string>) => {
   for (const envVar of envVars) {
     if (!process.env[envVar]) {
       throw new Error(`Error: set your '${envVar}' environmental variable `);
@@ -234,15 +238,5 @@ const hasValue = function(variable: any) {
   return true;
 };
 
-async function upsert(modelObj: any, newItem: any, condition: any, connection: any) {
-    const found = await modelObj.findOne({ where: condition });
-    if (!found) {
-        const item = await modelObj.create(newItem, connection);
-        return { item, created: true };
-    }
-    const item = modelObj.update(newItem, { where: condition }, connection);
-    return { item, created: false };
-}
-
-export { baseResp, succ, err, hasValue, require_env_variables, upsert, prepareJson };
+export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson };
 
