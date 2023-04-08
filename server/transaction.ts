@@ -47,7 +47,6 @@ export enum TransactionModelStatus {
 }
 
 export async function createTx(req: any, res: any) {
-    consola.log("create tx");
     const alias = req.body.alias;
     const pubKey = req.body.pubKey;
     const pubKey2 = req.body.pubKey2;

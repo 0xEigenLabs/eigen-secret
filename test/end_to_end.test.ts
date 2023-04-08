@@ -513,7 +513,7 @@ describe('POST /transactions', function() {
         let keysFound = [];
         let valuesFound = [];
         let siblings = [];
-        let dataTreeRoots = [];
+        let lastDataTreeRoot: any;
         for (const input of inputs) {
             const response = await request(app)
             .post('/statetree')
@@ -540,6 +540,20 @@ describe('POST /transactions', function() {
             let singleProof = response.body.data;
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
+
+            keysFound.push(input.outputNCs[0]);
+            valuesFound.push(input.outputNotes[0].inputNullifier);
+            keysFound.push(input.outputNCs[1]);
+            valuesFound.push(input.outputNotes[1].inputNullifier);
+            lastDataTreeRoot = singleProof.dataTreeRoot;
+
+            for (const item of singleProof.siblings) {
+                let tmpSiblings = [];
+                for (const sib of item) {
+                    tmpSiblings.push(BigInt(sib));
+                }
+                siblings.push(tmpSiblings);
+            }
 
             let transaction = new Transaction(input.outputNotes, signingKey);
             let txdata = await transaction.encrypt();
@@ -569,21 +583,6 @@ describe('POST /transactions', function() {
             .set('Accept', 'application/json');
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
-
-            keysFound.push(input.outputNCs[0]);
-            valuesFound.push(input.outputNotes[0].inputNullifier);
-            keysFound.push(input.outputNCs[1]);
-            valuesFound.push(input.outputNotes[1].inputNullifier);
-            dataTreeRoots.push(singleProof.dataTreeRoot);
-
-            for (const item of singleProof.siblings) {
-                let tmpSiblings = [];
-                for (const sib of item) {
-                    tmpSiblings.push(BigInt(sib));
-                }
-                siblings.push(tmpSiblings);
-            }
-            console.log(keysFound, valuesFound, dataTreeRoots, siblings);
 
             // call contract and deposit
             await rollupHelper.update(0, proofAndPublicSignals);
@@ -615,13 +614,13 @@ describe('POST /transactions', function() {
                         index: input.outputNotes[0].index,
                         pubKey: pubKey,
                         content: txdata[0].content,
-                        state: NoteState.PROVED
+                        state: NoteState.SPENT
                     },
                     {
                         index: input.outputNotes[1].index,
                         pubKey: pubKey,
                         content: txdata[1].content,
-                        state: NoteState.PROVED
+                        state: NoteState.SPENT
                     },
                 ]
             }))
@@ -631,6 +630,12 @@ describe('POST /transactions', function() {
             expect(responseSt.body.errno).to.eq(0);
         }
 
+        await rollupHelper.processDeposits(0, keysFound, valuesFound, siblings);
+
+        let sz = keysFound.length;
+        assert(lastProof.publicSignals[4] == keysFound[sz - 2]);
+        assert(lastProof.publicSignals[5] == keysFound[sz - 1]);
+
         let xy = rollupHelper.pubkeyEigenSigningKeys[0][0];
         // last tx
         const txInfo = {
@@ -639,10 +644,9 @@ describe('POST /transactions', function() {
             outputNc1: lastProof.publicSignals[4],
             outputNc2: lastProof.publicSignals[5],
             publicAssetId: assetId, // lastProof.publicSignals[7]
-            dataTreeRoots: dataTreeRoots,
-            keys: keysFound,
-            values: valuesFound,
-            siblings: siblings
+            dataTreeRoot: lastDataTreeRoot,
+            values: valuesFound.slice(valuesFound.length - 2),
+            siblings: siblings.slice(siblings.length - 2)
         }
 
         //FIXME hash sibings and tree

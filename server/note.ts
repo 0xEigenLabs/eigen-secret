@@ -36,9 +36,9 @@ NoteModel.init({
 });
 
 export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
-    consola.log("updateDBNotes", notes);
+    //consola.log("updateDBNotes", notes);
     let tmpResult = await getDBNotes(notes[0].alias, [NoteState.CREATING, NoteState.PROVED, NoteState.SPENT])
-    consola.log(tmpResult)
+    //consola.log(tmpResult)
     return await NoteModel.bulkCreate(
         notes,
         {

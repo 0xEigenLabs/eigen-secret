@@ -71,8 +71,7 @@ contract Rollup is SMT {
         uint outputNc1;
         uint outputNc2;
         uint publicAssetId;
-        uint[] dataTreeRoots;
-        uint[] keys;
+        uint dataTreeRoot;
         uint[] values;
         uint[][] siblings;
     }
@@ -196,6 +195,8 @@ contract Rollup is SMT {
         uint256 publicAssetId = input[7];
 
         require(!nullifierRoots[inDataTreeRoot], "Invalid data tree root");
+        require(!nullifierHashs[nullifier1], "Invalid nullifier1 when deposit");
+        require(!nullifierHashs[nullifier2], "Invalid nullifier2 when deposit");
 
         require(updateStateVerifier.verifyProof(a, b, c, input),
                 "Invalid deposit proof");
@@ -214,7 +215,7 @@ contract Rollup is SMT {
         uint[2] memory c
     ) public{
         uint publicAssetId = txInfo.publicAssetId;
-        uint[] memory inDataTreeRoot = txInfo.dataTreeRoots;
+        uint inDataTreeRoot = txInfo.dataTreeRoot;
 
         uint[] memory messages = new uint[](6);
         messages[0] = txInfo.publicValue;
@@ -237,19 +238,13 @@ contract Rollup is SMT {
 
         require(publicAssetId > 0, "Invalid tokenType");
 
-        uint len = inDataTreeRoot.length;
-        require(len > 0 && len * 2 == txInfo.keys.length, "Invalid Withdrawal requests");
+        uint[2] memory keys = [txInfo.outputNc1, txInfo.outputNc2];
+        require(nullifierRoots[inDataTreeRoot], "Invalid data tree root");
 
-        //console.log("keys len", len);
-        for (uint i = 0; i < len; i ++) {
-            require(nullifierRoots[inDataTreeRoot[i]], "Invalid data tree root");
-            //require(
-            //    inDataTreeRoot[i] == smtVerifier(txInfo.siblings[i*2], txInfo.keys[i*2], txInfo.values[i*2], 0, 0, false, false, 20),
-            //    "Invalid merkle proof 1"
-            //);
+        for (uint i = 0; i < 2; i ++) {
             require(
-                inDataTreeRoot[i] == smtVerifier(txInfo.siblings[i*2+1], txInfo.keys[i*2+1], txInfo.values[i*2+1], 0, 0, false, false, 20),
-                "Invalid merkle proof 2"
+                inDataTreeRoot == smtVerifier(txInfo.siblings[i], keys[i], txInfo.values[i], 0, 0, false, false, 20),
+                "Invalid merkle proof"
             );
         }
 
