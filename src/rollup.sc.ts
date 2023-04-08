@@ -1,4 +1,3 @@
-import { ethers } from "hardhat";
 import { assert } from "chai";
 import { uint8Array2Bigint, parseProof } from "../src/utils";
 const createBlakeHash = require("blake-hash");
@@ -30,63 +29,66 @@ export class RollupSC {
         eddsa: any,
         alias: string,
         userAccount: any,
+        rollup: any,
+        tokenRegistry: any,
+        testToken: any,
+        spongePoseidon: any,
         spongePoseidonAddress: string,
         tokenRegistryAddress: string,
         poseidon2Address: string,
         poseidon3Address: string,
         poseidon6Address: string,
         rollupAddress: string,
-        testTokenAddress: string = ""
+        testTokenAddress: string
     ) {
         this.eddsa = eddsa;
         this.alias = alias;
         this.userAccount = userAccount;
-        this.rollup = undefined;
-        this.tokenRegistry = undefined;
-        this.testToken = undefined;
-        this.spongePoseidon = undefined;
-        this.eddsa = undefined;
+        this.rollup = rollup;
+        this.tokenRegistry = tokenRegistry;
+        this.testToken = testToken;
+        this.spongePoseidon = spongePoseidon;
         this.aliasHash = undefined;
 
         this.spongePoseidonAddress = spongePoseidonAddress;
         this.tokenRegistryAddress = tokenRegistryAddress;
         this.poseidon2Address = poseidon2Address;
-        this.poseidon3Address = poseidon2Address;
-        this.poseidon6Address = poseidon2Address;
+        this.poseidon3Address = poseidon3Address;
+        this.poseidon6Address = poseidon6Address;
         this.rollupAddress = rollupAddress;
         this.testTokenAddress = testTokenAddress;
     }
 
-    async initialize() {
-        const aliasHashBuffer = this.eddsa.pruneBuffer(
-            createBlakeHash("blake512").update(this.alias).digest().slice(0, 32)
-        );
-        this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
-        const SpongePoseidonFactory = await ethers.getContractFactory("SpongePoseidon", {
-            libraries: {
-                PoseidonUnit6L: this.poseidon6Address
-            }
-        });
-        this.spongePoseidon = SpongePoseidonFactory.attach(this.spongePoseidonAddress);
+    // async initialize() {
+    //     const aliasHashBuffer = this.eddsa.pruneBuffer(
+    //         createBlakeHash("blake512").update(this.alias).digest().slice(0, 32)
+    //     );
+    //     this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
+    //     const SpongePoseidonFactory = await ethers.getContractFactory("SpongePoseidon", {
+    //         libraries: {
+    //             PoseidonUnit6L: this.poseidon6Address
+    //         }
+    //     });
+    //     this.spongePoseidon = SpongePoseidonFactory.attach(this.spongePoseidonAddress);
 
-        let factoryTR = await ethers.getContractFactory("TokenRegistry");
-        this.tokenRegistry = factoryTR.attach(this.tokenRegistryAddress);
+    //     let factoryTR = await ethers.getContractFactory("TokenRegistry");
+    //     this.tokenRegistry = factoryTR.attach(this.tokenRegistryAddress);
 
-        let factoryR = await ethers.getContractFactory(
-            "Rollup",
-            {
-                libraries: {
-                    SpongePoseidon: this.spongePoseidon.address
-                }
-            }
-        );
-        this.rollup = factoryR.attach(this.rollupAddress);
+    //     let factoryR = await ethers.getContractFactory(
+    //         "Rollup",
+    //         {
+    //             libraries: {
+    //                 SpongePoseidon: this.spongePoseidon.address
+    //             }
+    //         }
+    //     );
+    //     this.rollup = factoryR.attach(this.rollupAddress);
 
-        if (this.testTokenAddress != "") {
-            let factoryTT = await ethers.getContractFactory("TestToken");
-            this.testToken = factoryTT.attach(this.testTokenAddress);
-        }
-    }
+    //     if (this.testTokenAddress != "") {
+    //         let factoryTT = await ethers.getContractFactory("TestToken");
+    //         this.testToken = factoryTT.attach(this.testTokenAddress);
+    //     }
+    // }
 
     async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: number, nonce: number) {
         let userAccount = this.userAccount;

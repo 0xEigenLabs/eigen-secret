@@ -8,6 +8,8 @@ import { Note } from "../src/note";
 import { Transaction } from "../src/transaction";
 import { NoteState } from "../src/note";
 import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
+import { RollupSC } from "../src/rollup.sc";
+import { poseidonSponge } from "../src/sponge_poseidon";
 const axios = require("axios").default;
 import { assert } from "chai";
 
@@ -211,12 +213,18 @@ export class SecretSDK {
     note: NoteClient;
     trans: TransactionClient;
     circuitPath: string;
+    rollupSC: RollupSC;
+    keysFound:any;
+    valuesFound:any;
+    siblings:any;
+
     constructor(
         alias: string,
         accountKey: SigningKey,
         signingKey: SigningKey,
         serverAddr: string,
-        circuitPath: string
+        circuitPath: string,
+        rollupSC: RollupSC
     ) {
         this.alias = alias;
         this.signingKey = signingKey;
@@ -225,6 +233,10 @@ export class SecretSDK {
         this.note = new NoteClient(serverAddr);
         this.trans = new TransactionClient(serverAddr);
         this.circuitPath = circuitPath;
+        this.rollupSC = rollupSC;
+        this.keysFound = [];
+        this.valuesFound = [];
+        this.siblings = [];
     }
 
     static async newSigningKey() {
@@ -257,10 +269,28 @@ export class SecretSDK {
         return balance;
     }
     
+    async deploy() {
+        let setrollup = await this.rollupSC.tokenRegistry.connect(this.rollupSC.userAccount).setRollupNC(this.rollupSC.rollup.address);
+        assert(setrollup, 'setRollupNC failed')
+
+        let registerToken = await this.rollupSC.rollup.connect(this.rollupSC.userAccount).registerToken(this.rollupSC.testToken.address, { from: this.rollupSC.userAccount.address })
+        assert(registerToken, "token registration failed");
+
+        let approveToken = await this.rollupSC.rollup.connect(this.rollupSC.userAccount).approveToken(this.rollupSC.testToken.address, { from: this.rollupSC.userAccount.address })
+        assert(approveToken, "token registration failed");
+
+        return await this.rollupSC.tokenRegistry.numTokens();
+    }
+
     // create proof for general transaction
-    async deposit(ctx: any, receiver: string, value: string, assetId: number) {
+    async deposit(ctx: any, receiver: string, value: string, assetId: number, nonce: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
+        let tmpP = ctx.accountKey.pubKey.unpack(eddsa.babyJub);
+        let tmpPub = [eddsa.F.toObject(tmpP[0]), eddsa.F.toObject(tmpP[1])];
+
+        await this.rollupSC.deposit(tmpPub, assetId, Number(value), nonce);
+
         let accountRequired = false;
         console.log("alias: ", ctx.alias, this.alias);
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(ctx.alias).digest().slice(0, 32));
@@ -306,12 +336,28 @@ export class SecretSDK {
             let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             _proof.push(Prover.serialize(proofAndPublicSignals));
+
+            this.keysFound.push(input.outputNCs[0]);
+            this.valuesFound.push(input.outputNotes[0].inputNullifier);
+            this.keysFound.push(input.outputNCs[1]);
+            this.valuesFound.push(input.outputNotes[1].inputNullifier);
+            for (const item of proof.siblings) {
+                let tmpSiblings = [];
+                for (const sib of item) {
+                    tmpSiblings.push(BigInt(sib));
+                }
+                this.siblings.push(tmpSiblings);
+            }
+
             let transaction = new Transaction(input.outputNotes, ctx.signingKey);
             let txdata = await transaction.encrypt();
 
             let txInput = new Transaction(input.inputNotes, ctx.signingKey);
             let txInputData = await txInput.encrypt();
             await this.trans.createTx(ctx, txdata, input, proofAndPublicSignals);
+
+            await this.rollupSC.update(proofAndPublicSignals);
+
             let _notes = [
                 {
                     index: input.inputNotes[0].index,
@@ -341,6 +387,7 @@ export class SecretSDK {
             ]
             await this.note.updateNote(ctx, _notes);
         }
+        await this.rollupSC.processDeposits(this.rollupSC.userAccount, this.keysFound, this.valuesFound, this.siblings);
         return _proof;
     }
 
@@ -396,6 +443,8 @@ export class SecretSDK {
 
             // let txInput = new Transaction(input.inputNotes, ctx.signingKey);
             // let _txInputData = await txInput.encrypt();
+            await this.rollupSC.update(proofAndPublicSignals);
+
             await this.trans.createTx(ctx, txdata, input, proofAndPublicSignals);
             let _notes = [
                 {
@@ -464,6 +513,8 @@ export class SecretSDK {
         );
 
         let _proof: string[] = [];
+        let lastProof: any;
+        let lastSiblings: any;
         for (const input of inputs) {
             const proof = await this.state.updateStateTree(
                 ctx,
@@ -483,6 +534,10 @@ export class SecretSDK {
             // let txInput = new Transaction(input.inputNotes, ctx.signingKey);
             // let txInputData = await txInput.encrypt();
             await this.trans.createTx(ctx, txdata, input, proofAndPublicSignals);
+            // call contract and deposit
+            await this.rollupSC.update(proofAndPublicSignals);
+            lastProof = proofAndPublicSignals;
+            lastSiblings = proof.siblings;
             let _notes = [
                 {
                     index: encryptedNotes[0].index,
@@ -511,6 +566,45 @@ export class SecretSDK {
             ]
             await this.note.updateNote(ctx, _notes);
         }
+        let tmpP = ctx.signingKey.pubKey.unpack(eddsa.babyJub);
+        let xy = [eddsa.F.toObject(tmpP[0]), eddsa.F.toObject(tmpP[1])];
+        const txInfo = {
+            publicValue: value, // lastProof.publicSignals[1]
+            publicOwner: xy, //lastProof.publicSignals[2]
+            outputNc1: lastProof.publicSignals[4],
+            outputNc2: lastProof.publicSignals[5],
+            dataTreeRoot: lastProof.publicSignals[6],
+            publicAssetId: assetId // lastProof.publicSignals[7]
+        }
+
+        let msg = await poseidonSponge(
+            [
+                txInfo.publicValue,
+                txInfo.publicOwner[0],
+                txInfo.publicOwner[1],
+                txInfo.outputNc1,
+                txInfo.outputNc2,
+                txInfo.dataTreeRoot,
+                txInfo.publicAssetId,
+            ]
+        );
+
+        let sig = await ctx.signingKey.sign(eddsa.F.e(msg));
+        let input = {
+            enabled: 1,
+            Ax: xy[0],
+            Ay: xy[1],
+            M: msg,
+            R8x: eddsa.F.toObject(sig.R8[0]),
+            R8y: eddsa.F.toObject(sig.R8[1]),
+            S: sig.S,
+        }
+        let proofAndPublicSignals = await Prover.withdraw(this.circuitPath, input);
+        await this.rollupSC.withdraw(
+            this.rollupSC.userAccount,
+            txInfo,
+            proofAndPublicSignals
+        );
         return _proof;
     }
 
@@ -547,6 +641,15 @@ export class SecretSDK {
         if (!Prover.verifyState(proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
+
+        this.keysFound.push(acStateKey);
+        this.valuesFound.push(1n);
+        let tmpSiblings = [];
+        for (const sib of smtProof.siblings[0]) {
+            tmpSiblings.push(BigInt(sib));
+        }
+        this.siblings.push(tmpSiblings);
+
         return Prover.serialize(proofAndPublicSignals);
     }
 
