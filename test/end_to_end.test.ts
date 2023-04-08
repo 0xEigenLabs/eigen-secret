@@ -510,6 +510,10 @@ describe('POST /transactions', function() {
         );
         let lastProof: any;
         let lastSiblings: any;
+        let keysFound = [];
+        let valuesFound = [];
+        let siblings = [];
+        let dataTreeRoots = [];
         for (const input of inputs) {
             const response = await request(app)
             .post('/statetree')
@@ -566,10 +570,24 @@ describe('POST /transactions', function() {
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
 
+            //keysFound.push(input.outputNCs[0]);
+            //valuesFound.push(input.outputNotes[0].inputNullifier);
+            // FIXME 
+            keysFound.push(input.outputNCs[1]);
+            valuesFound.push(input.outputNotes[1].inputNullifier);
+            dataTreeRoots.push(singleProof.dataTreeRoot);
+
+            for (const item of singleProof.siblings) {
+                let tmpSiblings = [];
+                for (const sib of item) {
+                    tmpSiblings.push(BigInt(sib));
+                }
+                siblings.push(tmpSiblings);
+            }
+
             // call contract and deposit
             await rollupHelper.update(0, proofAndPublicSignals);
             lastProof = proofAndPublicSignals;
-            lastSiblings = singleProof.siblings;
 
             // settle down the spent notes
             const responseSt = await request(app)
@@ -620,10 +638,14 @@ describe('POST /transactions', function() {
             publicOwner: xy, //lastProof.publicSignals[2]
             outputNc1: lastProof.publicSignals[4],
             outputNc2: lastProof.publicSignals[5],
-            dataTreeRoot: lastProof.publicSignals[6],
-            publicAssetId: assetId // lastProof.publicSignals[7]
+            publicAssetId: assetId, // lastProof.publicSignals[7]
+            dataTreeRoots: dataTreeRoots,
+            keys: keysFound,
+            values: valuesFound,
+            siblings: siblings
         }
 
+        //FIXME hash sibings and tree
         let msg = await poseidonSponge(
             [
                 txInfo.publicValue,
@@ -631,7 +653,6 @@ describe('POST /transactions', function() {
                 txInfo.publicOwner[1],
                 txInfo.outputNc1,
                 txInfo.outputNc2,
-                txInfo.dataTreeRoot,
                 txInfo.publicAssetId,
             ]
         );

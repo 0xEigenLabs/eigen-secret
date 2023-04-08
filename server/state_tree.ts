@@ -36,7 +36,6 @@ export class WorldState {
         return WorldState.instance;
     }
 
-    // TODO add transaction
     public static async updateStateTree(
         outputNc1: bigint,
         nullifier1: bigint,
@@ -44,7 +43,7 @@ export class WorldState {
         nullifier2: bigint,
         acStateKey: bigint
     ) {
-        consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
+        // consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
         const eddsa = await buildEddsa();
         const F = eddsa.F;
         let instance = await WorldState.getInstance();
@@ -69,6 +68,7 @@ export class WorldState {
             siblings.push(siblingsPad(sib.siblings, F));
         }
 
+        // pad siblings
         if (siblings.length < 2) {
             for (let i = siblings.length; i < 2; i ++) {
                 siblings.push(
