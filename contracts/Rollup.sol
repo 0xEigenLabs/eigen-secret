@@ -195,8 +195,6 @@ contract Rollup is SMT {
         uint256 inDataTreeRoot = input[6];
         uint256 publicAssetId = input[7];
 
-        require(!nullifierHashs[nullifier1], "Invalid nullifier1 when deposit");
-        require(!nullifierHashs[nullifier2], "Invalid nullifier2 when deposit");
         require(!nullifierRoots[inDataTreeRoot], "Invalid data tree root");
 
         require(updateStateVerifier.verifyProof(a, b, c, input),
@@ -204,8 +202,6 @@ contract Rollup is SMT {
 
         dataTreeRoot = inDataTreeRoot;
         nullifierRoots[inDataTreeRoot] = true;
-        nullifierHashs[nullifier1] = true;
-        nullifierHashs[nullifier2] = true;
         emit UpdatedState(inDataTreeRoot, nullifier1, nullifier2);
     }
 
@@ -229,6 +225,8 @@ contract Rollup is SMT {
         //messages[5] = txInfo.dataTreeRoot;
         messages[5] = txInfo.publicAssetId;
         uint msghash = SpongePoseidon.hash(messages);
+        require(!nullifierHashs[txInfo.outputNc1], "Invalid nullifier1 when deposit");
+        require(!nullifierHashs[txInfo.outputNc2], "Invalid nullifier2 when deposit");
 
         //Ax, Ay, M
         uint[3] memory input = [
@@ -240,19 +238,18 @@ contract Rollup is SMT {
         require(publicAssetId > 0, "Invalid tokenType");
 
         uint len = inDataTreeRoot.length;
-        require(len > 0 && len == txInfo.keys.length, "Invalid Withdrawal requests");
-
-        require(
-            dataTreeRoot == inDataTreeRoot[len-1], // && dataTreeRoot == smtVerifier(txInfo.siblings, key, value, 0, 0, false, false, 20),
-            "Invalid dataTreeRoot"
-        );
+        require(len > 0 && len * 2 == txInfo.keys.length, "Invalid Withdrawal requests");
 
         //console.log("keys len", len);
         for (uint i = 0; i < len; i ++) {
             require(nullifierRoots[inDataTreeRoot[i]], "Invalid data tree root");
+            //require(
+            //    inDataTreeRoot[i] == smtVerifier(txInfo.siblings[i*2], txInfo.keys[i*2], txInfo.values[i*2], 0, 0, false, false, 20),
+            //    "Invalid merkle proof 1"
+            //);
             require(
-                inDataTreeRoot[i] == smtVerifier(txInfo.siblings[i], txInfo.keys[i], txInfo.values[i], 0, 0, false, false, 20),
-                "Invalid merkle proof"
+                inDataTreeRoot[i] == smtVerifier(txInfo.siblings[i*2+1], txInfo.keys[i*2+1], txInfo.values[i*2+1], 0, 0, false, false, 20),
+                "Invalid merkle proof 2"
             );
         }
 
@@ -270,6 +267,8 @@ contract Rollup is SMT {
                 "Transfer failed"
             );
         }
+        nullifierHashs[txInfo.outputNc1] = true;
+        nullifierHashs[txInfo.outputNc2] = true;
 
         emit Withdraw(txInfo, recipient);
     }

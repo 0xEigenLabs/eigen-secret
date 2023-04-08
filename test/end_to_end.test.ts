@@ -570,9 +570,8 @@ describe('POST /transactions', function() {
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
 
-            //keysFound.push(input.outputNCs[0]);
-            //valuesFound.push(input.outputNotes[0].inputNullifier);
-            // FIXME 
+            keysFound.push(input.outputNCs[0]);
+            valuesFound.push(input.outputNotes[0].inputNullifier);
             keysFound.push(input.outputNCs[1]);
             valuesFound.push(input.outputNotes[1].inputNullifier);
             dataTreeRoots.push(singleProof.dataTreeRoot);
@@ -584,6 +583,7 @@ describe('POST /transactions', function() {
                 }
                 siblings.push(tmpSiblings);
             }
+            console.log(keysFound, valuesFound, dataTreeRoots, siblings);
 
             // call contract and deposit
             await rollupHelper.update(0, proofAndPublicSignals);
