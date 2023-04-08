@@ -1,6 +1,5 @@
 import { assert } from "chai";
-import { uint8Array2Bigint, parseProof } from "../src/utils";
-const createBlakeHash = require("blake-hash");
+import { parseProof } from "../src/utils";
 
 /*
     Here we want to test the smart contract's deposit functionality.

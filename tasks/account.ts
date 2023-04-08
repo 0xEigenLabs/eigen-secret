@@ -1,12 +1,10 @@
-import { extendConfig, subtask, task } from "hardhat/config";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { subtask, task } from "hardhat/config";
 import { INIT } from "./task-names";
 import { signEOASignature } from "../src/utils";
 import { SigningKey } from "../src/account";
 import { SecretSDK } from "../sdk/main";
 import { RollupSC } from "../src/rollup.sc";
 import { deploySpongePoseidon, deployPoseidons } from "../src/deploy_poseidons.util";
-import { assert, expect } from "chai";
 require("dotenv").config()
 const path = require("path");
 const circuitPath = path.join(__dirname, "../circuits/");
@@ -18,13 +16,13 @@ const eddsa = buildEddsa();
 export const userAccount = async () =>{
     return {
         accountKey: new SigningKey(await eddsa, undefined),
-        signingKey: new SigningKey(await eddsa, undefined),
+        signingKey: new SigningKey(await eddsa, undefined)
     };
 };
 
 subtask(INIT, "Init contract and sdk for user")
   .addParam("alias")
-  .setAction(async( {alias}, {ethers} ) => {
+  .setAction(async ( { alias }, { ethers } ) => {
     let account = await userAccount();
     let accountKey = account.accountKey;
     let signingKey = account.signingKey;
@@ -80,17 +78,17 @@ subtask(INIT, "Init contract and sdk for user")
     console.log(contractJson);
     const rollupSC = new RollupSC(eddsa, alias, admin, rollup, tokenRegistry, testToken, spongePoseidon,
       spongePoseidon.address, testToken.address,
-      poseidonContracts[0].address, poseidonContracts[0].address, poseidonContracts[0].address, rollup.address, testToken.address);
+      poseidonContracts[0].address, poseidonContracts[0].address,
+      poseidonContracts[0].address, rollup.address, testToken.address);
 
-    const secretSDK = new SecretSDK(alias, accountKey, signingKey,"http://127.0.0.1:3000", circuitPath, rollupSC);
-    return(secretSDK)
+    const secretSDK = new SecretSDK(alias, accountKey, signingKey, "http://127.0.0.1:3000", circuitPath, rollupSC);
+    return (secretSDK)
   })
 
 task("create-account", "Create account and first transaction depositing to itself")
   .addParam("alias", "user alias", "Alice")
   .addParam("value", "first deposit value", "10")
   .setAction(async ({ alias, value }, { run, ethers }) => {
-
     let secretSDK = await run(INIT, { alias });
     console.log(secretSDK)
     console.log("init test------end")

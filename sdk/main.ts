@@ -72,7 +72,7 @@ export class NoteClient {
         this.serverAddr = serverAddr;
     }
 
-    async getBalance(context: any){
+    async getBalance(context: any) {
         const {
             alias,
             ethAddress,
@@ -256,27 +256,30 @@ export class SecretSDK {
         let balance = 0n;
         let _notes:Array<Note> = [];
         for (let i = 0; i < notes.length; i ++) {
-            if (notes[i].assetId == assetId){
+            if (notes[i].assetId == assetId) {
                 _notes.push(notes[i]);
-            };
+            }
         }
         for (let i = 0; i < 2; i ++) {
-            if(_notes[i]._owner.pubKey == ctx.accountKey.pubKey.pubKey){
+            if (_notes[i]._owner.pubKey == ctx.accountKey.pubKey.pubKey) {
                 let tmpValue = _notes[i].val;
                 balance = balance + tmpValue;
             }
         }
         return balance;
     }
-    
-    async deploy() {
-        let setrollup = await this.rollupSC.tokenRegistry.connect(this.rollupSC.userAccount).setRollupNC(this.rollupSC.rollup.address);
-        assert(setrollup, 'setRollupNC failed')
 
-        let registerToken = await this.rollupSC.rollup.connect(this.rollupSC.userAccount).registerToken(this.rollupSC.testToken.address, { from: this.rollupSC.userAccount.address })
+    async deploy() {
+        let setrollup = await this.rollupSC.tokenRegistry.connect(this.rollupSC.userAccount)
+        .setRollupNC(this.rollupSC.rollup.address);
+        assert(setrollup, "setRollupNC failed")
+
+        let registerToken = await this.rollupSC.rollup.connect(this.rollupSC.userAccount)
+        .registerToken(this.rollupSC.testToken.address, { from: this.rollupSC.userAccount.address })
         assert(registerToken, "token registration failed");
 
-        let approveToken = await this.rollupSC.rollup.connect(this.rollupSC.userAccount).approveToken(this.rollupSC.testToken.address, { from: this.rollupSC.userAccount.address })
+        let approveToken = await this.rollupSC.rollup.connect(this.rollupSC.userAccount)
+        .approveToken(this.rollupSC.testToken.address, { from: this.rollupSC.userAccount.address })
         assert(approveToken, "token registration failed");
 
         return await this.rollupSC.tokenRegistry.numTokens();
@@ -514,7 +517,7 @@ export class SecretSDK {
 
         let _proof: string[] = [];
         let lastProof: any;
-        let lastSiblings: any;
+        // let lastSiblings: any;
         for (const input of inputs) {
             const proof = await this.state.updateStateTree(
                 ctx,
@@ -537,7 +540,7 @@ export class SecretSDK {
             // call contract and deposit
             await this.rollupSC.update(proofAndPublicSignals);
             lastProof = proofAndPublicSignals;
-            lastSiblings = proof.siblings;
+            // lastSiblings = proof.siblings;
             let _notes = [
                 {
                     index: encryptedNotes[0].index,
@@ -570,7 +573,7 @@ export class SecretSDK {
         let xy = [eddsa.F.toObject(tmpP[0]), eddsa.F.toObject(tmpP[1])];
         const txInfo = {
             publicValue: value, // lastProof.publicSignals[1]
-            publicOwner: xy, //lastProof.publicSignals[2]
+            publicOwner: xy, // lastProof.publicSignals[2]
             outputNc1: lastProof.publicSignals[4],
             outputNc2: lastProof.publicSignals[5],
             dataTreeRoot: lastProof.publicSignals[6],
@@ -585,7 +588,7 @@ export class SecretSDK {
                 txInfo.outputNc1,
                 txInfo.outputNc2,
                 txInfo.dataTreeRoot,
-                txInfo.publicAssetId,
+                txInfo.publicAssetId
             ]
         );
 
@@ -597,7 +600,7 @@ export class SecretSDK {
             M: msg,
             R8x: eddsa.F.toObject(sig.R8[0]),
             R8y: eddsa.F.toObject(sig.R8[1]),
-            S: sig.S,
+            S: sig.S
         }
         let proofAndPublicSignals = await Prover.withdraw(this.circuitPath, input);
         await this.rollupSC.withdraw(
