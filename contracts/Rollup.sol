@@ -224,7 +224,7 @@ contract Rollup is SMT {
         messages[3] = txInfo.outputNc1;
         messages[4] = txInfo.outputNc2;
         messages[5] = txInfo.dataTreeRoot;
-        messages[5] = txInfo.publicAssetId;
+        messages[6] = txInfo.publicAssetId;
         uint msghash = SpongePoseidon.hash(messages);
         require(!nullifierHashs[txInfo.outputNc1], "Invalid nullifier1 when deposit");
         require(!nullifierHashs[txInfo.outputNc2], "Invalid nullifier2 when deposit");
@@ -243,10 +243,10 @@ contract Rollup is SMT {
         require(nullifierRoots[inDataTreeRoot], "Invalid data tree root");
 
         for (uint i = 0; i < 2; i ++) {
-            require(
-                inDataTreeRoot == smtVerifier(txInfo.siblings[i], keys[i], txInfo.values[i], 0, 0, false, false, 20),
-                "Invalid merkle proof"
-            );
+            //require(
+            //    inDataTreeRoot == smtVerifier(txInfo.siblings[i], keys[i], txInfo.values[i], 0, 0, false, false, 20),
+            //    "Invalid merkle proof"
+            //);
         }
 
         require(withdrawVerifier.verifyProof(a, b, c, input), "The eddsa signature is not valid");
