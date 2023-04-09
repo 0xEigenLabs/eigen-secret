@@ -508,8 +508,9 @@ describe('POST /transactions', function() {
             notes,
             accountRequired
         );
-        let lastProof: any;
-        let lastSiblings: any;
+        let lastKeys: Array<bigint> = [];
+        let lastSiblings: Array<Array<bigint>> = [];
+        let lastValues: Array<bigint> = [];
         let keysFound = [];
         let valuesFound = [];
         let siblings = [];
@@ -546,12 +547,16 @@ describe('POST /transactions', function() {
             keysFound.push(input.outputNCs[1]);
             valuesFound.push(input.outputNotes[1].inputNullifier);
             lastDataTreeRoot = singleProof.dataTreeRoot;
+            lastKeys = input.outputNCs;
+            lastValues = [input.outputNotes[0].inputNullifier, input.outputNotes[1].inputNullifier];
 
+            lastSiblings = []
             for (const item of singleProof.siblings) {
                 let tmpSiblings = [];
                 for (const sib of item) {
                     tmpSiblings.push(BigInt(sib));
                 }
+                lastSiblings.push(tmpSiblings);
                 siblings.push(tmpSiblings);
             }
 
@@ -586,7 +591,6 @@ describe('POST /transactions', function() {
 
             // call contract and deposit
             await rollupHelper.update(0, proofAndPublicSignals);
-            lastProof = proofAndPublicSignals;
 
             // settle down the spent notes
             const responseSt = await request(app)
@@ -633,33 +637,54 @@ describe('POST /transactions', function() {
         await rollupHelper.processDeposits(0, keysFound, valuesFound, siblings);
 
         let sz = keysFound.length;
-        assert(lastProof.publicSignals[4] == keysFound[sz - 2]);
-        assert(lastProof.publicSignals[5] == keysFound[sz - 1]);
 
         let xy = rollupHelper.pubkeyEigenSigningKeys[0][0];
         // last tx
         const txInfo = {
             publicValue: value, // lastProof.publicSignals[1]
             publicOwner: xy, //lastProof.publicSignals[2]
-            outputNc1: lastProof.publicSignals[4],
-            outputNc2: lastProof.publicSignals[5],
+            outputNc1: lastKeys[0], // lastProof.publicSignals[4]
+            outputNc2: lastKeys[1], // lastProof.publicSignals[5]
             publicAssetId: assetId, // lastProof.publicSignals[7]
             dataTreeRoot: lastDataTreeRoot,
-            values: valuesFound.slice(valuesFound.length - 2),
-            siblings: siblings.slice(siblings.length - 2)
+            values: lastValues,
+            siblings: lastSiblings
         }
 
         //FIXME hash sibings and tree
         let msg = await poseidonSponge(
             [
-                txInfo.publicValue,
+                BigInt(txInfo.publicValue),
                 txInfo.publicOwner[0],
                 txInfo.publicOwner[1],
                 txInfo.outputNc1,
                 txInfo.outputNc2,
-                txInfo.publicAssetId,
+                txInfo.dataTreeRoot,
+                BigInt(txInfo.publicAssetId),
             ]
         );
+
+        // check
+        const response = await request(app)
+        .post('/checkstatetree')
+        .send(prepareJson({
+            alias: alias,
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: newEOAAccount.address,
+            newStates: {
+                outputNc1: txInfo.outputNc1,
+                nullifier1: txInfo.values[0],
+                outputNc2: txInfo.outputNc2,
+                nullifier2: txInfo.values[1],
+                root: lastDataTreeRoot
+            }
+        }))
+        .set('Accept', 'application/json');
+        console.log("check statetree", response.body.data);
+        expect(response.status).to.eq(200);
+        expect(response.body.errno).to.eq(0);
 
         let sig = await signingKey.sign(eddsa.F.e(msg));
         let input = {
@@ -671,6 +696,7 @@ describe('POST /transactions', function() {
             R8y: F.toObject(sig.R8[1]),
             S: sig.S,
         }
+
         let proofAndPublicSignals = await Prover.withdraw(circuitPath, input);
         await rollupHelper.withdraw(
             0,

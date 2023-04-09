@@ -89,4 +89,48 @@ export class WorldState {
             siblingsAC: siblingsPad(ac.siblings, F)
         };
     }
+
+    public static async checkStateTree(
+        outputNc1: bigint,
+        nullifier1: bigint,
+        outputNc2: bigint,
+        nullifier2: bigint,
+        root: bigint
+    ) {
+        // consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
+        const eddsa = await buildEddsa();
+        const F = eddsa.F;
+        let instance = await WorldState.getInstance();
+        let siblings = [];
+        // insert all first, then find
+        if (outputNc1 > 0n) {
+            let sib = await instance.find(outputNc1)
+            siblings.push(siblingsPad(sib.siblings, F));
+            consola.log("find root", sib);
+            consola.log("find", outputNc1, siblings[siblings.length - 1]);
+            consola.log(F.toObject(sib.foundValue) == nullifier1, F.toObject(sib.foundValue), nullifier1);
+        }
+        if (outputNc2 > 0n) {
+            let sib = await instance.find(outputNc2)
+            siblings.push(siblingsPad(sib.siblings, F));
+            consola.log("find root", sib);
+            consola.log("find", outputNc2, siblings[siblings.length - 1]);
+            consola.log(F.toObject(sib.foundValue) == nullifier2, F.toObject(sib.foundValue), nullifier2);
+        }
+        consola.log("root", root == F.toObject(instance.root()));
+
+        // pad siblings
+        if (siblings.length < 2) {
+            for (let i = siblings.length; i < 2; i ++) {
+                siblings.push(
+                    new Array(N_LEVEL).fill(0n)
+                );
+            }
+        }
+
+        return {
+            dataTreeRoot: F.toObject(instance.root()),
+            siblings: siblings
+        };
+    }
 }

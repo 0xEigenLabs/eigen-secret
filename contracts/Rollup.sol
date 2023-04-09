@@ -217,17 +217,18 @@ contract Rollup is SMT {
         uint publicAssetId = txInfo.publicAssetId;
         uint inDataTreeRoot = txInfo.dataTreeRoot;
 
-        uint[] memory messages = new uint[](6);
+        uint[] memory messages = new uint[](7);
         messages[0] = txInfo.publicValue;
         messages[1] = txInfo.publicOwner[0];
         messages[2] = txInfo.publicOwner[1];
         messages[3] = txInfo.outputNc1;
         messages[4] = txInfo.outputNc2;
-        //messages[5] = txInfo.dataTreeRoot;
+        messages[5] = txInfo.dataTreeRoot;
         messages[5] = txInfo.publicAssetId;
         uint msghash = SpongePoseidon.hash(messages);
         require(!nullifierHashs[txInfo.outputNc1], "Invalid nullifier1 when deposit");
         require(!nullifierHashs[txInfo.outputNc2], "Invalid nullifier2 when deposit");
+        require(2 == txInfo.values.length, "Invalid input length");
 
         //Ax, Ay, M
         uint[3] memory input = [
