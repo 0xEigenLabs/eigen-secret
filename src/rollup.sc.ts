@@ -90,12 +90,14 @@ export class RollupSC {
     // }
     async deploy() {
         let setrollup = await this.tokenRegistry.connect(this.userAccount).setRollupNC(this.rollup.address);
-        assert(setrollup, 'setRollupNC failed')
+        assert(setrollup, "setRollupNC failed")
 
-        let registerToken = await this.rollup.connect(this.userAccount).registerToken(this.testToken.address, { from: this.userAccount.address })
+        let registerToken = await this.rollup.connect(this.userAccount)
+        .registerToken(this.testToken.address, { from: this.userAccount.address })
         assert(registerToken, "token registration failed");
 
-        let approveToken = await this.rollup.connect(this.userAccount).approveToken(this.testToken.address, { from: this.userAccount.address })
+        let approveToken = await this.rollup.connect(this.userAccount)
+        .approveToken(this.testToken.address, { from: this.userAccount.address })
         assert(approveToken, "token registration failed");
 
         return await this.tokenRegistry.numTokens();
