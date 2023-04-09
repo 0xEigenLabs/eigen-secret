@@ -1,6 +1,6 @@
 {
   "name": "@eigen-secret/core",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "> TODO: description",
   "author": "abu <285921957@qq.com>",
   "homepage": "https://github.com/abu-2022/eigen-secret#readme",
@@ -56,6 +56,7 @@
     "@types/mocha": "^9.1.0",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
+    "circom_runtime": "^0.1.18",
     "circom_tester": "^0.0.19",
     "circomlib": "^2.0.5",
     "dotenv": "^16.0.0",
@@ -68,7 +69,6 @@
     "tmp-promise": "^3.0.3",
     "ts-node": "^10.4.0",
     "typechain": "^8.1.1",
-    "circom_runtime": "^0.1.18",
     "typescript": "^4.6.2"
   }
 }
