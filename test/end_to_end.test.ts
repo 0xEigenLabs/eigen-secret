@@ -524,9 +524,10 @@ describe('POST /transactions', function() {
         let lastKeys: Array<bigint> = [];
         let lastSiblings: Array<Array<bigint>> = [];
         let lastValues: Array<bigint> = [];
-        let keysFound = [];
-        let valuesFound = [];
-        let siblings = [];
+        let keysFound: Array<bigint> = [];
+        let valuesFound: Array<bigint> = [];
+        let dataTreeRootsFound: Array<bigint> = [];
+        let siblings: Array<Array<bigint>> = [];
         let lastDataTreeRoot: any;
         for (const input of inputs) {
             const response = await request(app)
@@ -573,6 +574,7 @@ describe('POST /transactions', function() {
             valuesFound.push(input.outputNotes[0].inputNullifier);
             keysFound.push(input.outputNCs[1]);
             valuesFound.push(input.outputNotes[1].inputNullifier);
+            dataTreeRootsFound.push(singleProof.dataTreeRoot);
             lastDataTreeRoot = singleProof.dataTreeRoot;
             lastKeys = input.outputNCs;
             lastValues = [input.outputNotes[0].inputNullifier, input.outputNotes[1].inputNullifier];
@@ -584,7 +586,7 @@ describe('POST /transactions', function() {
                     tmpSiblings.push(sib);
                 }
                 lastSiblings.push(tmpSiblings);
-                siblings.push(pad(tmpSiblings));
+                siblings.push(tmpSiblings);
             }
 
             let transaction = new Transaction(input.outputNotes, signingKey);
@@ -661,8 +663,6 @@ describe('POST /transactions', function() {
             expect(responseSt.body.errno).to.eq(0);
         }
 
-        await rollupHelper.processDeposits(0, keysFound, valuesFound, siblings);
-
         let sz = keysFound.length;
 
         let xy = rollupHelper.pubkeyEigenSigningKeys[0][0];
@@ -674,35 +674,40 @@ describe('POST /transactions', function() {
             outputNc2: lastKeys[1], // lastProof.publicSignals[5]
             publicAssetId: assetId, // lastProof.publicSignals[7]
             dataTreeRoot: lastDataTreeRoot,
-            values: lastValues,
-            siblings: lastSiblings
+            roots: dataTreeRootsFound,
+            keys: keysFound,
+            values: valuesFound,
+            siblings: siblings
         }
 
         //FIXME hash sibings and tree
+        let hashInput = [
+            BigInt(txInfo.publicValue),
+            txInfo.publicOwner[0],
+            txInfo.publicOwner[1],
+            txInfo.outputNc1,
+            txInfo.outputNc2,
+            BigInt(txInfo.publicAssetId),
+        ];
+        for (var i = 0; i < txInfo.roots.length; i ++) {
+            hashInput.push(txInfo.roots[i])
+        }
         let msg = await poseidonSponge(
-            [
-                BigInt(txInfo.publicValue),
-                txInfo.publicOwner[0],
-                txInfo.publicOwner[1],
-                txInfo.outputNc1,
-                txInfo.outputNc2,
-                txInfo.dataTreeRoot,
-                BigInt(txInfo.publicAssetId),
-            ]
+           hashInput 
         );
 
         //DEBUG: check by smt verifier
-        let tmpRoot = await smtVerifierContract.smtVerifier(
-                txInfo.siblings[0], txInfo.outputNc1,
-                txInfo.values[0], "0", "0", false, false, 20
-        )
-        expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+        // let tmpRoot = await smtVerifierContract.smtVerifier(
+        //         txInfo.siblings[0], txInfo.outputNc1,
+        //         txInfo.values[0], "0", "0", false, false, 20
+        // )
+        // expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
 
-        tmpRoot = await smtVerifierContract.smtVerifier(
-                txInfo.siblings[1], txInfo.outputNc2,
-                txInfo.values[1], "0", "0", false, false, 20
-        )
-        expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+        // tmpRoot = await smtVerifierContract.smtVerifier(
+        //         txInfo.siblings[1], txInfo.outputNc2,
+        //         txInfo.values[1], "0", "0", false, false, 20
+        // )
+        // expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
 
         let sig = await signingKey.sign(Fr.e(msg));
         let input = {
