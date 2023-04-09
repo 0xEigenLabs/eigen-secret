@@ -64,14 +64,10 @@ export class WorldState {
         if (outputNc1 > 0n) {
             let sib = await instance.find(outputNc1)
             siblings.push(siblingsPad(sib.siblings, F, padding));
-            consola.log("find root", F.toObject(instance.root()));
-            consola.log("find", outputNc1, siblings[siblings.length - 1]);
         }
         if (outputNc2 > 0n) {
             let sib = await instance.find(outputNc2)
             siblings.push(siblingsPad(sib.siblings, F, padding));
-            consola.log("find root", F.toObject(instance.root()));
-            consola.log("find", outputNc2, siblings[siblings.length - 1]);
         }
 
         // pad siblings
