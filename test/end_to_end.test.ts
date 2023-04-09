@@ -681,16 +681,19 @@ describe('POST /transactions', function() {
         }
 
         //FIXME hash sibings and tree
+        let hashInput = [
+            BigInt(txInfo.publicValue),
+            txInfo.publicOwner[0],
+            txInfo.publicOwner[1],
+            txInfo.outputNc1,
+            txInfo.outputNc2,
+            BigInt(txInfo.publicAssetId),
+        ];
+        for (var i = 0; i < txInfo.roots.length; i ++) {
+            hashInput.push(txInfo.roots[i])
+        }
         let msg = await poseidonSponge(
-            [
-                BigInt(txInfo.publicValue),
-                txInfo.publicOwner[0],
-                txInfo.publicOwner[1],
-                txInfo.outputNc1,
-                txInfo.outputNc2,
-                txInfo.dataTreeRoot,
-                BigInt(txInfo.publicAssetId),
-            ]
+           hashInput 
         );
 
         //DEBUG: check by smt verifier

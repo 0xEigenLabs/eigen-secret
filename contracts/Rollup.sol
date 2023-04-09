@@ -219,14 +219,17 @@ contract Rollup is SMT {
         uint publicAssetId = txInfo.publicAssetId;
         uint inDataTreeRoot = txInfo.dataTreeRoot;
 
-        uint[] memory messages = new uint[](7);
+        uint rootsLength = txInfo.roots.length;
+        uint[] memory messages = new uint[](6 + rootsLength);
         messages[0] = txInfo.publicValue;
         messages[1] = txInfo.publicOwner[0];
         messages[2] = txInfo.publicOwner[1];
         messages[3] = txInfo.outputNc1;
         messages[4] = txInfo.outputNc2;
-        messages[5] = txInfo.dataTreeRoot;
-        messages[6] = txInfo.publicAssetId;
+        messages[5] = txInfo.publicAssetId;
+        for (uint i = 0; i < rootsLength; i ++) {
+            messages[6+i] = txInfo.roots[i];
+        }
         uint msghash = SpongePoseidon.hash(messages);
         require(!nullifierHashs[txInfo.outputNc1], "Invalid nullifier1 when deposit");
         require(!nullifierHashs[txInfo.outputNc2], "Invalid nullifier2 when deposit");
@@ -239,11 +242,11 @@ contract Rollup is SMT {
         ];
 
         require(publicAssetId > 0, "Invalid tokenType");
-
-        require(nullifierRoots[inDataTreeRoot], "Invalid data tree root");
+        require(nullifierRoots[inDataTreeRoot], "Invalid lastest data tree root");
 
         for (uint i = 0; i < txInfo.roots.length; i ++) {
             for (uint j = 0; j < 2; j ++) {
+                require(nullifierRoots[txInfo.roots[i]], "Invalid data tree root");
                 require(
                     txInfo.roots[i] == smtVerifier(txInfo.siblings[2*i+j], txInfo.keys[2*i+j], txInfo.values[2*i+j], 0, 0, false, false, 20),
                     "invalid merkle proof"
