@@ -173,7 +173,6 @@ export class TransactionClient {
     }
 }
 
-
 export class SecretSDK {
     alias: string;
     accountKey: SigningKey;

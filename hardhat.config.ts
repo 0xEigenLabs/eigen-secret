@@ -19,6 +19,10 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+console.log('process.env.GOERLI_RPC_URL', process.env.GOERLI_RPC_URL);
+console.log('process.env.PRIVATE_KEY', process.env.PRIVATE_KEY);
+
+
 module.exports = {
   solidity: {
     version: '0.8.16',
@@ -46,24 +50,30 @@ module.exports = {
   },
   defaultNetwork: "hardhat",
   networks: {
-    hardhat: {},
+    hardhat: {
+      chainId: 31337,
+    },
     goerli: {
-      url: `https://goerli.infura.io/v3/${process.env.API_KEY}`,
+      // url: `https://goerli.infura.io/v3/${process.env.API_KEY}`,
+      url: process.env.GOERLI_RPC_URL,
       accounts: [process.env.PRIVATE_KEY],
+      chainId: 5,
+      blockConfirmations: 6,
     },
-    sepolia: {
-      url: `https://sepolia.infura.io/v3/${process.env.API_KEY}`,
-      accounts: [process.env.PRIVATE_KEY]
-    },
-    tpolygon: {
-      url: "https://rpc-mumbai.maticvigil.com/",
-      accounts: [process.env.PRIVATE_KEY]
-    }
+    // sepolia: {
+    //   url: `https://sepolia.infura.io/v3/${process.env.API_KEY}`,
+    //   accounts: [process.env.PRIVATE_KEY]
+    // },
+    // tpolygon: {
+    //   url: "https://rpc-mumbai.maticvigil.com/",
+    //   accounts: [process.env.PRIVATE_KEY]
+    // }
   },
   gasReporter: {
     currency: 'USD',
     gasPrice: 20,
     token: 'ETH',
+    outputFile: "gas-report.txt",
     gasPriceApi: 'https://api.etherscan.io/api?module=proxy&action=eth_gasPrice',
     coinmarketcap: 'f6673cc5-a673-4e07-8461-f7281a5de7d7',
     onlyCalledMethods: false
