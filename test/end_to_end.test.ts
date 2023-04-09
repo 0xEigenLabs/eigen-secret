@@ -148,7 +148,8 @@ describe('POST /transactions', function() {
                 timestamp: timestamp,
                 message: rawMessage,
                 hexSignature: signature,
-                ethAddress: newEOAAccount.address
+                ethAddress: newEOAAccount.address,
+                noteState: [NoteState.CREATING, NoteState.PROVED]
             })
             .set('Accept', 'application/json');
         //console.log(responseNote.body.data);
@@ -330,7 +331,8 @@ describe('POST /transactions', function() {
             timestamp: timestamp,
             message: rawMessage,
             hexSignature: signature,
-            ethAddress: newEOAAccount.address
+            ethAddress: newEOAAccount.address,
+            noteState: [NoteState.CREATING, NoteState.PROVED]
         })
         .set('Accept', 'application/json');
         //console.log(responseNote.body.data);
@@ -489,7 +491,8 @@ describe('POST /transactions', function() {
             timestamp: timestamp,
             message: rawMessage,
             hexSignature: signature,
-            ethAddress: newEOAAccount.address
+            ethAddress: newEOAAccount.address,
+            noteState: [NoteState.CREATING, NoteState.PROVED]
         })
         .set('Accept', 'application/json');
         //console.log(responseNote.body.data);

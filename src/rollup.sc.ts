@@ -1,5 +1,13 @@
+import { ethers } from "ethers"
 import { assert } from "chai";
-import { parseProof } from "../src/utils";
+import { uint8Array2Bigint, parseProof } from "../src/utils";
+import spongePoseidonContract from "../artifacts/contracts/libs/Poseidon.sol/SpongePoseidon.json";
+import tokenRegistryContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
+import rollupContract from "../artifacts/contracts/Rollup.sol/Rollup.json";
+import testTokenContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
+const fs = require("fs")
+const createBlakeHash = require("blake-hash");
+
 
 /*
     Here we want to test the smart contract's deposit functionality.
@@ -28,79 +36,44 @@ export class RollupSC {
         eddsa: any,
         alias: string,
         userAccount: any,
-        rollup: any,
-        tokenRegistry: any,
-        testToken: any,
-        spongePoseidon: any,
         spongePoseidonAddress: string,
         tokenRegistryAddress: string,
         poseidon2Address: string,
         poseidon3Address: string,
         poseidon6Address: string,
         rollupAddress: string,
-        testTokenAddress: string
+        testTokenAddress: string = ""
     ) {
         this.eddsa = eddsa;
         this.alias = alias;
         this.userAccount = userAccount;
-        this.rollup = rollup;
-        this.tokenRegistry = tokenRegistry;
-        this.testToken = testToken;
-        this.spongePoseidon = spongePoseidon;
+        this.rollup = undefined;
+        this.tokenRegistry = undefined;
+        this.testToken = undefined;
+        this.spongePoseidon = undefined;
         this.aliasHash = undefined;
 
         this.spongePoseidonAddress = spongePoseidonAddress;
         this.tokenRegistryAddress = tokenRegistryAddress;
         this.poseidon2Address = poseidon2Address;
-        this.poseidon3Address = poseidon3Address;
-        this.poseidon6Address = poseidon6Address;
+        this.poseidon3Address = poseidon2Address;
+        this.poseidon6Address = poseidon2Address;
         this.rollupAddress = rollupAddress;
         this.testTokenAddress = testTokenAddress;
     }
 
-    // async initialize() {
-    //     const aliasHashBuffer = this.eddsa.pruneBuffer(
-    //         createBlakeHash("blake512").update(this.alias).digest().slice(0, 32)
-    //     );
-    //     this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
-    //     const SpongePoseidonFactory = await ethers.getContractFactory("SpongePoseidon", {
-    //         libraries: {
-    //             PoseidonUnit6L: this.poseidon6Address
-    //         }
-    //     });
-    //     this.spongePoseidon = SpongePoseidonFactory.attach(this.spongePoseidonAddress);
+    async initialize() {
+        const aliasHashBuffer = this.eddsa.pruneBuffer(
+            createBlakeHash("blake512").update(this.alias).digest().slice(0, 32)
+        );
+        this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
+        this.spongePoseidon = new ethers.Contract(this.spongePoseidonAddress, spongePoseidonContract.abi, this.userAccount);
+        this.tokenRegistry = new ethers.Contract(this.tokenRegistryAddress, tokenRegistryContract.abi, this.userAccount);
+        this.rollup = new ethers.Contract(this.rollupAddress, rollupContract.abi, this.userAccount);
 
-    //     let factoryTR = await ethers.getContractFactory("TokenRegistry");
-    //     this.tokenRegistry = factoryTR.attach(this.tokenRegistryAddress);
-
-    //     let factoryR = await ethers.getContractFactory(
-    //         "Rollup",
-    //         {
-    //             libraries: {
-    //                 SpongePoseidon: this.spongePoseidon.address
-    //             }
-    //         }
-    //     );
-    //     this.rollup = factoryR.attach(this.rollupAddress);
-
-    //     if (this.testTokenAddress != "") {
-    //         let factoryTT = await ethers.getContractFactory("TestToken");
-    //         this.testToken = factoryTT.attach(this.testTokenAddress);
-    //     }
-    // }
-    async deploy() {
-        let setrollup = await this.tokenRegistry.connect(this.userAccount).setRollupNC(this.rollup.address);
-        assert(setrollup, "setRollupNC failed")
-
-        let registerToken = await this.rollup.connect(this.userAccount)
-        .registerToken(this.testToken.address, { from: this.userAccount.address })
-        assert(registerToken, "token registration failed");
-
-        let approveToken = await this.rollup.connect(this.userAccount)
-        .approveToken(this.testToken.address, { from: this.userAccount.address })
-        assert(approveToken, "token registration failed");
-
-        return await this.tokenRegistry.numTokens();
+        if (this.testTokenAddress != "") {
+            this.testToken = new ethers.Contract(this.testTokenAddress, testTokenContract.abi, this.userAccount);
+        }
     }
 
     async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: number, nonce: number) {

@@ -13,7 +13,7 @@ import "dotenv/config";
 import * as utils from "../src/utils";
 import bodyParser from "body-parser";
 import { createAccount } from "./account";
-import { createTx, getTxByAlias, updateStateTree, updateNotes, getNotes, getBalance } from "./transaction";
+import { createTx, getTxByAlias, updateStateTree, updateNotes, getNotes } from "./transaction";
 
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);
@@ -35,7 +35,6 @@ app.post("/statetree", updateStateTree);
 app.get("/transactions/:alias", getTxByAlias); // TODO: get not allowed
 app.post("/notes/update", updateNotes);
 app.post("/notes/get", getNotes);
-app.post("/notes/getBalance", getBalance);
 app.get("/ping", (req, resp) => {
   resp.json(utils.succ("pong"));
 })

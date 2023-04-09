@@ -201,6 +201,7 @@ export async function getNotes(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
+    const noteState = req.body.noteState;
 
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
@@ -208,24 +209,7 @@ export async function getNotes(req: any, res: any) {
     }
 
     // get the confirmed note list, TODO: handle exception
-    let notes = await getDBNotes(alias, [NoteState.CREATING, NoteState.PROVED]);
-    return res.json(utils.succ(notes));
-}
-
-export async function getBalance(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
-
-    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
-    if (!validAdddr) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
-    }
-
-    // get the confirmed note list, TODO: handle exception
-    let notes = await getDBNotes(alias, [NoteState.PROVED]);
+    let notes = await getDBNotes(alias, noteState);
     return res.json(utils.succ(notes));
 }
 

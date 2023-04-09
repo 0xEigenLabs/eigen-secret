@@ -72,36 +72,7 @@ export class NoteClient {
         this.serverAddr = serverAddr;
     }
 
-    async getBalance(context: any) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
-
-        let options = {
-            method: "POST",
-            url: this.serverAddr + "/notes/getBalance",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: prepareJson({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: ethAddress
-            })
-        };
-        let response = await axios.request(options);
-        // console.log(response);
-        return response.data.data;
-    }
-
-    async getNote(context: any) {
+    async getNote(context: any, noteState: any) {
         const {
             alias,
             ethAddress,
@@ -122,7 +93,8 @@ export class NoteClient {
                 timestamp: timestamp,
                 message: rawMessage,
                 hexSignature: signature,
-                ethAddress: ethAddress
+                ethAddress: ethAddress,
+                noteState: noteState
             })
         };
         let response = await axios.request(options);
@@ -224,7 +196,15 @@ export class SecretSDK {
         signingKey: SigningKey,
         serverAddr: string,
         circuitPath: string,
-        rollupSC: RollupSC
+        eddsa: any,
+        userAccount: any,
+        spongePoseidonAddress: string,
+        tokenRegistryAddress: string,
+        poseidon2Address: string,
+        poseidon3Address: string,
+        poseidon6Address: string,
+        rollupAddress: string,
+        testTokenAddress: string = ""
     ) {
         this.alias = alias;
         this.signingKey = signingKey;
@@ -233,7 +213,8 @@ export class SecretSDK {
         this.note = new NoteClient(serverAddr);
         this.trans = new TransactionClient(serverAddr);
         this.circuitPath = circuitPath;
-        this.rollupSC = rollupSC;
+        this.rollupSC = new RollupSC(eddsa, alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
+            poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, testTokenAddress);
         this.keysFound = [];
         this.valuesFound = [];
         this.siblings = [];
@@ -244,9 +225,10 @@ export class SecretSDK {
         return new SigningKey(eddsa)
     }
 
-    async getBalance(ctx: any, assetId: number) {
+    async getNotesValue(ctx: any, assetId: number) {
         let notes: Array<Note> = [];
-        let encryptedNotes = await this.note.getBalance(ctx);
+        let noteState = [NoteState.PROVED]
+        let encryptedNotes = await this.note.getNote(ctx, noteState);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
                 let sharedKey = ctx.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
@@ -286,7 +268,8 @@ export class SecretSDK {
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
         const acStateKey = await accountCompress(ctx.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
-        let encryptedNotes = await this.note.getNote(ctx);
+        let noteState = [NoteState.CREATING, NoteState.PROVED]
+        let encryptedNotes = await this.note.getNote(ctx, noteState);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
                 let sharedKey = ctx.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
@@ -387,7 +370,8 @@ export class SecretSDK {
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
         const acStateKey = await accountCompress(ctx.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
-        let encryptedNotes = await this.note.getNote(ctx);
+        let noteState = [NoteState.CREATING, NoteState.PROVED];
+        let encryptedNotes = await this.note.getNote(ctx, noteState);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
                 let sharedKey = ctx.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
@@ -473,7 +457,8 @@ export class SecretSDK {
         const signer = accountRequired? ctx.signingKey: ctx.accountKey;
         const acStateKey = await accountCompress(ctx.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
-        let encryptedNotes = await this.note.getNote(ctx);
+        let noteState = [NoteState.CREATING, NoteState.PROVED];
+        let encryptedNotes = await this.note.getNote(ctx, noteState);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
                 let sharedKey = ctx.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
@@ -597,6 +582,7 @@ export class SecretSDK {
 
     // create proof for account operation, create, migrate or update
     async createAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey) {
+        await this.rollupSC.initialize();
         let eddsa = await buildEddsa();
         const F = eddsa.F;
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
