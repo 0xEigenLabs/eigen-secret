@@ -1,9 +1,7 @@
-import { subtask, task } from "hardhat/config";
+import { task } from "hardhat/config";
 import { signEOASignature } from "../src/utils";
 import { SigningKey } from "../src/account";
 import { SecretSDK } from "../sdk/main";
-import { RollupSC } from "../src/rollup.sc";
-import { deploySpongePoseidon, deployPoseidons } from "../src/deploy_poseidons.util";
 require("dotenv").config()
 const path = require("path");
 const fs = require("fs");

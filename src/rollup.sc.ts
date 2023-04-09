@@ -5,7 +5,6 @@ import spongePoseidonContract from "../artifacts/contracts/libs/Poseidon.sol/Spo
 import tokenRegistryContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
 import rollupContract from "../artifacts/contracts/Rollup.sol/Rollup.json";
 import testTokenContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
-const fs = require("fs")
 const createBlakeHash = require("blake-hash");
 
 
@@ -67,8 +66,12 @@ export class RollupSC {
             createBlakeHash("blake512").update(this.alias).digest().slice(0, 32)
         );
         this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
-        this.spongePoseidon = new ethers.Contract(this.spongePoseidonAddress, spongePoseidonContract.abi, this.userAccount);
-        this.tokenRegistry = new ethers.Contract(this.tokenRegistryAddress, tokenRegistryContract.abi, this.userAccount);
+        this.spongePoseidon = new ethers.Contract(
+            this.spongePoseidonAddress, spongePoseidonContract.abi, this.userAccount
+        );
+        this.tokenRegistry = new ethers.Contract(
+            this.tokenRegistryAddress, tokenRegistryContract.abi, this.userAccount
+        );
         this.rollup = new ethers.Contract(this.rollupAddress, rollupContract.abi, this.userAccount);
 
         if (this.testTokenAddress != "") {
