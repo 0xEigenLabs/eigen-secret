@@ -147,7 +147,8 @@ export class RollupHelper {
         const eventData = iface.decodeEventLog("RegisteredToken", tx.logs[0].data, tx.logs[0].topics)
 
         this.testTokenAssetId = await this.tokenRegistry.numTokens();
-        expect(this.testTokenAssetId).to.eq(eventData["publicAssetId"])
+        // use .deep.eq or toString, see this issue https://github.com/chaijs/chai/issues/1382
+        expect(this.testTokenAssetId.toString()).to.eq(eventData["publicAssetId"].toString())
 
         let approveToken2 = await this.testToken.connect(this.userAccounts[3]).approve(
             this.rollup.address, 1700,

@@ -72,6 +72,8 @@ contract Rollup is SMT {
         uint outputNc2;
         uint publicAssetId;
         uint dataTreeRoot;
+        uint[] roots;
+        uint[] keys;
         uint[] values;
         uint[][] siblings;
     }
@@ -228,7 +230,6 @@ contract Rollup is SMT {
         uint msghash = SpongePoseidon.hash(messages);
         require(!nullifierHashs[txInfo.outputNc1], "Invalid nullifier1 when deposit");
         require(!nullifierHashs[txInfo.outputNc2], "Invalid nullifier2 when deposit");
-        require(2 == txInfo.values.length, "Invalid input length");
 
         //Ax, Ay, M
         uint[3] memory input = [
@@ -239,14 +240,15 @@ contract Rollup is SMT {
 
         require(publicAssetId > 0, "Invalid tokenType");
 
-        uint[2] memory keys = [txInfo.outputNc1, txInfo.outputNc2];
         require(nullifierRoots[inDataTreeRoot], "Invalid data tree root");
 
-        for (uint i = 0; i < 2; i ++) {
-            require(
-                inDataTreeRoot == smtVerifier(txInfo.siblings[i], keys[i], txInfo.values[i], 0, 0, false, false, 20),
-                "Invalid merkle proof"
-            );
+        for (uint i = 0; i < txInfo.roots.length; i ++) {
+            for (uint j = 0; j < 2; j ++) {
+                require(
+                    txInfo.roots[i] == smtVerifier(txInfo.siblings[2*i+j], txInfo.keys[2*i+j], txInfo.values[2*i+j], 0, 0, false, false, 20),
+                    "invalid merkle proof"
+                );
+            }
         }
 
         require(withdrawVerifier.verifyProof(a, b, c, input), "The eddsa signature is not valid");
