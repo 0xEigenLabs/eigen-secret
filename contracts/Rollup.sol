@@ -243,10 +243,10 @@ contract Rollup is SMT {
         require(nullifierRoots[inDataTreeRoot], "Invalid data tree root");
 
         for (uint i = 0; i < 2; i ++) {
-            //require(
-            //    inDataTreeRoot == smtVerifier(txInfo.siblings[i], keys[i], txInfo.values[i], 0, 0, false, false, 20),
-            //    "Invalid merkle proof"
-            //);
+            require(
+                inDataTreeRoot == smtVerifier(txInfo.siblings[i], keys[i], txInfo.values[i], 0, 0, false, false, 20),
+                "Invalid merkle proof"
+            );
         }
 
         require(withdrawVerifier.verifyProof(a, b, c, input), "The eddsa signature is not valid");

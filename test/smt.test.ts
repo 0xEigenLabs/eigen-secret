@@ -122,7 +122,7 @@ describe("Test SMT smart contract", () => {
             // Note:do not push "0" into siblingsContract
             // otherwise the root calculation in contract.smtVerifier will be affected.
             for (let i=0; i<ci.siblings.length; i++) {
-                siblingsContract[i] = tree.F.toObject(ci.siblings[i]).toString();
+                siblingsContract[i] = tree.F.toObject(ci.siblings[i]);
             }
 
             let input = {
@@ -143,8 +143,8 @@ describe("Test SMT smart contract", () => {
         }
 
         // test 2
-        const key1 = Fr.e(3333);
-        const value1 = Fr.e(4444);
+        const key1 = Fr.e(19419982613806763325769100912950148077972106661286633749715627930322516296981n);
+        const value1 = Fr.e(5203787646884389997721541990301039755402773073070944864463089753046777216823n);
         await tree.insert(key1, value1);
         let ci1 = await tree.find(key1, value1);
 

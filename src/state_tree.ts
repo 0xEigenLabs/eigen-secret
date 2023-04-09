@@ -5,10 +5,18 @@ const {
 const { getCurveFromName } = require("ffjavascript");
 const consola = require("consola");
 
-export function siblingsPad(siblings: any, F: any) {
+export function siblingsPad(siblings: any, F: any, padding: boolean = true) {
   for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
-  while (siblings.length < N_LEVEL) siblings.push(0);
+  if (padding) {
+return pad(siblings)
+}
   return siblings;
+}
+
+export function pad(_sib: any) {
+    let siblings = Object.assign([], _sib);
+    while (siblings.length < N_LEVEL) siblings.push(0);
+    return siblings;
 }
 
 export const N_LEVEL = 20;

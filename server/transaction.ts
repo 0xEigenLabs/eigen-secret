@@ -174,6 +174,8 @@ export async function updateStateTree(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
+    const padding: boolean = req.body.padding;
+    consola.log("padding", padding);
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
@@ -186,31 +188,8 @@ export async function updateStateTree(req: any, res: any) {
         BigInt(newState.nullifier1),
         BigInt(newState.outputNc2),
         BigInt(newState.nullifier2),
-        BigInt(newState.acStateKey)
-    );
-    // TODO handle exception
-    return res.json(utils.succ(proof));
-}
-
-export async function checkStateTree(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
-    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
-    if (!validAdddr) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
-    }
-
-    // TODO: once updated, must be synchonized with circuits on chain
-    const newState = req.body.newStates;
-    let proof = await WorldState.checkStateTree(
-        BigInt(newState.outputNc1),
-        BigInt(newState.nullifier1),
-        BigInt(newState.outputNc2),
-        BigInt(newState.nullifier2),
-        BigInt(newState.root)
+        BigInt(newState.acStateKey),
+        padding
     );
     // TODO handle exception
     return res.json(utils.succ(proof));
