@@ -47,18 +47,18 @@ module.exports = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {},
-    goerli: {
-      url: `https://goerli.infura.io/v3/${process.env.API_KEY}`,
-      accounts: [process.env.PRIVATE_KEY],
-    },
-    sepolia: {
-      url: `https://sepolia.infura.io/v3/${process.env.API_KEY}`,
-      accounts: [process.env.PRIVATE_KEY]
-    },
-    tpolygon: {
-      url: "https://rpc-mumbai.maticvigil.com/",
-      accounts: [process.env.PRIVATE_KEY]
-    }
+    // goerli: {
+    //   url: `https://goerli.infura.io/v3/${process.env.API_KEY}`,
+    //   accounts: [process.env.PRIVATE_KEY],
+    // },
+    // sepolia: {
+    //   url: `https://sepolia.infura.io/v3/${process.env.API_KEY}`,
+    //   accounts: [process.env.PRIVATE_KEY]
+    // },
+    // tpolygon: {
+    //   url: "https://rpc-mumbai.maticvigil.com/",
+    //   accounts: [process.env.PRIVATE_KEY]
+    // }
   },
   gasReporter: {
     currency: 'USD',

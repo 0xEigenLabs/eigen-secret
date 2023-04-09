@@ -269,22 +269,6 @@ export class SecretSDK {
         return balance;
     }
 
-    async deploy() {
-        let setrollup = await this.rollupSC.tokenRegistry.connect(this.rollupSC.userAccount)
-        .setRollupNC(this.rollupSC.rollup.address);
-        assert(setrollup, "setRollupNC failed")
-
-        let registerToken = await this.rollupSC.rollup.connect(this.rollupSC.userAccount)
-        .registerToken(this.rollupSC.testToken.address, { from: this.rollupSC.userAccount.address })
-        assert(registerToken, "token registration failed");
-
-        let approveToken = await this.rollupSC.rollup.connect(this.rollupSC.userAccount)
-        .approveToken(this.rollupSC.testToken.address, { from: this.rollupSC.userAccount.address })
-        assert(approveToken, "token registration failed");
-
-        return await this.rollupSC.tokenRegistry.numTokens();
-    }
-
     // create proof for general transaction
     async deposit(ctx: any, receiver: string, value: string, assetId: number, nonce: number) {
         let eddsa = await buildEddsa();

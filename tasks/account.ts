@@ -1,5 +1,4 @@
 import { subtask, task } from "hardhat/config";
-import { INIT } from "./task-names";
 import { signEOASignature } from "../src/utils";
 import { SigningKey } from "../src/account";
 import { SecretSDK } from "../sdk/main";
@@ -20,7 +19,7 @@ export const userAccount = async () =>{
     };
 };
 
-subtask(INIT, "Init contract and sdk for user")
+subtask("init", "Init contract and sdk for user")
   .addParam("alias")
   .setAction(async ( { alias }, { ethers } ) => {
     let account = await userAccount();
@@ -89,11 +88,11 @@ task("create-account", "Create account and first transaction depositing to itsel
   .addParam("alias", "user alias", "Alice")
   .addParam("value", "first deposit value", "10")
   .setAction(async ({ alias, value }, { run, ethers }) => {
-    let secretSDK = await run(INIT, { alias });
+    let secretSDK = await run("init", { alias });
     console.log(secretSDK)
     console.log("init test------end")
 
-    await secretSDK.deploy();
+    await secretSDK.rollupSC.deploy();
     console.log("deploy test------end")
 
     let timestamp = Math.floor(Date.now()/1000).toString();
