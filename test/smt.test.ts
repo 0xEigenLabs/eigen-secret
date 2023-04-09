@@ -5,6 +5,7 @@ const cls = require("circomlibjs");
 import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad, StateTree } from "../src/state_tree";
 const { ethers } = require("hardhat");
 import { SMTModel } from "../server/state_tree";
+import { deployPoseidons } from "../src/deploy_poseidons.util";
 
 describe("Test SMT Membership Query", function () {
     this.timeout(1000 * 1000);
@@ -96,24 +97,10 @@ describe("Test SMT smart contract", () => {
         const [signer] = await ethers.getSigners();
         console.log("signer", signer.address);
 
-        const CF1 = new ethers.ContractFactory(
-            cls.poseidonContract.generateABI(2),
-            cls.poseidonContract.createCode(2),
-            signer
-          );
-        const CF2 = new ethers.ContractFactory(
-            cls.poseidonContract.generateABI(3),
-            cls.poseidonContract.createCode(3),
-            signer
-        );
-        poseidonContract2Inputs = await CF1.deploy();
-        console.log("poseidonContract2Inputs address:", poseidonContract2Inputs.address)
-        poseidonContract3Inputs = await CF2.deploy();
-        console.log("poseidonContract3Inputs address:", poseidonContract3Inputs.address)
+        let poseidons = await deployPoseidons(ethers, signer, [2, 3]);
         let F = await ethers.getContractFactory("SMT");
-        contract = await F.deploy(poseidonContract2Inputs.address, poseidonContract3Inputs.address);
+        contract = await F.deploy(poseidons[0].address, poseidons[1].address);
         await contract.deployed()
-        console.log("contract address:", contract.address)
         tree = new StateTree();
         await tree.init(SMTModel);
         Fr = tree.F;
@@ -124,36 +111,40 @@ describe("Test SMT smart contract", () => {
         const oldValue = "0";
 
         // test 1
-        const key = Fr.e(333);
-        const value = Fr.e(444);
-        await tree.insert(key, value);
-        let ci = await tree.find(key, value);
-        let siblingsContract = ci.siblings.slice();
-        // Note:do not push "0" into siblingsContract
-        // otherwise the root calculation in contract.smtVerifier will be affected.
-        for (let i=0; i<ci.siblings.length; i++) {
-            siblingsContract[i] = tree.F.toObject(ci.siblings[i]).toString();
-        }
-  
-        let input = {
-            key: Fr.toObject(key),
-            value: Fr.toObject(ci.foundValue),
-            root: Fr.toObject(tree.root()),
-            // Note: need to pad siblings with "0"
-            // Cause the siblings array length in circuit is N_LEVEL
-            siblings: siblingsPad(ci.siblings, Fr),
-            enabled: 1,
-        };
-        await utils.executeCircuit(circuit, input)
+        let key: any;
+        let value: any;
+        for (var i = 0; i < 128; i ++) {
+            key = Fr.random();
+            value = Fr.random();
+            await tree.insert(key, value);
+            let ci = await tree.find(key, value);
+            let siblingsContract = ci.siblings.slice();
+            // Note:do not push "0" into siblingsContract
+            // otherwise the root calculation in contract.smtVerifier will be affected.
+            for (let i=0; i<ci.siblings.length; i++) {
+                siblingsContract[i] = tree.F.toObject(ci.siblings[i]);
+            }
 
-        const result = await contract.smtVerifier(
-            siblingsContract, Fr.toObject(key).toString(),
-            Fr.toObject(value).toString(), oldKey, oldValue, false, false, 20)
-        expect(BigInt(result)).to.eq(Fr.toObject(tree.tree.root));
+            let input = {
+                key: Fr.toObject(key),
+                value: Fr.toObject(ci.foundValue),
+                root: Fr.toObject(tree.root()),
+                // Note: need to pad siblings with "0"
+                // Cause the siblings array length in circuit is N_LEVEL
+                siblings: siblingsPad(ci.siblings, Fr),
+                enabled: 1,
+            };
+            await utils.executeCircuit(circuit, input)
+
+            const result = await contract.smtVerifier(
+                siblingsContract, Fr.toObject(key),
+                Fr.toObject(value), oldKey, oldValue, false, false, 20)
+            expect(BigInt(result)).to.eq(Fr.toObject(tree.tree.root));
+        }
 
         // test 2
-        const key1 = Fr.e(3333);
-        const value1 = Fr.e(4444);
+        const key1 = Fr.e(19419982613806763325769100912950148077972106661286633749715627930322516296981n);
+        const value1 = Fr.e(5203787646884389997721541990301039755402773073070944864463089753046777216823n);
         await tree.insert(key1, value1);
         let ci1 = await tree.find(key1, value1);
 
