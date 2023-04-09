@@ -57,12 +57,6 @@ contract SMT {
     return insPoseidon3Unit.poseidon(inputs);
   }
   
-  /*
-  function find(uint256[] siblings, uint256 key, uint256 value) returns (uint root, bool found, bool, isOld0) {
-
-  }
-  */
-
    /**
    * @dev Verify sparse merkle tree proof
    * @param siblings all siblings
