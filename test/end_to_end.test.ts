@@ -6,7 +6,7 @@ import app from "../server/service";
 import { ethers } from "ethers";
 import { uint8Array2Bigint, signEOASignature, prepareJson } from "../src/utils";
 import { expect, assert } from "chai";
-import { StateTree } from "../src/state_tree";
+import { pad, siblingsPad, StateTree } from "../src/state_tree";
 import { NoteModel as DBNote } from "../server/note";
 import { Note, NoteState } from "../src/note";
 import { compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
@@ -21,6 +21,7 @@ import { RollupHelper } from "./rollup.helper";
 const path = require("path");
 const hre = require('hardhat')
 import { poseidonSponge } from "../src/sponge_poseidon";
+import { deployPoseidons } from "../src/deploy_poseidons.util";
 
 describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
@@ -28,7 +29,7 @@ describe('POST /transactions', function() {
     let eddsa: any;
     let babyJub: any;
     const circuitPath = path.join(__dirname, "../circuits/");
-    let F: any;
+    let Fr: any;
     let newEOAAccount: any;
     const rawMessage = "Use Eigen Secret to shield your asset";
     let aliasHash: any;
@@ -37,8 +38,17 @@ describe('POST /transactions', function() {
     let assetId = 0;
     let rollupHelper: RollupHelper;
     let userAccounts: any;
+
+    let smtVerifierContract: any;
+
     before("end2end deposit", async() => {
         userAccounts = await hre.ethers.getSigners()
+
+        let poseidons = await deployPoseidons(hre.ethers, userAccounts[0], [2, 3]);
+        let factorySMT = await hre.ethers.getContractFactory("SMT");
+        smtVerifierContract = await factorySMT.deploy(poseidons[0].address, poseidons[1].address);
+        await smtVerifierContract.deployed()
+
         rollupHelper = new RollupHelper(userAccounts);
         await rollupHelper.initialize();
         assetId = (await rollupHelper.deploy()).toNumber();
@@ -48,7 +58,7 @@ describe('POST /transactions', function() {
 
         eddsa = await buildEddsa();
         babyJub = eddsa.babyJub;
-        F = eddsa.F;
+        Fr = eddsa.F;
         const value = 10;
 
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
@@ -63,15 +73,15 @@ describe('POST /transactions', function() {
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
         let newAccountKey = accountKey;
         let newAccountPubKey = newAccountKey.pubKey.unpack(babyJub);
-        newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
+        newAccountPubKey = [Fr.toObject(newAccountPubKey[0]), Fr.toObject(newAccountPubKey[1])];
 
         let newSigningKey1 = rollupHelper.eigenSigningKeys[0][1]
         let newSigningPubKey1 = newSigningKey1.pubKey.unpack(babyJub);
-        newSigningPubKey1 = [F.toObject(newSigningPubKey1[0]), F.toObject(newSigningPubKey1[1])];
+        newSigningPubKey1 = [Fr.toObject(newSigningPubKey1[0]), Fr.toObject(newSigningPubKey1[1])];
 
         let newSigningKey2 = rollupHelper.eigenSigningKeys[0][2]
         let newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
-        newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
+        newSigningPubKey2 = [Fr.toObject(newSigningPubKey2[0]), Fr.toObject(newSigningPubKey2[1])];
 
         let keysFound = []
         let valuesFound = [];
@@ -96,6 +106,7 @@ describe('POST /transactions', function() {
             message: rawMessage,
             hexSignature: signature,
             ethAddress: newEOAAccount.address,
+            padding: true,
             newStates: {
                 outputNc1: acStateKey,
                 nullifier1: 1n,
@@ -180,6 +191,7 @@ describe('POST /transactions', function() {
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: newEOAAccount.address,
+                padding: true,
                 newStates: {
                     outputNc1: input.outputNCs[0],
                     nullifier1: input.outputNotes[0].inputNullifier,
@@ -359,6 +371,7 @@ describe('POST /transactions', function() {
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: newEOAAccount.address,
+                padding: true,
                 newStates: {
                     outputNc1: input.outputNCs[0],
                     nullifier1: input.outputNotes[0].inputNullifier,
@@ -508,8 +521,13 @@ describe('POST /transactions', function() {
             notes,
             accountRequired
         );
-        let lastProof: any;
-        let lastSiblings: any;
+        let lastKeys: Array<bigint> = [];
+        let lastSiblings: Array<Array<bigint>> = [];
+        let lastValues: Array<bigint> = [];
+        let keysFound = [];
+        let valuesFound = [];
+        let siblings = [];
+        let lastDataTreeRoot: any;
         for (const input of inputs) {
             const response = await request(app)
             .post('/statetree')
@@ -519,6 +537,7 @@ describe('POST /transactions', function() {
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: newEOAAccount.address,
+                padding: false, // NOTE: DO NOT pad because we need call smtVerifier smartcontract
                 newStates: {
                     outputNc1: input.outputNCs[0],
                     nullifier1: input.outputNotes[0].inputNullifier,
@@ -534,8 +553,39 @@ describe('POST /transactions', function() {
 
             // generate proof
             let singleProof = response.body.data;
+            let rawSiblings = singleProof.siblings;
+            console.log("rawSiblings", rawSiblings);
+            // pad siblings
+
+            let paddedSiblings = [
+                pad(rawSiblings[0]),
+                pad(rawSiblings[1])
+            ];
+            singleProof.siblings = paddedSiblings;
+
+            // pad account siblings
+            singleProof.siblingsAC = pad(singleProof.siblingsAC);
+
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
+
+            keysFound.push(input.outputNCs[0]);
+            valuesFound.push(input.outputNotes[0].inputNullifier);
+            keysFound.push(input.outputNCs[1]);
+            valuesFound.push(input.outputNotes[1].inputNullifier);
+            lastDataTreeRoot = singleProof.dataTreeRoot;
+            lastKeys = input.outputNCs;
+            lastValues = [input.outputNotes[0].inputNullifier, input.outputNotes[1].inputNullifier];
+
+            lastSiblings = []
+            for (const item of rawSiblings) {
+                let tmpSiblings = [];
+                for (const sib of item) {
+                    tmpSiblings.push(sib);
+                }
+                lastSiblings.push(tmpSiblings);
+                siblings.push(pad(tmpSiblings));
+            }
 
             let transaction = new Transaction(input.outputNotes, signingKey);
             let txdata = await transaction.encrypt();
@@ -568,8 +618,6 @@ describe('POST /transactions', function() {
 
             // call contract and deposit
             await rollupHelper.update(0, proofAndPublicSignals);
-            lastProof = proofAndPublicSignals;
-            lastSiblings = singleProof.siblings;
 
             // settle down the spent notes
             const responseSt = await request(app)
@@ -597,13 +645,13 @@ describe('POST /transactions', function() {
                         index: input.outputNotes[0].index,
                         pubKey: pubKey,
                         content: txdata[0].content,
-                        state: NoteState.PROVED
+                        state: NoteState.SPENT
                     },
                     {
                         index: input.outputNotes[1].index,
                         pubKey: pubKey,
                         content: txdata[1].content,
-                        state: NoteState.PROVED
+                        state: NoteState.SPENT
                     },
                 ]
             }))
@@ -613,39 +661,60 @@ describe('POST /transactions', function() {
             expect(responseSt.body.errno).to.eq(0);
         }
 
+        await rollupHelper.processDeposits(0, keysFound, valuesFound, siblings);
+
+        let sz = keysFound.length;
+
         let xy = rollupHelper.pubkeyEigenSigningKeys[0][0];
         // last tx
         const txInfo = {
             publicValue: value, // lastProof.publicSignals[1]
             publicOwner: xy, //lastProof.publicSignals[2]
-            outputNc1: lastProof.publicSignals[4],
-            outputNc2: lastProof.publicSignals[5],
-            dataTreeRoot: lastProof.publicSignals[6],
-            publicAssetId: assetId // lastProof.publicSignals[7]
+            outputNc1: lastKeys[0], // lastProof.publicSignals[4]
+            outputNc2: lastKeys[1], // lastProof.publicSignals[5]
+            publicAssetId: assetId, // lastProof.publicSignals[7]
+            dataTreeRoot: lastDataTreeRoot,
+            values: lastValues,
+            siblings: lastSiblings
         }
 
+        //FIXME hash sibings and tree
         let msg = await poseidonSponge(
             [
-                txInfo.publicValue,
+                BigInt(txInfo.publicValue),
                 txInfo.publicOwner[0],
                 txInfo.publicOwner[1],
                 txInfo.outputNc1,
                 txInfo.outputNc2,
                 txInfo.dataTreeRoot,
-                txInfo.publicAssetId,
+                BigInt(txInfo.publicAssetId),
             ]
         );
 
-        let sig = await signingKey.sign(eddsa.F.e(msg));
+        //DEBUG: check by smt verifier
+        let tmpRoot = await smtVerifierContract.smtVerifier(
+                txInfo.siblings[0], txInfo.outputNc1,
+                txInfo.values[0], "0", "0", false, false, 20
+        )
+        expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+
+        tmpRoot = await smtVerifierContract.smtVerifier(
+                txInfo.siblings[1], txInfo.outputNc2,
+                txInfo.values[1], "0", "0", false, false, 20
+        )
+        expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+
+        let sig = await signingKey.sign(Fr.e(msg));
         let input = {
             enabled: 1,
             Ax: xy[0],
             Ay: xy[1],
             M: msg,
-            R8x: F.toObject(sig.R8[0]),
-            R8y: F.toObject(sig.R8[1]),
+            R8x: Fr.toObject(sig.R8[0]),
+            R8y: Fr.toObject(sig.R8[1]),
             S: sig.S,
         }
+
         let proofAndPublicSignals = await Prover.withdraw(circuitPath, input);
         await rollupHelper.withdraw(
             0,
@@ -653,7 +722,5 @@ describe('POST /transactions', function() {
             txInfo,
             proofAndPublicSignals
         );
-
-        //TODO balance test
     })
 });

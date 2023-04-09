@@ -1,6 +1,6 @@
 const { DataTypes, Model } = require("sequelize");
 import sequelize from "../server/db";
-const consola = require("consola");
+// const consola = require("consola");
 import { NoteState } from "../src/note";
 
 export class NoteModel extends Model {}
@@ -36,9 +36,9 @@ NoteModel.init({
 });
 
 export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
-    consola.log("updateDBNotes", notes);
-    let tmpResult = await getDBNotes(notes[0].alias, [NoteState.CREATING, NoteState.PROVED, NoteState.SPENT])
-    consola.log(tmpResult)
+    // consola.log("updateDBNotes", notes);
+    // let tmpResult = await getDBNotes(notes[0].alias, [NoteState.CREATING, NoteState.PROVED, NoteState.SPENT])
+    // consola.log(tmpResult)
     return await NoteModel.bulkCreate(
         notes,
         {

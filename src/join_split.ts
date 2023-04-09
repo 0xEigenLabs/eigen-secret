@@ -201,7 +201,6 @@ export class JoinSplitCircuit {
         confirmedAndPendingInputNotes: Array<Note>,
         accountRequired: boolean
     ) {
-        console.log("createProofInput", publicAssetId, publicValue, publicOwner);
         let eddsa = await buildEddsa();
         const F = eddsa.F;
         const babyJub = eddsa.babyJub;
@@ -347,7 +346,6 @@ export class JoinSplitCircuit {
              */
 
             let ak = accountKey.toCircuitInput();
-            console.log("publicValue", publicValue);
             let input = new JoinSplitInput(
                 proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
@@ -362,7 +360,6 @@ export class JoinSplitCircuit {
             );
             inputList.push(input);
         }
-        console.log("createProofInput end", inputList);
         return Promise.resolve(inputList);
     }
 
@@ -389,7 +386,6 @@ export class JoinSplitCircuit {
         const pvk = eddsa.pruneBuffer(createBlakeHash("blake512").update(nk.prvKey).digest().slice(0, 32));
         const ak = Scalar.shr(utils.leBuff2int(pvk), 3);
 
-        // console.log("calculateNullifier", nc, inputNoteInUse, ak);
         let res = poseidon([
             nc,
             inputNoteInUse,
