@@ -1,0 +1,7 @@
+{
+  "packages": [
+    "core",
+    "sdk"
+  ],
+  "version": "0.0.0"
+}
