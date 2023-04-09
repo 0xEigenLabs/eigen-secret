@@ -26,9 +26,23 @@ task("create-account", "Create account and first transaction depositing to itsel
     let newSigningKey2 = new SigningKey(eddsa, undefined);
     const rawData = fs.readFileSync(defaultContractFile);
     const contractJson = JSON.parse(rawData.toString());
-    let secretSDK = new SecretSDK(alias, accountKey, signingKey, "http://127.0.0.1:3000", circuitPath,
-    eddsa, user, contractJson.spongePoseidon, contractJson.tokenRegistry, contractJson.poseidon2,
-    contractJson.poseidon3, contractJson.poseidon6, contractJson.rollup, contractJson.testToken);
+    let secretSDK = new SecretSDK(
+        alias,
+        accountKey,
+        signingKey,
+        "http://127.0.0.1:3000",
+        circuitPath,
+        eddsa,
+        user,
+        contractJson.spongePoseidon,
+        contractJson.tokenRegistry,
+        contractJson.poseidon2,
+        contractJson.poseidon3,
+        contractJson.poseidon6,
+        contractJson.rollup,
+        contractJson.testToken
+    );
+    await secretSDK.initialize();
     const ctx = {
       alias: alias,
       ethAddress: user.address,

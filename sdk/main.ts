@@ -206,6 +206,7 @@ export class SecretSDK {
         rollupAddress: string,
         testTokenAddress: string = ""
     ) {
+        console.log("testTokenAddress", testTokenAddress);
         this.alias = alias;
         this.signingKey = signingKey;
         this.accountKey = accountKey;
@@ -220,10 +221,16 @@ export class SecretSDK {
         this.siblings = [];
     }
 
+    async initialize() {
+        await this.rollupSC.initialize();
+    }
+
+    /*
     static async newSigningKey() {
         let eddsa = await buildEddsa();
         return new SigningKey(eddsa)
     }
+    */
 
     async getNotesValue(ctx: any, assetId: number) {
         let notes: Array<Note> = [];
@@ -582,7 +589,6 @@ export class SecretSDK {
 
     // create proof for account operation, create, migrate or update
     async createAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey) {
-        await this.rollupSC.initialize();
         let eddsa = await buildEddsa();
         const F = eddsa.F;
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;

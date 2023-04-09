@@ -4,7 +4,7 @@ import { uint8Array2Bigint, parseProof } from "../src/utils";
 import spongePoseidonContract from "../artifacts/contracts/libs/Poseidon.sol/SpongePoseidon.json";
 import tokenRegistryContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
 import rollupContract from "../artifacts/contracts/Rollup.sol/Rollup.json";
-import testTokenContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
+import testTokenContract from "../artifacts/contracts/TestToken.sol/TestToken.json";
 const createBlakeHash = require("blake-hash");
 
 
@@ -82,10 +82,12 @@ export class RollupSC {
     async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: number, nonce: number) {
         let userAccount = this.userAccount;
         assert(this.rollup);
+        console.log(this.testToken);
         let approveToken = await this.testToken.connect(userAccount).approve(
             this.rollup.address, value,
             { from: userAccount.address }
         )
+        console.log(approveToken);
         assert(approveToken, "approveToken failed")
         let deposit0 = await this.rollup.connect(userAccount).deposit(
             pubkeyEigenAccountKey,
