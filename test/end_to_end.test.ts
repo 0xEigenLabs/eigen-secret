@@ -562,7 +562,6 @@ describe('POST /transactions', function() {
                 pad(rawSiblings[1])
             ];
             singleProof.siblings = paddedSiblings;
-            console.log("compare: p vs no-p", paddedSiblings, rawSiblings);
 
             // pad account siblings
             singleProof.siblingsAC = pad(singleProof.siblingsAC);
@@ -697,7 +696,6 @@ describe('POST /transactions', function() {
                 txInfo.siblings[0], txInfo.outputNc1,
                 txInfo.values[0], "0", "0", false, false, 20
         )
-        console.log(tmpRoot);
         expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
 
         tmpRoot = await smtVerifierContract.smtVerifier(
