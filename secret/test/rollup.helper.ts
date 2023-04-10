@@ -4,15 +4,15 @@ import { expect, assert } from "chai";
 const {buildEddsa} = require("circomlibjs");
 const path = require("path");
 const fs = require("fs");
-import { uint8Array2Bigint, prepareJson, parseProof, Proof, signEOASignature } from "../src/utils";
-import { deploySpongePoseidon, deployPoseidons } from "../src/deploy_poseidons.util";
-import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
-import { JoinSplitCircuit } from "../src/join_split";
-import { Prover } from "../src/prover";
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "../src/state_tree";
+import { uint8Array2Bigint, prepareJson, parseProof, Proof, signEOASignature } from "@eigen-secret/core/dist/utils";
+import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
+import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "@eigen-secret/core/dist/account";
+import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
+import { Prover } from "@eigen-secret/core/dist/prover";
+import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "@eigen-secret/core/dist/state_tree";
 const createBlakeHash = require("blake-hash");
-import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
-import { NoteModel, updateDBNotes, getDBNotes } from "../server/note";
+import { UpdateStatusCircuit, UpdateStatusInput } from "@eigen-secret/core/dist/update_state";
+import { NoteModel, updateDBNotes, getDBNotes } from "../../server/dist/note";
 
 /*
     Here we want to test the smart contract's deposit functionality.

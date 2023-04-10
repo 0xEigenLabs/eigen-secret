@@ -1,10 +1,9 @@
 const request = require('supertest');
-const express = require('express');
 import { ethers } from "ethers";
 
-import app from "../server/service";
-import { SigningKey } from "../src/account";
-import * as utils from "../src/utils";
+import app from "../../server/dist/service";
+import { SigningKey } from "@eigen-secret/core/dist/account";
+import * as utils from "@eigen-secret/core/dist/utils";
 import { expect, assert } from "chai";
 
 describe('POST /accounts', function() {

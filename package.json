@@ -4,5 +4,8 @@
   "private": true,
   "devDependencies": {
     "lerna": "^3.22.1"
+  },
+  "scripts": {
+    "server": "cd server && npm start"
   }
 }

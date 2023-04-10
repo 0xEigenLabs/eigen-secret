@@ -1,10 +1,11 @@
 import { expect, assert } from "chai";
 import path = require("path");
-import { test, utils } from "../index";
+import test from "@eigen-secret/core/dist/test";
+import utils from "@eigen-secret/core/dist/utils";
 const cls = require("circomlibjs");
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad, StateTree } from "../src/state_tree";
+import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad, StateTree } from "@eigen-secret/core/dist/state_tree";
 const { ethers } = require("hardhat");
-import { SMTModel } from "../server/state_tree";
+import { SMTModel } from "../../server/dist/state_tree";
 
 describe("Test SMT Membership Query", function () {
     this.timeout(1000 * 1000);
@@ -134,7 +135,7 @@ describe("Test SMT smart contract", () => {
         for (let i=0; i<ci.siblings.length; i++) {
             siblingsContract[i] = tree.F.toObject(ci.siblings[i]).toString();
         }
-  
+
         let input = {
             key: Fr.toObject(key),
             value: Fr.toObject(ci.foundValue),

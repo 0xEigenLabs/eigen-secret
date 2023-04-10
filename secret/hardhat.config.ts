@@ -3,7 +3,6 @@ import "@typechain/hardhat";
 import { task, HardhatUserConfig } from "hardhat/config";
 import { resolve } from "path";
 import { config as dotenvConfig } from "dotenv";
-import { requireEnvVariables } from "./src/utils";
 require("./tasks/index");
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
@@ -18,10 +17,6 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     console.log(account.address);
   }
 });
-
-console.log('process.env.GOERLI_RPC_URL', process.env.GOERLI_RPC_URL);
-console.log('process.env.PRIVATE_KEY', process.env.PRIVATE_KEY);
-
 
 module.exports = {
   solidity: {
@@ -50,30 +45,24 @@ module.exports = {
   },
   defaultNetwork: "hardhat",
   networks: {
-    hardhat: {
-      chainId: 31337,
-    },
+    hardhat: {},
     goerli: {
-      // url: `https://goerli.infura.io/v3/${process.env.API_KEY}`,
-      url: process.env.GOERLI_RPC_URL,
+      url: `https://goerli.infura.io/v3/${process.env.API_KEY}`,
       accounts: [process.env.PRIVATE_KEY],
-      chainId: 5,
-      blockConfirmations: 6,
     },
-    // sepolia: {
-    //   url: `https://sepolia.infura.io/v3/${process.env.API_KEY}`,
-    //   accounts: [process.env.PRIVATE_KEY]
-    // },
-    // tpolygon: {
-    //   url: "https://rpc-mumbai.maticvigil.com/",
-    //   accounts: [process.env.PRIVATE_KEY]
-    // }
+    sepolia: {
+      url: `https://sepolia.infura.io/v3/${process.env.API_KEY}`,
+      accounts: [process.env.PRIVATE_KEY]
+    },
+    tpolygon: {
+      url: "https://rpc-mumbai.maticvigil.com/",
+      accounts: [process.env.PRIVATE_KEY]
+    }
   },
   gasReporter: {
     currency: 'USD',
     gasPrice: 20,
     token: 'ETH',
-    outputFile: "gas-report.txt",
     gasPriceApi: 'https://api.etherscan.io/api?module=proxy&action=eth_gasPrice',
     coinmarketcap: 'f6673cc5-a673-4e07-8461-f7281a5de7d7',
     onlyCalledMethods: false

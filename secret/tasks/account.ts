@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
-import { signEOASignature } from "../src/utils";
-import { SigningKey } from "../src/account";
-import { SecretSDK } from "../sdk/main";
+import { signEOASignature } from "@eigen-secret/core/dist/utils";
+import { SigningKey } from "@eigen-secret/core/dist/account";
+import { SecretSDK } from "@eigen-secret/sdk/dist/index";
 const path = require("path");
 const circuitPath = path.join(__dirname, "../circuits/");
 require("dotenv").config()

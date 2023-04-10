@@ -1,12 +1,13 @@
-import { test, utils } from "../index";
-import { Note } from "../src/note";
+import test from "@eigen-secret/core/dist/test";
+import utils from "@eigen-secret/core/dist/utils";
+import { Note } from "@eigen-secret/core/dist/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
-import { StateTree } from "../src/state_tree";
-import { index } from "../src/utils";
+import { StateTree } from "@eigen-secret/core/dist/state_tree";
+import { index } from "@eigen-secret/core/dist/utils";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
-import { SigningKey } from "../src/account";
+import { SigningKey } from "@eigen-secret/core/dist/account";
 
 describe("Test NoteCompressor", function () {
 
