@@ -1,0 +1,24 @@
+dist/
+.secret
+yarn-error.log
+package-lock.json
+yarn.lock
+*.key
+*.sol.bak
+node_modules
+.env
+coverage
+coverage.json
+typechain
+typechain-types
+verifier.sol
+
+# Hardhat files
+cache
+artifacts
+scripts/*.js
+circuits/*_js
+circuits/*.ptau
+circuits/circuit_final.zkey
+
+contracts/main_*.sol
