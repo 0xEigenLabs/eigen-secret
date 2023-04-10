@@ -6,15 +6,26 @@
   "homepage": "https://github.com/abu-2022/eigen-secret#readme",
   "license": "ISC",
   "main": "dist/index.js",
-  "exports": "./dist/*",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "node": "./dist/index.js"
+    },
+    "./dist/*": {
+      "require": "./dist/*.js",
+      "import": "./dist/*.js",
+      "node": "./dist/*.js"
+    }
+  },
   "directories": {
     "lib": "lib",
     "dist": "dist",
     "test": "__tests__"
   },
   "files": [
-    "dist",
-    "lib"
+    "lib",
+    "dist"
   ],
   "publishConfig": {
     "access": "public"

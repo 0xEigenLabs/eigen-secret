@@ -1,10 +1,12 @@
 const { DataTypes, Model } = require("sequelize");
-import sequelize from "../server/db";
+import sequelize from "./db";
 import consola from "consola";
-import * as utils from "../src/utils";
+import * as note from "@eigen-secret/core/dist/note";
+import * as utils from "@eigen-secret/core/dist/utils";
 import { WorldState } from "./state_tree";
 import { NoteModel, updateDBNotes, getDBNotes } from "./note";
-import { NoteState } from "../src/note";
+
+const { NoteState } = note;
 
 class TransactionModel extends Model {}
 TransactionModel.init({

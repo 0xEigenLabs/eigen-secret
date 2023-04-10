@@ -1,7 +1,10 @@
 const { DataTypes, Model } = require("sequelize");
-import sequelize from "../server/db";
+import sequelize from "./db";
 const consola = require("consola");
-import { NoteState } from "../src/note";
+import { NoteState } from "@eigen-secret/core/dist/note";
+
+
+type NoteStateArray = Array<NoteState>;
 
 export class NoteModel extends Model {}
 
@@ -48,6 +51,6 @@ export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
     );
 }
 
-export async function getDBNotes(alias: string, state: Array<NoteState>) {
+export async function getDBNotes(alias: string, state: NoteStateArray) {
     return await NoteModel.findAll({ where: { alias: alias, state: state } })
 }
