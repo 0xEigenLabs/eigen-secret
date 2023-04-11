@@ -16,6 +16,7 @@ verifier.sol
 # Hardhat files
 cache
 artifacts/build-info
+artifacts/**/*.dbg.json
 scripts/*.js
 circuits/*_js
 circuits/*.ptau
