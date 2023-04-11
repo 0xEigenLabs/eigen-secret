@@ -70,9 +70,12 @@ contract Rollup is SMT {
         uint[2] publicOwner;
         uint outputNc1;
         uint outputNc2;
-        uint dataTreeRoot;
         uint publicAssetId;
-        //uint[] siblings;
+        uint dataTreeRoot;
+        uint[] roots;
+        uint[] keys;
+        uint[] values;
+        uint[][] siblings;
     }
 
     event RegisteredToken(uint publicAssetId, address tokenContract);
@@ -193,17 +196,15 @@ contract Rollup is SMT {
         uint256 inDataTreeRoot = input[6];
         uint256 publicAssetId = input[7];
 
+        require(!nullifierRoots[inDataTreeRoot], "Invalid data tree root");
         require(!nullifierHashs[nullifier1], "Invalid nullifier1 when deposit");
         require(!nullifierHashs[nullifier2], "Invalid nullifier2 when deposit");
-        require(!nullifierRoots[inDataTreeRoot], "Invalid data tree root");
 
         require(updateStateVerifier.verifyProof(a, b, c, input),
                 "Invalid deposit proof");
 
         dataTreeRoot = inDataTreeRoot;
         nullifierRoots[inDataTreeRoot] = true;
-        nullifierHashs[nullifier1] = true;
-        nullifierHashs[nullifier2] = true;
         emit UpdatedState(inDataTreeRoot, nullifier1, nullifier2);
     }
 
@@ -218,16 +219,20 @@ contract Rollup is SMT {
         uint publicAssetId = txInfo.publicAssetId;
         uint inDataTreeRoot = txInfo.dataTreeRoot;
 
-        uint[] memory messages = new uint[](7);
+        uint rootsLength = txInfo.roots.length;
+        uint[] memory messages = new uint[](6 + rootsLength);
         messages[0] = txInfo.publicValue;
         messages[1] = txInfo.publicOwner[0];
         messages[2] = txInfo.publicOwner[1];
         messages[3] = txInfo.outputNc1;
         messages[4] = txInfo.outputNc2;
-        messages[5] = txInfo.dataTreeRoot;
-        messages[6] = txInfo.publicAssetId;
-        //uint msghash = insPoseidon7.poseidon(messages);
+        messages[5] = txInfo.publicAssetId;
+        for (uint i = 0; i < rootsLength; i ++) {
+            messages[6+i] = txInfo.roots[i];
+        }
         uint msghash = SpongePoseidon.hash(messages);
+        require(!nullifierHashs[txInfo.outputNc1], "Invalid nullifier1 when deposit");
+        require(!nullifierHashs[txInfo.outputNc2], "Invalid nullifier2 when deposit");
 
         //Ax, Ay, M
         uint[3] memory input = [
@@ -236,14 +241,19 @@ contract Rollup is SMT {
             msghash
         ];
 
-        // calculate outputNc1
-
         require(publicAssetId > 0, "Invalid tokenType");
-        require(
-            dataTreeRoot == inDataTreeRoot, // && dataTreeRoot == smtVerifier(txInfo.siblings, key, value, 0, 0, false, false, 20),
-            "Invalid dataTreeRoot"
-        );
-        require(nullifierRoots[inDataTreeRoot], "Invalid data tree root");
+        require(nullifierRoots[inDataTreeRoot], "Invalid lastest data tree root");
+
+        for (uint i = 0; i < txInfo.roots.length; i ++) {
+            for (uint j = 0; j < 2; j ++) {
+                require(nullifierRoots[txInfo.roots[i]], "Invalid data tree root");
+                require(
+                    txInfo.roots[i] == smtVerifier(txInfo.siblings[2*i+j], txInfo.keys[2*i+j], txInfo.values[2*i+j], 0, 0, false, false, 20),
+                    "invalid merkle proof"
+                );
+            }
+        }
+
         require(withdrawVerifier.verifyProof(a, b, c, input), "The eddsa signature is not valid");
         // transfer token on tokenContract
         if (publicAssetId == 1){
@@ -258,6 +268,8 @@ contract Rollup is SMT {
                 "Transfer failed"
             );
         }
+        nullifierHashs[txInfo.outputNc1] = true;
+        nullifierHashs[txInfo.outputNc2] = true;
 
         emit Withdraw(txInfo, recipient);
     }

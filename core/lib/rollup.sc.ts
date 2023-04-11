@@ -122,15 +122,14 @@ export class RollupSC {
             console.log("processDeposits revert reason", error)
         }
         assert(processDeposit1, "processDeposit1 failed")
-        await this.rollup.dataTreeRoot().then(console.log)
     }
 
     async update(proofAndPublicSignal: any) {
         assert(this.rollup);
-        let processDeposit1: any;
+        let update: any;
         let proof = parseProof(proofAndPublicSignal.proof);
         try {
-            processDeposit1 = await this.rollup.connect(this.userAccount).update(
+            update = await this.rollup.connect(this.userAccount).update(
                 proof.a,
                 proof.b,
                 proof.c,
@@ -140,15 +139,13 @@ export class RollupSC {
         } catch (error) {
             console.log("processDeposits revert reason", error)
         }
-        assert(processDeposit1, "processDeposit1 failed")
-        await this.rollup.dataTreeRoot().then(console.log)
+        assert(update, "update failed")
     }
 
     async withdraw(receiverAccount: any, txInfo: any, proofAndPublicSignal: any) {
         assert(this.rollup);
         let processDeposit1: any;
         let proof = parseProof(proofAndPublicSignal.proof);
-        console.log(txInfo, receiverAccount.address, proof);
         try {
             processDeposit1 = await this.rollup.connect(this.userAccount).withdraw(
                 txInfo,
@@ -162,6 +159,5 @@ export class RollupSC {
             console.log("processDeposits revert reason", error)
         }
         assert(processDeposit1, "processDeposit1 failed")
-        await this.rollup.dataTreeRoot().then(console.log)
     }
 }

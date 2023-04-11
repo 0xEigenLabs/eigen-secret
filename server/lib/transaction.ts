@@ -49,7 +49,6 @@ export enum TransactionModelStatus {
 }
 
 export async function createTx(req: any, res: any) {
-    consola.log("create tx");
     const alias = req.body.alias;
     const pubKey = req.body.pubKey;
     const pubKey2 = req.body.pubKey2;
@@ -177,6 +176,8 @@ export async function updateStateTree(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
+    const padding: boolean = req.body.padding;
+    consola.log("padding", padding);
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
@@ -189,7 +190,8 @@ export async function updateStateTree(req: any, res: any) {
         BigInt(newState.nullifier1),
         BigInt(newState.outputNc2),
         BigInt(newState.nullifier2),
-        BigInt(newState.acStateKey)
+        BigInt(newState.acStateKey),
+        padding
     );
     // TODO handle exception
     return res.json(utils.succ(proof));

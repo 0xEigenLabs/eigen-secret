@@ -42,19 +42,20 @@
     "@types/mocha": "^9.1.0",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
+    "circom_runtime": "^0.1.18",
     "circom_tester": "^0.0.19",
     "circomlib": "^2.0.5",
     "dotenv": "^16.0.0",
     "eslint": "^8.17.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-unused-imports": "^2.0.0",
+    "hardhat": "^2.13.0",
     "solhint": "^3.3.7",
     "supertest": "^6.3.3",
     "temp": "^0.9.4",
     "tmp-promise": "^3.0.3",
     "ts-node": "^10.4.0",
     "typechain": "^8.1.1",
-    "circom_runtime": "^0.1.18",
     "typescript": "^4.6.2"
   }
 }

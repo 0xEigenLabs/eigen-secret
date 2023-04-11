@@ -37,15 +37,15 @@ export class WorldState {
         return WorldState.instance;
     }
 
-    // TODO add transaction
     public static async updateStateTree(
         outputNc1: bigint,
         nullifier1: bigint,
         outputNc2: bigint,
         nullifier2: bigint,
-        acStateKey: bigint
+        acStateKey: bigint,
+        padding: boolean = true
     ) {
-        consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
+        // consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
         const eddsa = await buildEddsa();
         const F = eddsa.F;
         let instance = await WorldState.getInstance();
@@ -61,15 +61,17 @@ export class WorldState {
             consola.log(result);
         }
 
+        // NOTE: DO NOT PAD here, cause the smart contract does not accept padding
         if (outputNc1 > 0n) {
             let sib = await instance.find(outputNc1)
-            siblings.push(siblingsPad(sib.siblings, F));
+            siblings.push(siblingsPad(sib.siblings, F, padding));
         }
         if (outputNc2 > 0n) {
             let sib = await instance.find(outputNc2)
-            siblings.push(siblingsPad(sib.siblings, F));
+            siblings.push(siblingsPad(sib.siblings, F, padding));
         }
 
+        // pad siblings
         if (siblings.length < 2) {
             for (let i = siblings.length; i < 2; i ++) {
                 siblings.push(
@@ -83,7 +85,7 @@ export class WorldState {
         return {
             dataTreeRoot: F.toObject(instance.root()),
             siblings: siblings,
-            siblingsAC: siblingsPad(ac.siblings, F)
+            siblingsAC: siblingsPad(ac.siblings, F, padding)
         };
     }
 }

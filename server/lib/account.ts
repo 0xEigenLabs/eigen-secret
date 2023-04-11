@@ -32,7 +32,6 @@ AccountModel.init({
 
 // add new key
 export async function createAccount(req: any, res: any) {
-    consola.log("create account");
     const alias = req.body.alias;
     const ethAddress = req.params.ethAddress;
     const timestamp = req.body.timestamp;
@@ -72,7 +71,6 @@ export async function createAccount(req: any, res: any) {
             { transaction }
 
         );
-        consola.log("Upsert: ", insertResult);
         if (!utils.hasValue(insertResult.item)) {
             return res.json(utils.err(
                 utils.ErrCode.DBCreateError,

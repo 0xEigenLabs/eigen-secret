@@ -139,7 +139,16 @@ export class RollupHelper {
 
         let approveToken = await this.rollup.connect(this.userAccounts[0]).approveToken(this.testToken.address, { from: this.userAccounts[0].address })
         assert(approveToken, "token registration failed");
+        //FIXME should get assset id from event
+        let tx = await approveToken.wait();
+
+        let abi = [ "event RegisteredToken(uint publicAssetId, address tokenContract)" ];
+        const iface = new ethers.utils.Interface(abi)
+        const eventData = iface.decodeEventLog("RegisteredToken", tx.logs[0].data, tx.logs[0].topics)
+
         this.testTokenAssetId = await this.tokenRegistry.numTokens();
+        // use .deep.eq or toString, see this issue https://github.com/chaijs/chai/issues/1382
+        expect(this.testTokenAssetId.toString()).to.eq(eventData["publicAssetId"].toString())
 
         let approveToken2 = await this.testToken.connect(this.userAccounts[3]).approve(
             this.rollup.address, 1700,

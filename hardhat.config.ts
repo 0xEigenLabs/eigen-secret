@@ -57,6 +57,10 @@ module.exports = {
     tpolygon: {
       url: "https://rpc-mumbai.maticvigil.com/",
       accounts: [process.env.PRIVATE_KEY]
+    },
+    hermez: {
+      url: "https://rpc.public.zkevm-test.net/",
+      accounts: [process.env.PRIVATE_KEY]
     }
   },
   gasReporter: {
