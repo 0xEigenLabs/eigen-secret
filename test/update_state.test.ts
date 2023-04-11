@@ -2,7 +2,7 @@ import { test, utils } from "../index";
 import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
-import { compress as accountCompress, AccountOrNullifierKey, SigningKey } from "../src/account";
+import { compress as accountCompress, SigningKey } from "../src/account";
 import { WorldState } from "../server/state_tree";
 import { JoinSplitCircuit } from "../src/join_split";
 import { AccountCircuit } from "../src/account";

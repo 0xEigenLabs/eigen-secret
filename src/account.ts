@@ -3,8 +3,7 @@ const { buildEddsa, buildPoseidon } = require("circomlibjs");
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
-import { getPublicKey, verify as k1Verify, Point } from "@noble/secp256k1";
-import { bigint2Tuple } from "./utils";
+import { Aes256gcm } from "./aes_gcm";
 
 type UnpackFunc = (babyJub: any) => [any, any];
 interface Address {
@@ -29,29 +28,13 @@ export class EigenAddress implements Address {
     };
 }
 
-export class EthAddress implements Address {
-    protocol: string = "eth:";
-    pubKey: string;
-    constructor(pubKey: string) {
-        this.pubKey = pubKey;
-    }
-    unpack: UnpackFunc = (_: any) => {
-        let pubKey = this.pubKey;
-        if (pubKey.startsWith(this.protocol)) {
-            pubKey = pubKey.substring(this.protocol.length);
-        }
-        let p = Point.fromHex(pubKey);
-        return [p.x, p.y];
-    }
-}
-
 type SignFunc = (msghash: Uint8Array) => any;
 type VerifyFunc = (signature: Uint8Array | any, msghash: Uint8Array) => boolean;
 type KeyToCircuitInput = () => bigint[][];
 type MakeSharedKey = (receiver: Address) => Buffer;
 
 export interface IKey {
-    prvKey: bigint;
+    prvKey: string;
     pubKey: any;
     sign: SignFunc;
     verify: VerifyFunc;
@@ -61,12 +44,16 @@ export interface IKey {
 
 // eddsa
 export class SigningKey implements IKey {
-    prvKey: bigint = 0n;
+    prvKey: string;
     pubKey: EigenAddress = new EigenAddress("");
     eddsa: any;
-    constructor(eddsa: any, _seed: string | undefined = undefined) {
+    constructor(eddsa: any, _rawkeyHex: string | undefined = undefined) {
         this.eddsa = eddsa;
-        let rawpvk = Buffer.from(ethers.utils.randomBytes(31));
+        let rawpvk: string = _rawkeyHex === undefined?
+            Buffer.from(ethers.utils.randomBytes(31)).toString("hex") : _rawkeyHex;
+        if (rawpvk.startsWith("0x")) {
+            rawpvk = rawpvk.slice(2);
+        }
         let pubKey = eddsa.prv2pub(rawpvk);
         let pPubKey = eddsa.babyJub.packPoint(pubKey);
         let hexPubKey = "eig:" + Buffer.from(pPubKey).toString("hex");
@@ -74,6 +61,7 @@ export class SigningKey implements IKey {
         this.pubKey = new EigenAddress(hexPubKey);
         return this;
     }
+
     sign: SignFunc = (msghash: Uint8Array) => {
         let result = this.eddsa.signPoseidon(this.prvKey, msghash);
         return {
@@ -105,44 +93,6 @@ export class SigningKey implements IKey {
             this.eddsa.F.toObject(pPub[0]),
             this.eddsa.F.toObject(pPub[1])
         ], [S]];
-    }
-}
-
-// ecdsa
-export class AccountOrNullifierKey implements IKey {
-    prvKey: bigint = 0n;
-    pubKey: EthAddress = new EthAddress("");
-    constructor(signature: string | undefined = undefined) {
-        // return the first 32bytes as account key
-        if (signature === undefined) {
-            signature = ethers.utils.hexlify(ethers.utils.randomBytes(32));
-        }
-        let prvKey = ethers.utils.arrayify(signature).slice(0, 32);
-        // let pubKey: Point = Point.fromPrivateKey(prvKey);
-        let pubKey = getPublicKey(prvKey);
-        let hexPubKey = "eth:" + Buffer.from(pubKey).toString("hex");
-        this.prvKey = Buffer.from(prvKey);
-        this.pubKey = new EthAddress(hexPubKey);
-        return this;
-    }
-
-    makeSharedKey: MakeSharedKey = (_receiver: EigenAddress) => {
-        throw new Error("Unimplemented")
-    }
-
-    sign: SignFunc = (_msghash: Uint8Array) => {
-        // let sig: Uint8Array = await k1Sign(msghash, this.prvKey, { canonical: true, der: false })
-        // return Promise.resolve(sig);
-        throw new Error("Unimplemented");
-    }
-    verify: VerifyFunc = (signature: Uint8Array | any, msghash: Uint8Array) => {
-        let pPub = this.pubKey.unpack(undefined);
-        return k1Verify(signature, msghash, new Point(pPub[0], pPub[1]));
-    }
-
-    toCircuitInput: KeyToCircuitInput = () => {
-        let pPub = this.pubKey.unpack(undefined);
-        return [bigint2Tuple(pPub[0]), bigint2Tuple(pPub[1])];
     }
 }
 
@@ -207,20 +157,59 @@ async function newAccountDigest(newAccountPubKey: bigint[]) {
     return poseidon.F.toObject(result);
 }
 
-/*
 export class SecretAccount {
     accountKey: SigningKey;
     signingKey: SigningKey;
 
-    newAccountKey: SigningKey | undefined;
-    newSigningKey1: SigningKey | undefined;
-    newSigningKey2: SigningKey | undefined;
+    newAccountKey: SigningKey;
+    newSigningKey1: SigningKey;
+    newSigningKey2: SigningKey;
 
-    constructor() {
-        this= await (new SigningKey()).newKey(undefined);
+    constructor(
+        accountKey: SigningKey,
+        signingKey: SigningKey,
+        newAccountKey: SigningKey,
+        newSigningKey1: SigningKey,
+        newSigningKey2: SigningKey
+    ) {
+        this.accountKey = accountKey;
+        this.signingKey = signingKey;
+        this.newAccountKey = newAccountKey;
+        this.newSigningKey1 = newSigningKey1;
+        this.newSigningKey2 = newSigningKey2;
+    }
+
+    // generate key: const key = crypto.generateKeySync('aes', { length: 256 });
+    serialize(key: any): string {
+        let keys = [
+            this.accountKey.prvKey,
+            this.signingKey.prvKey,
+            this.newAccountKey.prvKey,
+            this.newSigningKey1.prvKey,
+            this.newSigningKey2.prvKey
+        ].join(",");
+        let aes = new Aes256gcm(key);
+        let cipher = aes.encrypt(keys);
+        return cipher.join(",");
+    }
+
+    static deserialize(eddsa: any, key: any, ciphertext: string): SecretAccount {
+        let aes = new Aes256gcm(key);
+        let cipherData = ciphertext.split(",");
+        if (cipherData.length != 3) {
+            throw new Error(`Invalid cipher: ${ciphertext}`)
+        }
+        let keyData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
+        let keys = keyData.split(",");
+        return new SecretAccount(
+            new SigningKey(eddsa, keys[0]),
+            new SigningKey(eddsa, keys[1]),
+            new SigningKey(eddsa, keys[2]),
+            new SigningKey(eddsa, keys[3]),
+            new SigningKey(eddsa, keys[4])
+        );
     }
 }
-*/
 
 export class AccountCircuit {
     static readonly PROOF_ID_TYPE_INVALID: number = 0;
