@@ -621,6 +621,7 @@ export class SecretSDK {
                 BigInt(txInfo.publicAssetId)
             ]
         );
+        // FIXME @Zelig
         // DEBUG: check by smt verifier
         // let tmpRoot = await this.smtVerifierContract.connect(this.rollupSC.userAccount).smtVerifier(
         //     txInfo.siblings[0], txInfo.outputNc1,

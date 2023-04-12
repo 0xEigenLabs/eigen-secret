@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { signEOASignature } from "../src/utils";
+import { signEOASignature, rawMessage } from "../src/utils";
 import { SigningKey, SecretAccount } from "../src/account";
 import { SecretSDK } from "../sdk/main";
 require("dotenv").config()
@@ -9,8 +9,6 @@ const circuitPath = path.join(__dirname, "../circuits/");
 const { buildEddsa } = require("circomlibjs");
 import { defaultContractFile, defaultAccountFile } from "./common";
 const createBlakeHash = require("blake-hash");
-
-const rawMessage = "Use Eigen Secret to shield your asset";
 
 task("create-account", "Create secret account")
   .addParam("alias", "user alias", "Alice")

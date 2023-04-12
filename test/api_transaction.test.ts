@@ -4,7 +4,7 @@ const consola = require("consola");
 import app from "../server/service";
 import { EigenAddress, SigningKey } from "../src/account";
 import { ethers } from "ethers";
-import { signEOASignature, index } from "../src/utils";
+import { signEOASignature, index, rawMessage } from "../src/utils";
 import { expect, assert } from "chai";
 import { StateTree } from "../src/state_tree";
 import { NoteState } from "../src/note";
@@ -20,7 +20,6 @@ describe('POST /transactions', function() {
     before(async() => {
         eddsa = await buildEddsa();
         let newEOAAccount = await ethers.Wallet.createRandom();
-        let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
 

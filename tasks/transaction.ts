@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { signEOASignature } from "../src/utils";
+import { signEOASignature, rawMessage } from "../src/utils";
 import { SecretAccount } from "../src/account";
 import { SecretSDK } from "../sdk/main";
 require("dotenv").config()
@@ -11,7 +11,6 @@ import { defaultContractFile, defaultAccountFile } from "./common";
 const createBlakeHash = require("blake-hash");
 
 const assetId = 2;
-const rawMessage = "Use Eigen Secret to shield your asset";
 
 task("deposit", "Deposit asset from L1 to L2")
   .addParam("alias", "user alias", "Alice")
