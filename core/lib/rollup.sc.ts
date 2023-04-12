@@ -1,10 +1,10 @@
 import { ethers } from "ethers"
 import { assert } from "chai";
 import { uint8Array2Bigint, parseProof } from "./utils";
-import spongePoseidonContract from "../artifacts/contracts/libs/Poseidon.sol/SpongePoseidon.json";
-import tokenRegistryContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
-import rollupContract from "../artifacts/contracts/Rollup.sol/Rollup.json";
-import testTokenContract from "../artifacts/contracts/TestToken.sol/TestToken.json";
+import spongePoseidonContract from "../../artifacts/contracts/libs/Poseidon.sol/SpongePoseidon.json";
+import tokenRegistryContract from "../../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
+import rollupContract from "../../artifacts/contracts/Rollup.sol/Rollup.json";
+import testTokenContract from "../../artifacts/contracts/TestToken.sol/TestToken.json";
 const createBlakeHash = require("blake-hash");
 
 

@@ -14,7 +14,7 @@ import { pad } from "@eigen-secret/core/dist/state_tree";
 import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
 const axios = require("axios").default;
 import { assert } from "chai";
-import _smtVerifierContract from "../artifacts/contracts/SMT.sol/SMT.json";
+import _smtVerifierContract from "../../artifacts/contracts/SMT.sol/SMT.json";
 export class StateTreeClient {
     serverAddr: any;
 
