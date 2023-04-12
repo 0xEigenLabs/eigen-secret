@@ -3,7 +3,7 @@ import * as utils from "@eigen-secret/core/dist/utils";
 import { Note } from "@eigen-secret/core/dist/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
-import { compress as accountCompress, AccountOrNullifierKey, SigningKey } from "@eigen-secret/core/dist/account";
+import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist/account";
 import { WorldState } from "../server/dist/state_tree";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
 import { AccountCircuit } from "@eigen-secret/core/dist/account";

@@ -16,10 +16,12 @@ verifier.sol
 
 # Hardhat files
 cache
-artifacts
+artifacts/build-info
+artifacts/**/*.dbg.json
 scripts/*.js
 circuits/*_js
 circuits/*.ptau
 circuits/circuit_final.zkey
+circuits/*.input.json
 
 contracts/main_*.sol

@@ -45,7 +45,7 @@ export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
         notes,
         {
             transaction: transaction,
-            updateOnDuplicate: ["index", "content"]
+            updateOnDuplicate: ["state"]
         }
     );
 }

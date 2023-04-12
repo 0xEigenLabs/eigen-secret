@@ -3,7 +3,7 @@ const consola = require("consola");
 import app from "../server/dist/service";
 import { EigenAddress, SigningKey } from "@eigen-secret/core/dist/account";
 import { ethers } from "ethers";
-import { signEOASignature, index } from "@eigen-secret/core/dist/utils";
+import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist/utils";
 import { expect, assert } from "chai";
 import { StateTree } from "@eigen-secret/core/dist/state_tree";
 import { NoteState } from "@eigen-secret/core/dist/note";
@@ -19,7 +19,6 @@ describe('POST /transactions', function() {
     before(async() => {
         eddsa = await buildEddsa();
         let newEOAAccount = await ethers.Wallet.createRandom();
-        let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
 
@@ -110,7 +109,8 @@ describe('POST /transactions', function() {
             timestamp: timestamp,
             message: rawMessage,
             hexSignature: signature,
-            ethAddress: newEOAAccount.address
+            ethAddress: newEOAAccount.address,
+            noteState: [NoteState.CREATING, NoteState.PROVED]
         })
         .set('Accept', 'application/json');
 

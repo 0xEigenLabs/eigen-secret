@@ -1,3 +1,0 @@
-[submodule "third-party/circom-ecdsa"]
-	path = third-party/circom-ecdsa
-	url = https://github.com/0xPARC/circom-ecdsa.git

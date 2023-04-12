@@ -12,7 +12,8 @@
     "baseUrl": "./",
     "paths": {
       "@server/*": ["../server/dist/*"]
-    }
+    },
+    "resolveJsonModule": true,
   },
   "include": ["tasks", "test", "typechain/**/*.ts", "typechain/**/*.d.ts", "typechain/**/*.js"],
   "files": ["./hardhat.config.ts"]
