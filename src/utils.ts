@@ -4,6 +4,10 @@ import { ethers } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
 
+export const rawMessage = "Sign this message to generate your EigenSecret Key. " +
+"This key lets the application decrypt your balance on EigenSecret. " +
+"IMPORTANT: Only sign this message if you trust the application.";
+
 export function index() {
     return BigInt("0x" + _randomBytes(31).toString("hex"))
 }

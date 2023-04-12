@@ -2,7 +2,7 @@ import { test, utils } from "../index";
 import { Note } from "../src/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
-import { EigenAddress, EthAddress, SigningKey, AccountOrNullifierKey, compress as accountCompress } from "../src/account";
+import { EigenAddress, SigningKey, compress as accountCompress } from "../src/account";
 import { getPublicKey, Point } from "@noble/secp256k1";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
@@ -38,17 +38,6 @@ describe("Test Account Compressor", function () {
         expect(Buffer.from(pubKey[0]).toString("hex")).to.eq(
             Buffer.from(pubKey3[0]).toString("hex")
         );
-    })
-
-    it("EthAddress Test", async () => {
-        let prvKey = ethers.utils.randomBytes(32);
-        let pubKey = getPublicKey(prvKey);
-        let hexPubKey = "eth:" + Buffer.from(pubKey).toString("hex");
-
-        let key = new EthAddress(hexPubKey);
-        let pubKey2 = key.unpack(babyJub);
-        let pubKey3 = Point.fromPrivateKey(prvKey);
-        expect(pubKey2[0]).to.eq(pubKey3.x);
     })
 
     it("AccountCompress Test", async() => {

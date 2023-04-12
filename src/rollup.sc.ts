@@ -1,7 +1,12 @@
-import { ethers } from "hardhat";
+import { ethers } from "ethers"
 import { assert } from "chai";
 import { uint8Array2Bigint, parseProof } from "../src/utils";
+import spongePoseidonContract from "../artifacts/contracts/libs/Poseidon.sol/SpongePoseidon.json";
+import tokenRegistryContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
+import rollupContract from "../artifacts/contracts/Rollup.sol/Rollup.json";
+import testTokenContract from "../artifacts/contracts/TestToken.sol/TestToken.json";
 const createBlakeHash = require("blake-hash");
+
 
 /*
     Here we want to test the smart contract's deposit functionality.
@@ -45,7 +50,6 @@ export class RollupSC {
         this.tokenRegistry = undefined;
         this.testToken = undefined;
         this.spongePoseidon = undefined;
-        this.eddsa = undefined;
         this.aliasHash = undefined;
 
         this.spongePoseidonAddress = spongePoseidonAddress;
@@ -62,39 +66,28 @@ export class RollupSC {
             createBlakeHash("blake512").update(this.alias).digest().slice(0, 32)
         );
         this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
-        const SpongePoseidonFactory = await ethers.getContractFactory("SpongePoseidon", {
-            libraries: {
-                PoseidonUnit6L: this.poseidon6Address
-            }
-        });
-        this.spongePoseidon = SpongePoseidonFactory.attach(this.spongePoseidonAddress);
-
-        let factoryTR = await ethers.getContractFactory("TokenRegistry");
-        this.tokenRegistry = factoryTR.attach(this.tokenRegistryAddress);
-
-        let factoryR = await ethers.getContractFactory(
-            "Rollup",
-            {
-                libraries: {
-                    SpongePoseidon: this.spongePoseidon.address
-                }
-            }
+        this.spongePoseidon = new ethers.Contract(
+            this.spongePoseidonAddress, spongePoseidonContract.abi, this.userAccount
         );
-        this.rollup = factoryR.attach(this.rollupAddress);
+        this.tokenRegistry = new ethers.Contract(
+            this.tokenRegistryAddress, tokenRegistryContract.abi, this.userAccount
+        );
+        this.rollup = new ethers.Contract(this.rollupAddress, rollupContract.abi, this.userAccount);
 
         if (this.testTokenAddress != "") {
-            let factoryTT = await ethers.getContractFactory("TestToken");
-            this.testToken = factoryTT.attach(this.testTokenAddress);
+            this.testToken = new ethers.Contract(this.testTokenAddress, testTokenContract.abi, this.userAccount);
         }
     }
 
     async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: number, nonce: number) {
         let userAccount = this.userAccount;
         assert(this.rollup);
+        console.log(this.testToken);
         let approveToken = await this.testToken.connect(userAccount).approve(
             this.rollup.address, value,
             { from: userAccount.address }
         )
+        console.log(approveToken);
         assert(approveToken, "approveToken failed")
         let deposit0 = await this.rollup.connect(userAccount).deposit(
             pubkeyEigenAccountKey,

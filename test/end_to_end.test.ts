@@ -4,7 +4,7 @@ const createBlakeHash = require("blake-hash");
 const consola = require("consola");
 import app from "../server/service";
 import { ethers } from "ethers";
-import { uint8Array2Bigint, signEOASignature, prepareJson } from "../src/utils";
+import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "../src/utils";
 import { expect, assert } from "chai";
 import { pad, siblingsPad, StateTree } from "../src/state_tree";
 import { NoteModel as DBNote } from "../server/note";
@@ -31,7 +31,6 @@ describe('POST /transactions', function() {
     const circuitPath = path.join(__dirname, "../circuits/");
     let Fr: any;
     let newEOAAccount: any;
-    const rawMessage = "Use Eigen Secret to shield your asset";
     let aliasHash: any;
     const accountRequired = false;
     let signer: any;
@@ -148,7 +147,8 @@ describe('POST /transactions', function() {
                 timestamp: timestamp,
                 message: rawMessage,
                 hexSignature: signature,
-                ethAddress: newEOAAccount.address
+                ethAddress: newEOAAccount.address,
+                noteState: [NoteState.CREATING, NoteState.PROVED]
             })
             .set('Accept', 'application/json');
         //console.log(responseNote.body.data);
@@ -330,7 +330,8 @@ describe('POST /transactions', function() {
             timestamp: timestamp,
             message: rawMessage,
             hexSignature: signature,
-            ethAddress: newEOAAccount.address
+            ethAddress: newEOAAccount.address,
+            noteState: [NoteState.CREATING, NoteState.PROVED]
         })
         .set('Accept', 'application/json');
         //console.log(responseNote.body.data);
@@ -489,7 +490,8 @@ describe('POST /transactions', function() {
             timestamp: timestamp,
             message: rawMessage,
             hexSignature: signature,
-            ethAddress: newEOAAccount.address
+            ethAddress: newEOAAccount.address,
+            noteState: [NoteState.CREATING, NoteState.PROVED]
         })
         .set('Accept', 'application/json');
         //console.log(responseNote.body.data);

@@ -201,6 +201,7 @@ export async function getNotes(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
+    const noteState = req.body.noteState;
 
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
@@ -208,7 +209,7 @@ export async function getNotes(req: any, res: any) {
     }
 
     // get the confirmed note list, TODO: handle exception
-    let notes = await getDBNotes(alias, [NoteState.CREATING, NoteState.PROVED]);
+    let notes = await getDBNotes(alias, noteState);
     return res.json(utils.succ(notes));
 }
 
