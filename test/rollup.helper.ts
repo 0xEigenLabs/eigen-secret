@@ -12,7 +12,7 @@ import { Prover } from "@eigen-secret/core/dist/prover";
 import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "@eigen-secret/core/dist/state_tree";
 const createBlakeHash = require("blake-hash");
 import { UpdateStatusCircuit, UpdateStatusInput } from "@eigen-secret/core/dist/update_state";
-import { NoteModel, updateDBNotes, getDBNotes } from "../../server/dist/note";
+import { NoteModel, updateDBNotes, getDBNotes } from "../server/dist/note";
 
 /*
     Here we want to test the smart contract's deposit functionality.

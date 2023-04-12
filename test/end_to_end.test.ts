@@ -1,5 +1,5 @@
 const request = require('supertest');
-const express = require('express');
+import express from 'express';
 const createBlakeHash = require("blake-hash");
 const consola = require("consola");
 import app from "../server/dist/service";

@@ -1,5 +1,5 @@
-import test from "@eigen-secret/core/dist/test";
-import utils from "@eigen-secret/core/dist/utils";
+import * as test from "@eigen-secret/core/dist/test";
+import * as utils from "@eigen-secret/core/dist/utils";
 import { Note } from "@eigen-secret/core/dist/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";

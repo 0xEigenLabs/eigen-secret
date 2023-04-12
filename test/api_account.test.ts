@@ -1,7 +1,7 @@
 const request = require('supertest');
 import { ethers } from "ethers";
 
-import app from "../../server/dist/service";
+import app from "../server/dist/service";
 import { SigningKey } from "@eigen-secret/core/dist/account";
 import * as utils from "@eigen-secret/core/dist/utils";
 import { expect, assert } from "chai";

@@ -12,6 +12,7 @@ coverage.json
 typechain
 typechain-types
 verifier.sol
+.idea
 
 # Hardhat files
 cache

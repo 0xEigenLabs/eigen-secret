@@ -1,6 +1,6 @@
 const request = require('supertest');
 const consola = require("consola");
-import app from "../../server/dist/service";
+import app from "../server/dist/service";
 import { EigenAddress, SigningKey } from "@eigen-secret/core/dist/account";
 import { ethers } from "ethers";
 import { signEOASignature, index } from "@eigen-secret/core/dist/utils";

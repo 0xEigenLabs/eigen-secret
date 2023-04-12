@@ -1,5 +1,5 @@
-import test from "@eigen-secret/core/dist/test";
-import utils from "@eigen-secret/core/dist/utils";
+import * as test from "@eigen-secret/core/dist/test";
+import * as utils from "@eigen-secret/core/dist/utils";
 const createBlakeHash = require("blake-hash");
 import { assert, expect } from "chai";
 import { ethers } from "ethers";

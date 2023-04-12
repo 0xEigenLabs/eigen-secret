@@ -2,8 +2,8 @@ import path = require("path");
 
 import { expect, assert } from 'chai';
 import { getPublicKey, sign, Point } from '@noble/secp256k1';
-import test from "@eigen-secret/core/dist/test";
-import utils from "@eigen-secret/core/dist/utils";
+import * as test from "@eigen-secret/core/dist/test";
+import * as utils from "@eigen-secret/core/dist/utils";
 
 const F1Field = require("ffjavascript").F1Field;
 const Scalar = require("ffjavascript").Scalar;
