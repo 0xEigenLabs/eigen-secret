@@ -1,20 +1,24 @@
 const createBlakeHash = require("blake-hash");
-const { buildEddsa } = require("circomlibjs");
-import { ethers } from "ethers"
-import { uint8Array2Bigint, prepareJson } from "../src/utils";
-import { JoinSplitCircuit } from "../src/join_split";
-import { UpdateStatusCircuit } from "../src/update_state";
-import { Prover } from "../src/prover";
-import { Note } from "../src/note";
-import { Transaction } from "../src/transaction";
-import { NoteState } from "../src/note";
-import { SecretAccount, AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
-import { RollupSC } from "../src/rollup.sc";
-import { pad } from "../src/state_tree";
-import { poseidonSponge } from "../src/sponge_poseidon";
+const {buildEddsa} = require("circomlibjs");
+import {prepareJson, uint8Array2Bigint} from "@eigen-secret/core/dist/utils";
+import {JoinSplitCircuit} from "@eigen-secret/core/dist/join_split";
+import {UpdateStatusCircuit} from "@eigen-secret/core/dist/update_state";
+import {Prover} from "@eigen-secret/core/dist/prover";
+import {Note, NoteState} from "@eigen-secret/core/dist/note";
+import {Transaction} from "@eigen-secret/core/dist/transaction";
+import {
+    AccountCircuit,
+    compress as accountCompress,
+    EigenAddress,
+    SecretAccount,
+    SigningKey
+} from "@eigen-secret/core/dist/account";
+import {RollupSC} from "@eigen-secret/core/dist/rollup.sc";
+import {pad} from "@eigen-secret/core/dist/state_tree";
+import {poseidonSponge} from "@eigen-secret/core/dist/sponge_poseidon";
+import {assert} from "chai";
+
 const axios = require("axios").default;
-import { expect, assert } from "chai";
-//import _smtVerifierContract from "../artifacts/contracts/SMT.sol/SMT.json";
 
 export class StateTreeClient {
     serverAddr: any;
@@ -181,7 +185,6 @@ export class TransactionClient {
     }
 }
 
-
 export class SecretSDK {
     alias: string;
     account: SecretAccount;
@@ -191,9 +194,9 @@ export class SecretSDK {
     circuitPath: string;
     rollupSC: RollupSC;
     smtVerifierContract: any;
-    keysFound:any;
-    valuesFound:any;
-    siblings:any;
+    keysFound: any;
+    valuesFound: any;
+    siblings: any;
 
     constructor(
         alias: string,
@@ -265,13 +268,13 @@ export class SecretSDK {
             });
         }
         let balance = 0n;
-        let _notes:Array<Note> = [];
-        for (let i = 0; i < notes.length; i ++) {
+        let _notes: Array<Note> = [];
+        for (let i = 0; i < notes.length; i++) {
             if (notes[i].assetId == assetId) {
                 _notes.push(notes[i]);
             }
         }
-        for (let i = 0; i < 2; i ++) {
+        for (let i = 0; i < 2; i++) {
             if (_notes[i]._owner.pubKey == this.account.accountKey.pubKey.pubKey) {
                 let tmpValue = _notes[i].val;
                 balance = balance + tmpValue;
@@ -294,7 +297,7 @@ export class SecretSDK {
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
 
-        const signer = accountRequired? this.account.signingKey: this.account.accountKey;
+        const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
         let noteState = [NoteState.CREATING, NoteState.PROVED]
@@ -396,7 +399,7 @@ export class SecretSDK {
         let accountRequired = false;
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
-        const signer = accountRequired? this.account.signingKey: this.account.accountKey;
+        const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
         let noteState = [NoteState.CREATING, NoteState.PROVED];
@@ -486,7 +489,7 @@ export class SecretSDK {
         let accountRequired = false;
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
-        const signer = accountRequired? this.account.signingKey: this.account.accountKey;
+        const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
         let noteState = [NoteState.CREATING, NoteState.PROVED];
@@ -690,7 +693,7 @@ export class SecretSDK {
             aliasHash
         );
         let accountRequired = false;
-        let signer = accountRequired? this.account.signingKey: this.account.accountKey;
+        let signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         let acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let smtProof = await this.state.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
         let circuitInput = input.toCircuitInput(eddsa.babyJub, smtProof);

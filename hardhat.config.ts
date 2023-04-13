@@ -3,7 +3,6 @@ import "@typechain/hardhat";
 import { task, HardhatUserConfig } from "hardhat/config";
 import { resolve } from "path";
 import { config as dotenvConfig } from "dotenv";
-import { requireEnvVariables } from "./src/utils";
 require("./tasks/index");
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });

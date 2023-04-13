@@ -1,10 +1,11 @@
-import { test, utils } from "../index";
+import * as test from "@eigen-secret/core/dist/test";
+import * as utils from "@eigen-secret/core/dist/utils";
 const createBlakeHash = require("blake-hash");
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
 const Scalar = require("ffjavascript").Scalar;
 const ffutils = require("ffjavascript").utils;
-import { SigningKey, SecretAccount } from "../src/account";
+import { SigningKey, SecretAccount } from "@eigen-secret/core/dist/account";
 const crypto = require("crypto");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");

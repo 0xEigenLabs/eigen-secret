@@ -1,9 +1,10 @@
-import { test, utils } from "../index";
-import { Note } from "../src/note";
+import * as test from "@eigen-secret/core/dist/test";
+import * as utils from "@eigen-secret/core/dist/utils";
+import { Note } from "@eigen-secret/core/dist/note";
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
-import { compress as accountCompress, SigningKey, AccountCircuit } from "../src/account";
-import { WorldState } from "../server/state_tree";
+import { compress as accountCompress, SigningKey, AccountCircuit } from "@eigen-secret/core/dist/account";
+import { WorldState } from "../server/dist/state_tree";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 
 const path = require("path");

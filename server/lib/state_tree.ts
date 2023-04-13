@@ -1,8 +1,9 @@
 const { buildEddsa } = require("circomlibjs");
 const consola = require("consola");
-import { N_LEVEL, siblingsPad, StateTree } from "../src/state_tree";
 const { DataTypes, Model } = require("sequelize");
-import sequelize from "../server/db";
+import sequelize from "./db";
+import { StateTree, N_LEVEL, siblingsPad } from "@eigen-secret/core/dist/state_tree";
+
 
 export class SMTModel extends Model {}
 

@@ -6,9 +6,15 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
+    "outDir": "dist",
+    "types": ["hardhat", "@nomiclabs/hardhat-ethers"],
+    "typeRoots": ["node_modules/@types"],
+    "baseUrl": "./",
+    "paths": {
+      "@server/*": ["../server/dist/*"]
+    },
     "resolveJsonModule": true,
-    "outDir": "dist"
   },
-  "include": ["tasks", "test", "typechain/**/*.ts", "typechain/**/*.d.ts", "typechain/**/*.js", "src", "server", "sdk"],
+  "include": ["tasks", "test", "typechain/**/*.ts", "typechain/**/*.d.ts", "typechain/**/*.js"],
   "files": ["./hardhat.config.ts"]
 }

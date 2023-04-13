@@ -1,6 +1,7 @@
-import { ethers } from "ethers"
-import { assert } from "chai";
-import { uint8Array2Bigint, parseProof } from "../src/utils";
+import {ethers} from "ethers"
+import {assert} from "chai";
+import {parseProof, uint8Array2Bigint} from "./utils";
+
 const createBlakeHash = require("blake-hash");
 
 
@@ -86,7 +87,7 @@ export class RollupSC {
         console.log(this.testToken);
         let approveToken = await this.testToken.connect(userAccount).approve(
             this.rollup.address, value,
-            { from: userAccount.address }
+            {from: userAccount.address}
         )
         console.log(approveToken);
         assert(approveToken, "approveToken failed")
@@ -95,7 +96,7 @@ export class RollupSC {
             assetId,
             value,
             nonce,
-            { from: userAccount.address }
+            {from: userAccount.address}
         )
         assert(deposit0, "deposit0 failed");
         return deposit0;
@@ -109,7 +110,7 @@ export class RollupSC {
                 keysFound,
                 valuesFound,
                 siblings,
-                { from: userAccount.address }
+                {from: userAccount.address}
             )
         } catch (error) {
             console.log("processDeposits revert reason", error)
@@ -127,7 +128,7 @@ export class RollupSC {
                 proof.b,
                 proof.c,
                 proofAndPublicSignal.publicSignals,
-                { from: this.userAccount.address }
+                {from: this.userAccount.address}
             )
         } catch (error) {
             console.log("processDeposits revert reason", error)
@@ -146,7 +147,7 @@ export class RollupSC {
                 proof.a,
                 proof.b,
                 proof.c,
-                { from: this.userAccount.address }
+                {from: this.userAccount.address}
             )
         } catch (error) {
             console.log("processDeposits revert reason", error)

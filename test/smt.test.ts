@@ -1,11 +1,12 @@
 import { expect, assert } from "chai";
 import path = require("path");
-import { test, utils } from "../index";
+import * as test from "@eigen-secret/core/dist/test";
+import * as utils from "@eigen-secret/core/dist/utils";
 const cls = require("circomlibjs");
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad, StateTree } from "../src/state_tree";
+import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad, StateTree } from "@eigen-secret/core/dist/state_tree";
 const { ethers } = require("hardhat");
-import { SMTModel } from "../server/state_tree";
-import { deployPoseidons } from "../src/deploy_poseidons.util";
+import { SMTModel } from "../server/dist/state_tree";
+import { deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
 
 describe("Test SMT Membership Query", function () {
     this.timeout(1000 * 1000);

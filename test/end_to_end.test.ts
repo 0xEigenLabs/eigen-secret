@@ -1,27 +1,27 @@
 const request = require('supertest');
-const express = require('express');
+import express from 'express';
 const createBlakeHash = require("blake-hash");
 const consola = require("consola");
-import app from "../server/service";
+import app from "../server/dist/service";
 import { ethers } from "ethers";
-import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "../src/utils";
+import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "@eigen-secret/core/dist/utils";
 import { expect, assert } from "chai";
-import { pad, siblingsPad, StateTree } from "../src/state_tree";
-import { NoteModel as DBNote } from "../server/note";
-import { Note, NoteState } from "../src/note";
-import { compress as accountCompress, EigenAddress, SigningKey } from "../src/account";
-import { JoinSplitCircuit } from "../src/join_split";
-import { AccountCircuit } from "../src/account";
-import { UpdateStatusCircuit, UpdateStatusInput } from "../src/update_state";
-import { Prover } from "../src/prover";
+import { pad, siblingsPad, StateTree } from "@eigen-secret/core/dist/state_tree";
+import { NoteModel as DBNote } from "../server/dist/note";
+import { Note, NoteState } from "@eigen-secret/core/dist/note";
+import { compress as accountCompress, EigenAddress, SigningKey } from "@eigen-secret/core/dist/account";
+import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
+import { AccountCircuit } from "@eigen-secret/core/dist/account";
+import { UpdateStatusCircuit, UpdateStatusInput } from "@eigen-secret/core/dist/update_state";
+import { Prover } from "@eigen-secret/core/dist/prover";
 import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import { Transaction } from "../src/transaction";
+import { Transaction } from "@eigen-secret/core/dist/transaction";
 const { buildEddsa } = require("circomlibjs");
 import { RollupHelper } from "./rollup.helper";
 const path = require("path");
 const hre = require('hardhat')
-import { poseidonSponge } from "../src/sponge_poseidon";
-import { deployPoseidons } from "../src/deploy_poseidons.util";
+import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
+import { deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
 
 describe('POST /transactions', function() {
     this.timeout(1000 * 1000);
@@ -695,7 +695,7 @@ describe('POST /transactions', function() {
             hashInput.push(txInfo.roots[i])
         }
         let msg = await poseidonSponge(
-           hashInput 
+           hashInput
         );
 
         //DEBUG: check by smt verifier

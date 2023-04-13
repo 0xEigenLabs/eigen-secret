@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
-import { signEOASignature, rawMessage } from "../src/utils";
-import { SecretAccount } from "../src/account";
-import { SecretSDK } from "../sdk/main";
+import { signEOASignature, rawMessage } from "@eigen-secret/core/dist/utils";
+import { SecretAccount } from "@eigen-secret/core/dist/account";
+import { SecretSDK } from "@eigen-secret/sdk/dist/index";
 require("dotenv").config()
 const path = require("path");
 const fs = require("fs");
