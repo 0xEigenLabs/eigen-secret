@@ -12,7 +12,7 @@
     "lint": "npm run lint_ts & npm run lint_sol",
     "compile": "hardhat compile",
     "test": "npm run build && npm run compile && npx hardhat test",
-    "lint_ts": "./node_modules/.bin/eslint --fix --ext .ts src server sdk tasks",
+    "lint_ts": "./node_modules/.bin/eslint --fix --ext .ts server sdk tasks",
     "clean": "rm -rf build dist typechain cache artifacts",
     "deploy:goerli": "hardhat deploy --network goerli"
   },
