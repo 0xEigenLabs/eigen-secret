@@ -1,10 +1,6 @@
 import { ethers } from "ethers"
 import { assert } from "chai";
 import { uint8Array2Bigint, parseProof } from "../src/utils";
-import spongePoseidonContract from "../artifacts/contracts/libs/Poseidon.sol/SpongePoseidon.json";
-import tokenRegistryContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
-import rollupContract from "../artifacts/contracts/Rollup.sol/Rollup.json";
-import testTokenContract from "../artifacts/contracts/TestToken.sol/TestToken.json";
 const createBlakeHash = require("blake-hash");
 
 
@@ -61,21 +57,26 @@ export class RollupSC {
         this.testTokenAddress = testTokenAddress;
     }
 
-    async initialize() {
+    async initialize(
+        spongePoseidonContractABI: any,
+        tokenRegistryContractABI: any,
+        rollupContractABI: any,
+        testTokenContractABI: any
+    ) {
         const aliasHashBuffer = this.eddsa.pruneBuffer(
             createBlakeHash("blake512").update(this.alias).digest().slice(0, 32)
         );
         this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
         this.spongePoseidon = new ethers.Contract(
-            this.spongePoseidonAddress, spongePoseidonContract.abi, this.userAccount
+            this.spongePoseidonAddress, spongePoseidonContractABI, this.userAccount
         );
         this.tokenRegistry = new ethers.Contract(
-            this.tokenRegistryAddress, tokenRegistryContract.abi, this.userAccount
+            this.tokenRegistryAddress, tokenRegistryContractABI, this.userAccount
         );
-        this.rollup = new ethers.Contract(this.rollupAddress, rollupContract.abi, this.userAccount);
+        this.rollup = new ethers.Contract(this.rollupAddress, rollupContractABI, this.userAccount);
 
         if (this.testTokenAddress != "") {
-            this.testToken = new ethers.Contract(this.testTokenAddress, testTokenContract.abi, this.userAccount);
+            this.testToken = new ethers.Contract(this.testTokenAddress, testTokenContractABI, this.userAccount);
         }
     }
 

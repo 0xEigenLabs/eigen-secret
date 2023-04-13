@@ -7,7 +7,7 @@ const path = require("path");
 const fs = require("fs");
 const circuitPath = path.join(__dirname, "../circuits/");
 const { buildEddsa } = require("circomlibjs");
-import { defaultContractFile, defaultAccountFile } from "./common";
+import { defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
 const createBlakeHash = require("blake-hash");
 
 const assetId = 2;
@@ -41,7 +41,7 @@ task("deposit", "Deposit asset from L1 to L2")
         contractJson.rollup,
         contractJson.testToken
     );
-    await secretSDK.initialize();
+    await secretSDK.initialize(defaultContractABI);
     const ctx = {
       alias: alias,
       ethAddress: user.address,
@@ -86,7 +86,7 @@ task("send", "send asset to receiver in L2")
         contractJson.rollup,
         contractJson.testToken
     );
-    await secretSDK.initialize();
+    await secretSDK.initialize(defaultContractABI);
     const ctx = {
       alias: alias,
       ethAddress: user.address,
@@ -129,7 +129,7 @@ task("withdraw", "withdraw assert from L2 to L1")
         contractJson.rollup,
         contractJson.testToken
     );
-    await secretSDK.initialize();
+    await secretSDK.initialize(defaultContractABI);
     const ctx = {
       alias: alias,
       ethAddress: user.address,

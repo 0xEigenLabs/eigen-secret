@@ -29,7 +29,8 @@ export class StateTreeClient {
         nullifier1: bigint,
         outputNc2: bigint,
         nullifier2: bigint,
-        acStateKey: bigint
+        acStateKey: bigint,
+        padding: boolean = true
     ) {
         const {
             alias,
@@ -44,6 +45,7 @@ export class StateTreeClient {
             message: rawMessage,
             hexSignature: signature,
             ethAddress: ethAddress,
+            padding: padding, // NOTE: DO NOT pad because we need call smtVerifier smartcontract
             newStates: {
                 outputNc1: outputNc1,
                 nullifier1: nullifier1,
@@ -222,8 +224,15 @@ export class SecretSDK {
         this.siblings = [];
     }
 
-    async initialize() {
-        await this.rollupSC.initialize();
+    async initialize(
+        contractABI: any
+    ) {
+        await this.rollupSC.initialize(
+            contractABI.spongePoseidonContractABI,
+            contractABI.tokenRegistryContractABI,
+            contractABI.rollupContractABI,
+            contractABI.testTokenContractABI
+        );
         let smtVerifierContractFactory = new ethers.ContractFactory(
             _smtVerifierContract.abi,
             _smtVerifierContract.bytecode,
@@ -521,17 +530,21 @@ export class SecretSDK {
                 input.outputNotes[0].inputNullifier,
                 input.outputNCs[1],
                 input.outputNotes[1].inputNullifier,
-                acStateKey
+                acStateKey,
+                false
             );
             // console.log(proof);
             let rawSiblings = proof.siblings;
+            console.log("rawSiblings", rawSiblings);
             let paddedSiblings = [
                 pad(rawSiblings[0]),
                 pad(rawSiblings[1])
             ];
-            proof.sibings = paddedSiblings;
+            console.log("paddedSiblings", paddedSiblings, rawSiblings);
+            proof.siblings = paddedSiblings;
             proof.siblingsAC = pad(proof.siblingsAC);
             let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
+            console.log(circuitInput);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             _proof.push(Prover.serialize(proofAndPublicSignals));
 
@@ -593,9 +606,6 @@ export class SecretSDK {
             await this.note.updateNote(ctx, _notes);
         }
 
-        await this.rollupSC.processDeposits(this.rollupSC.userAccount, keysFound, valuesFound, siblings);
-
-        // let sz = keysFound.length;
         let tmpP = this.account.signingKey.pubKey.unpack(eddsa.babyJub);
         let xy = [eddsa.F.toObject(tmpP[0]), eddsa.F.toObject(tmpP[1])];
         // last tx
@@ -626,13 +636,13 @@ export class SecretSDK {
         // DEBUG: check by smt verifier
         let tmpRoot = await this.smtVerifierContract.connect(this.rollupSC.userAccount).smtVerifier(
             txInfo.siblings[0], txInfo.outputNc1,
-            txInfo.values[0], "0", "0", false, false, 20
+            txInfo.values[0], 0, 0, false, false, 20
         )
         expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
 
         tmpRoot = await this.smtVerifierContract.connect(this.rollupSC.userAccount).smtVerifier(
             txInfo.siblings[1], txInfo.outputNc2,
-            txInfo.values[1], "0", "0", false, false, 20
+            txInfo.values[1], 0, 0, false, false, 20
         )
         expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
 
