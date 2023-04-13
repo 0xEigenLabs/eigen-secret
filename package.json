@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "server": "npm run build:server && npm start",
-    "build:core": "cd core && npm run build",
-    "build:sdk": "cd sdk && npm run build",
-    "build:server": "cd server && npm run build",
+    "build:core": "cd core && npm i && npm run build",
+    "build:sdk": "cd sdk && npm i && npm run build",
+    "build:server": "cd server && npm i && npm run build",
     "build": "npm run build:core && npm run build:sdk && npm run build:server",
     "lint_sol": "./node_modules/.bin/solhint 'contracts/**/*.sol'",
     "lint": "npm run lint_ts & npm run lint_sol",
