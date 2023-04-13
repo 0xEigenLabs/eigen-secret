@@ -113,7 +113,7 @@ task("migrate-account", "migrate account to another ETH address")
       signature: signature
     };
     let proofAndPublicSignals = await secretSDK.migrateAccount(
-        ctx, newAccountKey, sa.newSigningKey1, sa.newSigningKey2
+        ctx, newAccountKey
     );
     sa.accountKey = newAccountKey;
     sa.newAccountKey = newAccountKey;

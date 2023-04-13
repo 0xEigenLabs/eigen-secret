@@ -727,12 +727,12 @@ export class SecretSDK {
         return Prover.serialize(proofAndPublicSignals);
     }
 
-    async migrateAccount(ctx: any, newAccountKey: SigningKey, oldSigningKey: SigningKey, oldSigningKey2: SigningKey) {
+    async migrateAccount(ctx: any, newAccountKey: SigningKey) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
-        let newAccountPubKey = this.account.accountKey.toCircuitInput();
-        let newSigningPubKey1 = oldSigningKey.toCircuitInput();
-        let newSigningPubKey2 = oldSigningKey2.toCircuitInput();
+        let newAccountPubKey = newAccountKey.toCircuitInput();
+        let newSigningPubKey1 = this.account.newSigningKey1.toCircuitInput();
+        let newSigningPubKey2 = this.account.newSigningKey2.toCircuitInput();
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         let aliasHash = uint8Array2Bigint(aliasHashBuffer);
         let input = await UpdateStatusCircuit.createAccountInput(
