@@ -39,7 +39,8 @@ task("deposit", "Deposit asset from L1 to L2")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken
+        contractJson.testToken,
+        contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
     const ctx = {
@@ -84,7 +85,8 @@ task("send", "send asset to receiver in L2")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken
+        contractJson.testToken,
+        contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
     const ctx = {
@@ -127,7 +129,8 @@ task("withdraw", "withdraw assert from L2 to L1")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken
+        contractJson.testToken,
+        contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
     const ctx = {

@@ -55,6 +55,15 @@ task("deploy", "Deploy all smart contract")
     }
     contractJson.set("testToken", testTokenAddress);
 
+    // DEBUG only
+    let smtVerifierContractFactory = await ethers.getContractFactory("SMT");
+    let smtVerifierContract = await smtVerifierContractFactory.deploy(
+        poseidonContracts[0].address,
+        poseidonContracts[1].address
+    );
+    await smtVerifierContract.deployed();
+    contractJson.set("smtVerifier", smtVerifierContract.address);
+
     console.log(contractJson);
     fs.writeFileSync(contractFile, JSON.stringify(Object.fromEntries(contractJson)))
 })

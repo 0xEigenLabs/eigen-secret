@@ -2,6 +2,7 @@ import spongePoseidonContract from "../artifacts/contracts/libs/Poseidon.sol/Spo
 import tokenRegistryContract from "../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
 import rollupContract from "../artifacts/contracts/Rollup.sol/Rollup.json";
 import testTokenContract from "../artifacts/contracts/TestToken.sol/TestToken.json";
+import SMT from "../artifacts/contracts/SMT.sol/SMT.json";
 
 export const defaultContractFile = "../.contract.json";
 export const defaultAccountFile = ".account.json"
@@ -10,6 +11,7 @@ export const defaultContractABI = {
     spongePoseidonContractABI: spongePoseidonContract.abi,
     tokenRegistryContractABI: tokenRegistryContract.abi,
     rollupContractABI: rollupContract.abi,
-    testTokenContractABI: testTokenContract.abi
+    testTokenContractABI: testTokenContract.abi,
+    smtVerifierContractABI: SMT.abi
 };
 

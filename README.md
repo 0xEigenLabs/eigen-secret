@@ -16,6 +16,11 @@ npx hardhat
 ## Test
 
 ```
-npm run test test/update_state.test.ts
+cp .env.sample .env
+
+## configure .env
+
+npm run test
+
 cd circuits && ./run.sh main_update_state
 ```

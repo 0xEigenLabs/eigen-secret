@@ -25,11 +25,11 @@ export class Prover {
         return proofAndPublicSignals;
     }
 
-    static async verifyState(proofAndPublicSignals: any) {
+    static async verifyState(circuitPath: string, proofAndPublicSignals: any) {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
-        let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey.16");
+        let zkey = path.join(circuitPath, "circuit_final.zkey.16");
         const vKey = await snarkjs.zKey.exportVerificationKey(zkey);
         const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
         return res;
@@ -57,11 +57,11 @@ export class Prover {
         return proofAndPublicSignals;
     }
 
-    static async verifyWithrawal(proofAndPublicSignals: any) {
+    static async verifyWithrawal(circuitPath: string, proofAndPublicSignals: any) {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
-        let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey.14");
+        let zkey = path.join(circuitPath, "circuit_final.zkey.14");
         const vKey = await snarkjs.zKey.exportVerificationKey(zkey);
         const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
         return res;

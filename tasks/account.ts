@@ -41,7 +41,8 @@ task("create-account", "Create secret account")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken
+        contractJson.testToken,
+        contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
     const ctx = {
@@ -102,7 +103,8 @@ task("migrate-account", "migrate account to another ETH address")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken
+        contractJson.testToken,
+        contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
     const ctx = {
@@ -147,7 +149,8 @@ task("migrate-account", "migrate account to another ETH address")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken
+        contractJson.testToken,
+        contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
     const ctx = {

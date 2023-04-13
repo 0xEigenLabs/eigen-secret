@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "server": "npm run build:server && npm start",
+    "server": "npm run build:server && cd server && npm start",
     "build:core": "cd core && npm i && npm run build",
     "build:sdk": "cd sdk && npm i && npm run build",
     "build:server": "cd server && npm i && npm run build",
