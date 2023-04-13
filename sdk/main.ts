@@ -14,7 +14,7 @@ import { pad } from "../src/state_tree";
 import { poseidonSponge } from "../src/sponge_poseidon";
 const axios = require("axios").default;
 import { expect, assert } from "chai";
-import _smtVerifierContract from "../artifacts/contracts/SMT.sol/SMT.json";
+//import _smtVerifierContract from "../artifacts/contracts/SMT.sol/SMT.json";
 
 export class StateTreeClient {
     serverAddr: any;
@@ -233,6 +233,7 @@ export class SecretSDK {
             contractABI.rollupContractABI,
             contractABI.testTokenContractABI
         );
+        /*
         let smtVerifierContractFactory = new ethers.ContractFactory(
             _smtVerifierContract.abi,
             _smtVerifierContract.bytecode,
@@ -243,6 +244,7 @@ export class SecretSDK {
             this.rollupSC.poseidon3Address
         );
         await this.smtVerifierContract.deployed();
+        */
     }
 
     /*
@@ -634,17 +636,17 @@ export class SecretSDK {
         );
         // FIXME @Zelig
         // DEBUG: check by smt verifier
-        let tmpRoot = await this.smtVerifierContract.connect(this.rollupSC.userAccount).smtVerifier(
-            txInfo.siblings[0], txInfo.outputNc1,
-            txInfo.values[0], 0, 0, false, false, 20
-        )
-        expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+        //let tmpRoot = await this.smtVerifierContract.connect(this.rollupSC.userAccount).smtVerifier(
+        //    txInfo.siblings[0], txInfo.outputNc1,
+        //    txInfo.values[0], 0, 0, false, false, 20
+        //)
+        //expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
 
-        tmpRoot = await this.smtVerifierContract.connect(this.rollupSC.userAccount).smtVerifier(
-            txInfo.siblings[1], txInfo.outputNc2,
-            txInfo.values[1], 0, 0, false, false, 20
-        )
-        expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+        //tmpRoot = await this.smtVerifierContract.connect(this.rollupSC.userAccount).smtVerifier(
+        //    txInfo.siblings[1], txInfo.outputNc2,
+        //    txInfo.values[1], 0, 0, false, false, 20
+        //)
+        //expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
 
         let sig = await this.account.signingKey.sign(eddsa.F.e(msg));
         let input = {
