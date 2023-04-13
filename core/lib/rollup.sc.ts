@@ -1,10 +1,7 @@
-import { ethers } from "ethers"
-import { assert } from "chai";
-import { uint8Array2Bigint, parseProof } from "./utils";
-import spongePoseidonContract from "../../artifacts/contracts/libs/Poseidon.sol/SpongePoseidon.json";
-import tokenRegistryContract from "../../artifacts/contracts/TokenRegistry.sol/TokenRegistry.json";
-import rollupContract from "../../artifacts/contracts/Rollup.sol/Rollup.json";
-import testTokenContract from "../../artifacts/contracts/TestToken.sol/TestToken.json";
+import {ethers} from "ethers"
+import {assert} from "chai";
+import {parseProof, uint8Array2Bigint} from "./utils";
+
 const createBlakeHash = require("blake-hash");
 
 
@@ -61,21 +58,26 @@ export class RollupSC {
         this.testTokenAddress = testTokenAddress;
     }
 
-    async initialize() {
+    async initialize(
+        spongePoseidonContractABI: any,
+        tokenRegistryContractABI: any,
+        rollupContractABI: any,
+        testTokenContractABI: any
+    ) {
         const aliasHashBuffer = this.eddsa.pruneBuffer(
             createBlakeHash("blake512").update(this.alias).digest().slice(0, 32)
         );
         this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
         this.spongePoseidon = new ethers.Contract(
-            this.spongePoseidonAddress, spongePoseidonContract.abi, this.userAccount
+            this.spongePoseidonAddress, spongePoseidonContractABI, this.userAccount
         );
         this.tokenRegistry = new ethers.Contract(
-            this.tokenRegistryAddress, tokenRegistryContract.abi, this.userAccount
+            this.tokenRegistryAddress, tokenRegistryContractABI, this.userAccount
         );
-        this.rollup = new ethers.Contract(this.rollupAddress, rollupContract.abi, this.userAccount);
+        this.rollup = new ethers.Contract(this.rollupAddress, rollupContractABI, this.userAccount);
 
         if (this.testTokenAddress != "") {
-            this.testToken = new ethers.Contract(this.testTokenAddress, testTokenContract.abi, this.userAccount);
+            this.testToken = new ethers.Contract(this.testTokenAddress, testTokenContractABI, this.userAccount);
         }
     }
 
@@ -85,7 +87,7 @@ export class RollupSC {
         console.log(this.testToken);
         let approveToken = await this.testToken.connect(userAccount).approve(
             this.rollup.address, value,
-            { from: userAccount.address }
+            {from: userAccount.address}
         )
         console.log(approveToken);
         assert(approveToken, "approveToken failed")
@@ -94,7 +96,7 @@ export class RollupSC {
             assetId,
             value,
             nonce,
-            { from: userAccount.address }
+            {from: userAccount.address}
         )
         assert(deposit0, "deposit0 failed");
         return deposit0;
@@ -108,7 +110,7 @@ export class RollupSC {
                 keysFound,
                 valuesFound,
                 siblings,
-                { from: userAccount.address }
+                {from: userAccount.address}
             )
         } catch (error) {
             console.log("processDeposits revert reason", error)
@@ -126,7 +128,7 @@ export class RollupSC {
                 proof.b,
                 proof.c,
                 proofAndPublicSignal.publicSignals,
-                { from: this.userAccount.address }
+                {from: this.userAccount.address}
             )
         } catch (error) {
             console.log("processDeposits revert reason", error)
@@ -145,7 +147,7 @@ export class RollupSC {
                 proof.a,
                 proof.b,
                 proof.c,
-                { from: this.userAccount.address }
+                {from: this.userAccount.address}
             )
         } catch (error) {
             console.log("processDeposits revert reason", error)

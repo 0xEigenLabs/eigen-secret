@@ -7,7 +7,7 @@ const path = require("path");
 const fs = require("fs");
 const circuitPath = path.join(__dirname, "../circuits/");
 const { buildEddsa } = require("circomlibjs");
-import { defaultContractFile, defaultAccountFile } from "./common";
+import { defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
 const createBlakeHash = require("blake-hash");
 
 task("create-account", "Create secret account")
@@ -43,7 +43,7 @@ task("create-account", "Create secret account")
         contractJson.rollup,
         contractJson.testToken
     );
-    await secretSDK.initialize();
+    await secretSDK.initialize(defaultContractABI);
     const ctx = {
       alias: alias,
       ethAddress: user.address,
@@ -56,9 +56,10 @@ task("create-account", "Create secret account")
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     fs.writeFileSync(defaultAccountFile, sa.serialize(key));
     console.log(proofAndPublicSignals);
-    /*
     let receiver = accountKey.pubKey.pubKey;
     let nonce = 0;
+    let assetId = 2;
+    let value = "10";
     let proof = await secretSDK.deposit(ctx, receiver, value, assetId, nonce);
     let balance1 = await secretSDK.getNotesValue(ctx, assetId);
     console.log("test1-after deposit")
@@ -73,7 +74,6 @@ task("create-account", "Create secret account")
 
     let proof2 = await secretSDK.withdraw(ctx, receiver, "5", assetId);
     console.log("withdraw done, proof: ", proof2);
-    */
   })
 
 task("migrate-account", "migrate account to another ETH address")
@@ -104,7 +104,7 @@ task("migrate-account", "migrate account to another ETH address")
         contractJson.rollup,
         contractJson.testToken
     );
-    await secretSDK.initialize();
+    await secretSDK.initialize(defaultContractABI);
     const ctx = {
       alias: alias,
       ethAddress: user.address,
@@ -113,7 +113,7 @@ task("migrate-account", "migrate account to another ETH address")
       signature: signature
     };
     let proofAndPublicSignals = await secretSDK.migrateAccount(
-        ctx, newAccountKey, sa.newSigningKey1, sa.newSigningKey2
+        ctx, newAccountKey
     );
     sa.accountKey = newAccountKey;
     sa.newAccountKey = newAccountKey;
@@ -149,7 +149,7 @@ task("migrate-account", "migrate account to another ETH address")
         contractJson.rollup,
         contractJson.testToken
     );
-    await secretSDK.initialize();
+    await secretSDK.initialize(defaultContractABI);
     const ctx = {
       alias: alias,
       ethAddress: user.address,
