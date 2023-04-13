@@ -13,6 +13,7 @@ typechain
 typechain-types
 verifier.sol
 .idea
+lerna-debug.log
 
 # Hardhat files
 cache

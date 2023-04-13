@@ -1,9 +1,0 @@
-31 error Error: Command failed: git add -- core/package.json core/package-lock.json sdk/package.json sdk/package-lock.json lerna.json
-31 error 下列路径根据您的一个 .gitignore 文件而被忽略：
-31 error core/package-lock.json
-31 error sdk/package-lock.json
-31 error 使用 -f 参数如果您确实要添加它们。
-31 error
-31 error     at makeError (/Users/yangran/.nvm/versions/node/v14.19.0/lib/node_modules/lerna/node_modules/execa/index.js:174:9)
-31 error     at /Users/yangran/.nvm/versions/node/v14.19.0/lib/node_modules/lerna/node_modules/execa/index.js:278:16
-31 error     at processTicksAndRejections (internal/process/task_queues.js:95:5)
