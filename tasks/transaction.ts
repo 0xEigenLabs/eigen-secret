@@ -56,7 +56,7 @@ task("deposit", "Deposit asset from L1 to L2")
     console.log(proofAndPublicSignals);
   })
 
-task("send", "send asset to receiver in L2")
+task("send", "Send asset to receiver in L2")
   .addParam("alias", "user alias", "Alice")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("value", "amount of transaction", "2")
@@ -101,7 +101,7 @@ task("send", "send asset to receiver in L2")
     console.log(proofAndPublicSignals);
   })
 
-task("withdraw", "withdraw assert from L2 to L1")
+task("withdraw", "Withdraw assert from L2 to L1")
   .addParam("alias", "user alias", "Alice")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("value", "amount of transaction", "10")
@@ -110,7 +110,6 @@ task("withdraw", "withdraw assert from L2 to L1")
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [user] = await ethers.getSigners();
-    // const newEOAAccount = ethers.Wallet.createRandom();
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     const contractJson = require(defaultContractFile);
     let accountData = fs.readFileSync(defaultAccountFile);

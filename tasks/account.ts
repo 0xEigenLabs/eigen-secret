@@ -2,13 +2,14 @@ import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist/utils";
 import { SigningKey, SecretAccount } from "@eigen-secret/core/dist/account";
 import { SecretSDK } from "@eigen-secret/sdk/dist/index";
+import { defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
 require("dotenv").config()
 const path = require("path");
 const fs = require("fs");
-const circuitPath = path.join(__dirname, "../circuits/");
 const { buildEddsa } = require("circomlibjs");
-import { defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
 const createBlakeHash = require("blake-hash");
+
+const circuitPath = path.join(__dirname, "../circuits/");
 
 task("create-account", "Create secret account")
   .addParam("alias", "user alias", "Alice")
@@ -17,12 +18,12 @@ task("create-account", "Create secret account")
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [user] = await ethers.getSigners();
-    // const newEOAAccount = ethers.Wallet.createRandom();
+    console.log("user", user);
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    let signingKey = new SigningKey(eddsa, undefined);
-    let accountKey = new SigningKey(eddsa, undefined);
-    let newSigningKey1 = new SigningKey(eddsa, undefined);
-    let newSigningKey2 = new SigningKey(eddsa, undefined);
+    let signingKey = new SigningKey(eddsa);
+    let accountKey = new SigningKey(eddsa);
+    let newSigningKey1 = new SigningKey(eddsa);
+    let newSigningKey2 = new SigningKey(eddsa);
     const contractJson = require(defaultContractFile);
 
     let sa = new SecretAccount(
@@ -53,31 +54,12 @@ task("create-account", "Create secret account")
       signature: signature
     };
     let proofAndPublicSignals = await secretSDK.createAccount(ctx, sa.newSigningKey1, sa.newSigningKey2);
-
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     fs.writeFileSync(defaultAccountFile, sa.serialize(key));
-    console.log(proofAndPublicSignals);
-    let receiver = accountKey.pubKey.pubKey;
-    let nonce = 0;
-    let assetId = 2;
-    let value = "10";
-    let proof = await secretSDK.deposit(ctx, receiver, value, assetId, nonce);
-    let balance1 = await secretSDK.getNotesValue(ctx, assetId);
-    console.log("test1-after deposit")
-    console.log(balance1)
-    console.log("CreateAccount done, proof: ", proofAndPublicSignals, proof);
-
-    let proof1 = await secretSDK.send(ctx, receiver, "2", assetId);
-    let balance2 = await secretSDK.getNotesValue(ctx, assetId);
-    console.log("test2-after send")
-    console.log(balance2)
-    console.log("end2end send done, proof: ", proof1);
-
-    let proof2 = await secretSDK.withdraw(ctx, receiver, "5", assetId);
-    console.log("withdraw done, proof: ", proof2);
+    console.log("create account", proofAndPublicSignals);
   })
 
-task("migrate-account", "migrate account to another ETH address")
+task("migrate-account", "Migrate account to another ETH address")
   .addParam("alias", "user alias", "Alice")
   .addParam("password", "password for key sealing", "<your password>")
   .setAction(async ({ alias, password }, { ethers }) => {
@@ -85,7 +67,7 @@ task("migrate-account", "migrate account to another ETH address")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [user] = await ethers.getSigners();
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    let newAccountKey = new SigningKey(eddsa, undefined);
+    let newAccountKey = new SigningKey(eddsa);
     const contractJson = require(defaultContractFile);
     let accountData = fs.readFileSync(defaultAccountFile);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
@@ -124,7 +106,7 @@ task("migrate-account", "migrate account to another ETH address")
     console.log(proofAndPublicSignals);
   })
 
-  task("update-account", "update account")
+task("update-account", "Update signing key")
   .addParam("alias", "user alias", "Alice")
   .addParam("password", "password for key sealing", "<your password>")
   .setAction(async ({ alias, password }, { ethers }) => {

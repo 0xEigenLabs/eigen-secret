@@ -265,13 +265,14 @@ export class SecretSDK {
     }
 
     // create proof for general transaction
-    async deposit(ctx: any, receiver: string, value: string, assetId: number, nonce: number) {
+    async deposit(ctx: any, receiver: string, value: bigint, assetId: number, nonce: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let tmpP = this.account.accountKey.pubKey.unpack(eddsa.babyJub);
         let tmpPub = [eddsa.F.toObject(tmpP[0]), eddsa.F.toObject(tmpP[1])];
 
-        await this.rollupSC.deposit(tmpPub, assetId, Number(value), nonce);
+        console.log("begin to deposit");
+        await this.rollupSC.deposit(tmpPub, assetId, value, nonce);
 
         let accountRequired = false;
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -296,15 +297,15 @@ export class SecretSDK {
             aliasHash,
             assetId,
             assetId,
-            BigInt(value),
+            value,
             this.account.signingKey.pubKey,
-            BigInt(value),
+            value,
             new EigenAddress(receiver),
             notes,
             accountRequired
         );
 
-        let _proof: string[] = [];
+        let batchProof: string[] = [];
         for (const input of inputs) {
             const proof = await this.state.updateStateTree(
                 ctx,
@@ -317,7 +318,7 @@ export class SecretSDK {
             // console.log(proof);
             let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
-            _proof.push(Prover.serialize(proofAndPublicSignals));
+            batchProof.push(Prover.serialize(proofAndPublicSignals));
 
             this.keysFound.push(input.outputNCs[0]);
             this.valuesFound.push(input.outputNotes[0].inputNullifier);
@@ -370,10 +371,10 @@ export class SecretSDK {
             await this.note.updateNote(ctx, _notes);
         }
         await this.rollupSC.processDeposits(this.rollupSC.userAccount, this.keysFound, this.valuesFound, this.siblings);
-        return _proof;
+        return batchProof;
     }
 
-    async send(ctx: any, receiver: string, value: string, assetId: number) {
+    async send(ctx: any, receiver: string, value: bigint, assetId: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let accountRequired = false;
@@ -402,13 +403,13 @@ export class SecretSDK {
             0,
             0n,
             undefined,
-            BigInt(value),
+            value,
             _receiver,
             notes,
             accountRequired
         );
 
-        let _proof: string[] = [];
+        let batchProof: string[] = [];
         for (const input of inputs) {
             const proof = await this.state.updateStateTree(
                 ctx,
@@ -420,7 +421,7 @@ export class SecretSDK {
             );
             let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
-            _proof.push(Prover.serialize(proofAndPublicSignals));
+            batchProof.push(Prover.serialize(proofAndPublicSignals));
             let transaction = new Transaction(input.outputNotes, this.account.signingKey);
             let txdata = await transaction.encrypt();
 
@@ -460,10 +461,10 @@ export class SecretSDK {
             ]
             await this.note.updateNote(ctx, _notes);
         }
-        return _proof;
+        return batchProof;
     }
 
-    async withdraw(ctx: any, receiver: string, value: string, assetId: number) {
+    async withdraw(ctx: any, receiver: string, value: bigint, assetId: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
@@ -491,7 +492,7 @@ export class SecretSDK {
             aliasHash,
             assetId,
             assetId,
-            BigInt(value),
+            value,
             this.account.signingKey.pubKey,
             0n,
             this.account.signingKey.pubKey,
@@ -499,14 +500,13 @@ export class SecretSDK {
             accountRequired
         );
 
-        let _proof: string[] = [];
+        let batchProof: string[] = [];
         let lastKeys: Array<bigint> = [];
-        let lastSiblings: Array<Array<bigint>> = [];
-        let lastValues: Array<bigint> = [];
         let keysFound = [];
         let valuesFound = [];
+        let dataTreeRootsFound: Array<bigint> = [];
+        let lastDataTreeRoot: bigint = 0n;
         let siblings = [];
-        let lastDataTreeRoot: any;
 
         for (const input of inputs) {
             const proof = await this.state.updateStateTree(
@@ -531,24 +531,22 @@ export class SecretSDK {
             let circuitInput = input.toCircuitInput(eddsa.babyJub, proof);
             // console.log(circuitInput);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
-            _proof.push(Prover.serialize(proofAndPublicSignals));
+            batchProof.push(Prover.serialize(proofAndPublicSignals));
 
             keysFound.push(input.outputNCs[0]);
             valuesFound.push(input.outputNotes[0].inputNullifier);
             keysFound.push(input.outputNCs[1]);
             valuesFound.push(input.outputNotes[1].inputNullifier);
-            lastDataTreeRoot = proof.dataTreeRoot;
+            dataTreeRootsFound.push(BigInt(proof.dataTreeRoot));
+            lastDataTreeRoot = BigInt(proof.dataTreeRoot);
             lastKeys = input.outputNCs;
-            lastValues = [input.outputNotes[0].inputNullifier, input.outputNotes[1].inputNullifier];
 
-            lastSiblings = []
             for (const item of rawSiblings) {
                 let tmpSiblings = [];
                 for (const sib of item) {
                     tmpSiblings.push(sib);
                 }
-                lastSiblings.push(tmpSiblings);
-                siblings.push(pad(tmpSiblings));
+                siblings.push(tmpSiblings);
             }
 
             let transaction = new Transaction(input.outputNotes, this.account.signingKey);
@@ -601,37 +599,42 @@ export class SecretSDK {
             outputNc2: lastKeys[1], // lastProof.publicSignals[5]
             publicAssetId: assetId, // lastProof.publicSignals[7]
             dataTreeRoot: lastDataTreeRoot,
-            values: lastValues,
-            siblings: lastSiblings
+            roots: dataTreeRootsFound,
+            keys: keysFound,
+            values: valuesFound,
+            siblings: siblings
         }
 
         // FIXME hash sibings and tree
+        let hashInput = [
+            BigInt(txInfo.publicValue),
+            txInfo.publicOwner[0],
+            txInfo.publicOwner[1],
+            txInfo.outputNc1,
+            txInfo.outputNc2,
+            BigInt(txInfo.publicAssetId)
+        ];
+        for (let i = 0; i < txInfo.roots.length; i ++) {
+            hashInput.push(txInfo.roots[i])
+        }
         let msg = await poseidonSponge(
-            [
-                BigInt(txInfo.publicValue),
-                txInfo.publicOwner[0],
-                txInfo.publicOwner[1],
-                txInfo.outputNc1,
-                txInfo.outputNc2,
-                txInfo.dataTreeRoot,
-                BigInt(txInfo.publicAssetId)
-            ]
+            hashInput
         );
 
-        // FIXME @Zelig
         // DEBUG: check by smt verifier
         console.log("txInfo", txInfo);
         let tmpRoot = await this.rollupSC.SMT.smtVerifier(
             txInfo.siblings[0], txInfo.outputNc1,
             txInfo.values[0], 0, 0, false, false, 20
         )
-        expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+        expect(tmpRoot.toString()).to.eq(txInfo.roots[0].toString());
 
         tmpRoot = await this.rollupSC.SMT.smtVerifier(
             txInfo.siblings[1], txInfo.outputNc2,
             txInfo.values[1], 0, 0, false, false, 20
         )
-        expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+        expect(tmpRoot.toString()).to.eq(txInfo.roots[0].toString());
+        console.log("check tmpRoot done");
 
         let sig = await this.account.signingKey.sign(eddsa.F.e(msg));
         let input = {
@@ -649,7 +652,26 @@ export class SecretSDK {
             txInfo,
             proofAndPublicSignals
         );
-        return _proof;
+        return batchProof;
+    }
+
+    // TODO register testToken to rollup contract
+    async setRollupNC() {
+        await this.rollupSC.setRollupNC();
+    }
+
+    // TODO register testToken to rollup contract
+    async registerToken() {
+        await this.rollupSC.registerToken();
+    }
+
+    // TODO approve testToken to rollup contract
+    async approveToken() {
+        return await this.rollupSC.approveToken();
+    }
+
+    async approve(value: bigint) {
+        return await this.rollupSC.approve(value);
     }
 
     // create proof for account operation, create, migrate or update
@@ -674,12 +696,14 @@ export class SecretSDK {
             newSigningPubKey2,
             aliasHash
         );
+        console.log("create account input", input);
         let accountRequired = false;
         let signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         let acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let smtProof = await this.state.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
         let circuitInput = input.toCircuitInput(eddsa.babyJub, smtProof);
         // create final proof
+        console.log("update state input", circuitInput);
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
             throw new Error("Invalid proof")
@@ -693,6 +717,7 @@ export class SecretSDK {
         }
         this.siblings.push(tmpSiblings);
 
+        console.log("serialize", proofAndPublicSignals);
         return Prover.serialize(proofAndPublicSignals);
     }
 

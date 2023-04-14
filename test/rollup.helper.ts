@@ -145,7 +145,6 @@ export class RollupHelper {
         let abi = [ "event RegisteredToken(uint publicAssetId, address tokenContract)" ];
         const iface = new ethers.utils.Interface(abi)
         const eventData = iface.decodeEventLog("RegisteredToken", tx.logs[0].data, tx.logs[0].topics)
-
         this.testTokenAssetId = await this.tokenRegistry.numTokens();
         // use .deep.eq or toString, see this issue https://github.com/chaijs/chai/issues/1382
         expect(this.testTokenAssetId.toString()).to.eq(eventData["publicAssetId"].toString())
@@ -158,7 +157,7 @@ export class RollupHelper {
         return await this.tokenRegistry.numTokens();
     }
 
-    async deposit(index: number, assetId: number, value: number, nonce: number) {
+    async deposit(index: number, assetId: number, value: bigint, nonce: number) {
         let approveToken = await this.testToken.connect(this.userAccounts[index]).approve(
             this.rollup.address, value,
             {from: this.userAccounts[index].address}
@@ -212,7 +211,7 @@ export class RollupHelper {
     async withdraw(i: number, receiverI: number, txInfo: any, proofAndPublicSignal: any) {
         let processDeposit1: any;
         let proof = parseProof(proofAndPublicSignal.proof);
-        console.log(txInfo, this.userAccounts[receiverI].address, proof);
+        console.log(txInfo, this.userAccounts[receiverI].address, proof, this.userAccounts[i].address);
         try {
             processDeposit1 = await this.rollup.connect(this.userAccounts[i]).withdraw(
                 txInfo,
