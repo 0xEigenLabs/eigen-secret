@@ -110,7 +110,6 @@ task("withdraw", "withdraw assert from L2 to L1")
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [user] = await ethers.getSigners();
-    // const newEOAAccount = ethers.Wallet.createRandom();
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     const contractJson = require(defaultContractFile);
     let accountData = fs.readFileSync(defaultAccountFile);

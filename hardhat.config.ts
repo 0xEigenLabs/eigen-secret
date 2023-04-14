@@ -24,7 +24,13 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
+        runs: 200,
+        details: {
+            yul: true,
+            yulDetails: {
+                stackAllocation: true,
+            }
+        }
       }
     }
   },
@@ -46,9 +52,14 @@ module.exports = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {},
+    dev: {
+      url: "http://localhost:8545"
+    },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.API_KEY}`,
       accounts: [process.env.PRIVATE_KEY],
+      gas: 21000000,
+      gasPrice: 8000000000
     },
     sepolia: {
       url: `https://sepolia.infura.io/v3/${process.env.API_KEY}`,
