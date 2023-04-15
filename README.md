@@ -55,6 +55,8 @@ Common arguments:
 --password: password for encrypting the signing key
 ```
 
+The network dev is hardhat node, which is used to debug locally. And the hermez is Polygon zkEVMand .
+
 1. deploy contracts
 ```
 npm run deploy:dev
@@ -62,7 +64,7 @@ npm run deploy:dev
 
 2. setup rollup coordinator
 ```
-npx hardhat setup-rollup --network dev
+npx hardhat setup-rollup --contract-file $PWD/.contract.json --network dev
 
 ```
 
@@ -71,7 +73,7 @@ set the current account as the coordinator of Rollup contract
 3. register token
 
 ```
-npx hardhat register-token --token 0x0165878A594ca255338adfa4d48449f69242Eb8F --network dev
+npx hardhat register-token --contract-file $PWD/.contract.json --token 0x0165878A594ca255338adfa4d48449f69242Eb8F --network dev
 
 ```
 
