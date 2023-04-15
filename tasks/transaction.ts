@@ -107,7 +107,7 @@ task("send", "Send asset to receiver in L2")
     console.log(proofAndPublicSignals);
   })
 
-task("withdraw", "Withdraw assert from L2 to L1")
+task("withdraw", "Withdraw asset from L2 to L1")
   .addParam("alias", "user alias", "Alice")
   .addParam("assetId", "asset id/token id")
   .addParam("password", "password for key sealing", "<your password>")
