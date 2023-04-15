@@ -17,13 +17,13 @@ jobs:
       - name: Action Checkout
         uses: actions/checkout@v1
 
-      - name: Use Node.js 10.x
+      - name: Use Node.js 18.x
         uses: actions/setup-node@v1
         with:
-          node-version: 10.x
+          node-version: 18.x
 
       - name: Install Dependencies and Generating Documentation
-        run: npm install && npm install typedoc -g && npm run docs
+        run: npm install && npm install typedoc -g && ./node_modules/.bin/typedoc --out docs sdk/lib
 
       - name: Publishing on Github Pages
         uses: peaceiris/actions-gh-pages@v3
