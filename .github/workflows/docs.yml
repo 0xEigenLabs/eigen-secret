@@ -1,9 +1,13 @@
 name: workflow
-
 on:
   push:
+    branches: 
+      - main
+      - zkpay_dev
+  pull_request:
     branches:
-      - master
+      - main
+      - zkpay_dev
 
 jobs:
   docs:
