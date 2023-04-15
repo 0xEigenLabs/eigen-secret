@@ -1,0 +1,28 @@
+name: workflow
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  docs:
+    name: Publish Docs to Github Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Action Checkout
+        uses: actions/checkout@v1
+
+      - name: Use Node.js 10.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10.x
+
+      - name: Install Dependencies and Generating Documentation
+        run: npm install && npm run docs
+
+      - name: Publishing on Github Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          publish_dir: ./docs
