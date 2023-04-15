@@ -90,14 +90,62 @@ export class RollupSC {
         }
     }
 
-    async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: number, nonce: number) {
+    async setRollupNC() {
+        let tx = await this.tokenRegistry.
+            connect(this.userAccount).setRollupNC(this.rollup.address);
+        await tx.wait();
+    }
+
+    // TODO: customize tokenAddress
+    async registerToken() {
+        console.log("registerToken");
+        let info = await this.tokenRegistry.
+            connect(this.userAccount).
+            pendingTokens(this.testToken.address);
+        console.log("registerToken, info", info, info > 0);
+        if (info) {
+            return;
+        }
+
+        let registerToken = await this.rollup.connect(this.userAccount).
+            registerToken(
+                this.testToken.address,
+                { from: this.userAccount.address }
+        )
+        assert(registerToken, "token registration failed");
+        await registerToken.wait();
+    }
+
+    // TODO: customize tokenAddress
+    // return assetId
+    async approveToken() {
+        console.log("approveToken", this.userAccount);
+        let approveToken = await this.rollup.connect(this.userAccount).approveToken(
+            this.testToken.address, { from: this.userAccount.address }
+        )
+        console.log("approveToken", approveToken);
+        let tx = await approveToken.wait();
+        let abi = [ "event RegisteredToken(uint publicAssetId, address tokenContract)" ];
+        const iface = new ethers.utils.Interface(abi)
+        const eventData = iface.decodeEventLog("RegisteredToken", tx.logs[0].data, tx.logs[0].topics)
+        return eventData["publicAssetId"];
+    }
+
+    async approve(value: bigint) {
         let userAccount = this.userAccount;
         assert(this.rollup);
+        console.log("approve account", userAccount.address);
         let approveToken = await this.testToken.connect(userAccount).approve(
             this.rollup.address, value,
             {from: userAccount.address}
         )
         assert(approveToken, "approveToken failed")
+        return approveToken;
+    }
+
+    async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: bigint, nonce: number) {
+        let userAccount = this.userAccount;
+        assert(this.rollup);
         let deposit0 = await this.rollup.connect(userAccount).deposit(
             pubkeyEigenAccountKey,
             assetId,

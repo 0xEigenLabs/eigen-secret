@@ -58,7 +58,7 @@ describe('POST /transactions', function() {
         eddsa = await buildEddsa();
         babyJub = eddsa.babyJub;
         Fr = eddsa.F;
-        const value = 10;
+        const value = 10n;
 
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
         let accountKey = rollupHelper.eigenAccountKey[0];
@@ -317,7 +317,7 @@ describe('POST /transactions', function() {
 
         let proof = [];
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
-        const value = 5;
+        const value = 5n;
 
         let receiver = rollupHelper.eigenAccountKey[0];
         let pubKey = receiver.pubKey.pubKey;
@@ -524,13 +524,13 @@ describe('POST /transactions', function() {
             accountRequired
         );
         let lastKeys: Array<bigint> = [];
-        let lastSiblings: Array<Array<bigint>> = [];
-        let lastValues: Array<bigint> = [];
+        //let lastSiblings: Array<Array<bigint>> = [];
+        //let lastValues: Array<bigint> = [];
         let keysFound: Array<bigint> = [];
         let valuesFound: Array<bigint> = [];
         let dataTreeRootsFound: Array<bigint> = [];
+        let lastDataTreeRoot: bigint = 0n;
         let siblings: Array<Array<bigint>> = [];
-        let lastDataTreeRoot: any;
         for (const input of inputs) {
             const response = await request(app)
             .post('/statetree')
@@ -576,18 +576,18 @@ describe('POST /transactions', function() {
             valuesFound.push(input.outputNotes[0].inputNullifier);
             keysFound.push(input.outputNCs[1]);
             valuesFound.push(input.outputNotes[1].inputNullifier);
-            dataTreeRootsFound.push(singleProof.dataTreeRoot);
+            dataTreeRootsFound.push(BigInt(singleProof.dataTreeRoot));
             lastDataTreeRoot = singleProof.dataTreeRoot;
             lastKeys = input.outputNCs;
-            lastValues = [input.outputNotes[0].inputNullifier, input.outputNotes[1].inputNullifier];
+            //lastValues = [input.outputNotes[0].inputNullifier, input.outputNotes[1].inputNullifier];
 
-            lastSiblings = []
+            //lastSiblings = []
             for (const item of rawSiblings) {
                 let tmpSiblings = [];
                 for (const sib of item) {
                     tmpSiblings.push(sib);
                 }
-                lastSiblings.push(tmpSiblings);
+                //lastSiblings.push(tmpSiblings);
                 siblings.push(tmpSiblings);
             }
 
@@ -699,17 +699,17 @@ describe('POST /transactions', function() {
         );
 
         //DEBUG: check by smt verifier
-        // let tmpRoot = await smtVerifierContract.smtVerifier(
-        //         txInfo.siblings[0], txInfo.outputNc1,
-        //         txInfo.values[0], "0", "0", false, false, 20
-        // )
-        // expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+        let tmpRoot = await smtVerifierContract.smtVerifier(
+                txInfo.siblings[0], txInfo.outputNc1,
+                txInfo.values[0], 0, 0, false, false, 20
+        )
+        expect(tmpRoot.toString()).to.eq(dataTreeRootsFound[0].toString());
 
-        // tmpRoot = await smtVerifierContract.smtVerifier(
-        //         txInfo.siblings[1], txInfo.outputNc2,
-        //         txInfo.values[1], "0", "0", false, false, 20
-        // )
-        // expect(tmpRoot.toString()).to.eq(txInfo.dataTreeRoot.toString());
+        tmpRoot = await smtVerifierContract.smtVerifier(
+                txInfo.siblings[1], txInfo.outputNc2,
+                txInfo.values[1], 0, 0, false, false, 20
+        )
+        expect(tmpRoot.toString()).to.eq(dataTreeRootsFound[0].toString());
 
         let sig = await signingKey.sign(Fr.e(msg));
         let input = {
