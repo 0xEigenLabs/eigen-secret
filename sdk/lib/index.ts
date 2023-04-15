@@ -19,7 +19,9 @@ import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
 import { expect, assert } from "chai";
 
 const axios = require("axios").default;
-
+/**
+ * Update the status of the user account and transaction
+ */
 export class StateTreeClient {
     serverAddr: any;
 
@@ -74,6 +76,9 @@ export class StateTreeClient {
     }
 }
 
+/**
+ * Get or update the user's Note information
+ */
 export class NoteClient {
     serverAddr: any;
 
@@ -141,6 +146,9 @@ export class NoteClient {
     }
 }
 
+/**
+ * Create a new transaction
+ */
 export class TransactionClient {
     serverAddr: any;
 
@@ -185,6 +193,9 @@ export class TransactionClient {
     }
 }
 
+/**
+ * SecretSDK interface
+ */
 export class SecretSDK {
     alias: string;
     account: SecretAccount;
@@ -224,7 +235,10 @@ export class SecretSDK {
         this.valuesFound = [];
         this.siblings = [];
     }
-
+    /**
+     * connect the rollup contracts
+     * @param {Object} contractABI the contracts ABI directory
+     */
     async initialize(
         contractABI: any
     ) {
@@ -237,6 +251,12 @@ export class SecretSDK {
         );
     }
 
+    /**
+     * obtain the Notes value
+     * @param {Object} ctx
+     * @param {number} assetId the token to be calculated
+     * @return {bigint} the notes value
+     */
     async getNotesValue(ctx: any, assetId: number) {
         let notes: Array<Note> = [];
         let noteState = [NoteState.PROVED]
@@ -264,7 +284,7 @@ export class SecretSDK {
     }
 
     /**
-     * create proof for general transaction
+     * create proof for the deposit of the asset from L1 to L2
      *
      * @param {Object} ctx
      * @param {string} receiver
@@ -382,6 +402,15 @@ export class SecretSDK {
         return batchProof;
     }
 
+    /**
+     * create proof for sending the asset to the receiver in L2
+     *
+     * @param {Object} ctx
+     * @param {string} receiver
+     * @param {bigint} value the amount to be sent
+     * @param {number} assetId the token to be sent
+     * @return {Object} a batch of proof
+     */
     async send(ctx: any, receiver: string, value: bigint, assetId: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
@@ -472,6 +501,15 @@ export class SecretSDK {
         return batchProof;
     }
 
+    /**
+     * create proof for withdrawing asset from L2 to L1
+     *
+     * @param {Object} ctx
+     * @param {string} receiver
+     * @param {bigint} value the amount to be withdrawn
+     * @param {number} assetId the token to be withdrawn
+     * @return {Object} a batch of proof
+     */
     async withdraw(ctx: any, receiver: string, value: bigint, assetId: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
@@ -663,17 +701,25 @@ export class SecretSDK {
         return batchProof;
     }
 
-    // register testToken to rollup contract
+    /**
+     * register testToken to rollup contract
+     */
     async setRollupNC() {
         await this.rollupSC.setRollupNC();
     }
 
-    // register testToken to rollup contract
+    /**
+     * register testToken to rollup contract
+     * @param {string} token
+     */
     async registerToken(token: string) {
         await this.rollupSC.registerToken(token);
     }
 
-    // approve testToken to rollup contract
+    /**
+     * register testToken to rollup contract
+     * @param {string} token
+     */
     async approveToken(token: string) {
         return await this.rollupSC.approveToken(token);
     }
@@ -687,6 +733,14 @@ export class SecretSDK {
     }
 
     // create proof for account operation, create, migrate or update
+    /**
+     * create proof for the secret account created
+     *
+     * @param {Object} ctx
+     * @param {SigningKey} newSigningKey
+     * @param {SigningKey} newSigningKey2
+     * @return {Object} a batch of proof
+     */
     async createAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey) {
         let eddsa = await buildEddsa();
         const F = eddsa.F;
@@ -730,6 +784,14 @@ export class SecretSDK {
         return Prover.serialize(proofAndPublicSignals);
     }
 
+    /**
+     * create proof for the user updating their signing key
+     *
+     * @param {Object} ctx
+     * @param {SigningKey} newSigningKey
+     * @param {SigningKey} newSigningKey2
+     * @return {Object} a batch of proof
+     */
     async updateAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
@@ -759,6 +821,13 @@ export class SecretSDK {
         return Prover.serialize(proofAndPublicSignals);
     }
 
+    /**
+     * create proof for migrating the account to another ETH address
+     *
+     * @param {Object} ctx
+     * @param {SigningKey} newAccountKey the account key that which user renews
+     * @return {Object} a batch of proof
+     */
     async migrateAccount(ctx: any, newAccountKey: SigningKey) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
