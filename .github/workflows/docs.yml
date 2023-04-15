@@ -23,7 +23,7 @@ jobs:
           node-version: 10.x
 
       - name: Install Dependencies and Generating Documentation
-        run: npm install && npm run docs
+        run: npm install && npm install typedoc -g && npm run docs
 
       - name: Publishing on Github Pages
         uses: peaceiris/actions-gh-pages@v3
