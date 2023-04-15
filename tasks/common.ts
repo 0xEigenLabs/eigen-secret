@@ -4,7 +4,7 @@ import rollupContract from "../artifacts/contracts/Rollup.sol/Rollup.json";
 import testTokenContract from "../artifacts/contracts/TestToken.sol/TestToken.json";
 import SMT from "../artifacts/contracts/SMT.sol/SMT.json";
 
-export const defaultContractFile = "../.contract.json";
+export const defaultContractFile = ".contract.json";
 export const defaultAccountFile = ".account.json"
 
 export const defaultContractABI = {

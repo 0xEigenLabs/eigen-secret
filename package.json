@@ -16,6 +16,7 @@
     "lint_ts": "./node_modules/.bin/eslint --fix --ext .ts server sdk tasks",
     "clean": "rm -rf build dist typechain cache artifacts",
     "deploy:goerli": "hardhat deploy --network goerli",
+    "deploy:hermez": "hardhat deploy --network hermez",
     "deploy:dev": "hardhat deploy --network dev"
   },
   "dependencies": {

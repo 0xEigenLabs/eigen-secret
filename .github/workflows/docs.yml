@@ -1,0 +1,32 @@
+name: typedocs
+on:
+  push:
+    branches: 
+      - main
+      - zkpay_dev
+  pull_request:
+    branches:
+      - main
+      - zkpay_dev
+
+jobs:
+  docs:
+    name: Publish Docs to Github Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Action Checkout
+        uses: actions/checkout@v1
+
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18.x
+
+      - name: Install Dependencies and Generating Documentation
+        run: npm install && npm run build && npm run docs
+
+      - name: Publishing on Github Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
