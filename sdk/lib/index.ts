@@ -210,7 +210,6 @@ export class SecretSDK {
         poseidon3Address: string,
         poseidon6Address: string,
         rollupAddress: string,
-        testTokenAddress: string = "",
         smtVerifierAddress: string = ""
     ) {
         this.alias = alias;
@@ -220,7 +219,7 @@ export class SecretSDK {
         this.trans = new TransactionClient(serverAddr);
         this.circuitPath = circuitPath;
         this.rollupSC = new RollupSC(eddsa, alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
-            poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, testTokenAddress, smtVerifierAddress);
+            poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
         this.keysFound = [];
         this.valuesFound = [];
         this.siblings = [];
@@ -264,7 +263,16 @@ export class SecretSDK {
         return balance;
     }
 
-    // create proof for general transaction
+    /**
+     * create proof for general transaction
+     *
+     * @param {Object} ctx
+     * @param {string} receiver
+     * @param {bigint} value the amount to be deposited
+     * @param {number} assetId the token to be deposited
+     * @param {number} nonce the nonce of current transaction, usually obtained from Wallet like Metamask
+     * @return {Object} a batch of proof
+     */
     async deposit(ctx: any, receiver: string, value: bigint, assetId: number, nonce: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
@@ -655,23 +663,27 @@ export class SecretSDK {
         return batchProof;
     }
 
-    // TODO register testToken to rollup contract
+    // register testToken to rollup contract
     async setRollupNC() {
         await this.rollupSC.setRollupNC();
     }
 
-    // TODO register testToken to rollup contract
-    async registerToken() {
-        await this.rollupSC.registerToken();
+    // register testToken to rollup contract
+    async registerToken(token: string) {
+        await this.rollupSC.registerToken(token);
     }
 
-    // TODO approve testToken to rollup contract
-    async approveToken() {
-        return await this.rollupSC.approveToken();
+    // approve testToken to rollup contract
+    async approveToken(token: string) {
+        return await this.rollupSC.approveToken(token);
     }
 
-    async approve(value: bigint) {
-        return await this.rollupSC.approve(value);
+    async approve(token: string, value: bigint) {
+        return await this.rollupSC.approve(token, value);
+    }
+
+    async getRegisteredToken(id: bigint) {
+        return await this.rollupSC.getRegisteredToken(id);
     }
 
     // create proof for account operation, create, migrate or update
@@ -696,14 +708,12 @@ export class SecretSDK {
             newSigningPubKey2,
             aliasHash
         );
-        console.log("create account input", input);
         let accountRequired = false;
         let signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         let acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let smtProof = await this.state.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
         let circuitInput = input.toCircuitInput(eddsa.babyJub, smtProof);
         // create final proof
-        console.log("update state input", circuitInput);
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
             throw new Error("Invalid proof")
@@ -717,7 +727,6 @@ export class SecretSDK {
         }
         this.siblings.push(tmpSiblings);
 
-        console.log("serialize", proofAndPublicSignals);
         return Prover.serialize(proofAndPublicSignals);
     }
 

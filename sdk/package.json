@@ -2,8 +2,8 @@
   "name": "@eigen-secret/sdk",
   "version": "1.0.0",
   "description": "> TODO: description",
-  "author": "abu <285921957@qq.com>",
-  "homepage": "https://github.com/abu-2022/eigen-secret#readme",
+  "author": "Eigen Labs",
+  "homepage": "https://github.com/0xEigenLabs/eigen-secret#readme",
   "license": "ISC",
   "main": "dist/index.js",
   "exports": {
@@ -32,14 +32,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/abu-2022/eigen-secret.git"
+    "url": "git+https://github.com/0xEigenLabs/eigen-secret.git"
   },
   "scripts": {
     "build": "npx tsc",
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "bugs": {
-    "url": "https://github.com/abu-2022/eigen-secret/issues"
+    "url": "https://github.com/0xEigenLabs/eigen-secret/issues"
   },
   "dependencies": {
     "@eigen-secret/core": "file:../core",

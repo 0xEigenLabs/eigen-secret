@@ -42,6 +42,64 @@ npm run server
 3. Launch another terminal, and run the CI, which includes `create-account`, `deposit`, `send`, and `withdraw`
 
 ```
-npm run deploy
-npm run build && npx hardhat ci --network dev
+npm run deploy --network dev # npx run deploy:dev
+npx hardhat ci --network dev
 ```
+
+### More tasks
+
+Common arguments:
+
+```
+--alias: account id, namely user's alias
+--password: password for encrypting the signing key
+```
+
+1. deploy contracts
+```
+npm run deploy:dev
+```
+
+2. setup rollup coordinator
+```
+npx hardhat setup-rollup --network dev
+
+```
+
+set the current account as the coordinator of Rollup contract
+
+3. register token
+
+```
+npx hardhat register-token --token 0x0165878A594ca255338adfa4d48449f69242Eb8F --network dev
+
+```
+
+4. create account, make sure that the server is on.
+
+```
+npx hardhat create-account --network dev
+```
+
+can use `npx hardhat get-account` to get the current account information.
+
+5. deposit asset to L2
+
+```
+npx hardhat deposit --value 10 --asset-id 2 --network dev
+```
+
+6. send asset to L2
+
+```
+npx hardhat deposit --value 10 --asset-id 2 --network dev
+
+```
+TODO: specify receiver's public key.
+
+7. withdraw
+
+8. migrate account
+
+9. update account
+

@@ -9,12 +9,14 @@
     "build:server": "cd server && npm i && npm run build",
     "build": "npm run build:core && npm run build:sdk && npm run build:server",
     "lint_sol": "./node_modules/.bin/solhint 'contracts/**/*.sol'",
+    "docs": "./node_modules/.bin/typedoc --out docs sdk/lib",
     "lint": "npm run lint_ts & npm run lint_sol",
     "compile": "hardhat compile",
     "test": "npm run build && npm run compile && npx hardhat test",
     "lint_ts": "./node_modules/.bin/eslint --fix --ext .ts server sdk tasks",
     "clean": "rm -rf build dist typechain cache artifacts",
-    "deploy:goerli": "hardhat deploy --network goerli"
+    "deploy:goerli": "hardhat deploy --network goerli",
+    "deploy:dev": "hardhat deploy --network dev"
   },
   "dependencies": {
     "@eigen-secret/core": "file:./core",
@@ -56,6 +58,7 @@
     "tmp-promise": "^3.0.3",
     "ts-node": "^10.4.0",
     "typechain": "^8.1.1",
+    "typedoc": "^0.24.1",
     "typescript": "4.9.5"
   }
 }

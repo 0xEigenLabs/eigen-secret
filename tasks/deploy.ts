@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
 
-const defaultContractFile = ".contract.json";
+import { defaultContractFile } from "./common";
 const fs = require("fs");
 
 task("deploy", "Deploy all smart contract")

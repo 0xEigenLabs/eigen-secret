@@ -18,7 +18,6 @@ task("create-account", "Create secret account")
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [user] = await ethers.getSigners();
-    console.log("user", user);
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     let signingKey = new SigningKey(eddsa);
     let accountKey = new SigningKey(eddsa);
@@ -42,7 +41,6 @@ task("create-account", "Create secret account")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken,
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
@@ -59,7 +57,7 @@ task("create-account", "Create secret account")
     console.log("create account", proofAndPublicSignals);
   })
 
-task("migrate-account", "migrate account to another ETH address")
+task("migrate-account", "Migrate account to another ETH address")
   .addParam("alias", "user alias", "Alice")
   .addParam("password", "password for key sealing", "<your password>")
   .setAction(async ({ alias, password }, { ethers }) => {
@@ -85,7 +83,6 @@ task("migrate-account", "migrate account to another ETH address")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken,
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
@@ -106,7 +103,7 @@ task("migrate-account", "migrate account to another ETH address")
     console.log(proofAndPublicSignals);
   })
 
-task("update-account", "update account")
+task("update-account", "Update signing key")
   .addParam("alias", "user alias", "Alice")
   .addParam("password", "password for key sealing", "<your password>")
   .setAction(async ({ alias, password }, { ethers }) => {
@@ -131,7 +128,6 @@ task("update-account", "update account")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken,
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
@@ -150,4 +146,14 @@ task("update-account", "update account")
     let key2 = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     fs.writeFileSync(defaultAccountFile, sa.serialize(key2));
     console.log(proofAndPublicSignals);
+  })
+
+task("get-account", "Get account info")
+  .addParam("password", "password for key sealing", "<your password>")
+  .setAction(async ({ password }) => {
+    const eddsa = await buildEddsa();
+    let accountData = fs.readFileSync(defaultAccountFile);
+    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
+    console.log(sa);
   })

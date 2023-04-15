@@ -18,7 +18,6 @@ task("ci", "Run all task in one command")
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [user] = await ethers.getSigners();
-    console.log("user", user);
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     let signingKey = new SigningKey(eddsa);
     let accountKey = new SigningKey(eddsa);
@@ -42,7 +41,6 @@ task("ci", "Run all task in one command")
         contractJson.poseidon3,
         contractJson.poseidon6,
         contractJson.rollup,
-        contractJson.testToken,
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
@@ -64,19 +62,18 @@ task("ci", "Run all task in one command")
     console.log("setup Rollup NC done");
 
     // approve testToken
-    await secretSDK.registerToken();
+    await secretSDK.registerToken(contractJson.testToken);
     console.log("register token done")
 
-    let newAssetId = await secretSDK.approveToken();
-    console.log("approve token done", newAssetId)
+    let assetId = await secretSDK.approveToken(contractJson.testToken);
+    console.log("approve token done", assetId)
 
     let value = 1000n;
-    let approveTx = await secretSDK.approve(value);
+    let approveTx = await secretSDK.approve(contractJson.testToken, value);
     await approveTx.wait();
 
     let receiver = accountKey.pubKey.pubKey;
     let nonce = 0;
-    let assetId = 2;
     value = 10n;
 
     let proof = await secretSDK.deposit(ctx, receiver, value, assetId, nonce);
