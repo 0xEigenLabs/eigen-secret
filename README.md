@@ -63,7 +63,6 @@ npm run deploy:dev
 2. setup rollup coordinator
 ```
 npx hardhat setup-rollup --network dev
-
 ```
 
 set the current account as the coordinator of Rollup contract
@@ -72,34 +71,48 @@ set the current account as the coordinator of Rollup contract
 
 ```
 npx hardhat register-token --token 0x0165878A594ca255338adfa4d48449f69242Eb8F --network dev
-
 ```
 
 4. create account, make sure that the server is on.
 
 ```
-npx hardhat create-account --network dev
-```
-
+npx hardhat create-account --alias Alice --index 0 --network dev
+ // accountKey:  eig:b82a1b55d3d2becbbb25e75286c4eaa87ba380b46e4dc3f197d3826d5fe69618
+```   
 can use `npx hardhat get-account` to get the current account information.
 
 5. deposit asset to L2
 
 ```
-npx hardhat deposit --value 10 --asset-id 2 --network dev
+npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network dev
 ```
-
-6. send asset to L2
-
-```
-npx hardhat deposit --value 10 --asset-id 2 --network dev
+6. create another account and deposit
 
 ```
-TODO: specify receiver's public key.
+npx hardhat create-account --alias Bob --index 1 --network dev
+npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id 2 --network dev
+```
+7. send asset to L2
 
-7. withdraw
+```
+npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:b82a1b55d3d2becbbb25e75286c4eaa87ba380b46e4dc3f197d3826d5fe69618 --network dev
+// using Alice's accountKey as the receiver.
+```
 
-8. migrate account
+8. withdraw
 
-9. update account
+```
+npx hardhat withdraw --alias Bob --index 1 --value 5 --asset-id 2 --network dev
+```
 
+9. migrate account
+
+```
+npx hardhat migrate-account --network dev
+```
+
+10. update account
+
+```
+npx hardhat update-account --network dev
+```

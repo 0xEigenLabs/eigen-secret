@@ -12,19 +12,20 @@ const createBlakeHash = require("blake-hash");
 const circuitPath = path.join(__dirname, "../circuits/");
 
 task("create-account", "Create secret account")
-  .addParam("alias", "user alias", "Alice")
+  .addParam("alias", "user alias")
   .addParam("password", "password for key sealing", "<your password>")
-  .setAction(async ({ alias, password }, { ethers }) => {
+  .addParam("index", "user index for test")
+  .setAction(async ({ alias, password, index }, { ethers }) => {
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
-    let [user] = await ethers.getSigners();
-    const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
+    let account = await ethers.getSigners();
+    const signature = await signEOASignature(account[index], rawMessage, account[index].address, alias, timestamp);
     let signingKey = new SigningKey(eddsa);
     let accountKey = new SigningKey(eddsa);
     let newSigningKey1 = new SigningKey(eddsa);
     let newSigningKey2 = new SigningKey(eddsa);
     const contractJson = require(defaultContractFile);
-
+    console.log("accountKey: ", accountKey.pubKey.pubKey);
     let sa = new SecretAccount(
         accountKey, signingKey, accountKey, newSigningKey1, newSigningKey2
     );
@@ -34,7 +35,7 @@ task("create-account", "Create secret account")
         "http://127.0.0.1:3000",
         circuitPath,
         eddsa,
-        user,
+        account[index],
         contractJson.spongePoseidon,
         contractJson.tokenRegistry,
         contractJson.poseidon2,
@@ -46,7 +47,7 @@ task("create-account", "Create secret account")
     await secretSDK.initialize(defaultContractABI);
     const ctx = {
       alias: alias,
-      ethAddress: user.address,
+      ethAddress: account[index].address,
       rawMessage: rawMessage,
       timestamp: timestamp,
       signature: signature

@@ -8,7 +8,7 @@ task("deploy", "Deploy all smart contract")
       .addParam("testTokenAddress", "test token address, default none", "")
       .addParam("contractFile", "[output] contract address", defaultContractFile)
       .setAction(async ({ testTokenAddress, contractFile }, { ethers }) => {
-    let [admin] = await ethers.getSigners();
+    let [admin, user1] = await ethers.getSigners();
     let poseidonContracts = await deployPoseidons(
         ethers,
         admin,
@@ -50,6 +50,11 @@ task("deploy", "Deploy all smart contract")
         let factoryTT = await ethers.getContractFactory("TestToken");
         let testToken = await factoryTT.connect(admin).deploy();
         await testToken.deployed();
+        const ownerBalance = (
+            await testToken.balanceOf(admin.address)
+        ).toString()
+        console.log("owner balance", ownerBalance)
+        await (await testToken.transfer(user1.address, 1000)).wait()
         console.log("TestToken deployed to:", testToken.address);
         testTokenAddress = testToken.address;
     }

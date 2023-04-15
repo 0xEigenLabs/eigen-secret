@@ -31,7 +31,9 @@ const ctx = {
     ethAddress: user_EthAddress.address,
     rawMessage: rawMessage,
     timestamp: timestamp,
-    signature: signature
+    signature: signature 
+    // signMessage("\x19Ethereum Signed Message:\n" + lengthOf(m) + m)
+    // m = rawMessage + user_EthAddress.address + alias + timestamp
 };
 
 await secretSDK.initialize(
