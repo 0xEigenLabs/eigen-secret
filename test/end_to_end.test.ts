@@ -177,7 +177,7 @@ describe('POST /transactions', function() {
             assetId,
             assetId,
             BigInt(value),
-            signingKey.pubKey,
+            accountKey.pubKey,
             BigInt(value),
             receiver.pubKey,
             notes,
@@ -517,9 +517,9 @@ describe('POST /transactions', function() {
             assetId,
             assetId,
             BigInt(value),
-            signingKey.pubKey,
+            accountKey.pubKey,
             0n,
-            signingKey.pubKey,
+            accountKey.pubKey,
             notes,
             accountRequired
         );

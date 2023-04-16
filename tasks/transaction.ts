@@ -111,10 +111,9 @@ task("withdraw", "Withdraw asset from L2 to L1")
   .addParam("alias", "user alias")
   .addParam("assetId", "asset id/token id")
   .addParam("password", "password for key sealing", "<your password>")
-  .addParam("index", "user index for test")
   .addParam("value", "amount of transaction")
-  .setAction(async ({ alias, assetId, password, value, index, receiver }, { ethers }) => {
-    console.log(receiver)
+  .addParam("index", "user index for test")
+  .setAction(async ({ alias, assetId, password, value, index }, { ethers }) => {
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
@@ -146,7 +145,7 @@ task("withdraw", "Withdraw asset from L2 to L1")
       timestamp: timestamp,
       signature: signature
     };
-    let _receiver = sa.accountKey.pubKey.pubKey;
-    let proofAndPublicSignals = await secretSDK.withdraw(ctx, _receiver, BigInt(value), Number(assetId));
+    let receiver = sa.accountKey.pubKey.pubKey;
+    let proofAndPublicSignals = await secretSDK.withdraw(ctx, receiver, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
   })

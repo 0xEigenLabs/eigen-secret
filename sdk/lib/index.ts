@@ -299,7 +299,6 @@ export class SecretSDK {
         let tmpP = this.account.accountKey.pubKey.unpack(eddsa.babyJub);
         let tmpPub = [eddsa.F.toObject(tmpP[0]), eddsa.F.toObject(tmpP[1])];
 
-        console.log("begin to deposit");
         await this.rollupSC.deposit(tmpPub, assetId, value, nonce);
 
         let accountRequired = false;
@@ -326,7 +325,7 @@ export class SecretSDK {
             assetId,
             assetId,
             value,
-            this.account.signingKey.pubKey,
+            this.account.accountKey.pubKey,
             value,
             new EigenAddress(receiver),
             notes,
@@ -420,7 +419,7 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
-        let noteState = [NoteState.CREATING, NoteState.PROVED];
+        let noteState = [NoteState.PROVED];
         let encryptedNotes = await this.note.getNote(ctx, noteState);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
@@ -519,7 +518,7 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
-        let noteState = [NoteState.CREATING, NoteState.PROVED];
+        let noteState = [NoteState.PROVED];
         let encryptedNotes = await this.note.getNote(ctx, noteState);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
@@ -527,6 +526,8 @@ export class SecretSDK {
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }
+        const util = require("util");
+        console.log("notes: ", util.inspect(notes, 1, 100));
         assert(notes.length > 0, "Invalid notes");
         let _receiver = new EigenAddress(receiver);
         let receiverPubKey = _receiver.pubKey;
@@ -539,12 +540,13 @@ export class SecretSDK {
             assetId,
             assetId,
             value,
-            this.account.signingKey.pubKey,
+            this.account.accountKey.pubKey,
             0n,
-            this.account.signingKey.pubKey,
+            this.account.accountKey.pubKey,
             notes,
             accountRequired
         );
+        console.log("inputs", util.inspect(inputs, 1, 100));
 
         let batchProof: string[] = [];
         let lastKeys: Array<bigint> = [];
@@ -692,6 +694,7 @@ export class SecretSDK {
             R8y: eddsa.F.toObject(sig.R8[1]),
             S: sig.S
         }
+        console.log("withdraw, input", input);
         let proofAndPublicSignals = await Prover.withdraw(this.circuitPath, input);
         await this.rollupSC.withdraw(
             this.rollupSC.userAccount,

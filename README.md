@@ -61,6 +61,9 @@ The network dev is hardhat node, which is used to debug locally. And the hermez 
 1. deploy contracts
 ```
 npm run deploy:dev
+
+# expose token address in env
+export TOKEN=0x0165878A594ca255338adfa4d48449f69242Eb8F
 ```
 
 2. create account, make sure that the server is on.
@@ -81,7 +84,7 @@ set the current account as the coordinator of Rollup contract
 4. register token
 
 ```
-npx hardhat register-token --token 0x0165878A594ca255338adfa4d48449f69242Eb8F --network dev
+npx hardhat register-token --token $TOKEN --network dev
 ```
 
 5. deposit asset to L2
