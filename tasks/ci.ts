@@ -4,7 +4,7 @@ import { SigningKey, SecretAccount } from "@eigen-secret/core/dist/account";
 import { SecretSDK } from "@eigen-secret/sdk/dist/index";
 import {
     defaultServerEndpoint,
-    defaultCircuitPath, defaultContractABI, defaultContractFile, defaultAccountFile
+    defaultCircuitPath, defaultContractABI, defaultContractFile, accountFile
 } from "./common";
 require("dotenv").config()
 const fs = require("fs");
@@ -54,7 +54,7 @@ task("ci", "Run all task in one command")
     let proofAndPublicSignals = await secretSDK.createAccount(ctx, sa.newSigningKey1, sa.newSigningKey2);
 
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    fs.writeFileSync(defaultAccountFile, sa.serialize(key));
+    fs.writeFileSync(accountFile(alias), sa.serialize(key));
     console.log("create account", proofAndPublicSignals);
 
     // set rollup nc

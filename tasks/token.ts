@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { SecretAccount } from "@eigen-secret/core/dist/account";
 import {
     defaultServerEndpoint,
-    defaultCircuitPath, defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
+    defaultCircuitPath, defaultContractABI, defaultContractFile, accountFile } from "./common";
 const { buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
 import { SecretSDK } from "@eigen-secret/sdk/dist/index";
@@ -10,15 +10,14 @@ const fs = require("fs");
 
 task("setup-rollup", "Setup rollup coordinator")
       .addParam("alias", "user alias", "Alice")
-      .addParam("contractFile", "[output] contract address", defaultContractFile)
       .addParam("password", "password for key sealing", "<your password>")
-      .setAction(async ({ alias, contractFile, password }, { ethers }) => {
+      .setAction(async ({ alias, password }, { ethers }) => {
     let [admin] = await ethers.getSigners();
     let eddsa = await buildEddsa();
-    let accountData = fs.readFileSync(defaultAccountFile);
+    let accountData = fs.readFileSync(accountFile(alias));
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
-    const contractJson = require(contractFile);
+    const contractJson = require(defaultContractFile);
 
     let secretSDK = new SecretSDK(
         alias,
@@ -44,16 +43,15 @@ task("setup-rollup", "Setup rollup coordinator")
 
 task("register-token", "Register token to Rollup")
       .addParam("alias", "user alias", "Alice")
-      .addParam("contractFile", "[output] contract address", defaultContractFile)
       .addParam("token", "the token to be registered")
       .addParam("password", "password for key sealing", "<your password>")
-      .setAction(async ({ alias, contractFile, token, password }, { ethers }) => {
+      .setAction(async ({ alias, token, password }, { ethers }) => {
     let [admin] = await ethers.getSigners();
     let eddsa = await buildEddsa();
-    let accountData = fs.readFileSync(defaultAccountFile);
+    let accountData = fs.readFileSync(accountFile(alias));
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
-    const contractJson = require(contractFile);
+    const contractJson = require(defaultContractFile);
 
     let secretSDK = new SecretSDK(
         alias,
@@ -77,3 +75,47 @@ task("register-token", "Register token to Rollup")
     let assetId = await secretSDK.approveToken(token);
     console.log("approve token done, assetId is", assetId, toString())
 })
+
+task("send_l1", "Send asset from L1 to L1")
+    .addParam("alias", "user name", "Alice")
+    .addParam("value", "transaction amount")
+    .addParam("receiver", "receiver ETH address")
+    .addParam("assetId", "asset id")
+    .addParam("password", "password for key sealing", "<your password>")
+    .setAction(async ({ alias, value, receiver, assetId, password }, { ethers }) => {
+        let [admin] = await ethers.getSigners();
+        let eddsa = await buildEddsa();
+        let accountData = fs.readFileSync(accountFile(alias));
+        let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+        let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
+        const contractJson = require(defaultContractFile);
+        let secretSDK = new SecretSDK(
+            alias,
+            sa,
+            defaultServerEndpoint,
+            defaultCircuitPath,
+            eddsa,
+            admin,
+            contractJson.spongePoseidon,
+            contractJson.tokenRegistry,
+            contractJson.poseidon2,
+            contractJson.poseidon3,
+            contractJson.poseidon6,
+            contractJson.rollup,
+            contractJson.smtVerifier
+        );
+        await secretSDK.initialize(defaultContractABI);
+        // get token address
+        let address = await secretSDK.getRegisteredToken(BigInt(assetId));
+        let tokenIns = new ethers.Contract(
+            address,
+            defaultContractABI.testTokenContractABI,
+            admin
+        );
+
+        let tx = await tokenIns.transfer(receiver, BigInt(value));
+        await tx.wait();
+
+        let balance = await tokenIns.balanceOf(receiver);
+        console.log("balance", balance.toString());
+    });

@@ -18,3 +18,6 @@ export const defaultContractABI = {
     smtVerifierContractABI: SMT.abi
 };
 
+export const accountFile = (alias: string) => {
+    return `${defaultAccountFile}.${alias}`;
+}

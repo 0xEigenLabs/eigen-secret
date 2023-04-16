@@ -93,12 +93,17 @@ npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network de
 
 ```
 npx hardhat create-account --alias Bob --index 1 --network dev
+
+npx hardhat send_l1 --alias Alice --asset-id 2 --receiver 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --value 100 --network dev
+
 npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id 2 --network dev
 ```
 7. send asset to L2
 
 ```
-npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:b82a1b55d3d2becbbb25e75286c4eaa87ba380b46e4dc3f197d3826d5fe69618 --network dev
+npx hardhat get-account --alias Bob
+
+npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:099425cfd131bf4fc0b5f0cf484615c14485d42b3107301dfdeb58814dbfad86 --network dev
 // using Alice's accountKey as the receiver.
 ```
 
