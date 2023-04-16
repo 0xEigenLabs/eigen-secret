@@ -420,7 +420,7 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
-        let noteState = [NoteState.CREATING, NoteState.PROVED];
+        let noteState = [NoteState.PROVED];
         let encryptedNotes = await this.note.getNote(ctx, noteState);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
@@ -519,7 +519,7 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let notes: Array<Note> = [];
-        let noteState = [NoteState.CREATING, NoteState.PROVED];
+        let noteState = [NoteState.PROVED];
         let encryptedNotes = await this.note.getNote(ctx, noteState);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
@@ -539,9 +539,9 @@ export class SecretSDK {
             assetId,
             assetId,
             value,
-            this.account.signingKey.pubKey,
+            this.account.accountKey.pubKey,
             0n,
-            this.account.signingKey.pubKey,
+            this.account.accountKey.pubKey,
             notes,
             accountRequired
         );
