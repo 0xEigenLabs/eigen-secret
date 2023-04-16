@@ -5,9 +5,10 @@ import { SecretSDK } from "@eigen-secret/sdk/dist/index";
 require("dotenv").config()
 const fs = require("fs");
 const { buildEddsa } = require("circomlibjs");
+import path from "path";
 import {
     defaultServerEndpoint,
-    defaultCircuitPath, defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
+    defaultCircuitPath, defaultContractABI, defaultContractFile } from "./common";
 const createBlakeHash = require("blake-hash");
 
 task("deposit", "Deposit asset from L1 to L2")
@@ -23,7 +24,8 @@ task("deposit", "Deposit asset from L1 to L2")
     // const newEOAAccount = ethers.Wallet.createRandom();
     const signature = await signEOASignature(account[index], rawMessage, account[index].address, alias, timestamp);
     const contractJson = require(defaultContractFile);
-    let accountData = fs.readFileSync(defaultAccountFile);
+    let userAccountFile = path.join(__dirname, "../" + alias + ".account.json")
+    let accountData = fs.readFileSync(userAccountFile);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
     let secretSDK = new SecretSDK(
@@ -78,7 +80,8 @@ task("send", "Send asset to receiver in L2")
     // const newEOAAccount = ethers.Wallet.createRandom();
     const signature = await signEOASignature(account[index], rawMessage, account[index].address, alias, timestamp);
     const contractJson = require(defaultContractFile);
-    let accountData = fs.readFileSync(defaultAccountFile);
+    let userAccountFile = path.join(__dirname, "../" + alias + ".account.json")
+    let accountData = fs.readFileSync(userAccountFile);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
     let secretSDK = new SecretSDK(
@@ -122,7 +125,8 @@ task("withdraw", "Withdraw asset from L2 to L1")
     let account = await ethers.getSigners();
     const signature = await signEOASignature(account[index], rawMessage, account[index].address, alias, timestamp);
     const contractJson = require(defaultContractFile);
-    let accountData = fs.readFileSync(defaultAccountFile);
+    let userAccountFile = path.join(__dirname, "../" + alias + ".account.json")
+    let accountData = fs.readFileSync(userAccountFile);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
     let secretSDK = new SecretSDK(

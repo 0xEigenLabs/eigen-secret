@@ -6,7 +6,6 @@ import SMT from "../artifacts/contracts/SMT.sol/SMT.json";
 import path from "path";
 
 export const defaultContractFile = path.join(__dirname, "../.contract.json");
-export const defaultAccountFile = path.join(__dirname, "../.account.json")
 export const defaultCircuitPath = path.join(__dirname, "../circuits/");
 export const defaultServerEndpoint = "http://127.0.0.1:3000";
 

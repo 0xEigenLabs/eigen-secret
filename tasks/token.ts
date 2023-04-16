@@ -2,10 +2,11 @@ import { task } from "hardhat/config";
 import { SecretAccount } from "@eigen-secret/core/dist/account";
 import {
     defaultServerEndpoint,
-    defaultCircuitPath, defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
+    defaultCircuitPath, defaultContractABI, defaultContractFile } from "./common";
 const { buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
 import { SecretSDK } from "@eigen-secret/sdk/dist/index";
+import path from "path";
 const fs = require("fs");
 
 task("setup-rollup", "Setup rollup coordinator")
@@ -15,7 +16,8 @@ task("setup-rollup", "Setup rollup coordinator")
       .setAction(async ({ alias, contractFile, password }, { ethers }) => {
     let [admin] = await ethers.getSigners();
     let eddsa = await buildEddsa();
-    let accountData = fs.readFileSync(defaultAccountFile);
+    let userAccountFile = path.join(__dirname, "../" + alias + ".account.json")
+    let accountData = fs.readFileSync(userAccountFile);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
     const contractJson = require(contractFile);
@@ -50,7 +52,8 @@ task("register-token", "Register token to Rollup")
       .setAction(async ({ alias, contractFile, token, password }, { ethers }) => {
     let [admin] = await ethers.getSigners();
     let eddsa = await buildEddsa();
-    let accountData = fs.readFileSync(defaultAccountFile);
+    let userAccountFile = path.join(__dirname, "../" + alias + ".account.json")
+    let accountData = fs.readFileSync(userAccountFile);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
     const contractJson = require(contractFile);
