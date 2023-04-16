@@ -3,11 +3,11 @@ import { signEOASignature, rawMessage } from "@eigen-secret/core/dist/utils";
 import { SecretAccount } from "@eigen-secret/core/dist/account";
 import { SecretSDK } from "@eigen-secret/sdk/dist/index";
 require("dotenv").config()
-const path = require("path");
 const fs = require("fs");
-const circuitPath = path.join(__dirname, "../circuits/");
 const { buildEddsa } = require("circomlibjs");
-import { defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
+import {
+    defaultServerEndpoint,
+    defaultCircuitPath, defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
 const createBlakeHash = require("blake-hash");
 
 task("deposit", "Deposit asset from L1 to L2")
@@ -29,8 +29,8 @@ task("deposit", "Deposit asset from L1 to L2")
     let secretSDK = new SecretSDK(
         alias,
         sa,
-        "http://127.0.0.1:3000",
-        circuitPath,
+        defaultServerEndpoint,
+        defaultCircuitPath,
         eddsa,
         account[index],
         contractJson.spongePoseidon,
@@ -84,8 +84,8 @@ task("send", "Send asset to receiver in L2")
     let secretSDK = new SecretSDK(
         alias,
         sa,
-        "http://127.0.0.1:3000",
-        circuitPath,
+        defaultServerEndpoint,
+        defaultCircuitPath,
         eddsa,
         account[index],
         contractJson.spongePoseidon,
@@ -128,8 +128,8 @@ task("withdraw", "Withdraw asset from L2 to L1")
     let secretSDK = new SecretSDK(
         alias,
         sa,
-        "http://127.0.0.1:3000",
-        circuitPath,
+        defaultServerEndpoint,
+        defaultCircuitPath,
         eddsa,
         account[index],
         contractJson.spongePoseidon,

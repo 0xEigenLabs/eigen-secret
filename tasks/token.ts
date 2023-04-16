@@ -1,12 +1,12 @@
 import { task } from "hardhat/config";
 import { SecretAccount } from "@eigen-secret/core/dist/account";
-import { defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
+import {
+    defaultServerEndpoint,
+    defaultCircuitPath, defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
 const { buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
 import { SecretSDK } from "@eigen-secret/sdk/dist/index";
-const path = require("path");
 const fs = require("fs");
-const circuitPath = path.join(__dirname, "../circuits/");
 
 task("setup-rollup", "Setup rollup coordinator")
       .addParam("alias", "user alias", "Alice")
@@ -23,8 +23,8 @@ task("setup-rollup", "Setup rollup coordinator")
     let secretSDK = new SecretSDK(
         alias,
         sa,
-        "http://127.0.0.1:3000",
-        circuitPath,
+        defaultServerEndpoint,
+        defaultCircuitPath,
         eddsa,
         admin,
         contractJson.spongePoseidon,
@@ -58,8 +58,8 @@ task("register-token", "Register token to Rollup")
     let secretSDK = new SecretSDK(
         alias,
         sa,
-        "http://127.0.0.1:3000",
-        circuitPath,
+        defaultServerEndpoint,
+        defaultCircuitPath,
         eddsa,
         admin,
         contractJson.spongePoseidon,

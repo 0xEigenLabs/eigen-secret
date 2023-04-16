@@ -2,14 +2,14 @@ import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist/utils";
 import { SigningKey, SecretAccount } from "@eigen-secret/core/dist/account";
 import { SecretSDK } from "@eigen-secret/sdk/dist/index";
-import { defaultContractABI, defaultContractFile, defaultAccountFile } from "./common";
+import {
+    defaultServerEndpoint,
+    defaultCircuitPath, defaultContractABI, defaultContractFile, defaultAccountFile
+} from "./common";
 require("dotenv").config()
-const path = require("path");
 const fs = require("fs");
 const { buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
-
-const circuitPath = path.join(__dirname, "../circuits/");
 
 task("ci", "Run all task in one command")
   .addParam("alias", "user alias", "Alice")
@@ -31,8 +31,8 @@ task("ci", "Run all task in one command")
     let secretSDK = new SecretSDK(
         alias,
         sa,
-        "http://127.0.0.1:3000",
-        circuitPath,
+        defaultServerEndpoint,
+        defaultCircuitPath,
         eddsa,
         user,
         contractJson.spongePoseidon,
