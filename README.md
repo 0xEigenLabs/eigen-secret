@@ -63,28 +63,26 @@ The network dev is hardhat node, which is used to debug locally. And the hermez 
 npm run deploy:dev
 ```
 
-2. setup rollup coordinator
-```
-npx hardhat setup-rollup --network dev
-
-```
-
-set the current account as the coordinator of Rollup contract
-
-3. register token
-
-```
-npx hardhat register-token --token 0x0165878A594ca255338adfa4d48449f69242Eb8F --network dev
-
-```
-
-4. create account, make sure that the server is on.
+2. create account, make sure that the server is on.
 
 ```
 npx hardhat create-account --alias Alice --index 0 --network dev
  // accountKey:  eig:b82a1b55d3d2becbbb25e75286c4eaa87ba380b46e4dc3f197d3826d5fe69618
 ```   
 can use `npx hardhat get-account` to get the current account information.
+
+3. setup rollup coordinator
+```
+npx hardhat setup-rollup --network dev
+```
+
+set the current account as the coordinator of Rollup contract
+
+4. register token
+
+```
+npx hardhat register-token --token 0x0165878A594ca255338adfa4d48449f69242Eb8F --network dev
+```
 
 5. deposit asset to L2
 
@@ -107,7 +105,7 @@ npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:b82
 8. withdraw
 
 ```
-npx hardhat withdraw --alias Bob --index 1 --value 5 --asset-id 2 --network dev
+npx hardhat withdraw --alias Bob --index 1 --value 4 --asset-id 2 --network dev
 ```
 
 9. migrate account
