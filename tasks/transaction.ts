@@ -150,7 +150,7 @@ task("withdraw", "Withdraw asset from L2 to L1")
     console.log(proofAndPublicSignals);
   })
 
-task("get-balance_l2", "Get user L2 balance")
+task("get-balance-l2", "Get user L2 balance")
   .addParam("alias", "user name", "Alice")
   .addParam("assetId", "asset id")
   .addParam("password", "password for key sealing", "<your password>")

@@ -71,7 +71,7 @@ task("register-token", "Register token to Rollup")
     await secretSDK.registerToken(token);
     console.log("register token done")
     let assetId = await secretSDK.approveToken(token);
-    console.log("approve token done, assetId is", assetId, toString())
+    console.log("approve token done, assetId is", assetId.toString())
 })
 
 task("send_l1", "Send asset from L1 to L1")

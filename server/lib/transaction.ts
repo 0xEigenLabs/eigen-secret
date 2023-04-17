@@ -233,7 +233,7 @@ export async function updateNotes(req: any, res: any) {
     notes.forEach((item: any) => {
         console.log("item", item);
         insertings.push({
-            alias: alias,
+            alias: alias, // TODO use alias from item @lw
             index: item.index,
             pubKey: item.pubKey,
             content: item.content,
