@@ -478,37 +478,64 @@ export class SecretSDK {
 
             await this.rollupSC.update(proofAndPublicSignals);
 
-            let _notes = [
-                {
-                    alias: this.alias,
-                    index: encryptedNotes[0].index,
-                    pubKey: receiverPubKey,
-                    content: encryptedNotes[0].content,
-                    state: NoteState.SPENT
-                },
-                {
-                    alias: this.alias,
-                    index: encryptedNotes[1].index,
-                    pubKey: receiverPubKey,
-                    content: encryptedNotes[1].content,
-                    state: NoteState.SPENT
-                },
-                {
-                    alias: receiver_alias,
-                    index: input.outputNotes[0].index,
-                    pubKey: receiverPubKey,
-                    content: txdata[0].content,
-                    state: NoteState.PROVED
-                },
-                {
-                    alias: this.alias,
-                    index: input.outputNotes[1].index,
-                    pubKey: receiverPubKey,
-                    content: txdata[1].content,
-                    state: NoteState.PROVED
-                }
-            ]
-            await this.note.updateNote(ctx, _notes);
+            if (notes.length == 1) {
+                let _notes = [
+                    {
+                        alias: this.alias,
+                        index: encryptedNotes[0].index,
+                        pubKey: receiverPubKey,
+                        content: encryptedNotes[0].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        alias: receiver_alias,
+                        index: input.outputNotes[0].index,
+                        pubKey: receiverPubKey,
+                        content: txdata[0].content,
+                        state: NoteState.PROVED
+                    },
+                    {
+                        alias: this.alias,
+                        index: input.outputNotes[1].index,
+                        pubKey: receiverPubKey,
+                        content: txdata[1].content,
+                        state: NoteState.PROVED
+                    }
+                ]
+                await this.note.updateNote(ctx, _notes);
+            } else {
+                let _notes = [
+                    {
+                        alias: this.alias,
+                        index: encryptedNotes[0].index,
+                        pubKey: receiverPubKey,
+                        content: encryptedNotes[0].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        alias: this.alias,
+                        index: encryptedNotes[1].index,
+                        pubKey: receiverPubKey,
+                        content: encryptedNotes[1].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        alias: receiver_alias,
+                        index: input.outputNotes[0].index,
+                        pubKey: receiverPubKey,
+                        content: txdata[0].content,
+                        state: NoteState.PROVED
+                    },
+                    {
+                        alias: this.alias,
+                        index: input.outputNotes[1].index,
+                        pubKey: receiverPubKey,
+                        content: txdata[1].content,
+                        state: NoteState.PROVED
+                    }
+                ]
+                await this.note.updateNote(ctx, _notes);
+            }
         }
         return batchProof;
     }
@@ -621,37 +648,64 @@ export class SecretSDK {
             // call contract and deposit
             await this.rollupSC.update(proofAndPublicSignals);
             // settle down the spent notes
-            let _notes = [
-                {
-                    alias: this.alias,
-                    index: encryptedNotes[0].index,
-                    pubKey: receiverPubKey,
-                    content: encryptedNotes[0].content,
-                    state: NoteState.SPENT
-                },
-                {
-                    alias: this.alias,
-                    index: encryptedNotes[1].index,
-                    pubKey: receiverPubKey,
-                    content: encryptedNotes[1].content,
-                    state: NoteState.SPENT
-                },
-                {
-                    alias: this.alias,
-                    index: input.outputNotes[0].index,
-                    pubKey: receiverPubKey,
-                    content: txdata[0].content,
-                    state: NoteState.SPENT
-                },
-                {
-                    alias: this.alias,
-                    index: input.outputNotes[1].index,
-                    pubKey: receiverPubKey,
-                    content: txdata[1].content,
-                    state: NoteState.PROVED
-                }
-            ]
-            await this.note.updateNote(ctx, _notes);
+            if (notes.length == 1) {
+                let _notes = [
+                    {
+                        alias: this.alias,
+                        index: encryptedNotes[0].index,
+                        pubKey: receiverPubKey,
+                        content: encryptedNotes[0].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        alias: this.alias,
+                        index: input.outputNotes[0].index,
+                        pubKey: receiverPubKey,
+                        content: txdata[0].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        alias: this.alias,
+                        index: input.outputNotes[1].index,
+                        pubKey: receiverPubKey,
+                        content: txdata[1].content,
+                        state: NoteState.PROVED
+                    }
+                ]
+                await this.note.updateNote(ctx, _notes);
+            } else {
+                let _notes = [
+                    {
+                        alias: this.alias,
+                        index: encryptedNotes[0].index,
+                        pubKey: receiverPubKey,
+                        content: encryptedNotes[0].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        alias: this.alias,
+                        index: encryptedNotes[1].index,
+                        pubKey: receiverPubKey,
+                        content: encryptedNotes[1].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        alias: this.alias,
+                        index: input.outputNotes[0].index,
+                        pubKey: receiverPubKey,
+                        content: txdata[0].content,
+                        state: NoteState.SPENT
+                    },
+                    {
+                        alias: this.alias,
+                        index: input.outputNotes[1].index,
+                        pubKey: receiverPubKey,
+                        content: txdata[1].content,
+                        state: NoteState.PROVED
+                    }
+                ]
+                await this.note.updateNote(ctx, _notes);
+            }
         }
 
         let tmpP = this.account.signingKey.pubKey.unpack(eddsa.babyJub);
