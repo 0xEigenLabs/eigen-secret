@@ -414,13 +414,12 @@ export class SecretSDK {
      *
      * @param {Object} ctx
      * @param {string} receiver
-     * @param {string} receiver_signingKey
      * @param {string} receiver_alias use for test
      * @param {bigint} value the amount to be sent
      * @param {number} assetId the token to be sent
      * @return {Object} a batch of proof
      */
-    async send(ctx: any, receiver: string, receiver_signingKey: string, receiver_alias: string, value: bigint, assetId: number) {
+    async send(ctx: any, receiver: string, receiver_alias: string, value: bigint, assetId: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let accountRequired = false;
@@ -439,9 +438,6 @@ export class SecretSDK {
         }
         let _receiver = new EigenAddress(receiver);
         let receiverPubKey = _receiver.pubKey;
-        let _receiver_signingKey = new EigenAddress(receiver_signingKey);
-        let receiverPubKey_signingKey = _receiver_signingKey.pubKey;
-
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.account.accountKey,
             this.account.signingKey,
@@ -451,9 +447,9 @@ export class SecretSDK {
             assetId,
             0,
             0n,
-            _receiver,
+            undefined,
             value,
-            _receiver_signingKey,
+            _receiver,
             notes,
             accountRequired
         );

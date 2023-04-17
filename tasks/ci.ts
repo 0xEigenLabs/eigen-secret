@@ -82,7 +82,7 @@ task("ci", "Run all task in one command")
     console.log(balance1)
     console.log("CreateAccount done, proof: ", proofAndPublicSignals, proof);
 
-    let proof1 = await secretSDK.send(ctx, receiver, 2n, assetId);
+    let proof1 = await secretSDK.send(ctx, receiver, alias, 2n, assetId);
     console.log("send proof", proof1);
     let balance2 = await secretSDK.getNotesValue(ctx, assetId);
     console.log(balance2)

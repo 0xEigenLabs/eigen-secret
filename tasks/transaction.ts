@@ -69,9 +69,8 @@ task("send", "Send asset to receiver in L2")
   .addParam("value", "amount of transaction")
   .addParam("index", "user index for test")
   .addParam("receiver", "receiver account public key")
-  .addParam("receiverSigningkey", "receiver account public key")
   .addParam("receiverAlias", "receiver_alias use for test")
-  .setAction(async ({ alias, assetId, password, value, index, receiver, receiverSigningkey, receiverAlias }, { ethers }) => {
+  .setAction(async ({ alias, assetId, password, value, index, receiver, receiverAlias }, { ethers }) => {
     console.log("receiver: ", receiver)
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
@@ -105,7 +104,7 @@ task("send", "Send asset to receiver in L2")
       signature: signature
     };
     // let _receiver = sa.accountKey.pubKey.pubKey;
-    let proofAndPublicSignals = await secretSDK.send(ctx, receiver, receiverSigningkey, receiverAlias, BigInt(value), Number(assetId));
+    let proofAndPublicSignals = await secretSDK.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
   })
 
