@@ -32,6 +32,7 @@ describe('POST /transactions', function() {
             message: rawMessage,
             hexSignature: signature,
             ethAddress: newEOAAccount.address,
+            receiver_alias: alias,
             pubKey: pubKey,
             pubKey2: pubKey,
             content: "0x12",
@@ -127,12 +128,14 @@ describe('POST /transactions', function() {
             ethAddress: newEOAAccount.address,
             notes: [
                 {
+                    alias: alias,
                     index: encryptedNotes[0].index,
                     content: encryptedNotes[0].content,
                     pubKey: pubKey,
                     state: NoteState.SPENT
                 },
                 {
+                    alias: alias,
                     index: encryptedNotes[1].index,
                     content: encryptedNotes[1].content,
                     pubKey: pubKey,

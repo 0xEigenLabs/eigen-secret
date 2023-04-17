@@ -10,7 +10,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "dependencies": {
     "@eigen-secret/core": "file:../core",
     "@eigen-secret/sdk": "file:../sdk",

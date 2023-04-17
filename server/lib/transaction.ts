@@ -50,6 +50,7 @@ export enum TransactionModelStatus {
 
 export async function createTx(req: any, res: any) {
     const alias = req.body.alias;
+    const receiver_alias = req.body.receiver_alias;
     const pubKey = req.body.pubKey;
     const pubKey2 = req.body.pubKey2;
     const proof = req.body.proof;
@@ -66,6 +67,7 @@ export async function createTx(req: any, res: any) {
     const hexSignature = req.body.hexSignature;
 
     if (!utils.hasValue(alias) ||
+        !utils.hasValue(receiver_alias) ||
         !utils.hasValue(pubKey) ||
         !utils.hasValue(pubKey2) ||
         !utils.hasValue(noteIndex) ||
@@ -92,7 +94,7 @@ export async function createTx(req: any, res: any) {
 
         if (isAliasAvailable === null) {
             let result = await createTxInternal(
-                alias, pubKey, pubKey2, content, content2,
+                alias, receiver_alias, pubKey, pubKey2, content, content2,
                 noteIndex, note2Index, proof, publicInput, transaction
             );
             await transaction.commit();
@@ -109,6 +111,7 @@ export async function createTx(req: any, res: any) {
 
 export async function createTxInternal(
     alias: string,
+    receiver_alias: string,
     pubKey: string,
     pubKey2: string,
     content: string,
@@ -132,7 +135,7 @@ export async function createTxInternal(
     let result2 = await updateDBNotes(
         [
             {
-                alias: alias,
+                alias: receiver_alias,
                 index: noteIndex,
                 pubKey: pubKey,
                 content: content,
@@ -233,7 +236,7 @@ export async function updateNotes(req: any, res: any) {
     notes.forEach((item: any) => {
         console.log("item", item);
         insertings.push({
-            alias: alias,
+            alias: item.alias,
             index: item.index,
             pubKey: item.pubKey,
             content: item.content,

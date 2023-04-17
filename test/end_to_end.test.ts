@@ -244,6 +244,7 @@ describe('POST /transactions', function() {
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: newEOAAccount.address,
+                receiver_alias: alias,
                 pubKey: txdata[0].pubKey.pubKey,
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
@@ -272,24 +273,28 @@ describe('POST /transactions', function() {
                 ethAddress: newEOAAccount.address,
                 notes: [
                     {
+                        alias: alias,
                         index: input.inputNotes[0].index,
                         pubKey: txInputData[0].pubKey.pubKey, //it's the first depositing, so the init public key is a random
                         content: txInputData[0].content,
                         state: NoteState.SPENT
                     },
                     {
+                        alias: alias,
                         index: input.inputNotes[1].index,
                         pubKey: txInputData[1].pubKey.pubKey, //same as above
                         content: txInputData[1].content,
                         state: NoteState.SPENT
                     },
                     {
+                        alias: alias,
                         index: input.outputNotes[0].index,
                         pubKey: txdata[0].pubKey.pubKey,
                         content: txdata[0].content,
                         state: NoteState.PROVED
                     },
                     {
+                        alias: alias,
                         index: input.outputNotes[1].index,
                         pubKey: txdata[1].pubKey.pubKey,
                         content: txdata[1].content,
@@ -407,6 +412,7 @@ describe('POST /transactions', function() {
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: newEOAAccount.address,
+                receiver_alias: alias,
                 pubKey: txdata[0].pubKey.pubKey,
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
@@ -434,24 +440,28 @@ describe('POST /transactions', function() {
                 ethAddress: newEOAAccount.address,
                 notes: [
                     {
+                        alias: alias,
                         index: encryptedNotes[0].index,
                         pubKey: pubKey,
                         content: encryptedNotes[0].content,
                         state: NoteState.SPENT
                     },
                     {
+                        alias: alias,
                         index: encryptedNotes[1].index,
                         pubKey: pubKey,
                         content: encryptedNotes[1].content,
                         state: NoteState.SPENT
                     },
                     {
+                        alias: alias,
                         index: input.outputNotes[0].index,
                         pubKey: pubKey,
                         content: txdata[0].content,
                         state: NoteState.PROVED
                     },
                     {
+                        alias: alias,
                         index: input.outputNotes[1].index,
                         pubKey: pubKey,
                         content: txdata[1].content,
@@ -607,6 +617,7 @@ describe('POST /transactions', function() {
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: newEOAAccount.address,
+                receiver_alias: alias,
                 pubKey: txdata[0].pubKey.pubKey,
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
@@ -634,24 +645,28 @@ describe('POST /transactions', function() {
                 ethAddress: newEOAAccount.address,
                 notes: [
                     {
+                        alias: alias,
                         index: encryptedNotes[0].index,
                         pubKey: pubKey,
                         content: encryptedNotes[0].content,
                         state: NoteState.SPENT
                     },
                     {
+                        alias: alias,
                         index: encryptedNotes[1].index,
                         pubKey: pubKey,
                         content: encryptedNotes[1].content,
                         state: NoteState.SPENT
                     },
                     {
+                        alias: alias,
                         index: input.outputNotes[0].index,
                         pubKey: pubKey,
                         content: txdata[0].content,
                         state: NoteState.SPENT
                     },
                     {
+                        alias: alias,
                         index: input.outputNotes[1].index,
                         pubKey: pubKey,
                         content: txdata[1].content,
