@@ -624,7 +624,7 @@ export class SecretSDK {
                     index: input.outputNotes[0].index,
                     pubKey: receiverPubKey,
                     content: txdata[0].content,
-                    state: NoteState.PROVED
+                    state: NoteState.SPENT
                 },
                 {
                     index: input.outputNotes[1].index,
