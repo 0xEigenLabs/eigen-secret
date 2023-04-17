@@ -156,7 +156,7 @@ export class TransactionClient {
         this.serverAddr = serverAddr;
     }
 
-    async createTx(context: any, txdata: any, input: any, proofAndPublicSignals: any) {
+    async createTx(context: any, receiver_alias: any, txdata: any, input: any, proofAndPublicSignals: any) {
         const {
             alias,
             ethAddress,
@@ -177,6 +177,7 @@ export class TransactionClient {
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: ethAddress,
+                receiver_alias: receiver_alias,
                 pubKey: txdata[0].pubKey.pubKey,
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
@@ -260,6 +261,8 @@ export class SecretSDK {
         let notes: Array<Note> = [];
         let noteState = [NoteState.PROVED]
         let encryptedNotes = await this.note.getNote(ctx, noteState);
+        console.log("------encryptedNotes")
+        console.log(encryptedNotes)
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
                 let sharedKey = this.account.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
@@ -273,7 +276,9 @@ export class SecretSDK {
                 _notes.push(notes[i]);
             }
         }
-        for (let i = 0; i < 2; i++) {
+        console.log("note-length")
+        console.log(_notes.length)
+        for (let i = 0; i < _notes.length; i++) {
             if (_notes[i]._owner.pubKey == this.account.accountKey.pubKey.pubKey) {
                 let tmpValue = _notes[i].val;
                 balance = balance + tmpValue;
@@ -363,12 +368,13 @@ export class SecretSDK {
 
             let txInput = new Transaction(input.inputNotes, this.account.signingKey);
             let txInputData = await txInput.encrypt();
-            await this.trans.createTx(ctx, txdata, input, proofAndPublicSignals);
+            await this.trans.createTx(ctx, this.alias, txdata, input, proofAndPublicSignals);
 
             await this.rollupSC.update(proofAndPublicSignals);
 
             let _notes = [
                 {
+                    alias: this.alias,
                     index: input.inputNotes[0].index,
                     // it's the first depositing, so the init public key is a random
                     pubKey: txInputData[0].pubKey.pubKey,
@@ -376,18 +382,21 @@ export class SecretSDK {
                     state: NoteState.SPENT
                 },
                 {
+                    alias: this.alias,
                     index: input.inputNotes[1].index,
                     pubKey: txInputData[1].pubKey.pubKey, // same as above
                     content: txInputData[1].content,
                     state: NoteState.SPENT
                 },
                 {
+                    alias: this.alias,
                     index: input.outputNotes[0].index,
                     pubKey: txdata[0].pubKey.pubKey,
                     content: txdata[0].content,
                     state: NoteState.PROVED
                 },
                 {
+                    alias: this.alias,
                     index: input.outputNotes[1].index,
                     pubKey: txdata[1].pubKey.pubKey,
                     content: txdata[1].content,
@@ -405,11 +414,13 @@ export class SecretSDK {
      *
      * @param {Object} ctx
      * @param {string} receiver
+     * @param {string} receiver_signingKey
+     * @param {string} receiver_alias use for test
      * @param {bigint} value the amount to be sent
      * @param {number} assetId the token to be sent
      * @return {Object} a batch of proof
      */
-    async send(ctx: any, receiver: string, value: bigint, assetId: number) {
+    async send(ctx: any, receiver: string, receiver_signingKey: string, receiver_alias: string, value: bigint, assetId: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let accountRequired = false;
@@ -428,6 +439,9 @@ export class SecretSDK {
         }
         let _receiver = new EigenAddress(receiver);
         let receiverPubKey = _receiver.pubKey;
+        let _receiver_signingKey = new EigenAddress(receiver_signingKey);
+        let receiverPubKey_signingKey = _receiver_signingKey.pubKey;
+
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.account.accountKey,
             this.account.signingKey,
@@ -437,9 +451,9 @@ export class SecretSDK {
             assetId,
             0,
             0n,
-            undefined,
-            value,
             _receiver,
+            value,
+            _receiver_signingKey,
             notes,
             accountRequired
         );
@@ -464,30 +478,34 @@ export class SecretSDK {
             let txInputData = await txInput.encrypt();
             assert(txInputData[0].content, encryptedNotes[0].content);
 
-            await this.trans.createTx(ctx, txdata, input, proofAndPublicSignals);
+            await this.trans.createTx(ctx, receiver_alias, txdata, input, proofAndPublicSignals);
 
             await this.rollupSC.update(proofAndPublicSignals);
 
             let _notes = [
                 {
+                    alias: this.alias,
                     index: encryptedNotes[0].index,
                     pubKey: receiverPubKey,
                     content: encryptedNotes[0].content,
                     state: NoteState.SPENT
                 },
                 {
+                    alias: this.alias,
                     index: encryptedNotes[1].index,
                     pubKey: receiverPubKey,
                     content: encryptedNotes[1].content,
                     state: NoteState.SPENT
                 },
                 {
+                    alias: receiver_alias,
                     index: input.outputNotes[0].index,
                     pubKey: receiverPubKey,
                     content: txdata[0].content,
                     state: NoteState.PROVED
                 },
                 {
+                    alias: this.alias,
                     index: input.outputNotes[1].index,
                     pubKey: receiverPubKey,
                     content: txdata[1].content,
@@ -603,30 +621,34 @@ export class SecretSDK {
             let txInputData = await txInput.encrypt();
             assert(txInputData[0].content, encryptedNotes[0].content);
 
-            await this.trans.createTx(ctx, txdata, input, proofAndPublicSignals);
+            await this.trans.createTx(ctx, this.alias, txdata, input, proofAndPublicSignals);
             // call contract and deposit
             await this.rollupSC.update(proofAndPublicSignals);
             // settle down the spent notes
             let _notes = [
                 {
+                    alias: this.alias,
                     index: encryptedNotes[0].index,
                     pubKey: receiverPubKey,
                     content: encryptedNotes[0].content,
                     state: NoteState.SPENT
                 },
                 {
+                    alias: this.alias,
                     index: encryptedNotes[1].index,
                     pubKey: receiverPubKey,
                     content: encryptedNotes[1].content,
                     state: NoteState.SPENT
                 },
                 {
+                    alias: this.alias,
                     index: input.outputNotes[0].index,
                     pubKey: receiverPubKey,
                     content: txdata[0].content,
                     state: NoteState.SPENT
                 },
                 {
+                    alias: this.alias,
                     index: input.outputNotes[1].index,
                     pubKey: receiverPubKey,
                     content: txdata[1].content,

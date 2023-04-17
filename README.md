@@ -106,7 +106,7 @@ npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id 2 --network dev
 ```
 npx hardhat get-account --alias Bob
 
-npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:099425cfd131bf4fc0b5f0cf484615c14485d42b3107301dfdeb58814dbfad86 --network dev
+npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:099425cfd131bf4fc0b5f0cf484615c14485d42b3107301dfdeb58814dbfad86--receiver-signingkey eig:xxxx --receiver-alias Alice --network dev
 // using Alice's accountKey as the receiver.
 ```
 8. get L2 balance
