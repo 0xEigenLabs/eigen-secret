@@ -74,7 +74,7 @@ task("register-token", "Register token to Rollup")
     console.log("approve token done, assetId is", assetId.toString())
 })
 
-task("send_l1", "Send asset from L1 to L1")
+task("send-l1", "Send asset from L1 to L1")
     .addParam("alias", "user name", "Alice")
     .addParam("value", "transaction amount")
     .addParam("receiver", "receiver ETH address")

@@ -48,12 +48,12 @@ task("deposit", "Deposit asset from L1 to L2")
       timestamp: timestamp,
       signature: signature
     };
-    let nonce = 0; // get nonce from Metamask
+    let nonce = 0; // TODO: get nonce from Metamask
     let receiver = sa.accountKey.pubKey.pubKey;
 
     // get tokenAddress by asset id
     let tokenAddress = await secretSDK.getRegisteredToken(BigInt(assetId))
-    console.log(tokenAddress.toString());
+    console.log("token", tokenAddress.toString());
     // approve
     let approveTx = await secretSDK.approve(tokenAddress.toString(), value);
     await approveTx.wait();
