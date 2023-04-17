@@ -209,7 +209,6 @@ export class SecretSDK {
     siblings: any;
 
     constructor(
-        alias: string,
         account: SecretAccount,
         serverAddr: string,
         circuitPath: string,
@@ -223,13 +222,13 @@ export class SecretSDK {
         rollupAddress: string,
         smtVerifierAddress: string = ""
     ) {
-        this.alias = alias;
+        this.alias = account.alias;
         this.account = account;
         this.state = new StateTreeClient(serverAddr);
         this.note = new NoteClient(serverAddr);
         this.trans = new TransactionClient(serverAddr);
         this.circuitPath = circuitPath;
-        this.rollupSC = new RollupSC(eddsa, alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
+        this.rollupSC = new RollupSC(eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
             poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
         this.keysFound = [];
         this.valuesFound = [];
@@ -625,13 +624,13 @@ export class SecretSDK {
                     index: input.outputNotes[0].index,
                     pubKey: receiverPubKey,
                     content: txdata[0].content,
-                    state: NoteState.SPENT
+                    state: NoteState.PROVED
                 },
                 {
                     index: input.outputNotes[1].index,
                     pubKey: receiverPubKey,
                     content: txdata[1].content,
-                    state: NoteState.SPENT
+                    state: NoteState.PROVED
                 }
             ]
             await this.note.updateNote(ctx, _notes);

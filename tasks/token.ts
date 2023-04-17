@@ -20,7 +20,6 @@ task("setup-rollup", "Setup rollup coordinator")
     const contractJson = require(defaultContractFile);
 
     let secretSDK = new SecretSDK(
-        alias,
         sa,
         defaultServerEndpoint,
         defaultCircuitPath,
@@ -54,7 +53,6 @@ task("register-token", "Register token to Rollup")
     const contractJson = require(defaultContractFile);
 
     let secretSDK = new SecretSDK(
-        alias,
         sa,
         defaultServerEndpoint,
         defaultCircuitPath,
@@ -90,7 +88,6 @@ task("send_l1", "Send asset from L1 to L1")
         let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
         const contractJson = require(defaultContractFile);
         let secretSDK = new SecretSDK(
-            alias,
             sa,
             defaultServerEndpoint,
             defaultCircuitPath,

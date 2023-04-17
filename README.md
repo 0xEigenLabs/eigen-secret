@@ -109,23 +109,26 @@ npx hardhat get-account --alias Bob
 npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:099425cfd131bf4fc0b5f0cf484615c14485d42b3107301dfdeb58814dbfad86 --network dev
 // using Alice's accountKey as the receiver.
 ```
+8. get L2 balance
 
-8. withdraw
+```
+npx hardhat get-balance_l2 --alias Bob --index 1 --asset-id 2 --network dev
+```
+9. withdraw
 
 ```
 npx hardhat withdraw --alias Bob --index 1 --value 4 --asset-id 2 --network dev
 ```
-
-9. migrate account
-
-```
-npx hardhat migrate-account --network dev
-```
-
-10. update account
+10. migrate account
 
 ```
-npx hardhat update-account --network dev
+npx hardhat migrate-account --alias Alice --index 0 --network dev
+```
+
+11. update account
+
+```
+npx hardhat update-account --alias Alice --index 0 --network dev
 ```
 
 ## SDK

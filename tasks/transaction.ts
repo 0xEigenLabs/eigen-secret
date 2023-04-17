@@ -20,18 +20,18 @@ task("deposit", "Deposit asset from L1 to L2")
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
-    const signature = await signEOASignature(account[index], rawMessage, account[index].address, alias, timestamp);
-    const contractJson = require(defaultContractFile);
+    let user = account[index];
     let accountData = fs.readFileSync(accountFile(alias));
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
+    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
+    const contractJson = require(defaultContractFile);
     let secretSDK = new SecretSDK(
-        alias,
         sa,
         defaultServerEndpoint,
         defaultCircuitPath,
         eddsa,
-        account[index],
+        user,
         contractJson.spongePoseidon,
         contractJson.tokenRegistry,
         contractJson.poseidon2,
@@ -42,8 +42,8 @@ task("deposit", "Deposit asset from L1 to L2")
     );
     await secretSDK.initialize(defaultContractABI);
     const ctx = {
-      alias: alias,
-      ethAddress: account[index].address,
+      alias: sa.alias,
+      ethAddress: user.address,
       rawMessage: rawMessage,
       timestamp: timestamp,
       signature: signature
@@ -74,18 +74,18 @@ task("send", "Send asset to receiver in L2")
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
-    const signature = await signEOASignature(account[index], rawMessage, account[index].address, alias, timestamp);
-    const contractJson = require(defaultContractFile);
+    let user = account[index];
     let accountData = fs.readFileSync(accountFile(alias));
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
+    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
+    const contractJson = require(defaultContractFile);
     let secretSDK = new SecretSDK(
-        alias,
         sa,
         defaultServerEndpoint,
         defaultCircuitPath,
         eddsa,
-        account[index],
+        user,
         contractJson.spongePoseidon,
         contractJson.tokenRegistry,
         contractJson.poseidon2,
@@ -96,8 +96,8 @@ task("send", "Send asset to receiver in L2")
     );
     await secretSDK.initialize(defaultContractABI);
     const ctx = {
-      alias: alias,
-      ethAddress: account[index].address,
+      alias: sa.alias,
+      ethAddress: user.address,
       rawMessage: rawMessage,
       timestamp: timestamp,
       signature: signature
@@ -117,18 +117,18 @@ task("withdraw", "Withdraw asset from L2 to L1")
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
-    const signature = await signEOASignature(account[index], rawMessage, account[index].address, alias, timestamp);
-    const contractJson = require(defaultContractFile);
+    let user = account[index];
     let accountData = fs.readFileSync(accountFile(alias));
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
+    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
+    const contractJson = require(defaultContractFile);
     let secretSDK = new SecretSDK(
-        alias,
         sa,
         defaultServerEndpoint,
         defaultCircuitPath,
         eddsa,
-        account[index],
+        user,
         contractJson.spongePoseidon,
         contractJson.tokenRegistry,
         contractJson.poseidon2,
@@ -139,8 +139,8 @@ task("withdraw", "Withdraw asset from L2 to L1")
     );
     await secretSDK.initialize(defaultContractABI);
     const ctx = {
-      alias: alias,
-      ethAddress: account[index].address,
+      alias: sa.alias,
+      ethAddress: user.address,
       rawMessage: rawMessage,
       timestamp: timestamp,
       signature: signature
@@ -149,3 +149,45 @@ task("withdraw", "Withdraw asset from L2 to L1")
     let proofAndPublicSignals = await secretSDK.withdraw(ctx, receiver, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
   })
+
+task("get-balance_l2", "Get user L2 balance")
+  .addParam("alias", "user name", "Alice")
+  .addParam("assetId", "asset id")
+  .addParam("password", "password for key sealing", "<your password>")
+  .addParam("index", "user index for test")
+  .setAction(async ({ alias, assetId, password, index }, { ethers }) => {
+    const eddsa = await buildEddsa();
+    let timestamp = Math.floor(Date.now()/1000).toString();
+    let account = await ethers.getSigners();
+    let user = account[index];
+    let accountData = fs.readFileSync(accountFile(alias));
+    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
+    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
+    const contractJson = require(defaultContractFile);
+    let secretSDK = new SecretSDK(
+        sa,
+        defaultServerEndpoint,
+        defaultCircuitPath,
+        eddsa,
+        user,
+        contractJson.spongePoseidon,
+        contractJson.tokenRegistry,
+        contractJson.poseidon2,
+        contractJson.poseidon3,
+        contractJson.poseidon6,
+        contractJson.rollup,
+        contractJson.smtVerifier
+    );
+    await secretSDK.initialize(defaultContractABI);
+    const ctx = {
+      alias: sa.alias,
+      ethAddress: user.address,
+      rawMessage: rawMessage,
+      timestamp: timestamp,
+      signature: signature
+    };
+
+    let balance = await secretSDK.getNotesValue(ctx, assetId);
+    console.log("balance", balance.toString());
+  });
