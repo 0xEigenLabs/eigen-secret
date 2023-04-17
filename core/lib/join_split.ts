@@ -307,20 +307,23 @@ export class JoinSplitCircuit {
 
             let outputNotes = [outputNote1];
             let outputNCs = [outputNc1];
-            const totalInputNoteValue = inputNotes.reduce((sum, n) => sum + n.val, 0n);
+            let totalInputNoteValue = inputNotes.reduce((sum, n) => sum + n.val, 0n);
             if (proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT &&
                 totalInputNoteValue < recipientPrivateOutput) {
                 throw new Error(
                     `Insufficient balance to private value: ${totalInputNoteValue}, ${recipientPrivateOutput}`
                 )
+            } else {
+                totalInputNoteValue += publicValue;
             }
             let change = totalInputNoteValue >= recipientPrivateOutput ?
                 (totalInputNoteValue - recipientPrivateOutput) : 0n;
-            if (proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT &&
-                change < publicValue) {
-                throw new Error(`Insufficient balance to public value: ${change}, ${publicValue}`);
+            if (proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT) {
+                if (change < publicValue) {
+                    throw new Error(`Insufficient balance to public value: ${change}, ${publicValue}`);
+                }
+                change = change >= publicValue ? (change - publicValue) : 0n;
             }
-            change = change >= publicValue ? (change - publicValue) : 0n;
             assert(inputNotes[1]);
             let nc2 = await inputNotes[1].compress(babyJub);
             let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, inputNoteInUse[1], accountKey);

@@ -317,6 +317,8 @@ export class SecretSDK {
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }
+        const util = require("util");
+        console.log("notes", notes);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.account.accountKey,
             this.account.signingKey,
@@ -332,6 +334,7 @@ export class SecretSDK {
             notes,
             accountRequired
         );
+        console.log("inputs", util.inspect(inputs, 1, 100));
 
         let batchProof: string[] = [];
         for (const input of inputs) {
