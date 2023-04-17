@@ -65,6 +65,7 @@ describe("Test View Key", function () {
     it("Serialize and deserialize key", () => {
         let keys = new Array(5).fill(new SigningKey(eddsa))
         let sa = new SecretAccount(
+            "Alice",
             keys[0],
             keys[1],
             keys[2],

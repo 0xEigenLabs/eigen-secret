@@ -207,7 +207,6 @@ export class JoinSplitCircuit {
         const confirmedNote = confirmedAndPendingInputNotes.filter((n) => !n.pending);
 
         let owner = accountKey.pubKey;
-
         let publicOwnerX = 0n;
         if (publicOwner !== undefined) {
             let publicOwnerXY = publicOwner.unpack(babyJub);
@@ -325,6 +324,7 @@ export class JoinSplitCircuit {
             assert(inputNotes[1]);
             let nc2 = await inputNotes[1].compress(babyJub);
             let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, inputNoteInUse[1], accountKey);
+            secret = F.toObject(F.random());
             let outputNote2: Note = new Note(
                 change, secret, owner, assetId, nullifier2, false,
                 index()

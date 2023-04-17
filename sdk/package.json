@@ -4,7 +4,7 @@
   "description": "> TODO: description",
   "author": "Eigen Labs",
   "homepage": "https://github.com/0xEigenLabs/eigen-secret#readme",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "main": "dist/index.js",
   "exports": {
     ".": {

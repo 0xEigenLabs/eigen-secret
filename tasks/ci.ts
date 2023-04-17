@@ -17,7 +17,8 @@ task("ci", "Run all task in one command")
   .setAction(async ({ alias, password }, { ethers }) => {
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
-    let [user] = await ethers.getSigners();
+    let account = await ethers.getSigners();
+    let user = account[0];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     let signingKey = new SigningKey(eddsa);
     let accountKey = new SigningKey(eddsa);
@@ -26,10 +27,9 @@ task("ci", "Run all task in one command")
     const contractJson = require(defaultContractFile);
 
     let sa = new SecretAccount(
-        accountKey, signingKey, accountKey, newSigningKey1, newSigningKey2
+        alias, accountKey, signingKey, accountKey, newSigningKey1, newSigningKey2
     );
     let secretSDK = new SecretSDK(
-        alias,
         sa,
         defaultServerEndpoint,
         defaultCircuitPath,
@@ -82,7 +82,7 @@ task("ci", "Run all task in one command")
     console.log(balance1)
     console.log("CreateAccount done, proof: ", proofAndPublicSignals, proof);
 
-    let proof1 = await secretSDK.send(ctx, receiver, 2n, assetId);
+    let proof1 = await secretSDK.send(ctx, receiver, alias, 2n, assetId);
     console.log("send proof", proof1);
     let balance2 = await secretSDK.getNotesValue(ctx, assetId);
     console.log(balance2)

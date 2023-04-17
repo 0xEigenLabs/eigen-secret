@@ -158,6 +158,8 @@ async function newAccountDigest(newAccountPubKey: bigint[]) {
 }
 
 export class SecretAccount {
+    alias: string;
+
     accountKey: SigningKey;
     signingKey: SigningKey;
 
@@ -166,12 +168,14 @@ export class SecretAccount {
     newSigningKey2: SigningKey;
 
     constructor(
+        alias: string,
         accountKey: SigningKey,
         signingKey: SigningKey,
         newAccountKey: SigningKey,
         newSigningKey1: SigningKey,
         newSigningKey2: SigningKey
     ) {
+        this.alias = alias;
         this.accountKey = accountKey;
         this.signingKey = signingKey;
         this.newAccountKey = newAccountKey;
@@ -182,6 +186,7 @@ export class SecretAccount {
     // generate key: const key = crypto.generateKeySync('aes', { length: 256 });
     serialize(key: any): string {
         let keys = [
+            this.alias,
             this.accountKey.prvKey,
             this.signingKey.prvKey,
             this.newAccountKey.prvKey,
@@ -202,11 +207,12 @@ export class SecretAccount {
         let keyData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
         let keys = keyData.split(",");
         return new SecretAccount(
-            new SigningKey(eddsa, keys[0]),
+            keys[0],
             new SigningKey(eddsa, keys[1]),
             new SigningKey(eddsa, keys[2]),
             new SigningKey(eddsa, keys[3]),
-            new SigningKey(eddsa, keys[4])
+            new SigningKey(eddsa, keys[4]),
+            new SigningKey(eddsa, keys[5])
         );
     }
 }

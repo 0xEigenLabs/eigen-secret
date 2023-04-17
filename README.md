@@ -61,6 +61,9 @@ The network dev is hardhat node, which is used to debug locally. And the hermez 
 1. deploy contracts
 ```
 npm run deploy:dev
+
+# expose token address in env
+export TOKEN=0x0165878A594ca255338adfa4d48449f69242Eb8F
 ```
 
 2. create account, make sure that the server is on.
@@ -81,7 +84,7 @@ set the current account as the coordinator of Rollup contract
 4. register token
 
 ```
-npx hardhat register-token --token 0x0165878A594ca255338adfa4d48449f69242Eb8F --network dev
+npx hardhat register-token --token $TOKEN --network dev
 ```
 
 5. deposit asset to L2
@@ -94,7 +97,7 @@ npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network de
 ```
 npx hardhat create-account --alias Bob --index 1 --network dev
 
-npx hardhat send_l1 --alias Alice --asset-id 2 --receiver 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --value 100 --network dev
+npx hardhat send-l1 --alias Alice --asset-id 2 --receiver 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --value 100 --network dev
 
 npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id 2 --network dev
 ```
@@ -103,26 +106,29 @@ npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id 2 --network dev
 ```
 npx hardhat get-account --alias Bob
 
-npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:099425cfd131bf4fc0b5f0cf484615c14485d42b3107301dfdeb58814dbfad86 --network dev
+npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:099425cfd131bf4fc0b5f0cf484615c14485d42b3107301dfdeb58814dbfad86 --receiver-alias Alice --network dev
 // using Alice's accountKey as the receiver.
 ```
+8. get L2 balance
 
-8. withdraw
+```
+npx hardhat get-balance-l2 --alias Bob --index 1 --asset-id 2 --network dev
+```
+9. withdraw
 
 ```
 npx hardhat withdraw --alias Bob --index 1 --value 4 --asset-id 2 --network dev
 ```
-
-9. migrate account
-
-```
-npx hardhat migrate-account --network dev
-```
-
-10. update account
+10. migrate account
 
 ```
-npx hardhat update-account --network dev
+npx hardhat migrate-account --alias Alice --index 0 --network dev
+```
+
+11. update account
+
+```
+npx hardhat update-account --alias Alice --index 0 --network dev
 ```
 
 ## SDK
