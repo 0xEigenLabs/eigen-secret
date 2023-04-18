@@ -1,6 +1,6 @@
 import { expect, assert } from "chai";
 import path = require("path");
-import * as test from "@eigen-secret/core/dist/test";
+import * as test from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
 const cls = require("circomlibjs");
 import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad, StateTree } from "@eigen-secret/core/dist/state_tree";

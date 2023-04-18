@@ -1,5 +1,4 @@
 export * as utils from "./utils";
-export * as test from "./test";
 export * as account from "./account";
 export * as note from "./note";
 export * as aes from "./aes_gcm";

@@ -1,4 +1,4 @@
-import * as test from "@eigen-secret/core/dist/test";
+import * as test from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
 import { Note } from "@eigen-secret/core/dist/note";
 import { assert, expect } from "chai";

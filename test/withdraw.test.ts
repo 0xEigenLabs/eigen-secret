@@ -6,7 +6,7 @@ const cls = require("circomlibjs");
 const fs = require("fs");
 
 import { SigningKey } from "@eigen-secret/core/dist/account";
-import { genTempMain } from "@eigen-secret/core/dist/test";
+import { genTempMain } from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
 
 describe("Test withdraw", async() => {
