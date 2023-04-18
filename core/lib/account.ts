@@ -2,7 +2,8 @@ import { ethers } from "ethers";
 const { buildEddsa, buildPoseidon } = require("circomlibjs");
 const { Scalar, utils } = require("ffjavascript");
 const createBlakeHash = require("blake-hash");
-const { Buffer } = require("buffer");
+//const { Buffer } = require("buffer");
+var Buffer = require('buffer/').Buffer
 import { Aes256gcm } from "./aes_gcm";
 
 type UnpackFunc = (babyJub: any) => [any, any];
@@ -77,11 +78,13 @@ export class SigningKey implements IKey {
         let babyJub = this.eddsa.babyJub;
         let receiverPoint = receiver.unpack(babyJub);
 
-        const sBuff = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(Buffer.from(this.prvKey)).digest());
+        console.log(this.prvKey, Buffer.from(this.prvKey));
+        const sBuff = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.prvKey).digest());
         let s = Scalar.fromRprLE(sBuff, 0, 32);
         let prvKey = Scalar.shr(s, 3);
         let rawSharedKey = babyJub.mulPointEscalar(receiverPoint, prvKey);
-        let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
+        console.log(rawSharedKey, Buffer.from(rawSharedKey[0]));
+        let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey[0])).update(Buffer.from(rawSharedKey[1])).digest();
         return sharedKey;
     }
     toCircuitInput: KeyToCircuitInput = () => {

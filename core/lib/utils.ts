@@ -1,4 +1,5 @@
-import { Buffer } from "buffer";
+//import { Buffer } from "buffer";
+var Buffer = require('buffer/').Buffer
 import { BigNumberish } from "ethers";
 import { ethers } from "ethers";
 import consola from "consola";

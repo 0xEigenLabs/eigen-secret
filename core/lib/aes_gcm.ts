@@ -1,5 +1,6 @@
 const crypto = require("crypto");
-const { Buffer } = require("buffer");
+//const { Buffer } = require("buffer");
+var Buffer = require('buffer/').Buffer
 
 export class Aes256gcm {
     readonly ALGO = "aes-256-gcm";
