@@ -541,8 +541,8 @@ export class SecretSDK {
                 notes.push(Note.decrypt(item.content, sharedKey));
             });
         }
-        // const util = require("util");
-        // console.log("notes: ", util.inspect(notes, 1, 100));
+        const util = require("util");
+        console.log("notes: ", util.inspect(notes, 1, 100));
         assert(notes.length > 0, "Invalid notes");
         let _receiver = new EigenAddress(receiver);
         let receiverPubKey = _receiver.pubKey;
@@ -561,7 +561,7 @@ export class SecretSDK {
             notes,
             accountRequired
         );
-        // console.log("inputs", util.inspect(inputs, 1, 100));
+        console.log("inputs", util.inspect(inputs, 1, 100));
 
         let batchProof: string[] = [];
         let lastKeys: Array<bigint> = [];

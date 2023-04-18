@@ -112,7 +112,7 @@ npx hardhat send --alias Bob --value 5 --index 1 --asset-id 2 --receiver eig:099
 8. get L2 balance
 
 ```
-npx hardhat get-balance-l2 --alias Bob --index 1 --asset-id 2 --network dev
+npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network dev
 ```
 9. withdraw
 
