@@ -1,4 +1,4 @@
-import * as test from "@eigen-secret/core/dist/test";
+import * as test from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
 const createBlakeHash = require("blake-hash");
 import { assert, expect } from "chai";

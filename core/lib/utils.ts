@@ -242,5 +242,7 @@ const hasValue = function(variable: any) {
   return true;
 };
 
-export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson };
+const pathJoin = (parts: Array<string>, sep='/') => parts.join(sep).replace(new RegExp(sep+'{1,}', 'g'), sep);
+
+export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson, pathJoin };
 
