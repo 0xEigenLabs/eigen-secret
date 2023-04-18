@@ -121,6 +121,7 @@ describe("Test JoinSplit Circuit", function () {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
+            console.log(input.toCircuitInput(babyJub, proof));
             await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
         let confirmedNote: Note[] = [];
@@ -191,6 +192,7 @@ describe("Test JoinSplit Circuit", function () {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
+            console.log(input.toCircuitInput(babyJub, proof));
             await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
     })
