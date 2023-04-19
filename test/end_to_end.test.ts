@@ -441,29 +441,29 @@ describe('POST /transactions', function() {
                 notes: [
                     {
                         alias: alias,
-                        index: encryptedNotes[0].index,
-                        pubKey: pubKey,
-                        content: encryptedNotes[0].content,
+                        index: input.inputNotes[0].index,
+                        pubKey: txInputData[0].pubKey.pubKey,
+                        content: txInputData[0].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
-                        index: encryptedNotes[1].index,
-                        pubKey: pubKey,
-                        content: encryptedNotes[1].content,
+                        index: input.inputNotes[1].index,
+                        pubKey: txInputData[1].pubKey.pubKey,
+                        content: txInputData[1].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[0].index,
-                        pubKey: pubKey,
+                        pubKey: txdata[0].pubKey.pubKey,
                         content: txdata[0].content,
                         state: NoteState.PROVED
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[1].index,
-                        pubKey: pubKey,
+                        pubKey: txdata[1].pubKey.pubKey,
                         content: txdata[1].content,
                         state: NoteState.PROVED
                     },
@@ -646,29 +646,29 @@ describe('POST /transactions', function() {
                 notes: [
                     {
                         alias: alias,
-                        index: encryptedNotes[0].index,
-                        pubKey: pubKey,
-                        content: encryptedNotes[0].content,
+                        index: input.inputNotes[0].index,
+                        pubKey: txInputData[0].pubKey.pubKey,
+                        content: txInputData[0].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
-                        index: encryptedNotes[1].index,
-                        pubKey: pubKey,
-                        content: encryptedNotes[1].content,
+                        index: input.inputNotes[1].index,
+                        pubKey: txInputData[0].pubKey.pubKey,
+                        content: txInputData[1].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[0].index,
-                        pubKey: pubKey,
+                        pubKey: txdata[0].pubKey.pubKey,
                         content: txdata[0].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[1].index,
-                        pubKey: pubKey,
+                        pubKey: txdata[1].pubKey.pubKey,
                         content: txdata[1].content,
                         state: NoteState.SPENT
                     },
@@ -715,13 +715,13 @@ describe('POST /transactions', function() {
 
         //DEBUG: check by smt verifier
         let tmpRoot = await smtVerifierContract.smtVerifier(
-                txInfo.siblings[0], txInfo.outputNc1,
+                txInfo.siblings[0], txInfo.keys[0],
                 txInfo.values[0], 0, 0, false, false, 20
         )
         expect(tmpRoot.toString()).to.eq(dataTreeRootsFound[0].toString());
 
         tmpRoot = await smtVerifierContract.smtVerifier(
-                txInfo.siblings[1], txInfo.outputNc2,
+                txInfo.siblings[1], txInfo.keys[1],
                 txInfo.values[1], 0, 0, false, false, 20
         )
         expect(tmpRoot.toString()).to.eq(dataTreeRootsFound[0].toString());
