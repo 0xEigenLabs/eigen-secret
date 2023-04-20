@@ -1,18 +1,14 @@
 import * as test from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
 import { Note } from "@eigen-secret/core/dist/note";
-import { assert, expect } from "chai";
-import { ethers } from "ethers";
 import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist/account";
 import { WorldState } from "../server/dist/state_tree";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
-import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
-import { SMTModel } from "../server/dist/state_tree";
 const path = require("path");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 
-describe("Test JoinSplit Circuit", function () {
+describe("Test JoinSplit Circuit", function() {
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
@@ -31,7 +27,7 @@ describe("Test JoinSplit Circuit", function () {
         F = babyJub.F;
         let third = path.join(__dirname, "../third-party");
         circuit = await test.genTempMain("circuits/join_split.circom",
-            "JoinSplit", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {include: third});
+            "JoinSplit", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", { include: third });
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
         signer = accountRequired? signingKey: accountKey;

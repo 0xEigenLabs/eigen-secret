@@ -1,18 +1,13 @@
 import { ethers } from "hardhat";
 const { ContractFactory, Contract } = require("ethers");
 import { expect, assert } from "chai";
-const {buildEddsa} = require("circomlibjs");
+const { buildEddsa } = require("circomlibjs");
 const path = require("path");
 const fs = require("fs");
-import { uint8Array2Bigint, prepareJson, parseProof, Proof, signEOASignature } from "@eigen-secret/core/dist/utils";
+import { uint8Array2Bigint, parseProof } from "@eigen-secret/core/dist/utils";
 import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
-import { AccountCircuit, compress as accountCompress, EigenAddress, SigningKey } from "@eigen-secret/core/dist/account";
-import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
-import { Prover } from "@eigen-secret/core/dist/prover";
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad } from "@eigen-secret/core/dist/state_tree";
+import { SigningKey } from "@eigen-secret/core/dist/account";
 const createBlakeHash = require("blake-hash");
-import { UpdateStatusCircuit, UpdateStatusInput } from "@eigen-secret/core/dist/update_state";
-import { NoteModel, updateDBNotes, getDBNotes } from "../server/dist/note";
 
 /*
     Here we want to test the smart contract's deposit functionality.
@@ -42,7 +37,7 @@ export class RollupHelper {
     sendFunc: any;
 
     constructor(
-        userAccounts: Array<any>,
+        userAccounts: Array<any>
     ) {
         this.userAccounts = userAccounts;
         this.rollup = undefined;
@@ -76,14 +71,14 @@ export class RollupHelper {
             "Rollup",
             {
                 libraries: {
-                    SpongePoseidon: this.spongePoseidon.address,
+                    SpongePoseidon: this.spongePoseidon.address
                 }
             }
         );
         this.rollup = await factoryR.deploy(
             this.poseidonContracts[0].address,
             this.poseidonContracts[1].address,
-            this.tokenRegistry.address,
+            this.tokenRegistry.address
         );
         await this.rollup.deployed();
         console.log("rollup address:", this.rollup.address);
@@ -100,7 +95,7 @@ export class RollupHelper {
         let tmpKeyP: any;
         const F = this.eddsa.F;
         const babyJub = this.eddsa.babyJub;
-        for (var i = 0; i < 20; i ++) {
+        for (let i = 0; i < 20; i ++) {
             let tmp = new SigningKey(this.eddsa);
             let tmpP = tmp.pubKey.unpack(babyJub);
             let tmpPub = [F.toObject(tmpP[0]), F.toObject(tmpP[1])];
@@ -132,17 +127,17 @@ export class RollupHelper {
 
     async deploy() {
         let setrollup = await this.tokenRegistry.connect(this.userAccounts[0]).setRollupNC(this.rollup.address);
-        assert(setrollup, 'setRollupNC failed')
+        assert(setrollup, "setRollupNC failed")
 
         let registerToken = await this.rollup.connect(this.userAccounts[1]).registerToken(this.testToken.address, { from: this.userAccounts[1].address })
         assert(registerToken, "token registration failed");
 
         let approveToken = await this.rollup.connect(this.userAccounts[0]).approveToken(this.testToken.address, { from: this.userAccounts[0].address })
         assert(approveToken, "token registration failed");
-        //FIXME should get assset id from event
+        // FIXME should get assset id from event
         let tx = await approveToken.wait();
 
-        let abi = [ "event RegisteredToken(uint publicAssetId, address tokenContract)" ];
+        let abi = ["event RegisteredToken(uint publicAssetId, address tokenContract)"];
         const iface = new ethers.utils.Interface(abi)
         const eventData = iface.decodeEventLog("RegisteredToken", tx.logs[0].data, tx.logs[0].topics)
         this.testTokenAssetId = await this.tokenRegistry.numTokens();
@@ -151,7 +146,7 @@ export class RollupHelper {
 
         let approveToken2 = await this.testToken.connect(this.userAccounts[3]).approve(
             this.rollup.address, 1700,
-            {from: this.userAccounts[3].address}
+            { from: this.userAccounts[3].address }
         )
         assert(approveToken2, "approveToken failed")
         return await this.tokenRegistry.numTokens();
@@ -160,7 +155,7 @@ export class RollupHelper {
     async deposit(index: number, assetId: number, value: bigint, nonce: number) {
         let approveToken = await this.testToken.connect(this.userAccounts[index]).approve(
             this.rollup.address, value,
-            {from: this.userAccounts[index].address}
+            { from: this.userAccounts[index].address }
         )
         assert(approveToken, "approveToken failed")
         let deposit0 = await this.rollup.connect(this.userAccounts[index]).deposit(
@@ -184,7 +179,7 @@ export class RollupHelper {
                 { from: this.userAccounts[i].address }
             )
         } catch (error) {
-            console.log('processDeposits revert reason', error)
+            console.log("processDeposits revert reason", error)
         }
         assert(processDeposit1, "processDeposit1 failed")
         await this.rollup.dataTreeRoot().then(console.log)
@@ -202,7 +197,7 @@ export class RollupHelper {
                 { from: this.userAccounts[i].address }
             )
         } catch (error) {
-            console.log('processDeposits revert reason', error)
+            console.log("processDeposits revert reason", error)
         }
         assert(processDeposit1, "processDeposit1 failed")
         await this.rollup.dataTreeRoot().then(console.log)
@@ -222,7 +217,7 @@ export class RollupHelper {
                 { from: this.userAccounts[i].address }
             )
         } catch (error) {
-            console.log('processDeposits revert reason', error)
+            console.log("processDeposits revert reason", error)
         }
         assert(processDeposit1, "processDeposit1 failed")
         await this.rollup.dataTreeRoot().then(console.log)

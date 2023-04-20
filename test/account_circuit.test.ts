@@ -1,18 +1,13 @@
 import * as test from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
-import { Note } from "@eigen-secret/core/dist/note";
-import { assert, expect } from "chai";
-import { ethers } from "ethers";
-import { compress as accountCompress, SigningKey, AccountCircuit } from "@eigen-secret/core/dist/account";
+import { SigningKey, AccountCircuit } from "@eigen-secret/core/dist/account";
 import { WorldState } from "../server/dist/state_tree";
-import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 
 const path = require("path");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 
-describe("Account circuit test", function () {
-
+describe("Account circuit test", function() {
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
@@ -54,10 +49,10 @@ describe("Account circuit test", function () {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            aliasHash,
+            aliasHash
         );
 
-        //FIXME: nullifier hardcoded to 1
+        // FIXME: nullifier hardcoded to 1
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
         await utils.executeCircuit(circuit, input.toCircuitInput(proof));
 
@@ -76,7 +71,7 @@ describe("Account circuit test", function () {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            aliasHash,
+            aliasHash
         );
 
         proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.accountNC);
@@ -94,7 +89,7 @@ describe("Account circuit test", function () {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            aliasHash,
+            aliasHash
         );
 
         proof = await WorldState.updateStateTree(0n, 0n, 0n, 0n, input.accountNC);

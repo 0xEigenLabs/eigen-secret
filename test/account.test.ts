@@ -1,15 +1,12 @@
 import * as test from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
-import { Note } from "@eigen-secret/core/dist/note";
-import { assert, expect } from "chai";
+import { expect } from "chai";
 import { ethers } from "ethers";
 import { EigenAddress, SigningKey, compress as accountCompress } from "@eigen-secret/core/dist/account";
-import { getPublicKey, Point } from "@noble/secp256k1";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 
-describe("Test Account Compressor", function () {
-
+describe("Test Account Compressor", function() {
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
@@ -41,7 +38,7 @@ describe("Test Account Compressor", function () {
         );
     })
 
-    it("AccountCompress Test", async() => {
+    it("AccountCompress Test", async () => {
         let accountKey = new SigningKey(eddsa);
         let signingKey = new SigningKey(eddsa);
         let aliasHash = 1n;

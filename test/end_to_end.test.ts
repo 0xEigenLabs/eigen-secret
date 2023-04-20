@@ -1,29 +1,27 @@
-const request = require('supertest');
-import express from 'express';
+const request = require("supertest");
 const createBlakeHash = require("blake-hash");
 const consola = require("consola");
 import app from "../server/dist/service";
 import { ethers } from "ethers";
 import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "@eigen-secret/core/dist/utils";
 import { expect, assert } from "chai";
-import { pad, siblingsPad, StateTree } from "@eigen-secret/core/dist/state_tree";
+import { pad } from "@eigen-secret/core/dist/state_tree";
 import { NoteModel as DBNote } from "../server/dist/note";
 import { Note, NoteState } from "@eigen-secret/core/dist/note";
-import { compress as accountCompress, EigenAddress, SigningKey } from "@eigen-secret/core/dist/account";
+import { compress as accountCompress, EigenAddress } from "@eigen-secret/core/dist/account";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
 import { AccountCircuit } from "@eigen-secret/core/dist/account";
-import { UpdateStatusCircuit, UpdateStatusInput } from "@eigen-secret/core/dist/update_state";
+import { UpdateStatusCircuit } from "@eigen-secret/core/dist/update_state";
 import { Prover } from "@eigen-secret/core/dist/prover";
-import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 import { Transaction } from "@eigen-secret/core/dist/transaction";
 const { buildEddsa } = require("circomlibjs");
 import { RollupHelper } from "./rollup.helper";
 const path = require("path");
-const hre = require('hardhat')
+const hre = require("hardhat")
 import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
 import { deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
 
-describe('POST /transactions', function() {
+describe("POST /transactions", function() {
     this.timeout(1000 * 1000);
     const alias = "eigen.eth";
     let eddsa: any;
@@ -40,7 +38,7 @@ describe('POST /transactions', function() {
 
     let smtVerifierContract: any;
 
-    before("end2end deposit", async() => {
+    before("end2end deposit", async () => {
         userAccounts = await hre.ethers.getSigners()
 
         let poseidons = await deployPoseidons(hre.ethers, userAccounts[0], [2, 3]);
@@ -92,7 +90,7 @@ describe('POST /transactions', function() {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            aliasHash,
+            aliasHash
         );
         assert(input.newAccountNC == acStateKey, "Invalid accountNC");
 
@@ -114,13 +112,13 @@ describe('POST /transactions', function() {
                 acStateKey: acStateKey
             }
         });
-        //console.log("tmpInput", tmpInput, acStateKey);
+        // console.log("tmpInput", tmpInput, acStateKey);
         const response = await request(app)
-        .post('/statetree')
+        .post("/statetree")
         .send(
             tmpInput
         )
-        .set('Accept', 'application/json');
+        .set("Accept", "application/json");
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
 
@@ -141,7 +139,7 @@ describe('POST /transactions', function() {
         let receiver = accountKey;
 
         const responseNote = await request(app)
-            .post('/notes/get')
+            .post("/notes/get")
             .send({
                 alias: alias,
                 timestamp: timestamp,
@@ -150,8 +148,8 @@ describe('POST /transactions', function() {
                 ethAddress: newEOAAccount.address,
                 noteState: [NoteState.CREATING, NoteState.PROVED]
             })
-            .set('Accept', 'application/json');
-        //console.log(responseNote.body.data);
+            .set("Accept", "application/json");
+        // console.log(responseNote.body.data);
         let encryptedNotes = responseNote.body.data;
 
         // decrypt
@@ -163,7 +161,7 @@ describe('POST /transactions', function() {
             });
         }
 
-        //console.log("note: ", notes);
+        // console.log("note: ", notes);
         let nonce = 0; // get nonce from metamask
         await rollupHelper.deposit(0, assetId, value, nonce);
         // create notes
@@ -200,13 +198,13 @@ describe('POST /transactions', function() {
                     acStateKey: acStateKey
                 }
             });
-            //console.log("tmpInput", tmpInput);
+            // console.log("tmpInput", tmpInput);
             const response = await request(app)
-                .post('/statetree')
+                .post("/statetree")
                 .send(
                     tmpInput
                 )
-                .set('Accept', 'application/json');
+                .set("Accept", "application/json");
             console.log(response.body.data);
             expect(response.status).to.eq(200);
             expect(response.body.errno).to.eq(0);
@@ -237,7 +235,7 @@ describe('POST /transactions', function() {
 
             // create tx. FIXME: should peg input?
             const responseTx = await request(app)
-            .post('/transactions')
+            .post("/transactions")
             .send({
                 alias: alias,
                 timestamp: timestamp,
@@ -249,13 +247,13 @@ describe('POST /transactions', function() {
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
                 content2: txdata[1].content,
-                noteIndex:  input.outputNotes[0].index.toString(),
+                noteIndex: input.outputNotes[0].index.toString(),
                 note2Index: input.outputNotes[1].index.toString(),
                 proof: Prover.serialize(proofAndPublicSignals.proof),
                 publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
             })
-            .set('Accept', 'application/json');
-            //console.log(responseTx.body);
+            .set("Accept", "application/json");
+            // console.log(responseTx.body);
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
 
@@ -264,7 +262,7 @@ describe('POST /transactions', function() {
 
             // settle down the spent notes
             const responseSt = await request(app)
-            .post('/notes/update')
+            .post("/notes/update")
             .send(prepareJson({
                 alias: alias,
                 timestamp: timestamp,
@@ -275,14 +273,14 @@ describe('POST /transactions', function() {
                     {
                         alias: alias,
                         index: input.inputNotes[0].index,
-                        pubKey: txInputData[0].pubKey.pubKey, //it's the first depositing, so the init public key is a random
+                        pubKey: txInputData[0].pubKey.pubKey, // it's the first depositing, so the init public key is a random
                         content: txInputData[0].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.inputNotes[1].index,
-                        pubKey: txInputData[1].pubKey.pubKey, //same as above
+                        pubKey: txInputData[1].pubKey.pubKey, // same as above
                         content: txInputData[1].content,
                         state: NoteState.SPENT
                     },
@@ -302,8 +300,8 @@ describe('POST /transactions', function() {
                     }
                 ]
             }))
-            .set('Accept', 'application/json');
-            //console.log(responseSt.body.data);
+            .set("Accept", "application/json");
+            // console.log(responseSt.body.data);
             expect(responseSt.status).to.eq(200);
             expect(responseSt.body.errno).to.eq(0);
         }
@@ -311,7 +309,7 @@ describe('POST /transactions', function() {
         await rollupHelper.processDeposits(0, keysFound, valuesFound, siblings);
     })
 
-    it("end2end send", async() => {
+    it("end2end send", async () => {
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
@@ -329,7 +327,7 @@ describe('POST /transactions', function() {
 
         // 1. first transaction
         const responseNote = await request(app)
-        .post('/notes/get')
+        .post("/notes/get")
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -338,8 +336,8 @@ describe('POST /transactions', function() {
             ethAddress: newEOAAccount.address,
             noteState: [NoteState.CREATING, NoteState.PROVED]
         })
-        .set('Accept', 'application/json');
-        //console.log(responseNote.body.data);
+        .set("Accept", "application/json");
+        // console.log(responseNote.body.data);
         let encryptedNotes = responseNote.body.data;
 
         // decrypt
@@ -370,7 +368,7 @@ describe('POST /transactions', function() {
         );
         for (const input of inputs) {
             const response = await request(app)
-            .post('/statetree')
+            .post("/statetree")
             .send(prepareJson({
                 alias: alias,
                 timestamp: timestamp,
@@ -386,8 +384,8 @@ describe('POST /transactions', function() {
                     acStateKey: acStateKey
                 }
             }))
-            .set('Accept', 'application/json');
-            //console.log(response.body.data);
+            .set("Accept", "application/json");
+            // console.log(response.body.data);
             expect(response.status).to.eq(200);
             expect(response.body.errno).to.eq(0);
 
@@ -405,7 +403,7 @@ describe('POST /transactions', function() {
 
             // create tx
             const responseTx = await request(app)
-            .post('/transactions')
+            .post("/transactions")
             .send({
                 alias: alias,
                 timestamp: timestamp,
@@ -417,12 +415,12 @@ describe('POST /transactions', function() {
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
                 content2: txdata[1].content,
-                noteIndex:  input.outputNotes[0].index.toString(),
+                noteIndex: input.outputNotes[0].index.toString(),
                 note2Index: input.outputNotes[1].index.toString(),
                 proof: Prover.serialize(proofAndPublicSignals.proof),
                 publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
             })
-            .set('Accept', 'application/json');
+            .set("Accept", "application/json");
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
 
@@ -431,7 +429,7 @@ describe('POST /transactions', function() {
 
             // settle down the spent notes
             const responseSt = await request(app)
-            .post('/notes/update')
+            .post("/notes/update")
             .send(prepareJson({
                 alias: alias,
                 timestamp: timestamp,
@@ -466,17 +464,17 @@ describe('POST /transactions', function() {
                         pubKey: txdata[1].pubKey.pubKey,
                         content: txdata[1].content,
                         state: NoteState.PROVED
-                    },
+                    }
                 ]
             }))
-            .set('Accept', 'application/json');
-            //console.log(responseSt.body.data);
+            .set("Accept", "application/json");
+            // console.log(responseSt.body.data);
             expect(responseSt.status).to.eq(200);
             expect(responseSt.body.errno).to.eq(0);
         }
     })
 
-    it("should accept valid withdrawals", async() => {
+    it("should accept valid withdrawals", async () => {
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
@@ -494,7 +492,7 @@ describe('POST /transactions', function() {
 
         // 1. first transaction
         const responseNote = await request(app)
-        .post('/notes/get')
+        .post("/notes/get")
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -503,8 +501,8 @@ describe('POST /transactions', function() {
             ethAddress: newEOAAccount.address,
             noteState: [NoteState.CREATING, NoteState.PROVED]
         })
-        .set('Accept', 'application/json');
-        //console.log(responseNote.body.data);
+        .set("Accept", "application/json");
+        // console.log(responseNote.body.data);
         let encryptedNotes = responseNote.body.data;
 
         // decrypt
@@ -534,8 +532,8 @@ describe('POST /transactions', function() {
             accountRequired
         );
         let lastKeys: Array<bigint> = [];
-        //let lastSiblings: Array<Array<bigint>> = [];
-        //let lastValues: Array<bigint> = [];
+        // let lastSiblings: Array<Array<bigint>> = [];
+        // let lastValues: Array<bigint> = [];
         let keysFound: Array<bigint> = [];
         let valuesFound: Array<bigint> = [];
         let dataTreeRootsFound: Array<bigint> = [];
@@ -543,7 +541,7 @@ describe('POST /transactions', function() {
         let siblings: Array<Array<bigint>> = [];
         for (const input of inputs) {
             const response = await request(app)
-            .post('/statetree')
+            .post("/statetree")
             .send(prepareJson({
                 alias: alias,
                 timestamp: timestamp,
@@ -559,8 +557,8 @@ describe('POST /transactions', function() {
                     acStateKey: acStateKey
                 }
             }))
-            .set('Accept', 'application/json');
-            //console.log(response.body.data);
+            .set("Accept", "application/json");
+            // console.log(response.body.data);
             expect(response.status).to.eq(200);
             expect(response.body.errno).to.eq(0);
 
@@ -589,15 +587,15 @@ describe('POST /transactions', function() {
             dataTreeRootsFound.push(BigInt(singleProof.dataTreeRoot));
             lastDataTreeRoot = singleProof.dataTreeRoot;
             lastKeys = input.outputNCs;
-            //lastValues = [input.outputNotes[0].inputNullifier, input.outputNotes[1].inputNullifier];
+            // lastValues = [input.outputNotes[0].inputNullifier, input.outputNotes[1].inputNullifier];
 
-            //lastSiblings = []
+            // lastSiblings = []
             for (const item of rawSiblings) {
                 let tmpSiblings = [];
                 for (const sib of item) {
                     tmpSiblings.push(sib);
                 }
-                //lastSiblings.push(tmpSiblings);
+                // lastSiblings.push(tmpSiblings);
                 siblings.push(tmpSiblings);
             }
 
@@ -610,7 +608,7 @@ describe('POST /transactions', function() {
 
             // create tx
             const responseTx = await request(app)
-            .post('/transactions')
+            .post("/transactions")
             .send({
                 alias: alias,
                 timestamp: timestamp,
@@ -622,12 +620,12 @@ describe('POST /transactions', function() {
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
                 content2: txdata[1].content,
-                noteIndex:  input.outputNotes[0].index.toString(),
+                noteIndex: input.outputNotes[0].index.toString(),
                 note2Index: input.outputNotes[1].index.toString(),
                 proof: Prover.serialize(proofAndPublicSignals.proof),
                 publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
             })
-            .set('Accept', 'application/json');
+            .set("Accept", "application/json");
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
 
@@ -636,7 +634,7 @@ describe('POST /transactions', function() {
 
             // settle down the spent notes
             const responseSt = await request(app)
-            .post('/notes/update')
+            .post("/notes/update")
             .send(prepareJson({
                 alias: alias,
                 timestamp: timestamp,
@@ -671,11 +669,11 @@ describe('POST /transactions', function() {
                         pubKey: txdata[1].pubKey.pubKey,
                         content: txdata[1].content,
                         state: NoteState.SPENT
-                    },
+                    }
                 ]
             }))
-            .set('Accept', 'application/json');
-            //console.log(responseSt.body.data);
+            .set("Accept", "application/json");
+            // console.log(responseSt.body.data);
             expect(responseSt.status).to.eq(200);
             expect(responseSt.body.errno).to.eq(0);
         }
@@ -686,7 +684,7 @@ describe('POST /transactions', function() {
         // last tx
         const txInfo = {
             publicValue: value, // lastProof.publicSignals[1]
-            publicOwner: xy, //lastProof.publicSignals[2]
+            publicOwner: xy, // lastProof.publicSignals[2]
             outputNc1: lastKeys[0], // lastProof.publicSignals[4]
             outputNc2: lastKeys[1], // lastProof.publicSignals[5]
             publicAssetId: assetId, // lastProof.publicSignals[7]
@@ -697,23 +695,23 @@ describe('POST /transactions', function() {
             siblings: siblings
         }
 
-        //FIXME hash sibings and tree
+        // FIXME hash sibings and tree
         let hashInput = [
             BigInt(txInfo.publicValue),
             txInfo.publicOwner[0],
             txInfo.publicOwner[1],
             txInfo.outputNc1,
             txInfo.outputNc2,
-            BigInt(txInfo.publicAssetId),
+            BigInt(txInfo.publicAssetId)
         ];
-        for (var i = 0; i < txInfo.roots.length; i ++) {
+        for (let i = 0; i < txInfo.roots.length; i ++) {
             hashInput.push(txInfo.roots[i])
         }
         let msg = await poseidonSponge(
            hashInput
         );
 
-        //DEBUG: check by smt verifier
+        // DEBUG: check by smt verifier
         let tmpRoot = await smtVerifierContract.smtVerifier(
                 txInfo.siblings[0], txInfo.keys[0],
                 txInfo.values[0], 0, 0, false, false, 20
@@ -734,7 +732,7 @@ describe('POST /transactions', function() {
             M: msg,
             R8x: Fr.toObject(sig.R8[0]),
             R8y: Fr.toObject(sig.R8[1]),
-            S: sig.S,
+            S: sig.S
         }
 
         let proofAndPublicSignals = await Prover.withdraw(circuitPath, input);

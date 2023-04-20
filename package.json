@@ -14,7 +14,7 @@
     "compile": "hardhat compile",
     "test": "npm run build && npm run compile && npx hardhat test",
     "lint_ts": "./node_modules/.bin/eslint --fix --ext .ts server sdk tasks",
-    "clean": "rm -rf build dist typechain cache artifacts",
+    "clean": "rm -rf build dist typechain cache node_modules",
     "deploy:goerli": "hardhat deploy --network goerli",
     "deploy:hermez": "hardhat deploy --network hermez",
     "deploy:dev": "hardhat deploy --network dev"

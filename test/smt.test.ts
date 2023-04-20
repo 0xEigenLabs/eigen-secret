@@ -1,21 +1,21 @@
-import { expect, assert } from "chai";
+import { expect } from "chai";
 import path = require("path");
 import * as test from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
 const cls = require("circomlibjs");
-import { getHashes, N_LEVEL, StateTreeCircuitInput, siblingsPad, StateTree } from "@eigen-secret/core/dist/state_tree";
+import { siblingsPad, StateTree } from "@eigen-secret/core/dist/state_tree";
 const { ethers } = require("hardhat");
 import { SMTModel } from "../server/dist/state_tree";
 import { deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
 
-describe("Test SMT Membership Query", function () {
+describe("Test SMT Membership Query", function() {
     this.timeout(1000 * 1000);
 
     // runs circom compilation
     let circuit: any;
     let tree: any;
     let Fr: any;
-    before(async function () {
+    before(async function() {
         let stateTree = path.join(__dirname, "../circuits", "state_tree.circom");
         circuit = await test.genTempMain(stateTree, "Membership", "", [20], {});
         await circuit.loadSymbols();
@@ -24,7 +24,7 @@ describe("Test SMT Membership Query", function () {
         Fr = tree.F;
     });
 
-    it("Test Membership", async function () {
+    it("Test Membership", async function() {
         const key = Fr.e(333);
         const value = Fr.e(444);
         await tree.insert(key, value);
@@ -36,20 +36,20 @@ describe("Test SMT Membership Query", function () {
             value: Fr.toObject(value),
             root: Fr.toObject(tree.root()),
             siblings: siblingsPad(ci.siblings, Fr),
-            enabled: 1,
+            enabled: 1
         };
         await utils.executeCircuit(circuit, input)
     });
 });
 
-describe("Test SMT Membership Update", function () {
+describe("Test SMT Membership Update", function() {
     this.timeout(1000 * 1000);
 
     // runs circom compilation
     let circuit: any;
     let tree: any;
     let Fr: any;
-    before(async function () {
+    before(async function() {
         let stateTree = path.join(__dirname, "../circuits", "state_tree.circom");
         circuit = await test.genTempMain(stateTree, "NonMembershipUpdate", "", [20], {});
         await circuit.loadSymbols();
@@ -58,7 +58,7 @@ describe("Test SMT Membership Update", function () {
         Fr = tree.F;
     });
 
-    it("Test NonMembershipUpdate", async function () {
+    it("Test NonMembershipUpdate", async function() {
         const key = Fr.e(333333);
         const value = Fr.e(444111);
         let ci = await tree.insert(key, value);
@@ -66,7 +66,7 @@ describe("Test SMT Membership Update", function () {
         await utils.executeCircuit(circuit, input)
     });
 
-    it("Test NonMembershipUpdate 2", async function () {
+    it("Test NonMembershipUpdate 2", async function() {
         const key = Fr.e("17195092312975762537892237130737365903429674363577646686847513978084990105579");
         const value = Fr.e("19650379996168153643111744440707177573540245771926102415571667548153444658179");
         let ci = await tree.insert(key, value);
@@ -114,7 +114,7 @@ describe("Test SMT smart contract", () => {
         // test 1
         let key: any;
         let value: any;
-        for (var i = 0; i < 128; i ++) {
+        for (let i = 0; i < 128; i ++) {
             key = Fr.random();
             value = Fr.random();
             await tree.insert(key, value);
@@ -133,7 +133,7 @@ describe("Test SMT smart contract", () => {
                 // Note: need to pad siblings with "0"
                 // Cause the siblings array length in circuit is N_LEVEL
                 siblings: siblingsPad(ci.siblings, Fr),
-                enabled: 1,
+                enabled: 1
             };
             await utils.executeCircuit(circuit, input)
 
@@ -163,7 +163,7 @@ describe("Test SMT smart contract", () => {
             // Note: need to pad siblings with "0"
             // Cause the siblings array length in circuit is N_LEVEL
             siblings: siblingsPad(ci1.siblings, Fr),
-            enabled: 1,
+            enabled: 1
         };
         await utils.executeCircuit(circuit, input1)
 
