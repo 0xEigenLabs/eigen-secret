@@ -228,6 +228,7 @@ export class SecretSDK {
         this.state = new StateTreeClient(serverAddr);
         this.note = new NoteClient(serverAddr);
         this.trans = new TransactionClient(serverAddr);
+        Prover.serverAddr = serverAddr; // init Prover client with serverAddr
         this.circuitPath = circuitPath;
         this.rollupSC = new RollupSC(eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
             poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
