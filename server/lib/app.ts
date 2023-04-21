@@ -11,8 +11,8 @@ import express from "express";
 import path from "path";
 
 app.use("/public", express.static(path.resolve(__dirname, "../../circuits"), {
-  maxAge: 3600000, // 设置缓存时间为1小时
-  etag: true // 启用ETag
+  maxAge: 3600000, // set cache time to 1 hour
+  etag: true // enable ETag
 }));
 
 app.listen(3000, function() {
