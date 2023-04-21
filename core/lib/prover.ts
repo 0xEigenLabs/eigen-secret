@@ -12,8 +12,8 @@ export class Prover {
 
         // console.log("prover input", input);
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(
-            input,
-            0
+          input,
+          0
         );
 
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkey, witnessBuffer);
@@ -44,8 +44,8 @@ export class Prover {
 
         // console.log("withdraw prover input", input);
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(
-            input,
-            0
+          input,
+          0
         );
 
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkey, witnessBuffer);
