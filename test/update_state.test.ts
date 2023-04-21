@@ -1,23 +1,20 @@
 import * as test from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
 import { Note } from "@eigen-secret/core/dist/note";
-import { assert, expect } from "chai";
-import { ethers } from "ethers";
+import { assert } from "chai";
 import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist/account";
 import { WorldState } from "../server/dist/state_tree";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
 import { AccountCircuit } from "@eigen-secret/core/dist/account";
-import { UpdateStatusCircuit, UpdateStatusInput } from "@eigen-secret/core/dist/update_state";
+import { UpdateStatusCircuit } from "@eigen-secret/core/dist/update_state";
 import { Prover } from "@eigen-secret/core/dist/prover";
-import { getPublicKey, sign as k1Sign, verify as k1Verify, Point } from "@noble/secp256k1";
 const path = require("path");
 const { readFileSync } = require("fs");
 const snarkjs = require("snarkjs");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
-
-describe("Test JoinSplit Circuit", function () {
-
+/* globals describe, before, it */
+describe("Test JoinSplit Circuit", function() {
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
@@ -36,7 +33,11 @@ describe("Test JoinSplit Circuit", function () {
         F = babyJub.F;
         let third = path.join(__dirname, "../third-party");
         circuit = await test.genTempMain("circuits/update_state.circom",
-            "UpdateState", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {include: third});
+            "UpdateState",
+            "proof_id, public_value, public_owner,"+
+            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id",
+            "20",
+            { include: third });
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
     })
@@ -62,7 +63,7 @@ describe("Test JoinSplit Circuit", function () {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            aliasHash,
+            aliasHash
         );
         let proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.accountNC);
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
@@ -82,7 +83,7 @@ describe("Test JoinSplit Circuit", function () {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            aliasHash,
+            aliasHash
         );
 
         proof = await WorldState.updateStateTree(0n, 0n, 0n, 0n, input.accountNC);
@@ -93,8 +94,8 @@ describe("Test JoinSplit Circuit", function () {
         signer = accountRequired? signingKey: accountKey;
         acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
-        //let state = await WorldState.getInstance();
-        //await state.insert(F.e(acStateKey), 1n);
+        // let state = await WorldState.getInstance();
+        // await state.insert(F.e(acStateKey), 1n);
         await WorldState.updateStateTree(acStateKey, 1n, 0n, 0n, acStateKey);
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
@@ -165,7 +166,7 @@ describe("Test JoinSplit Circuit", function () {
         confirmedNote = [];
         for (const inp of inputs2) {
             assert(inp.outputNotes[1].val === 5n);
-            //confirmedNote.push(inp.outputNotes[0]);
+            // confirmedNote.push(inp.outputNotes[0]);
             confirmedNote.push(inp.outputNotes[1]);
         }
         let withrawReceiver = new SigningKey(eddsa);
