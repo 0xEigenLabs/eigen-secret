@@ -10,10 +10,10 @@ export class Prover {
     }
 
     static async updateState(circuitPath: string, input: any) {
-        let wasmUrl = `${Prover.serverAddr}/main_update_state_js/main_update_state.wasm`;
-        let zkeyUrl = `${Prover.serverAddr}/circuit_final.zkey.16`;
+        let wasmUrl = `${Prover.serverAddr}/public/main_update_state_js/main_update_state.wasm`;
+        let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.16`;
 
-        let wcUrl = `${Prover.serverAddr}/main_update_state_js/witness_calculator.js`;
+        let wcUrl = `${Prover.serverAddr}/public/main_update_state_js/witness_calculator.js`;
         const { data: wcContent } = await axios.get(wcUrl, { responseType: "text" });
         const wcBlob = new Blob([wcContent], { type: "text/javascript" });
         const wcImportUrl = URL.createObjectURL(wcBlob);
@@ -43,7 +43,7 @@ export class Prover {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
-        let zkeyUrl = `${circuitPath}/circuit_final.zkey.16`;
+        let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.16`;
 
         const zkeyBuffer = await Prover.fetchRemoteFile(zkeyUrl);
 
@@ -53,10 +53,10 @@ export class Prover {
     }
 
     static async withdraw(circuitPath: string, input: any) {
-        let wasmUrl = `${Prover.serverAddr}/main_withdraw_js/main_update_state.wasm`;
-        let zkeyUrl = `${Prover.serverAddr}/circuit_final.zkey.14`;
+        let wasmUrl = `${Prover.serverAddr}/public/main_withdraw_js/main_update_state.wasm`;
+        let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.14`;
 
-        let wcUrl = `${Prover.serverAddr}/main_withdraw_js/witness_calculator.js`;
+        let wcUrl = `${Prover.serverAddr}/public/main_withdraw_js/witness_calculator.js`;
         const { data: wcContent } = await axios.get(wcUrl, { responseType: "text" });
         const wcBlob = new Blob([wcContent], { type: "text/javascript" });
         const wcImportUrl = URL.createObjectURL(wcBlob);
@@ -86,7 +86,7 @@ export class Prover {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
-        let zkeyUrl = `${Prover.serverAddr}/circuit_final.zkey.14`;
+        let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.14`;
 
         const zkeyBuffer = await Prover.fetchRemoteFile(zkeyUrl);
 

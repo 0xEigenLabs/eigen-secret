@@ -1,6 +1,6 @@
 {
   "name": "@eigen-secret/core",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "> TODO: description",
   "author": "Eigen Labs",
   "homepage": "https://github.com/0xEigenLabs/eigen-secret#readme",
@@ -47,10 +47,9 @@
     "blake-hash": "^2.0.0",
     "circomlibjs": "^0.1.7",
     "consola": "^2.15.3",
-    "cors": "^2.8.5",
     "ethers": "^5.6.8",
     "ffjavascript": "^0.2.55",
-    "mariadb": "^3.1.0",
+    "ffjavascript-browser": "^0.0.3",
     "snarkjs": "^0.6.1"
   },
   "devDependencies": {

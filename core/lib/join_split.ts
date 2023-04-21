@@ -4,7 +4,7 @@ import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
 import { strict as assert } from "assert";
 import { index } from "./utils";
-const { Scalar, utils } = require("ffjavascript");
+const { Scalar, utils } = require("ffjavascript-browser");
 
 export class JoinSplitInput {
     proofId: number;

@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 const { buildEddsa, buildPoseidon } = require("circomlibjs");
-const { Scalar, utils } = require("ffjavascript");
+const { Scalar, utils } = require("ffjavascript-browser");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { Aes256gcm } from "./aes_gcm";
