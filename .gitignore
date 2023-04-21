@@ -1,8 +1,6 @@
 dist/
 .secret
 yarn-error.log
-package-lock.json
-yarn.lock
 *.key
 *.sol.bak
 node_modules
