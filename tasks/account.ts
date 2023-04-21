@@ -103,7 +103,6 @@ task("migrate-account", "Migrate account to another ETH address")
         ctx, sa.newAccountKey
     );
     sa.accountKey = sa.newAccountKey;
-    sa.newAccountKey = sa.newAccountKey;
     let key2 = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     fs.writeFileSync(accountFile(sa.alias), sa.serialize(key2));
     console.log(proofAndPublicSignals);
