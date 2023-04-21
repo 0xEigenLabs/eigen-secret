@@ -1,12 +1,11 @@
 import axios from "axios";
-const fs = require("fs");
 const snarkjs = require("snarkjs");
 
 export class Prover {
     static serverAddr: string;
 
     static async fetchRemoteFile(url: string) {
-        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        const response = await axios.get(url, { responseType: "arraybuffer" });
         return response.data;
     }
 
@@ -15,8 +14,8 @@ export class Prover {
         let zkeyUrl = `${Prover.serverAddr}/circuit_final.zkey.16`;
 
         let wcUrl = `${Prover.serverAddr}/main_update_state_js/witness_calculator.js`;
-        const { data: wcContent } = await axios.get(wcUrl, { responseType: 'text' });
-        const wcBlob = new Blob([wcContent], { type: 'text/javascript' });
+        const { data: wcContent } = await axios.get(wcUrl, { responseType: "text" });
+        const wcBlob = new Blob([wcContent], { type: "text/javascript" });
         const wcImportUrl = URL.createObjectURL(wcBlob);
         const { default: wc } = await import(wcImportUrl);
         URL.revokeObjectURL(wcImportUrl);
@@ -58,8 +57,8 @@ export class Prover {
         let zkeyUrl = `${Prover.serverAddr}/circuit_final.zkey.14`;
 
         let wcUrl = `${Prover.serverAddr}/main_withdraw_js/witness_calculator.js`;
-        const { data: wcContent } = await axios.get(wcUrl, { responseType: 'text' });
-        const wcBlob = new Blob([wcContent], { type: 'text/javascript' });
+        const { data: wcContent } = await axios.get(wcUrl, { responseType: "text" });
+        const wcBlob = new Blob([wcContent], { type: "text/javascript" });
         const wcImportUrl = URL.createObjectURL(wcBlob);
         const { default: wc } = await import(wcImportUrl);
         URL.revokeObjectURL(wcImportUrl);
