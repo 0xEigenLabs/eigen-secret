@@ -9,10 +9,8 @@ task("deploy", "Deploy all smart contract")
       .addParam("contractFile", "[output] contract address", defaultContractFile)
       .setAction(async ({ testTokenAddress, contractFile }, { ethers }) => {
     let [admin] = await ethers.getSigners();
-    let poseidonContracts = await deployPoseidons(
-        ethers,
-        admin,
-        [2, 3, 6]
+    // @ts-ignore
+    let poseidonContracts = await deployPoseidons( ethers, admin, [2, 3, 6]
     );
     let contractJson = new Map<string, string>();
     console.log("Using account ", admin.address);

@@ -4,6 +4,8 @@ import { prepareJson, uint8Array2Bigint } from "@eigen-secret/core/dist/utils";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
 import { UpdateStatusCircuit } from "@eigen-secret/core/dist/update_state";
 import { Prover } from "@eigen-secret/core/dist/prover";
+// import { Prover } from "@eigen-secret/core/dist/prover_client";
+
 import { Note, NoteState } from "@eigen-secret/core/dist/note";
 import { Transaction } from "@eigen-secret/core/dist/transaction";
 import {
@@ -228,7 +230,7 @@ export class SecretSDK {
         this.state = new StateTreeClient(serverAddr);
         this.note = new NoteClient(serverAddr);
         this.trans = new TransactionClient(serverAddr);
-        Prover.serverAddr = serverAddr; // init Prover client with serverAddr
+        // Prover.serverAddr = serverAddr; // init Prover client with serverAddr
         this.circuitPath = circuitPath;
         this.rollupSC = new RollupSC(eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
             poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
