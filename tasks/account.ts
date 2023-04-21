@@ -76,7 +76,6 @@ task("migrate-account", "Migrate account to another ETH address")
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
     const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
-    let newAccountKey = new SigningKey(eddsa);
     const contractJson = require(defaultContractFile);
     let secretSDK = new SecretSDK(
         sa,
@@ -101,10 +100,10 @@ task("migrate-account", "Migrate account to another ETH address")
       signature: signature
     };
     let proofAndPublicSignals = await secretSDK.migrateAccount(
-        ctx, newAccountKey
+        ctx, sa.newAccountKey
     );
-    sa.accountKey = newAccountKey;
-    sa.newAccountKey = newAccountKey;
+    sa.accountKey = sa.newAccountKey;
+    sa.newAccountKey = sa.newAccountKey;
     let key2 = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     fs.writeFileSync(accountFile(sa.alias), sa.serialize(key2));
     console.log(proofAndPublicSignals);
