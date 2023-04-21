@@ -4,7 +4,7 @@ import { expect } from "chai";
 const cls = require("circomlibjs");
 import { deployPoseidonFacade } from "@eigen-secret/core/dist/deploy_poseidons.util";
 import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
-
+/* globals describe, before, it */
 describe("poseidon", () => {
     let spongePoseidon: Contract;
     let poseidon: any;
@@ -26,7 +26,7 @@ describe("poseidon", () => {
         expect(resSC).to.be.equal(resJS);
     });
 
-    it("check with input 1", async() => {
+    it("check with input 1", async () => {
         const resGo = "18586133768512220936620570745912940619677854269274689475585506675881198879027";
         let values = [1n];
         const resSC = await spongePoseidon.poseidon1(values);
@@ -37,8 +37,8 @@ describe("poseidon", () => {
     })
 
     it("check poseidon hash function with inputs [1, 2, 3, 4, 5, 6, 7, 8]", async () => {
-        //let values = [1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n];
-        //let values = [1n, 2n, 3n, 4n, 5n, 6n];
+        // let values = [1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n];
+        // let values = [1n, 2n, 3n, 4n, 5n, 6n];
         let values = new Array(20).fill(0).map((_, i) => BigInt(i+1));
         const resSC = await spongePoseidon.poseidonSponge(values);
         const resJS = await poseidonSponge(values);
@@ -93,7 +93,7 @@ describe("poseidon", () => {
       "15453246007413592894994052056189504931596869378720796254186083890034315683271",
       "14930743011745380472827539825298308928576986968662249646825944671013914580841",
       "6822810469207228926573027566092443611631514245644522254380047883923091850495",
-      "572256611333939647870071795094991346875682904248480845061433474146479504943",
+      "572256611333939647870071795094991346875682904248480845061433474146479504943"
     ];
     for (let i = 1; i <= expectedSpongeHashes.length; i++) {
       const vector: bigint[] = new Array(i).fill(1).map((_, i) => BigInt(i + 1));

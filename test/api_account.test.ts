@@ -1,28 +1,29 @@
-const request = require('supertest');
+const request = require("supertest");
 import { ethers } from "ethers";
 
 import app from "../server/dist/service";
-import { SigningKey } from "@eigen-secret/core/dist/account";
 import * as utils from "@eigen-secret/core/dist/utils";
 import { expect, assert } from "chai";
-
-describe('POST /accounts', function() {
-    this.timeout(1000 * 1000);
-    before(async() => {
+/* globals describe, before, it */
+describe("POST /accounts", function() {
+    before(async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         let alias = "eigen.eth";
-        const signature = await utils.signEOASignature(newEOAAccount, utils.rawMessage, newEOAAccount.address, alias, timestamp);
-
+        const signature = await utils.signEOASignature(newEOAAccount,
+            utils.rawMessage,
+            newEOAAccount.address,
+            alias,
+            timestamp);
         const response = await request(app)
-        .post('/accounts/' + newEOAAccount.address)
+        .post("/accounts/" + newEOAAccount.address)
         .send({
             alias: alias,
             message: utils.rawMessage,
             timestamp: timestamp,
             hexSignature: signature
         })
-        .set('Accept', 'application/json');
+        .set("Accept", "application/json");
 
         console.log(response.body)
         expect(response.status).to.eq(200);
@@ -31,14 +32,14 @@ describe('POST /accounts', function() {
         expect(response.body.data["ethAddress"]).to.eq(newEOAAccount.address);
     });
 
-    it.skip('responds with json', async() => {
+    it.skip("responds with json", async () => {
         const response = await request(app)
-        .get('/accounts/alice.eth')
-        .set('Accept', 'application/json');
+        .get("/accounts/alice.eth")
+        .set("Accept", "application/json");
 
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
         console.log(response.body);
-        assert(response.body.data[0].alias, 'alice.eth')
+        assert(response.body.data[0].alias, "alice.eth")
     });
 });

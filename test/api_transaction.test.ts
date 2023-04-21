@@ -1,22 +1,20 @@
-const request = require('supertest');
+const request = require("supertest");
 const consola = require("consola");
 import app from "../server/dist/service";
 import { EigenAddress, SigningKey } from "@eigen-secret/core/dist/account";
 import { ethers } from "ethers";
 import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist/utils";
 import { expect, assert } from "chai";
-import { StateTree } from "@eigen-secret/core/dist/state_tree";
 import { NoteState } from "@eigen-secret/core/dist/note";
 import { TxData } from "@eigen-secret/core/dist/transaction";
 const { buildEddsa } = require("circomlibjs");
-
-describe('POST /transactions', function() {
-    this.timeout(1000 * 1000);
+/* globals describe, before, it */
+describe("POST /transactions", function() {
     const alias = "api.eigen.eth";
     let tmpKey: any;
     let pubKey: any;
     let eddsa: any;
-    before(async() => {
+    before(async () => {
         eddsa = await buildEddsa();
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
@@ -25,7 +23,7 @@ describe('POST /transactions', function() {
         tmpKey = new SigningKey(eddsa);
         pubKey = tmpKey.pubKey.pubKey;
         const response = await request(app)
-        .post('/transactions')
+        .post("/transactions")
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -42,7 +40,7 @@ describe('POST /transactions', function() {
             proof: "0x12",
             publicInput: "{\"root\": \"11\"}"
         })
-        .set('Accept', 'application/json');
+        .set("Accept", "application/json");
 
         consola.log(response.body)
         expect(response.status).to.eq(200);
@@ -64,10 +62,10 @@ describe('POST /transactions', function() {
         expect(tx2.content.toString()).eq(tx.content.toString());
     })
 
-    it('get tx', async() => {
+    it("get tx", async () => {
         const response = await request(app)
-        .get('/transactions/' + alias)
-        .set('Accept', 'application/json');
+        .get("/transactions/" + alias)
+        .set("Accept", "application/json");
 
         console.log(response.body);
         expect(response.status).to.eq(200);
@@ -75,14 +73,14 @@ describe('POST /transactions', function() {
         assert(response.body.data[0].alias, alias)
     });
 
-    it("update smt", async() => {
+    it("update smt", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
 
         const response = await request(app)
-        .post('/statetree')
+        .post("/statetree")
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -97,14 +95,15 @@ describe('POST /transactions', function() {
                 acStateKey: "111"
             }
         })
-        .set('Accept', 'application/json');
+        .set("Accept", "application/json");
         console.log(response.body.data);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        assert(response.body.data.dataTreeRoot, "11789410253405726493196100626786015322476180488220624361762052237583743243512")
+        assert(response.body.data.dataTreeRoot,
+            "11789410253405726493196100626786015322476180488220624361762052237583743243512")
 
         const responseNote = await request(app)
-        .post('/notes/get')
+        .post("/notes/get")
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -113,13 +112,13 @@ describe('POST /transactions', function() {
             ethAddress: newEOAAccount.address,
             noteState: [NoteState.CREATING, NoteState.PROVED]
         })
-        .set('Accept', 'application/json');
+        .set("Accept", "application/json");
 
         let encryptedNotes = responseNote.body.data;
         console.log(pubKey);
         // update notes
         const response2 = await request(app)
-        .post('/notes/update')
+        .post("/notes/update")
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -143,10 +142,9 @@ describe('POST /transactions', function() {
                 }
             ]
         })
-        .set('Accept', 'application/json');
+        .set("Accept", "application/json");
         console.log(response2.body.data);
         expect(response2.status).to.eq(200);
         expect(response2.body.errno).to.eq(0);
-
     })
 });

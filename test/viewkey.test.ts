@@ -9,8 +9,8 @@ import { SigningKey, SecretAccount } from "@eigen-secret/core/dist/account";
 const crypto = require("crypto");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
-
-describe("Test View Key", function () {
+/* globals describe, before, it */
+describe("Test View Key", function() {
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
@@ -72,7 +72,7 @@ describe("Test View Key", function () {
             keys[3],
             keys[4]
         );
-        const secret = crypto.generateKeySync('aes', { length: 256 });
+        const secret = crypto.generateKeySync("aes", { length: 256 });
         let serKeys = sa.serialize(secret);
         let derKeys = SecretAccount.deserialize(eddsa, secret, serKeys);
         expect(keys[0].prvKey).to.eq(derKeys.accountKey.prvKey);
@@ -83,7 +83,7 @@ describe("Test View Key", function () {
     })
 });
 
-describe("Test Proof knowledge of Private Key", function () {
+describe("Test Proof knowledge of Private Key", function() {
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
@@ -103,7 +103,7 @@ describe("Test Proof knowledge of Private Key", function () {
         let prvKey = Scalar.shr(ffutils.leBuff2int(pvk), 3);
         let pubKey = eddsa.prv2pub(rawpvk);
         let input = {
-            in: prvKey,
+            in: prvKey
         };
         let wtns = await utils.executeCircuit(circuit, input);
         await circuit.assertOut(wtns, { Ax: F.toObject(pubKey[0]), Ay: F.toObject(pubKey[1]) });
