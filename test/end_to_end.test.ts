@@ -1,6 +1,5 @@
 const request = require("supertest");
 const createBlakeHash = require("blake-hash");
-const consola = require("consola");
 import app from "../server/dist/service";
 import { ethers } from "ethers";
 import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "@eigen-secret/core/dist/utils";
@@ -20,9 +19,8 @@ const path = require("path");
 const hre = require("hardhat")
 import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
 import { deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
-
+/* globals describe, before, it */
 describe("POST /transactions", function() {
-    this.timeout(1000 * 1000);
     const alias = "eigen.eth";
     let eddsa: any;
     let babyJub: any;
@@ -134,6 +132,7 @@ describe("POST /transactions", function() {
 
         let circuitInput = input.toCircuitInput(babyJub, singleProof);
         let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
+        console.log(proofAndPublicSignals)
 
         // 1. first transaction depositing to itself
         let receiver = accountKey;
@@ -273,7 +272,8 @@ describe("POST /transactions", function() {
                     {
                         alias: alias,
                         index: input.inputNotes[0].index,
-                        pubKey: txInputData[0].pubKey.pubKey, // it's the first depositing, so the init public key is a random
+                        pubKey: txInputData[0].pubKey.pubKey,
+                        // pubKey: it's the first depositing, so the init public key is a random
                         content: txInputData[0].content,
                         state: NoteState.SPENT
                     },
@@ -318,12 +318,10 @@ describe("POST /transactions", function() {
         signer = accountRequired? signingKey: accountKey;
         let acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
-        let proof = [];
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         const value = 5n;
 
         let receiver = rollupHelper.eigenAccountKey[0];
-        let pubKey = receiver.pubKey.pubKey;
 
         // 1. first transaction
         const responseNote = await request(app)
@@ -480,15 +478,11 @@ describe("POST /transactions", function() {
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
         let accountKey = rollupHelper.eigenAccountKey[0];
 
-        let proof = [];
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
         signer = accountRequired? signingKey: accountKey;
         let acStateKey = await accountCompress(accountKey, signer, aliasHash);
         const value = 5;
-
-        let receiver = rollupHelper.eigenAccountKey[0];
-        let pubKey = receiver.pubKey.pubKey;
 
         // 1. first transaction
         const responseNote = await request(app)
@@ -678,7 +672,7 @@ describe("POST /transactions", function() {
             expect(responseSt.body.errno).to.eq(0);
         }
 
-        let sz = keysFound.length;
+        // let sz = keysFound.length;
 
         let xy = rollupHelper.pubkeyEigenSigningKeys[0][0];
         // last tx

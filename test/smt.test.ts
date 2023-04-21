@@ -2,15 +2,12 @@ import { expect } from "chai";
 import path = require("path");
 import * as test from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
-const cls = require("circomlibjs");
 import { siblingsPad, StateTree } from "@eigen-secret/core/dist/state_tree";
 const { ethers } = require("hardhat");
 import { SMTModel } from "../server/dist/state_tree";
 import { deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
-
+/* globals describe, before, it */
 describe("Test SMT Membership Query", function() {
-    this.timeout(1000 * 1000);
-
     // runs circom compilation
     let circuit: any;
     let tree: any;
@@ -43,8 +40,6 @@ describe("Test SMT Membership Query", function() {
 });
 
 describe("Test SMT Membership Update", function() {
-    this.timeout(1000 * 1000);
-
     // runs circom compilation
     let circuit: any;
     let tree: any;
@@ -83,9 +78,6 @@ describe("Test SMT Membership Update", function() {
 
 describe("Test SMT smart contract", () => {
     let contract: any;
-    let poseidonContract2Inputs: any;
-    let poseidonContract3Inputs: any;
-    let signer;
     let circuit: any;
     let tree: any;
     let Fr: any;

@@ -7,12 +7,11 @@ import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
 const path = require("path");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
-
+/* globals describe, before, it */
 describe("Test JoinSplit Circuit", function() {
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
-    let F: any;
     let accountKey: SigningKey;
     let signingKey: SigningKey;
     let aliasHash: bigint = 123n;
@@ -24,10 +23,13 @@ describe("Test JoinSplit Circuit", function() {
     before(async () => {
         eddsa = await buildEddsa();
         babyJub = await buildBabyjub();
-        F = babyJub.F;
         let third = path.join(__dirname, "../third-party");
         circuit = await test.genTempMain("circuits/join_split.circom",
-            "JoinSplit", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", { include: third });
+            "JoinSplit",
+            "proof_id, public_value, public_owner," +
+            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id",
+            "20",
+            { include: third });
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
         signer = accountRequired? signingKey: accountKey;

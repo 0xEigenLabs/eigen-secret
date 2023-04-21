@@ -8,9 +8,8 @@ import { expect, assert } from "chai";
 import { NoteState } from "@eigen-secret/core/dist/note";
 import { TxData } from "@eigen-secret/core/dist/transaction";
 const { buildEddsa } = require("circomlibjs");
-
+/* globals describe, before, it */
 describe("POST /transactions", function() {
-    this.timeout(1000 * 1000);
     const alias = "api.eigen.eth";
     let tmpKey: any;
     let pubKey: any;
@@ -100,7 +99,8 @@ describe("POST /transactions", function() {
         console.log(response.body.data);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        assert(response.body.data.dataTreeRoot, "11789410253405726493196100626786015322476180488220624361762052237583743243512")
+        assert(response.body.data.dataTreeRoot,
+            "11789410253405726493196100626786015322476180488220624361762052237583743243512")
 
         const responseNote = await request(app)
         .post("/notes/get")

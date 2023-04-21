@@ -5,17 +5,15 @@ import { ethers } from "ethers";
 import { EigenAddress, SigningKey, compress as accountCompress } from "@eigen-secret/core/dist/account";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
-
+/* globals describe, before, it */
 describe("Test Account Compressor", function() {
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
-    let F: any;
 
     before(async () => {
         eddsa = await buildEddsa();
         babyJub = await buildBabyjub();
-        F = babyJub.F;
         circuit = await test.genTempMain("circuits/account.circom",
             "AccountNoteCompressor", "", "", {});
     })

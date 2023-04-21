@@ -3,10 +3,8 @@ import * as utils from "@eigen-secret/core/dist/utils";
 import { SigningKey, AccountCircuit } from "@eigen-secret/core/dist/account";
 import { WorldState } from "../server/dist/state_tree";
 
-const path = require("path");
-
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
-
+/* globals describe, before, it */
 describe("Account circuit test", function() {
     let circuit: any;
     let eddsa: any;
@@ -15,15 +13,17 @@ describe("Account circuit test", function() {
     let accountKey: SigningKey;
     let signingKey: SigningKey;
     let aliasHash: bigint = 123n;
-    let acStateKey: any;
-    let assetId: number = 1;
 
     before(async () => {
         eddsa = await buildEddsa();
         babyJub = await buildBabyjub();
         F = babyJub.F;
         circuit = await test.genTempMain("circuits/account.circom",
-            "Account", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", {});
+            "Account",
+            "proof_id, public_value, public_owner," +
+            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id",
+            "20",
+            {});
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
     })

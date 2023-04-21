@@ -9,7 +9,7 @@ import { SigningKey, SecretAccount } from "@eigen-secret/core/dist/account";
 const crypto = require("crypto");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
-
+/* globals describe, before, it */
 describe("Test View Key", function() {
     let circuit: any;
     let eddsa: any;

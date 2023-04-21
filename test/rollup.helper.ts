@@ -1,9 +1,7 @@
 import { ethers } from "hardhat";
-const { ContractFactory, Contract } = require("ethers");
 import { expect, assert } from "chai";
 const { buildEddsa } = require("circomlibjs");
 const path = require("path");
-const fs = require("fs");
 import { uint8Array2Bigint, parseProof } from "@eigen-secret/core/dist/utils";
 import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
 import { SigningKey } from "@eigen-secret/core/dist/account";
@@ -53,7 +51,10 @@ export class RollupHelper {
 
     async initialize() {
         this.eddsa = await buildEddsa();
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
+        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512")
+        .update(this.alias)
+        .digest()
+        .slice(0, 32));
         this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
 
         this.poseidonContracts = await deployPoseidons(
@@ -129,10 +130,12 @@ export class RollupHelper {
         let setrollup = await this.tokenRegistry.connect(this.userAccounts[0]).setRollupNC(this.rollup.address);
         assert(setrollup, "setRollupNC failed")
 
-        let registerToken = await this.rollup.connect(this.userAccounts[1]).registerToken(this.testToken.address, { from: this.userAccounts[1].address })
+        let registerToken = await this.rollup.connect(this.userAccounts[1])
+        .registerToken(this.testToken.address, { from: this.userAccounts[1].address })
         assert(registerToken, "token registration failed");
 
-        let approveToken = await this.rollup.connect(this.userAccounts[0]).approveToken(this.testToken.address, { from: this.userAccounts[0].address })
+        let approveToken = await this.rollup.connect(this.userAccounts[0])
+        .approveToken(this.testToken.address, { from: this.userAccounts[0].address })
         assert(approveToken, "token registration failed");
         // FIXME should get assset id from event
         let tx = await approveToken.wait();

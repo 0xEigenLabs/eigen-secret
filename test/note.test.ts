@@ -5,17 +5,15 @@ import { index } from "@eigen-secret/core/dist/utils";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 import { SigningKey } from "@eigen-secret/core/dist/account";
-
+/* globals describe, before, it */
 describe("Test NoteCompressor", function() {
     let circuit: any;
     let eddsa: any;
     let babyJub: any;
-    let F: any;
 
     before(async () => {
         eddsa = await buildEddsa();
         babyJub = await buildBabyjub();
-        F = babyJub.F;
         circuit = await test.genTempMain("circuits/note_compressor.circom",
             "NoteCompressor", "", "", {});
     })

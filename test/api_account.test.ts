@@ -4,15 +4,17 @@ import { ethers } from "ethers";
 import app from "../server/dist/service";
 import * as utils from "@eigen-secret/core/dist/utils";
 import { expect, assert } from "chai";
-
+/* globals describe, before, it */
 describe("POST /accounts", function() {
-    this.timeout(1000 * 1000);
     before(async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         let alias = "eigen.eth";
-        const signature = await utils.signEOASignature(newEOAAccount, utils.rawMessage, newEOAAccount.address, alias, timestamp);
-
+        const signature = await utils.signEOASignature(newEOAAccount,
+            utils.rawMessage,
+            newEOAAccount.address,
+            alias,
+            timestamp);
         const response = await request(app)
         .post("/accounts/" + newEOAAccount.address)
         .send({

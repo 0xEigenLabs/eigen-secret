@@ -1,14 +1,10 @@
-const { waffle, ethers } = require("hardhat");
-// import { ContractFactory, BigNumber} from "ethers";
-const hre = require("hardhat")
-const assert = require("assert");
 const cls = require("circomlibjs");
 const fs = require("fs");
 
 import { SigningKey } from "@eigen-secret/core/dist/account";
 import { genTempMain } from "./test";
 import * as utils from "@eigen-secret/core/dist/utils";
-
+/* globals describe, before, it */
 describe("Test withdraw", async () => {
     let eddsa: any;
     let circuit: any;

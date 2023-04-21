@@ -13,7 +13,7 @@ const { readFileSync } = require("fs");
 const snarkjs = require("snarkjs");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
-
+/* globals describe, before, it */
 describe("Test JoinSplit Circuit", function() {
     let circuit: any;
     let eddsa: any;
@@ -33,7 +33,11 @@ describe("Test JoinSplit Circuit", function() {
         F = babyJub.F;
         let third = path.join(__dirname, "../third-party");
         circuit = await test.genTempMain("circuits/update_state.circom",
-            "UpdateState", "proof_id, public_value, public_owner, num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id", "20", { include: third });
+            "UpdateState",
+            "proof_id, public_value, public_owner,"+
+            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id",
+            "20",
+            { include: third });
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
     })
