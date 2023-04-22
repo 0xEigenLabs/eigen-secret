@@ -3,8 +3,7 @@ const { buildEddsa } = require("circomlibjs");
 import { prepareJson, uint8Array2Bigint } from "@eigen-secret/core/dist/utils";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
 import { UpdateStatusCircuit } from "@eigen-secret/core/dist/update_state";
-// import { Prover } from "@eigen-secret/core/dist/prover";
-import { Prover } from "@eigen-secret/core/dist/prover_client";
+import { Prover } from "@eigen-secret/core/dist/prover";
 
 import { Note, NoteState } from "@eigen-secret/core/dist/note";
 import { Transaction } from "@eigen-secret/core/dist/transaction";
