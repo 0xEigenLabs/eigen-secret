@@ -1,6 +1,6 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
-import * as utils from "@eigen-secret/core/dist/utils";
+import * as utils from "@eigen-secret/core/dist-node/utils";
 import consola from "consola";
 
 const { requireEnvVariables } = utils

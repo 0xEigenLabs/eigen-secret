@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import path = require("path");
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist/utils";
-import { siblingsPad, StateTree } from "@eigen-secret/core/dist/state_tree";
+import * as utils from "@eigen-secret/core/dist-node/utils";
+import { siblingsPad, StateTree } from "@eigen-secret/core/dist-node/state_tree";
 const { ethers } = require("hardhat");
 import { SMTModel } from "../server/dist/state_tree";
-import { deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
+import { deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
 /* globals describe, before, it */
 describe("Test SMT Membership Query", function() {
     // runs circom compilation

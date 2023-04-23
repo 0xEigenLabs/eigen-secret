@@ -1,22 +1,22 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
-import { prepareJson, uint8Array2Bigint } from "@eigen-secret/core/dist/utils";
-import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
-import { UpdateStatusCircuit } from "@eigen-secret/core/dist/update_state";
-import { Prover } from "@eigen-secret/core/dist/prover";
+import { prepareJson, uint8Array2Bigint } from "@eigen-secret/core/dist-browser/utils";
+import { JoinSplitCircuit } from "@eigen-secret/core/dist-browser/join_split";
+import { UpdateStatusCircuit } from "@eigen-secret/core/dist-browser/update_state";
+import { Prover } from "@eigen-secret/core/dist-browser/prover";
 
-import { Note, NoteState } from "@eigen-secret/core/dist/note";
-import { Transaction } from "@eigen-secret/core/dist/transaction";
+import { Note, NoteState } from "@eigen-secret/core/dist-browser/note";
+import { Transaction } from "@eigen-secret/core/dist-browser/transaction";
 import {
     AccountCircuit,
     compress as accountCompress,
     EigenAddress,
     SecretAccount,
     SigningKey
-} from "@eigen-secret/core/dist/account";
-import { RollupSC } from "@eigen-secret/core/dist/rollup.sc";
-import { pad } from "@eigen-secret/core/dist/state_tree";
-import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
+} from "@eigen-secret/core/dist-browser/account";
+import { RollupSC } from "@eigen-secret/core/dist-browser/rollup.sc";
+import { pad } from "@eigen-secret/core/dist-browser/state_tree";
+import { poseidonSponge } from "@eigen-secret/core/dist-browser/sponge_poseidon";
 import { expect, assert } from "chai";
 
 const axios = require("axios").default;

@@ -1,21 +1,25 @@
 {
   "name": "@eigen-secret/sdk",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "> TODO: description",
   "author": "Eigen Labs",
   "homepage": "https://github.com/0xEigenLabs/eigen-secret#readme",
   "license": "UNLICENSED",
-  "main": "dist/index.js",
+  "main": "dist-node/index.js",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.js",
-      "node": "./dist/index.js"
+      "require": "./dist-node/index.js",
+      "import": "./dist-node/index.js",
+      "node": "./dist-node/index.js"
     },
-    "./dist/*": {
-      "require": "./dist/*.js",
-      "import": "./dist/*.js",
-      "node": "./dist/*.js"
+    "./dist-node/*": {
+      "require": "./dist-node/*.js",
+      "import": "./dist-node/*.js",
+      "node": "./dist-node/*.js"
+    },
+    "./dist-browser/*": {
+      "require": "./dist-browser/*.js",
+      "import": "./dist-browser/*.js"
     }
   },
   "directories": {
@@ -35,7 +39,9 @@
     "url": "git+https://github.com/0xEigenLabs/eigen-secret.git"
   },
   "scripts": {
-    "build": "npx tsc",
+    "build": "npm run build:node && npm run build:browser",
+    "build:node": "npx tsc --project tsconfig.node.json",
+    "build:browser": "npx tsc --project tsconfig.browser.json",
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "bugs": {

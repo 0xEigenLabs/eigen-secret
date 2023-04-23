@@ -2,7 +2,7 @@ const request = require("supertest");
 import { ethers } from "ethers";
 
 import app from "../server/dist/service";
-import * as utils from "@eigen-secret/core/dist/utils";
+import * as utils from "@eigen-secret/core/dist-node/utils";
 import { expect, assert } from "chai";
 /* globals describe, before, it */
 describe("POST /accounts", function() {

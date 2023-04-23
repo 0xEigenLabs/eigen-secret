@@ -1,6 +1,6 @@
 const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
-import { NoteState } from "@eigen-secret/core/dist/note";
+import { NoteState } from "@eigen-secret/core/dist-node/note";
 
 type NoteStateArray = Array<NoteState>;
 // const consola = require("consola");

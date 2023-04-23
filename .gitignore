@@ -1,4 +1,6 @@
 dist/
+dist-node/
+dist-browser/
 .secret
 yarn-error.log
 package-lock.json

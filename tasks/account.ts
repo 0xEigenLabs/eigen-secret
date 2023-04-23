@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
-import { signEOASignature, rawMessage } from "@eigen-secret/core/dist/utils";
-import { SigningKey, SecretAccount } from "@eigen-secret/core/dist/account";
-import { SecretSDK } from "@eigen-secret/sdk/dist/index";
+import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account";
+import { SecretSDK } from "@eigen-secret/sdk/dist-node/index";
 import {
     defaultServerEndpoint,
     defaultCircuitPath,
