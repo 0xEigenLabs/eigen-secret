@@ -65,8 +65,9 @@ task("ci", "Run all task in one command")
     await secretSDK.registerToken(contractJson.testToken);
     console.log("register token done")
 
-    let assetId = await secretSDK.approveToken(contractJson.testToken);
-    console.log("approve token done", assetId)
+    let numTokens = await secretSDK.approveToken(contractJson.testToken);
+    let assetId = numTokens.toNumer();
+    console.log("approve token done", assetId);
 
     let value = 1000n;
     let approveTx = await secretSDK.approve(contractJson.testToken, value);
