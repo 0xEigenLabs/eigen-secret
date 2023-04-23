@@ -26,6 +26,11 @@ async function loadScriptFromBlob(blob: Blob, globalVarName: string) {
     });
 }
 
+export enum ProofState {
+    NEW = 1,
+    PROVED,
+}
+
 export class Prover {
     static serverAddr: string;
 

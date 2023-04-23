@@ -162,7 +162,17 @@ export async function createTxInternal(
 }
 
 export async function getTxByAlias(req: any, res: any) {
-    const alias = req.params.alias;
+    const alias = req.body.alias;
+    const ethAddress = req.body.ethAddress;
+    const timestamp = req.body.timestamp;
+    const rawMessage = req.body.message;
+    const hexSignature = req.body.hexSignature;
+    const noteState = req.body.noteState;
+    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
+    if (!validAdddr) {
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
+    }
+
     let result: any;
     try {
         result = await TransactionModel.findAll({ where: { alias: alias } });

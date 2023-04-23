@@ -1,9 +1,11 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
+
 import { prepareJson, uint8Array2Bigint } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
 import { Prover } from "./prover";
+
 
 import { Note, NoteState } from "./note";
 import { Transaction } from "./transaction";
@@ -879,5 +881,24 @@ export class SecretSDK {
             throw new Error("Invalid proof")
         }
         return Prover.serialize(proofAndPublicSignals);
+    }
+
+    /**
+     *
+     *
+     */
+    async submitProof(ctx: any) {
+        alias = this.alias;
+        states = ProofState.NEW;
+
+        // TODO call server by http
+    }
+
+    /**
+     *
+     *
+     */
+    async getTransactions(ctx: any) {
+
     }
 }
