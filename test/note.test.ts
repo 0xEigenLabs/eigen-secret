@@ -1,10 +1,10 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist/utils";
-import { Note } from "@eigen-secret/core/dist/note";
-import { index } from "@eigen-secret/core/dist/utils";
+import * as utils from "@eigen-secret/core/dist-node/utils";
+import { Note } from "@eigen-secret/core/dist-node/note";
+import { index } from "@eigen-secret/core/dist-node/utils";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
-import { SigningKey } from "@eigen-secret/core/dist/account";
+import { SigningKey } from "@eigen-secret/core/dist-node/account";
 /* globals describe, before, it */
 describe("Test NoteCompressor", function() {
     let circuit: any;

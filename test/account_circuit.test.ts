@@ -1,6 +1,6 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist/utils";
-import { SigningKey, AccountCircuit } from "@eigen-secret/core/dist/account";
+import * as utils from "@eigen-secret/core/dist-node/utils";
+import { SigningKey, AccountCircuit } from "@eigen-secret/core/dist-node/account";
 import { WorldState } from "../server/dist/state_tree";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");

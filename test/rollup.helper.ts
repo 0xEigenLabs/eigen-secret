@@ -2,9 +2,9 @@ import { ethers } from "hardhat";
 import { expect, assert } from "chai";
 const { buildEddsa } = require("circomlibjs");
 const path = require("path");
-import { uint8Array2Bigint, parseProof } from "@eigen-secret/core/dist/utils";
-import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
-import { SigningKey } from "@eigen-secret/core/dist/account";
+import { uint8Array2Bigint, parseProof } from "@eigen-secret/core/dist-node/utils";
+import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
+import { SigningKey } from "@eigen-secret/core/dist-node/account";
 const createBlakeHash = require("blake-hash");
 
 /*

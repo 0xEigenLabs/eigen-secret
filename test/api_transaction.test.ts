@@ -1,12 +1,12 @@
 const request = require("supertest");
 const consola = require("consola");
 import app from "../server/dist/service";
-import { EigenAddress, SigningKey } from "@eigen-secret/core/dist/account";
+import { EigenAddress, SigningKey } from "@eigen-secret/core/dist-node/account";
 import { ethers } from "ethers";
-import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist/utils";
+import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { expect, assert } from "chai";
-import { NoteState } from "@eigen-secret/core/dist/note";
-import { TxData } from "@eigen-secret/core/dist/transaction";
+import { NoteState } from "@eigen-secret/core/dist-node/note";
+import { TxData } from "@eigen-secret/core/dist-node/transaction";
 const { buildEddsa } = require("circomlibjs");
 /* globals describe, before, it */
 describe("POST /transactions", function() {

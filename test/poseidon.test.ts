@@ -2,8 +2,8 @@ import { ethers } from "hardhat";
 import { Contract } from "ethers";
 import { expect } from "chai";
 const cls = require("circomlibjs");
-import { deployPoseidonFacade } from "@eigen-secret/core/dist/deploy_poseidons.util";
-import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
+import { deployPoseidonFacade } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
+import { poseidonSponge } from "@eigen-secret/core/dist-node/sponge_poseidon";
 /* globals describe, before, it */
 describe("poseidon", () => {
     let spongePoseidon: Contract;

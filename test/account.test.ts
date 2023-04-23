@@ -1,8 +1,8 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist/utils";
+import * as utils from "@eigen-secret/core/dist-node/utils";
 import { expect } from "chai";
 import { ethers } from "ethers";
-import { EigenAddress, SigningKey, compress as accountCompress } from "@eigen-secret/core/dist/account";
+import { EigenAddress, SigningKey, compress as accountCompress } from "@eigen-secret/core/dist-node/account";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 /* globals describe, before, it */

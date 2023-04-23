@@ -2,23 +2,23 @@ const request = require("supertest");
 const createBlakeHash = require("blake-hash");
 import app from "../server/dist/service";
 import { ethers } from "ethers";
-import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "@eigen-secret/core/dist/utils";
+import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { expect, assert } from "chai";
-import { pad } from "@eigen-secret/core/dist/state_tree";
+import { pad } from "@eigen-secret/core/dist-node/state_tree";
 import { NoteModel as DBNote } from "../server/dist/note";
-import { Note, NoteState } from "@eigen-secret/core/dist/note";
-import { compress as accountCompress, EigenAddress } from "@eigen-secret/core/dist/account";
-import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
-import { AccountCircuit } from "@eigen-secret/core/dist/account";
-import { UpdateStatusCircuit } from "@eigen-secret/core/dist/update_state";
-import { Prover } from "@eigen-secret/core/dist/prover";
-import { Transaction } from "@eigen-secret/core/dist/transaction";
+import { Note, NoteState } from "@eigen-secret/core/dist-node/note";
+import { compress as accountCompress, EigenAddress } from "@eigen-secret/core/dist-node/account";
+import { JoinSplitCircuit } from "@eigen-secret/core/dist-node/join_split";
+import { AccountCircuit } from "@eigen-secret/core/dist-node/account";
+import { UpdateStatusCircuit } from "@eigen-secret/core/dist-node/update_state";
+import { Prover } from "@eigen-secret/core/dist-node/prover";
+import { Transaction } from "@eigen-secret/core/dist-node/transaction";
 const { buildEddsa } = require("circomlibjs");
 import { RollupHelper } from "./rollup.helper";
 const path = require("path");
 const hre = require("hardhat")
-import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
-import { deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
+import { poseidonSponge } from "@eigen-secret/core/dist-node/sponge_poseidon";
+import { deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
 /* globals describe, before, it */
 describe("POST /transactions", function() {
     const alias = "eigen.eth";
