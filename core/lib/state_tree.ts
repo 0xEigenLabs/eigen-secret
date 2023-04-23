@@ -2,7 +2,7 @@ const {
     // newMemEmptyTrie
     SMT, buildPoseidon
 } = require("circomlibjs");
-const { getCurveFromName } = require("ffjavascript");
+const { getCurveFromName } = require("ffjavascript-browser");
 const consola = require("consola");
 
 export function siblingsPad(siblings: any, F: any, padding: boolean = true) {
