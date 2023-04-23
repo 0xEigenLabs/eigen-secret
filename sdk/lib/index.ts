@@ -424,7 +424,7 @@ export class SecretSDK {
     async send(ctx: any, receiver: string, receiver_alias: string, value: bigint, assetId: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
-        let accountRequired = false;
+        let accountRequired = true;
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
@@ -435,7 +435,9 @@ export class SecretSDK {
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
                 let sharedKey = this.account.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
-                notes.push(Note.decrypt(item.content, sharedKey));
+                let noteContent = Note.decrypt(item.content, sharedKey);
+                noteContent.accountRequired = accountRequired;
+                notes.push(noteContent);
             });
         }
         let _receiver = new EigenAddress(receiver);
@@ -860,6 +862,32 @@ export class SecretSDK {
         let newSigningPubKey2 = this.account.newSigningKey2.toCircuitInput();
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         let aliasHash = uint8Array2Bigint(aliasHashBuffer);
+
+        let notes: Array<Note> = [];
+        let noteState = [NoteState.PROVED]
+        let encryptedNotes = await this.note.getNote(ctx, noteState);
+        if (encryptedNotes) {
+            encryptedNotes.forEach((item: any) => {
+                let sharedKey = this.account.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
+                notes.push(Note.decrypt(item.content, sharedKey));
+            });
+        }
+        console.log("notes", notes)
+
+        let note_assetId: number[] = [];
+        for (let i = 0; i < notes.length; i++) {
+            if (!note_assetId.includes(notes[i].assetId)) {
+                note_assetId.push(notes[i].assetId)
+            }
+        }
+        console.log(note_assetId)
+
+        for (let i = 0; i < note_assetId.length; i++) {
+            let balance = await this.getNotesValue(ctx, note_assetId[i]);
+            let batchProof = await this.send(ctx, newAccountKey.pubKey.pubKey, this.alias, balance, note_assetId[i]);
+            console.log(batchProof)
+        }
+
         let input = await UpdateStatusCircuit.createAccountInput(
             proofId,
             this.account.accountKey,
@@ -869,7 +897,7 @@ export class SecretSDK {
             newSigningPubKey2[0],
             aliasHash
         );
-        let smtProof = await this.state.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.accountNC);
+        let smtProof = await this.state.updateStateTree(ctx, input.accountNC, 1n, 0n, 0n, input.accountNC);
         let inputJson = input.toCircuitInput(eddsa.babyJub, smtProof);
 
         // create final proof
