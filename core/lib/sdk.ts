@@ -492,10 +492,10 @@ export class SecretSDK {
      * @param {number} assetId the token to be sent
      * @return {Object} a batch of proof
      */
-    async send(ctx: any, receiver: string, receiver_alias: string, value: bigint, assetId: number, inAccountRequired: boolean = false) {
+    async send(ctx: any, receiver: string, receiver_alias: string, value: bigint, assetId: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
-        let accountRequired = inAccountRequired;
+        let accountRequired = false;
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
@@ -582,7 +582,6 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 }
             ];
-            console.log(_notes);
             await this.note.updateNote(ctx, _notes);
         }
         return batchProof;
@@ -940,10 +939,12 @@ export class SecretSDK {
             newSigningPubKey2[0],
             aliasHash
         );
+        // insert the new account key
         let smtProof = await this.state.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.accountNC);
         let inputJson = input.toCircuitInput(eddsa.babyJub, smtProof);
 
         // create final proof
+        console.log(inputJson);
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, inputJson);
 
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
@@ -962,25 +963,25 @@ export class SecretSDK {
             });
         }
         console.log("notes", notes)
-        let notesByAssetId: any = {};
+        let notesByAssetId: Map<number, bigint> = new Map();
         for (const note of notes) {
-            if (!(note.assetId in notesByAssetId)) {
-                notesByAssetId[note.assetId] = 0n;
-            };
-
-            notesByAssetId[note.assetId] += note.val;
+            if (!notesByAssetId.has(note.assetId)) {
+                notesByAssetId.set(note.assetId, note.val);
+            } else {
+                notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
+            }
         }
+        console.log("notesByAssetId", notesByAssetId);
         // send to user itself
-        for (let _assetId in notesByAssetId) {
-            let val = notesByAssetId[_assetId];
-            if (val !== undefined && val > 0n) {
+        for (let aid of notesByAssetId.keys()) {
+            let val = notesByAssetId.get(aid);
+            if (val !== undefined && BigInt(val) > 0n) {
                 let prf = await this.send(
                     ctx,
                     newAccountKey.pubKey.pubKey,
                     this.alias,
                     val,
-                    Number(_assetId),
-                    true
+                    Number(aid)
                 );
                 proofs.concat(prf);
             }

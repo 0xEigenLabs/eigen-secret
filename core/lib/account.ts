@@ -327,12 +327,12 @@ export class AccountCircuit {
         }
 
         let leaf = await state.find(F.e(accountNC));
-        */
 
         let tmpAccountNC = accountNC;
         if (proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) {
             tmpAccountNC = newAccountNC;
         }
+        */
 
         let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
@@ -349,7 +349,7 @@ export class AccountCircuit {
             [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
             sig.S,
             accountNC,
-            tmpAccountNC
+            newAccountNC
         );
     }
 
