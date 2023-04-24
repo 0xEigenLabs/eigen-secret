@@ -3,6 +3,30 @@ const fs = require("fs");
 const snarkjs = require("snarkjs");
 import axios from "axios";
 
+function generateRandomVarName(prefix: string) {
+    const randomString = Math.random().toString(36).substr(2, 8);
+    return `${prefix}_${randomString}`;
+}
+
+async function loadScriptFromBlob(blob: Blob, globalVarName: string) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        const url = URL.createObjectURL(blob);
+        script.src = url;
+        script.type = 'text/javascript';
+        script.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(window[globalVarName]);
+        };
+        script.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Failed to load the script'));
+        };
+        document.head.appendChild(script);
+    });
+}
+
+
 export class Prover {
     static serverAddr: string;
 
@@ -49,22 +73,20 @@ export class Prover {
 
         let wcUrl = `${Prover.serverAddr}/public/main_update_state_js/witness_calculator.js`;
         const { data: wcContent } = await axios.get(wcUrl, { responseType: "text" });
-        const wcBlob = new Blob([wcContent], { type: "text/javascript" });
-        const wcImportUrl = URL.createObjectURL(wcBlob);
-        const { default: wc } = await import(wcImportUrl);
-        URL.revokeObjectURL(wcImportUrl);
+
+        const globalVarName = generateRandomVarName('witnessCalculatorModule');
+
+        const wcContentModified = wcContent.replace(/module\.exports\s*=/, `window.${globalVarName} =`);
+        const wcBlob = new Blob([wcContentModified], { type: "text/javascript" });
+
+        const wc = await loadScriptFromBlob(wcBlob, globalVarName);
 
         const wasmBuffer = await Prover.fetchRemoteFile(wasmUrl);
-        const witnessCalculator = await wc(wasmBuffer);
+        const witnessCalculator = await (wc as Function)(wasmBuffer);
 
-        // console.log("prover input", input);
-        const witnessBuffer = await witnessCalculator.calculateWTNSBin(
-          input,
-          0
-        );
-
+        const witnessBuffer = await witnessCalculator.calculateWTNSBin(input, 0);
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkeyUrl, witnessBuffer);
-        // console.log("proof", proof, publicSignals)
+
         const proofAndPublicSignals = {
             proof,
             publicSignals
@@ -78,9 +100,7 @@ export class Prover {
 
         let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.16`;
 
-        const zkeyBuffer = await Prover.fetchRemoteFile(zkeyUrl);
-
-        const vKey = await snarkjs.zKey.exportVerificationKey(zkeyBuffer);
+        const vKey = await snarkjs.zKey.exportVerificationKey(zkeyUrl);
         const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
         return res;
     }
