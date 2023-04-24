@@ -1,6 +1,6 @@
 {
   "name": "@eigen-secret/core",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "> TODO: description",
   "author": "Eigen Labs",
   "homepage": "https://github.com/0xEigenLabs/eigen-secret#readme",
@@ -25,6 +25,8 @@
   "directories": {
     "lib": "lib",
     "dist": "dist",
+    "dist-node": "dist-node",
+    "dist-browser": "dist-browser",
     "test": "__tests__"
   },
   "files": [

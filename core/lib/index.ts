@@ -8,4 +8,4 @@ export * as spongposeidon from "./sponge_poseidon";
 export * as transaction from "./transaction";
 export * as updatestate from "./update_state";
 export * as statetree from "./state_tree";
-
+export * as sdk from "./sdk";
