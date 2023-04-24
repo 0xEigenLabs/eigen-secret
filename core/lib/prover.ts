@@ -26,7 +26,6 @@ async function loadScriptFromBlob(blob: Blob, globalVarName: string) {
     });
 }
 
-
 export class Prover {
     static serverAddr: string;
 
