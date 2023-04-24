@@ -18,7 +18,7 @@
   "rules": {
     "@typescript-eslint/no-var-requires": 0,
     "quotes": ["error", "double", { "avoidEscape": true }],
-    'object-curly-spacing': ['error', 'always'],
+    "object-curly-spacing": ["error", "always"],
     "require-jsdoc": 0,
     "semi": 0,
     "unused-imports/no-unused-imports": "error",
@@ -26,11 +26,11 @@
         "error",
         { "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
     ],
-    'indent': 'off',
+    "indent": "off",
     "no-unused-vars": "off",
     "comma-dangle": ["error", "never"],
     "camelcase": "off",
     "prefer-const": "off",
-    "max-len": ["error", { "code": 120 }]
+    "max-len": ["error", { "code": 180 }]
   }
 }

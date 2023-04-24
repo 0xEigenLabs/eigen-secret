@@ -1,9 +1,9 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist/utils";
-import { Note } from "@eigen-secret/core/dist/note";
-import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist/account";
+import * as utils from "@eigen-secret/core/dist-node/utils";
+import { Note } from "@eigen-secret/core/dist-node/note";
+import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist-node/account";
 import { WorldState } from "../server/dist/state_tree";
-import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
+import { JoinSplitCircuit } from "@eigen-secret/core/dist-node/join_split";
 const path = require("path");
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");

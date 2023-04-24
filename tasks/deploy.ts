@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist/deploy_poseidons.util";
+import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
 
 import { defaultContractFile } from "./common";
 const fs = require("fs");

@@ -1,11 +1,11 @@
 import { task } from "hardhat/config";
-import { SecretAccount } from "@eigen-secret/core/dist/account";
+import { SecretAccount } from "@eigen-secret/core/dist-node/account";
 import {
     defaultServerEndpoint,
     defaultCircuitPath, defaultContractABI, defaultContractFile, accountFile } from "./common";
 const { buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
-import { SecretSDK } from "@eigen-secret/sdk/dist/index";
+import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
 const fs = require("fs");
 
 task("setup-rollup", "Setup rollup coordinator")

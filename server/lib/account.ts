@@ -1,7 +1,7 @@
 const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
-import * as utils from "@eigen-secret/core/dist/utils"
+import * as utils from "@eigen-secret/core/dist-node/utils"
 import { upsert } from "./common";
 
 class AccountModel extends Model {}

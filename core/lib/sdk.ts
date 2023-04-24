@@ -1,22 +1,22 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
-import { prepareJson, uint8Array2Bigint } from "@eigen-secret/core/dist/utils";
-import { JoinSplitCircuit } from "@eigen-secret/core/dist/join_split";
-import { UpdateStatusCircuit } from "@eigen-secret/core/dist/update_state";
-import { Prover } from "@eigen-secret/core/dist/prover";
+import { prepareJson, uint8Array2Bigint } from "./utils";
+import { JoinSplitCircuit } from "./join_split";
+import { UpdateStatusCircuit } from "./update_state";
+import { Prover } from "./prover";
 
-import { Note, NoteState } from "@eigen-secret/core/dist/note";
-import { Transaction } from "@eigen-secret/core/dist/transaction";
+import { Note, NoteState } from "./note";
+import { Transaction } from "./transaction";
 import {
     AccountCircuit,
     compress as accountCompress,
     EigenAddress,
     SecretAccount,
     SigningKey
-} from "@eigen-secret/core/dist/account";
-import { RollupSC } from "@eigen-secret/core/dist/rollup.sc";
-import { pad } from "@eigen-secret/core/dist/state_tree";
-import { poseidonSponge } from "@eigen-secret/core/dist/sponge_poseidon";
+} from "./account";
+import { RollupSC } from "./rollup.sc";
+import { pad } from "./state_tree";
+import { poseidonSponge } from "./sponge_poseidon";
 import { expect, assert } from "chai";
 
 const axios = require("axios").default;

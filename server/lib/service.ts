@@ -10,7 +10,7 @@ import cors from "cors";
 import consola from "consola";
 import { BasicReporter } from "consola";
 import "dotenv/config";
-import * as utils from "@eigen-secret/core/dist/utils";
+import * as utils from "@eigen-secret/core/dist-node/utils";
 import bodyParser from "body-parser";
 import { createAccount } from "./account";
 import { createTx, getTxByAlias, updateStateTree, updateNotes, getNotes } from "./transaction";
