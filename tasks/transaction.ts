@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { SecretAccount } from "@eigen-secret/core/dist-node/account";
-import { SecretSDK } from "@eigen-secret/sdk/dist-node/index";
+import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
 require("dotenv").config()
 const fs = require("fs");
 const { buildEddsa } = require("circomlibjs");

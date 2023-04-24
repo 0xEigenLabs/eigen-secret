@@ -5,7 +5,7 @@ import {
     defaultCircuitPath, defaultContractABI, defaultContractFile, accountFile } from "./common";
 const { buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
-import { SecretSDK } from "@eigen-secret/sdk/dist-node/index";
+import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
 const fs = require("fs");
 
 task("setup-rollup", "Setup rollup coordinator")
