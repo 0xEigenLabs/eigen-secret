@@ -492,10 +492,10 @@ export class SecretSDK {
      * @param {number} assetId the token to be sent
      * @return {Object} a batch of proof
      */
-    async send(ctx: any, receiver: string, receiver_alias: string, value: bigint, assetId: number) {
+    async send(ctx: any, receiver: string, receiver_alias: string, value: bigint, assetId: number, inAccountRequired: boolean = false) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
-        let accountRequired = false;
+        let accountRequired = inAccountRequired;
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired ? this.account.signingKey : this.account.accountKey;
@@ -949,7 +949,43 @@ export class SecretSDK {
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
-        return Prover.serialize(proofAndPublicSignals);
+        let proofs = new Array<string>(0);
+        proofs.push(Prover.serialize(proofAndPublicSignals));
+
+        let notes: Array<Note> = [];
+        let noteState = [NoteState.PROVED]
+        let encryptedNotes = await this.note.getNote(ctx, noteState);
+        if (encryptedNotes) {
+            encryptedNotes.forEach((item: any) => {
+                let sharedKey = this.account.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
+                notes.push(Note.decrypt(item.content, sharedKey));
+            });
+        }
+        console.log("notes", notes)
+        let notesByAssetId: any = {};
+        for (const note of notes) {
+            if (!(note.assetId in notesByAssetId)) {
+                notesByAssetId[note.assetId] = 0n;
+            };
+
+            notesByAssetId[note.assetId] += note.val;
+        }
+        // send to user itself
+        for (let _assetId in notesByAssetId) {
+            let val = notesByAssetId[_assetId];
+            if (val !== undefined && val > 0n) {
+                let prf = await this.send(
+                    ctx,
+                    newAccountKey.pubKey.pubKey,
+                    this.alias,
+                    val,
+                    Number(_assetId),
+                    true
+                );
+                proofs.concat(prf);
+            }
+        }
+        return proofs;
     }
 
     /**
