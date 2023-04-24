@@ -1,11 +1,9 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
-
 import { prepareJson, uint8Array2Bigint } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
 import { Prover } from "./prover";
-
 
 import { Note, NoteState } from "./note";
 import { Transaction } from "./transaction";

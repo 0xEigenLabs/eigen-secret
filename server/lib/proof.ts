@@ -84,7 +84,6 @@ export async function getProofs(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
-    const noteState = req.body.noteState;
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
