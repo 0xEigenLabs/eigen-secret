@@ -140,6 +140,12 @@ function App() {
   return (
     <>
       <div className="card">
+        <p>npm run server</p>
+        <p>npx hardhat node</p>
+        <p>base eigen-secret-common-setup.sh</p>
+        <p>MetaMask import hardhat node account by index 1</p>
+      </div>
+      <div className="card">
         {signer ? (
           <p>
             MetaMask connected, current account address:
