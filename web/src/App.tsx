@@ -15,6 +15,8 @@ const assetId = 2
 const Alice = "Alice"
 const AliceAccount = "CKCRW1G+fKMxEVg9fKukRPitQFq4X7qNYZRk/BGfQBRkUYzsjUrNavs6jnttApm8qNZ0g45df4pr05syJZsVGj8bf5M6ERJYcgvE3U2w6iwfe53jkx9m724MCsB0MincSvdTDSAErxn80XRjvX6qaIBhU7sdcJ9ZUiJus6ZOpMM7jQCDaefVyx5h8cJagc8UX6IlsDjM6zZQuH3/OgDLKCMO2nPyJntinS9lWsBmHIRLmgQxSfpvRkbcSmdDSaRXBbkqYkOpH8O1RrK/uYw2+FyefHUkb1Zob/1GD0aooQqAg/pB4uFuQkdIPAuXKVmFhnZM8Zv8Ja9wDKaOV+dZHVhx8ciMIFgVydnpzhkRmB5mtZ+WNziujL0Klqg9GGEKnzWVdKwkCmOIth+pt6qVhHLqEJf+jc9wdTQSEq80Yvk=,1c8eed5455318bcf7c461f3e,f03ae7106aa3dbae77bb2d2b16814416";
 
+const TOKEN = "0x0165878A594ca255338adfa4d48449f69242Eb8F"
+
 const BobAddress = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
 
 function App() {
@@ -94,7 +96,7 @@ function App() {
     const receiver = sa.accountKey.pubKey.pubKey;
 
     // get tokenAddress by asset id
-    const tokenAddress = await secretSDK.getRegisteredToken(BigInt(assetId))
+    const tokenAddress = await secretSDK.getRegisteredToken(BigInt(assetId)) // todo return 0x0000000000000000000000000000000000000000
     console.log("token", tokenAddress.toString());
 
     // approve
@@ -124,6 +126,17 @@ function App() {
     console.log("sendL1 balance", balance.toString());
   }
 
+  const setupRollup = async () => {
+    await secretSDK.setRollupNC();
+  }
+
+  const registerToken = async () => {
+    await secretSDK.registerToken(TOKEN);
+    console.log("register token done")
+    const assetId = await secretSDK.approveToken(TOKEN);
+    console.log("approve token done, assetId is", assetId.toString())
+  }
+
   return (
     <>
       <div className="card">
@@ -143,6 +156,14 @@ function App() {
         ) : (
           <button onClick={initializeSecretSDK}>Initialize Alice SecretSDK</button>
         )}
+      </div>
+
+      <div className="card">
+        <button onClick={setupRollup}>setup-rollup</button>
+      </div>
+
+      <div className="card">
+        <button onClick={registerToken}>register-token for assetId 2</button>
       </div>
 
       <div className="card">
