@@ -15,6 +15,6 @@
     },
     "resolveJsonModule": true,
   },
-  "include": ["tasks", "test", "sdk/lib", "typechain/**/*.ts", "typechain/**/*.d.ts", "typechain/**/*.js"],
+  "include": ["tasks", "test", "sdk/lib", "typechain/**/*.ts", "typechain/**/*.d.ts", "typechain/**/*.js", "core/lib"],
   "files": ["./hardhat.config.ts"]
 }
