@@ -1,6 +1,6 @@
-import {ethers} from "ethers"
-import {assert} from "chai";
-import {parseProof, uint8Array2Bigint} from "./utils";
+import { ethers } from "ethers"
+import { assert } from "chai";
+import { parseProof, uint8Array2Bigint } from "./utils";
 
 const createBlakeHash = require("blake-hash");
 
@@ -125,7 +125,7 @@ export class RollupSC {
             tokenAddress, { from: this.userAccount.address }
         )
         let tx = await approveToken.wait();
-        let abi = [ "event RegisteredToken(uint publicAssetId, address tokenContract)" ];
+        let abi = ["event RegisteredToken(uint publicAssetId, address tokenContract)"];
         const iface = new ethers.utils.Interface(abi)
         const eventData = iface.decodeEventLog("RegisteredToken", tx.logs[0].data, tx.logs[0].topics)
         return eventData["publicAssetId"];
@@ -137,7 +137,7 @@ export class RollupSC {
         let testToken = new ethers.Contract(tokenAddress, this.tokenERC20ABI, this.userAccount);
         let approveToken = await testToken.connect(userAccount).approve(
             this.rollup.address, value,
-            {from: userAccount.address}
+            { from: userAccount.address }
         )
         assert(approveToken, "approveToken failed")
         return approveToken;
@@ -151,7 +151,7 @@ export class RollupSC {
             assetId,
             value,
             nonce,
-            {from: userAccount.address}
+            { from: userAccount.address }
         )
         assert(deposit0, "deposit0 failed");
         return deposit0;
@@ -165,7 +165,7 @@ export class RollupSC {
                 keysFound,
                 valuesFound,
                 siblings,
-                {from: userAccount.address}
+                { from: userAccount.address }
             )
         } catch (error) {
             console.log("processDeposits revert reason", error)
@@ -183,7 +183,7 @@ export class RollupSC {
                 proof.b,
                 proof.c,
                 proofAndPublicSignal.publicSignals,
-                {from: this.userAccount.address}
+                { from: this.userAccount.address }
             )
         } catch (error) {
             console.log("processDeposits revert reason", error)
@@ -202,7 +202,7 @@ export class RollupSC {
                 proof.a,
                 proof.b,
                 proof.c,
-                {from: this.userAccount.address}
+                { from: this.userAccount.address }
             )
         } catch (error) {
             console.log("processDeposits revert reason", error)

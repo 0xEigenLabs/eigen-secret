@@ -26,6 +26,11 @@ async function loadScriptFromBlob(blob: Blob, globalVarName: string) {
     });
 }
 
+export enum ProofState {
+    NEW = 1,
+    PROVED,
+}
+
 export class Prover {
     static serverAddr: string;
 
@@ -73,7 +78,7 @@ export class Prover {
         let wcUrl = `${Prover.serverAddr}/public/main_update_state_js/witness_calculator.js`;
         const { data: wcContent } = await axios.get(wcUrl, { responseType: "text" });
 
-        const globalVarName = generateRandomVarName('witnessCalculatorModule');
+        const globalVarName = generateRandomVarName("witnessCalculatorModule");
 
         const wcContentModified = wcContent.replace(/module\.exports\s*=/, `window.${globalVarName} =`);
         const wcBlob = new Blob([wcContentModified], { type: "text/javascript" });

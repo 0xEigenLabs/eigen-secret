@@ -193,7 +193,76 @@ export class TransactionClient {
         // console.log(response);
         return response.data.data;
     }
+
+    async getTransactions(context: any) {
+        const {
+            alias,
+            ethAddress,
+            rawMessage,
+            timestamp,
+            signature
+        } = context;
+        let options = {
+            method: "GET",
+            url: this.serverAddr + "/transactions/" + alias,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: prepareJson({
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: ethAddress
+            })
+        };
+        console.log(`options: ${options}`)
+        let response = await axios.request(options);
+        // console.log(response);
+        return response.data.data;
+    }
 }
+
+/**
+ * submit proof
+ */
+export class ProofClient {
+    serverAddr: any;
+
+    constructor(serverAddr: string) {
+        this.serverAddr = serverAddr;
+    }
+
+    async submitProofs(context: any, proofs: any) {
+        const {
+            alias,
+            ethAddress,
+            rawMessage,
+            timestamp,
+            signature
+        } = context;
+        let options = {
+            method: "POST",
+            url: this.serverAddr + "/proof",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: prepareJson({
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: ethAddress,
+                proofs: proofs
+            })
+        };
+        let response = await axios.request(options);
+        return response.data.data;
+    }
+}
+
 
 /**
  * SecretSDK interface
@@ -204,6 +273,7 @@ export class SecretSDK {
     state: StateTreeClient;
     note: NoteClient;
     trans: TransactionClient;
+    proof: ProofClient;
     circuitPath: string;
     rollupSC: RollupSC;
     keysFound: any;
@@ -229,6 +299,7 @@ export class SecretSDK {
         this.state = new StateTreeClient(serverAddr);
         this.note = new NoteClient(serverAddr);
         this.trans = new TransactionClient(serverAddr);
+        this.proof = new ProofClient(serverAddr);
         Prover.serverAddr = serverAddr; // init Prover client with serverAddr
         this.circuitPath = circuitPath;
         this.rollupSC = new RollupSC(eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
@@ -879,5 +950,26 @@ export class SecretSDK {
             throw new Error("Invalid proof")
         }
         return Prover.serialize(proofAndPublicSignals);
+    }
+
+    /**
+     * submit proof
+     *
+     * @param {Object} ctx
+     * @param {Object} proofs
+     * @return {Object} request body
+     */
+    async submitProof(ctx: any, proofs: any) {
+        return this.proof.submitProofs(ctx, proofs);
+    }
+
+    /**
+     * get all transactions
+     *
+     * @param {Object} ctx
+     * @return {Object} transactions
+     */
+    async getTransactions(ctx: any) {
+        return this.trans.getTransactions(ctx);
     }
 }

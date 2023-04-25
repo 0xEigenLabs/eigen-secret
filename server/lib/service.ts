@@ -14,6 +14,7 @@ import * as utils from "@eigen-secret/core/dist-node/utils";
 import bodyParser from "body-parser";
 import { createAccount } from "./account";
 import { createTx, getTxByAlias, updateStateTree, updateNotes, getNotes } from "./transaction";
+import { submitProofs, getProofs } from "./proof";
 
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);
@@ -32,9 +33,11 @@ app.use(cors(issueOptions));
 app.post("/accounts/:ethAddress", createAccount);
 app.post("/transactions", createTx);
 app.post("/statetree", updateStateTree);
-app.get("/transactions/:alias", getTxByAlias); // TODO: get not allowed
+app.get("/transactions/:alias", getTxByAlias);
 app.post("/notes/update", updateNotes);
 app.post("/notes/get", getNotes);
+app.post("/proof", submitProofs);
+app.get("/proof", getProofs);
 app.get("/ping", (req, resp) => {
   resp.json(utils.succ("pong"));
 })
