@@ -162,7 +162,7 @@ task("get-balance", "Get user's both L1 and L2 balance")
     let account = await ethers.getSigners();
     let user = account[index];
     let accountData = fs.readFileSync(accountFile(alias));
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest(); // this password console: <your password>
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
     const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
     const contractJson = require(defaultContractFile);

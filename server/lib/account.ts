@@ -37,6 +37,9 @@ export async function createAccount(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
+
+    consola.log('createAccount: ', alias, hexSignature, rawMessage, timestamp, ethAddress)
+
     if (
         !utils.hasValue(alias) ||
         !utils.hasValue(hexSignature) ||
