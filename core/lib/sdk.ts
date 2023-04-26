@@ -4,7 +4,7 @@ import { prepareJson, uint8Array2Bigint } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
 import { Prover } from "./prover";
-
+const consola = require("consola");
 import { Note, NoteState } from "./note";
 import { Transaction } from "./transaction";
 import {
