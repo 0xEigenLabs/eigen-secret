@@ -79,9 +79,10 @@ describe("POST /transactions", function() {
         .set("Accept", "application/json");
 
         console.log(response.body);
+        console.log(response.body.data);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        assert(response.body.data[0].alias, alias)
+        assert(response.body.data.transactions[0].alias, alias)
     });
 
     it("get paging txs", async () => {
@@ -107,8 +108,8 @@ describe("POST /transactions", function() {
         console.log(response.body);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        assert(response.body.data[0].alias, alias)
-        expect(response.body.data.length).to.eq(page_size);
+        assert(response.body.data.transactions[0].alias, alias)
+        expect(response.body.data.transactions.length).to.eq(page_size);
     });
 
     it("update smt", async () => {

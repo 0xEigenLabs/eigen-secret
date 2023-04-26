@@ -276,30 +276,30 @@ async function serch(filter_dict: any, page: any, page_size: any) {
     if (page) {
       consola.log("page = ", page);
       consola.log("page_size = ", page_size);
-  
+
       const { count, rows } = await TransactionModel.findAndCountAll({
         where: filter_dict,
         order: [["createdAt", "DESC"]],
         limit: page_size,
         offset: (page - 1) * page_size,
-        raw: true,
+        raw: true
       });
       consola.log("count = ", count);
       consola.log("rows = ", rows);
       const total_page = Math.ceil(count / page_size);
       return {
         transactions: rows,
-        total_page,
+        total_page
       };
     } else {
       const list = await TransactionModel.findAll({
         where: filter_dict,
         order: [["createdAt", "DESC"]],
-        raw: true,
+        raw: true
       });
       return {
         transactions: list,
-        total_page: list.length,
+        total_page: list.length
       };
     }
-  };
+  }

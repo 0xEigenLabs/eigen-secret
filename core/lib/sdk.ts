@@ -993,6 +993,8 @@ notes.push(tmpNote);
      * get all transactions
      *
      * @param {Object} ctx
+     * @param {Object} page
+     * @param {Object} page_size
      * @return {Object} transactions
      */
     async getTransactions(ctx: any, page: any, page_size: any) {
