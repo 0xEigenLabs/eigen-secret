@@ -65,7 +65,7 @@ describe("Test JoinSplit Circuit", function() {
             newSigningPubKey2,
             aliasHash
         );
-        let proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.accountNC);
+        let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
@@ -86,17 +86,17 @@ describe("Test JoinSplit Circuit", function() {
             aliasHash
         );
 
-        proof = await WorldState.updateStateTree(0n, 0n, 0n, 0n, input.accountNC);
+        proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
     })
 
     it("JoinSplit deposit and send update_state test", async () => {
-        signer = accountRequired? signingKey: accountKey;
+        signer = accountRequired? accountKey: signingKey;
         acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
         // let state = await WorldState.getInstance();
         // await state.insert(F.e(acStateKey), 1n);
-        await WorldState.updateStateTree(acStateKey, 1n, 0n, 0n, acStateKey);
+        // await WorldState.updateStateTree(acStateKey, 1n, 0n, 0n, acStateKey);
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(

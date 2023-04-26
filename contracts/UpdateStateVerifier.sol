@@ -53,7 +53,7 @@ contract UpdateStateVerifier {
         );
         vk.IC = new Pairing.G1Point[](9);
         
-         vk.IC[0] = Pairing.G1Point( 
+        vk.IC[0] = Pairing.G1Point( 
             15861216370985258874595831661869832385871646175013679027026301950455271773577,
             14779452390905648591158185731251231323830967427098315546930591598196912240175
         );                                      
@@ -96,7 +96,7 @@ contract UpdateStateVerifier {
         vk.IC[8] = Pairing.G1Point( 
             17744938203407639974973107478641404995700038423533274335960277528396726366282,
             9160953014625821100143325889648177083570932828324844364172267405986842775386
-        );                                 
+        );                                      
         
     }
     function verify(uint[] memory input, Proof memory proof) internal view returns (uint) {

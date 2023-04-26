@@ -106,7 +106,7 @@ task("migrate-account", "Migrate account to another ETH address")
     sa.accountKey = newAccountKey;
     sa.newAccountKey = newAccountKey;
     let key2 = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    console.log("migrated", sa);
+    console.log("migrated", sa.toString(eddsa));
     fs.writeFileSync(accountFile(sa.alias), sa.serialize(key2));
     console.log(proofAndPublicSignals);
   })
@@ -166,5 +166,5 @@ task("get-account", "Get account info")
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
     // TODO: prety print @LW
-    console.log(sa);
+    console.log(sa.toString(eddsa));
   })
