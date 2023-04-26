@@ -104,7 +104,6 @@ task("send", "Send asset to receiver in L2")
       timestamp: timestamp,
       signature: signature
     };
-    // let _receiver = sa.accountKey.pubKey.pubKey;
     let proofAndPublicSignals = await secretSDK.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
     await secretSDK.submitProof(ctx, proofAndPublicSignals);

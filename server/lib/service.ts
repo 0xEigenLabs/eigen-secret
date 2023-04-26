@@ -10,7 +10,6 @@ import cors from "cors";
 import consola from "consola";
 import { BasicReporter } from "consola";
 import "dotenv/config";
-import * as utils from "@eigen-secret/core/dist-node/utils";
 import bodyParser from "body-parser";
 import { createAccount } from "./account";
 import { createTx, getTxByAlias, updateStateTree, updateNotes, getNotes } from "./transaction";
@@ -33,13 +32,10 @@ app.use(cors(issueOptions));
 app.post("/accounts/:ethAddress", createAccount);
 app.post("/transactions", createTx);
 app.post("/statetree", updateStateTree);
-app.get("/transactions/:alias", getTxByAlias);
+app.post("/transactions/:alias", getTxByAlias);
 app.post("/notes/update", updateNotes);
 app.post("/notes/get", getNotes);
 app.post("/proof", submitProofs);
-app.get("/proof", getProofs);
-app.get("/ping", (req, resp) => {
-  resp.json(utils.succ("pong"));
-})
+app.post("/proof", getProofs);
 
 export default app;

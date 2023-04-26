@@ -32,7 +32,7 @@ describe("Test JoinSplit Circuit", function() {
             { include: third });
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
-        signer = accountRequired? signingKey: accountKey;
+        signer = accountRequired? accountKey: signingKey;
         acStateKey = await accountCompress(accountKey, signer, aliasHash);
         await (await WorldState.getInstance()).insert(acStateKey, 1n);
     })

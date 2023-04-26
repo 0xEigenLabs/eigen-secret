@@ -74,7 +74,7 @@ describe("Account circuit test", function() {
             aliasHash
         );
 
-        proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.accountNC);
+        proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
         await utils.executeCircuit(circuit, input.toCircuitInput(proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
