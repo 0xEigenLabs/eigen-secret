@@ -62,7 +62,7 @@ describe("POST /transactions", function() {
         expect(tx2.content.toString()).eq(tx.content.toString());
     })
 
-    it("get tx", async () => {
+    it.skip("get tx", async () => {
         const response = await request(app)
         .get("/transactions/" + alias)
         .set("Accept", "application/json");

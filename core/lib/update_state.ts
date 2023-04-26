@@ -156,16 +156,14 @@ export class UpdateStatusInput {
         }
 
         // console.log(inputJson)
-        /*
-        const fs = require("fs");
-        fs.writeFileSync("./circuits/main_update_state.input.json",
-                         JSON.stringify(
-                             inputJson,
-                             (key, value) => typeof value === "bigint" ?
-                                 value.toString() :
-                                 value // return everything else unchanged
-                         ));
-        */
+        // const fs = require("fs");
+        // fs.writeFileSync("./circuits/main_update_state.input.json",
+        //                  JSON.stringify(
+        //                      inputJson,
+        //                      (key, value) => typeof value === "bigint" ?
+        //                          value.toString() :
+        //                          value // return everything else unchanged
+        //                  ));
         return inputJson;
     }
 }
@@ -272,4 +270,3 @@ export class UpdateStatusCircuit {
         return Promise.resolve(inputList);
     }
 }
-

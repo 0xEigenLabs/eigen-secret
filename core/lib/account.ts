@@ -215,6 +215,38 @@ export class SecretAccount {
             new SigningKey(eddsa, keys[5])
         );
     }
+
+    toString(eddsa: any) {
+        const F = eddsa.F;
+        let accountPubKeyP = this.accountKey.pubKey.unpack(eddsa.babyJub);
+        let accountPubKey = [F.toObject(accountPubKeyP[0]), F.toObject(accountPubKeyP[1])];
+
+        let newAccountPubKeyP = this.newAccountKey.pubKey.unpack(eddsa.babyJub);
+        let newAccountPubKey = [F.toObject(newAccountPubKeyP[0]), F.toObject(newAccountPubKeyP[1])];
+
+        let signingPubKeyP = this.signingKey.pubKey.unpack(eddsa.babyJub);
+        let signingPubKey = [F.toObject(signingPubKeyP[0]), F.toObject(signingPubKeyP[1])];
+
+
+        let signingPubKey1P = this.newSigningKey1.pubKey.unpack(eddsa.babyJub);
+        let signingPubKey1 = [F.toObject(signingPubKey1P[0]), F.toObject(signingPubKey1P[1])];
+
+        let signingPubKey2P = this.newSigningKey2.pubKey.unpack(eddsa.babyJub);
+        let signingPubKey2 = [F.toObject(signingPubKey2P[0]), F.toObject(signingPubKey2P[1])];
+
+        return {
+            accountPubKey,
+            accountPubKeyP: this.accountKey.pubKey.pubKey,
+            signingPubKey,
+            signingPubKeyP: this.signingKey.pubKey.pubKey,
+            newAccountPubKey,
+            newAccountPubKeyP: this.newAccountKey.pubKey.pubKey,
+            signingPubKey1,
+            signingPubKey1P: this.newSigningKey1.pubKey.pubKey,
+            signingPubKey2,
+            signingPubKey2P: this.newSigningKey2.pubKey.pubKey
+        }
+    }
 }
 
 export class AccountCircuit {
@@ -327,12 +359,12 @@ export class AccountCircuit {
         }
 
         let leaf = await state.find(F.e(accountNC));
-        */
 
         let tmpAccountNC = accountNC;
         if (proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) {
             tmpAccountNC = newAccountNC;
         }
+        */
 
         let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
@@ -349,7 +381,7 @@ export class AccountCircuit {
             [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
             sig.S,
             accountNC,
-            tmpAccountNC
+            newAccountNC
         );
     }
 
