@@ -156,7 +156,6 @@ export class UpdateStatusInput {
         }
 
         // console.log(inputJson)
-        /*
         const fs = require("fs");
         fs.writeFileSync("./circuits/main_update_state.input.json",
                          JSON.stringify(
@@ -165,7 +164,6 @@ export class UpdateStatusInput {
                                  value.toString() :
                                  value // return everything else unchanged
                          ));
-        */
         return inputJson;
     }
 }
