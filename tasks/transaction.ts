@@ -209,7 +209,9 @@ task("get-balance", "Get user's both L1 and L2 balance")
   .addParam("alias", "user name", "Alice")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("index", "user index for test")
-  .setAction(async ({ alias, password, index }, { ethers }) => {
+  .addParam("page", "page")
+  .addParam("pagesize", "page size")
+  .setAction(async ({ alias, password, index, page, pagesize }, { ethers }) => {
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
@@ -241,6 +243,6 @@ task("get-balance", "Get user's both L1 and L2 balance")
       timestamp: timestamp,
       signature: signature
     };
-    const transactions = await secretSDK.getTransactions(ctx)
+    const transactions = await secretSDK.getTransactions(ctx, page, pagesize);
     console.log("transactions", transactions);
   });

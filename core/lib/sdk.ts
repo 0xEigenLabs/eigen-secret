@@ -194,7 +194,7 @@ export class TransactionClient {
         return response.data.data;
     }
 
-    async getTransactions(context: any) {
+    async getTransactions(context: any, page: any, page_size: any) {
         const {
             alias,
             ethAddress,
@@ -203,7 +203,7 @@ export class TransactionClient {
             signature
         } = context;
         let options = {
-            method: "GET",
+            method: "POST",
             url: this.serverAddr + "/transactions/" + alias,
             headers: {
                 "Content-Type": "application/json",
@@ -214,7 +214,9 @@ export class TransactionClient {
                 timestamp: timestamp,
                 message: rawMessage,
                 hexSignature: signature,
-                ethAddress: ethAddress
+                ethAddress: ethAddress,
+                page: page,
+                page_size: page_size
             })
         };
         console.log(`options: ${options}`)
@@ -993,7 +995,7 @@ notes.push(tmpNote);
      * @param {Object} ctx
      * @return {Object} transactions
      */
-    async getTransactions(ctx: any) {
-        return this.trans.getTransactions(ctx);
+    async getTransactions(ctx: any, page: any, page_size: any) {
+        return this.trans.getTransactions(ctx, page, page_size);
     }
 }
