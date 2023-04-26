@@ -77,14 +77,14 @@ task("ci", "Run all task in one command")
     value = 10n;
 
     let proof = await secretSDK.deposit(ctx, receiver, value, assetId, nonce);
-    let balance1 = await secretSDK.getNotesValue(ctx, assetId);
+    let balance1 = await secretSDK.getAllBalance(ctx);
     console.log("test1-after deposit")
     console.log(balance1)
     console.log("CreateAccount done, proof: ", proofAndPublicSignals, proof);
 
     let proof1 = await secretSDK.send(ctx, receiver, alias, 2n, assetId);
     console.log("send proof", proof1);
-    let balance2 = await secretSDK.getNotesValue(ctx, assetId);
+    let balance2 = await secretSDK.getAllBalance(ctx);
     console.log(balance2)
 
     let proof2 = await secretSDK.withdraw(ctx, receiver, 5n, assetId);
