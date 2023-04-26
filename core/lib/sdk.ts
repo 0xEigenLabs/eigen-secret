@@ -873,7 +873,9 @@ notes.push(tmpNote);
         }
         this.siblings.push(tmpSiblings);
 
-        return Prover.serialize(proofAndPublicSignals);
+        await this.rollupSC.update(proofAndPublicSignals);
+
+        return Prover.serialize(proofAndPublicSignals)
     }
 
     /**
