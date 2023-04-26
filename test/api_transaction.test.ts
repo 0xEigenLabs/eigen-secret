@@ -63,8 +63,19 @@ describe("POST /transactions", function() {
     })
 
     it("get tx", async () => {
+        let newEOAAccount = await ethers.Wallet.createRandom();
+        let rawMessage = "Use Eigen Secret to shield your asset";
+        let timestamp = Math.floor(Date.now()/1000).toString();
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
         const response = await request(app)
-        .get("/transactions/" + alias)
+        .post("/transactions/" + alias)
+        .send({
+            alias: alias,
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: newEOAAccount.address
+        })
         .set("Accept", "application/json");
 
         console.log(response.body);

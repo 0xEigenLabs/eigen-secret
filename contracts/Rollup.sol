@@ -83,7 +83,6 @@ contract Rollup is SMT {
     event UpdatedState(uint, uint, uint); //newRoot, txRoot, oldRoot
     event Withdraw(TxInfo, address);
 
-
     constructor(
         address _poseidon2ContractAddr,
         address _poseidon3ContractAddr,

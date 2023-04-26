@@ -290,6 +290,7 @@ export class JoinSplitCircuit {
                 );
                 inputNoteInUse[i] = 0n;
             }
+            console.log("inputNoteInUse", inputNoteInUse);
 
             let nc1 = await inputNotes[0].compress(babyJub);
             let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, inputNoteInUse[0], accountKey);

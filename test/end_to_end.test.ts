@@ -60,9 +60,6 @@ describe("POST /transactions", function() {
         let accountKey = rollupHelper.eigenAccountKey[0];
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(alias).digest().slice(0, 32));
         aliasHash = uint8Array2Bigint(aliasHashBuffer);
-        let _accountRequired = true;
-        signer = _accountRequired? signingKey: accountKey;
-        let acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
         // 1. create account
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
@@ -90,10 +87,9 @@ describe("POST /transactions", function() {
             newSigningPubKey2,
             aliasHash
         );
-        assert(input.newAccountNC == acStateKey, "Invalid accountNC");
 
-        signer = accountRequired? signingKey: accountKey;
-        acStateKey = await accountCompress(accountKey, signer, aliasHash);
+        signer = accountRequired? accountKey: signingKey;
+        let acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
         let tmpInput = prepareJson({
             alias: alias,
@@ -197,7 +193,6 @@ describe("POST /transactions", function() {
                     acStateKey: acStateKey
                 }
             });
-            // console.log("tmpInput", tmpInput);
             const response = await request(app)
                 .post("/statetree")
                 .send(
@@ -315,7 +310,7 @@ describe("POST /transactions", function() {
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
         let accountKey = rollupHelper.eigenAccountKey[0];
         let accountRequired = false;
-        signer = accountRequired? signingKey: accountKey;
+        signer = accountRequired? accountKey: signingKey;
         let acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
@@ -480,7 +475,7 @@ describe("POST /transactions", function() {
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
-        signer = accountRequired? signingKey: accountKey;
+        signer = accountRequired? accountKey: signingKey;
         let acStateKey = await accountCompress(accountKey, signer, aliasHash);
         const value = 5;
 

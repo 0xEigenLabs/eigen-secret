@@ -69,10 +69,10 @@ template JoinSplit(nLevel) {
     enabled * (account_required - input_note_account_required[0]) === 0;
     enabled * (account_required - input_note_account_required[1]) === 0;
 
-    // signer_pk = account_required ? signing_pk.x : account_pk.x;
+    // signer_pk = account_required ? account_pk.x : signing_pk.x;
     var signer_pk[2];
-    signer_pk[0] = account_required * (account_note_spk[0] - account_note_npk[0]) + account_note_npk[0];
-    signer_pk[1] = account_required * (account_note_spk[1] - account_note_npk[1]) + account_note_npk[1];
+    signer_pk[0] = account_required * (account_note_npk[0] - account_note_spk[0]) + account_note_spk[0];
+    signer_pk[1] = account_required * (account_note_npk[1] - account_note_spk[1]) + account_note_spk[1];
 
     // range check
     component is_less_than[2][2];
@@ -113,7 +113,7 @@ template JoinSplit(nLevel) {
     enabled * aux2 === 0;
 
     // is_public_tx = is_withdraw || is_deposit
-    component is_public_tx = XOR();
+    component is_public_tx = OR();
     is_public_tx.a <== is_deposit.out;
     is_public_tx.b <== is_withdraw.out;
 

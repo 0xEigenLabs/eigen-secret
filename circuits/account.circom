@@ -97,7 +97,7 @@ template Account(nLevel) {
     enabled * (sum_1.out - 1) === 0;
 
     component account_note_commitment = AccountNoteCompressor();
-    account_note_commitment.npk <== account_note_npk;
+    account_note_commitment.npk <== new_account_note_npk;
     account_note_commitment.spk <== account_note_spk;
     account_note_commitment.alias_hash <== alias_hash;
 
@@ -179,7 +179,7 @@ template Account(nLevel) {
     // https://wiki.polygon.technology/docs/zkEVM/zkProver/detailed-smt-concepts
     component ms = Membership(nLevel);
     ms.key <== account_note_commitment.out;
-    ms.value <== 1; 
+    ms.value <== 1;
     ms.root <== data_tree_root;
     ms.enabled <== (1 - is_create) * enabled;
 
