@@ -14,11 +14,14 @@ describe("POST /transactions", function() {
     let tmpKey: any;
     let pubKey: any;
     let eddsa: any;
+    let newEOAAccount:any;
+    let timestamp:any;
+    let signature:any;
     before(async () => {
         eddsa = await buildEddsa();
-        let newEOAAccount = await ethers.Wallet.createRandom();
-        let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        newEOAAccount = await ethers.Wallet.createRandom();
+        timestamp = Math.floor(Date.now()/1000).toString();
+        signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
 
         tmpKey = new SigningKey(eddsa);
         pubKey = tmpKey.pubKey.pubKey;
@@ -62,9 +65,15 @@ describe("POST /transactions", function() {
         expect(tx2.content.toString()).eq(tx.content.toString());
     })
 
-    it.skip("get tx", async () => {
+    it("get tx", async () => {
         const response = await request(app)
         .get("/transactions/" + alias)
+        .send({
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: newEOAAccount.address
+        })
         .set("Accept", "application/json");
 
         console.log(response.body);
