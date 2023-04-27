@@ -8,7 +8,6 @@ import {
 } from "./common";
 require("dotenv").config()
 const { buildEddsa } = require("circomlibjs");
-const createBlakeHash = require("blake-hash");
 
 task("ci", "Run all task in one command")
   .addParam("alias", "user alias", "Alice")
@@ -50,8 +49,7 @@ task("ci", "Run all task in one command")
       timestamp: timestamp,
       signature: signature
     };
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let proofAndPublicSignals = await secretSDK.createAccount(ctx, sa.newSigningKey1, sa.newSigningKey2, sa.serialize(key));
+    let proofAndPublicSignals = await secretSDK.createAccount(ctx, password);
     console.log("create account", proofAndPublicSignals);
 
     // set rollup nc

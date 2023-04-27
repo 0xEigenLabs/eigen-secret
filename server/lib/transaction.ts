@@ -80,9 +80,10 @@ export async function createTx(req: any, res: any) {
         consola.error("missing one or more arguments");
         return res.json(utils.err(utils.ErrCode.InvalidInput, "missing input"));
     }
-    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
-    if (!validAdddr) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
+
+    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    if (code !== utils.ErrCode.Success) {
+        return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
     let transaction: any;
@@ -170,9 +171,9 @@ export async function getTxByAlias(req: any, res: any) {
     const page = req.body.page;
     const pageSize = req.body.pageSize;
 
-    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
-    if (!validAdddr) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
+    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    if (code !== utils.ErrCode.Success) {
+        return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
     let result: any;
@@ -192,10 +193,9 @@ export async function updateStateTree(req: any, res: any) {
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
     const padding: boolean = req.body.padding;
-    consola.log("padding", padding);
-    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
-    if (!validAdddr) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
+    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    if (code !== utils.ErrCode.Success) {
+        return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
     // TODO: once updated, must be synchonized with circuits on chain
@@ -220,9 +220,9 @@ export async function getNotes(req: any, res: any) {
     const hexSignature = req.body.hexSignature;
     const noteState = req.body.noteState;
 
-    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
-    if (!validAdddr) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
+    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    if (code !== utils.ErrCode.Success) {
+        return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
     // get the confirmed note list, TODO: handle exception
@@ -236,10 +236,9 @@ export async function updateNotes(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
-
-    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
-    if (!validAdddr) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
+    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    if (code !== utils.ErrCode.Success) {
+        return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
     const notes = req.body.notes;
