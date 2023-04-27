@@ -31,9 +31,9 @@ app.use(cors(issueOptions));
 
 app.post("/accounts/create", createAccount);
 app.post("/accounts/get", getAccount);
-app.post("/transactions", createTx);
+app.post("/transactions/create", createTx);
+app.post("/transactions/get", getTxByAlias);
 app.post("/statetree", updateStateTree);
-app.post("/transactions/:alias", getTxByAlias);
 app.post("/notes/update", updateNotes);
 app.post("/notes/get", getNotes);
 app.post("/proof/create", submitProofs);

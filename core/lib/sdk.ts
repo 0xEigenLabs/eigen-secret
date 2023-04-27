@@ -176,7 +176,7 @@ export class SecretSDK {
                 proof: Prover.serialize(proofAndPublicSignals.proof),
                 publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
         };
-        return this.curl("transactions", inputData);
+        return this.curl("transactions/create", inputData);
     }
 
     async getTransactions(context: any, option: any) {
@@ -196,7 +196,7 @@ export class SecretSDK {
                 page: option.page,
                 pageSize: option.pageSize
         };
-        return this.curl("transactions/"+alias, data);
+        return this.curl("transactions/get", data);
     }
 
     async submitProofs(context: any, proofs: any) {
