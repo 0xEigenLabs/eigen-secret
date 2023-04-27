@@ -35,7 +35,7 @@ jobs:
       - name: Compile contract
         run: npm run build
       - name: Start server
-        run: nohup npx run server &
+        run: nohup npm run server &
       - name: Start hardhat node
         run: nohup npx hardhat node &
       - name: Start test

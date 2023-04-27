@@ -30,7 +30,6 @@
   },
   "devDependencies": {
     "@eslint/create-config": "^0.1.2",
-    "@types/minimatch": "^5.1.2",
     "@nomicfoundation/hardhat-toolbox": "^2.0.1",
     "@nomiclabs/hardhat-ethers": "^2.2.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
