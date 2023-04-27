@@ -4,12 +4,10 @@ import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account"
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
 import {
     defaultServerEndpoint,
-    defaultCircuitPath, defaultContractABI, defaultContractFile, accountFile
+    defaultCircuitPath, defaultContractABI, defaultContractFile
 } from "./common";
 require("dotenv").config()
-const fs = require("fs");
 const { buildEddsa } = require("circomlibjs");
-const createBlakeHash = require("blake-hash");
 
 task("ci", "Run all task in one command")
   .addParam("alias", "user alias", "Alice")
@@ -51,10 +49,7 @@ task("ci", "Run all task in one command")
       timestamp: timestamp,
       signature: signature
     };
-    let proofAndPublicSignals = await secretSDK.createAccount(ctx, sa.newSigningKey1, sa.newSigningKey2);
-
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    fs.writeFileSync(accountFile(alias), sa.serialize(key));
+    let proofAndPublicSignals = await secretSDK.createAccount(ctx, password);
     console.log("create account", proofAndPublicSignals);
 
     // set rollup nc

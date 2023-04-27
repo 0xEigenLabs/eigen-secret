@@ -2,7 +2,6 @@ const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
 import * as utils from "@eigen-secret/core/dist-node/utils"
-import { upsert } from "./common";
 
 class AccountModel extends Model {}
 
@@ -27,36 +26,6 @@ AccountModel.init({
     modelName: "AccountModel" // We need to choose the model name
 });
 
-export async function getAccount(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
-    if (
-        !utils.hasValue(alias) ||
-        !utils.hasValue(hexSignature) ||
-        !utils.hasValue(rawMessage) ||
-        !utils.hasValue(timestamp) ||
-        !utils.hasValue(ethAddress)) {
-        consola.log(alias, hexSignature, rawMessage, timestamp, ethAddress)
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "missing input"));
-    }
-
-    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
-    if (!validAdddr) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
-    }
-    let result: any;
-    try {
-        result = await AccountModel.findAll({ where: { alias: alias, ethAddress: ethAddress } });
-    } catch (err: any) {
-        consola.log(err)
-        return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
-    }
-    return res.json(utils.succ(result));
-}
-
 // add new key
 export async function createAccount(req: any, res: any) {
     const alias = req.body.alias;
@@ -66,50 +35,26 @@ export async function createAccount(req: any, res: any) {
     const secretAccount = req.body.secretAccount;
     const hexSignature = req.body.hexSignature;
 
-    consola.log("createAccount: ", alias, hexSignature, rawMessage, timestamp, ethAddress)
-
-    if (
-        !utils.hasValue(alias) ||
-        !utils.hasValue(hexSignature) ||
-        !utils.hasValue(rawMessage) ||
-        !utils.hasValue(timestamp) ||
-        !utils.hasValue(ethAddress)) {
-        consola.log(alias, hexSignature, rawMessage, timestamp, ethAddress)
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "missing input"));
+    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    if (code !== utils.ErrCode.Success) {
+        return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
-    let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
-    if (!validAdddr) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
-    }
-
-    const DURATION: number = 60; // seconds
-    let expireAt = Math.floor(Date.now() / 1000);
-
-    if (Number(timestamp) + DURATION <= expireAt) {
-        return res.json(utils.err(
-            utils.ErrCode.InvalidAuth,
-            "Expired signature"
-        ));
-    }
-    let transaction = await sequelize.transaction();
-
-    try {
-        let insertResult = await upsert(
-            AccountModel,
-            { alias, ethAddress, secretAccount }, // new item
-            { alias, ethAddress }, // condition
-            { transaction }
-
-        );
-        if (!utils.hasValue(insertResult.item)) {
-            return res.json(utils.err(
-                utils.ErrCode.DBCreateError,
-                "Create alias-ethAddress record error"
-            ));
+    let newItem = { alias, ethAddress, secretAccount };
+    const found: AccountModel | null = await AccountModel.findOne({ where: { alias } });
+    if (found) {
+        if (found.ethAddress !== ethAddress) {
+            return res.json(utils.err(utils.ErrCode.DuplicatedRecordError, "alias duplicated"));
+        } else {
+            return res.json(utils.succ(found));
         }
+    }
+
+    let transaction = await sequelize.transaction();
+    try {
+        const item = await AccountModel.create(newItem, transaction);
         transaction.commit();
-        return res.json(utils.succ(insertResult.item));
+        return res.json(utils.succ(item));
     } catch (err: any) {
         consola.log(err)
         if (transaction) {
@@ -117,5 +62,41 @@ export async function createAccount(req: any, res: any) {
         }
     }
     return res.json(utils.err(utils.ErrCode.DBCreateError, "Unknown error"));
+}
+
+export async function updateAccount(req: any, res: any) {
+    const alias = req.body.alias;
+    const ethAddress = req.body.ethAddress;
+    const timestamp = req.body.timestamp;
+    const rawMessage = req.body.message;
+    const secretAccount = req.body.secretAccount;
+    const hexSignature = req.body.hexSignature;
+
+    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    if (code !== utils.ErrCode.Success) {
+        return res.json(utils.err(code, utils.ErrCode[code]));
+    }
+
+    let condition = { alias, ethAddress };
+    let found: AccountModel | null = await AccountModel.findOne({ where: condition });
+    if (found && found.ethAddress !== ethAddress) {
+        return res.json(utils.err(utils.ErrCode.DuplicatedRecordError, "alias duplicated"));
+    }
+
+    let transaction = await sequelize.transaction();
+    try {
+        await AccountModel.update(
+            { secretAccount },
+            { where: condition, returning: true, plain: true },
+            transaction);
+        transaction.commit();
+    } catch (err: any) {
+        consola.log(err)
+        if (transaction) {
+            transaction.rollback();
+        }
+    }
+    found = await AccountModel.findOne({ where: condition });
+    return res.json(utils.succ(found));
 }
 

@@ -16,7 +16,7 @@ async function loadScriptFromBlob(blob: Blob, globalVarName: string) {
         script.type = "text/javascript";
         script.onload = () => {
             URL.revokeObjectURL(url);
-            resolve(window[globalVarName]);
+            resolve(window[(globalVarName as keyof Window)]);
         };
         script.onerror = () => {
             URL.revokeObjectURL(url);

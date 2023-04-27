@@ -1,14 +1,11 @@
 import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
-import { SecretAccount } from "@eigen-secret/core/dist-node/account";
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
 require("dotenv").config()
-const fs = require("fs");
-const { buildEddsa } = require("circomlibjs");
 import {
     defaultServerEndpoint,
-    defaultCircuitPath, defaultContractABI, defaultContractFile, accountFile } from "./common";
-const createBlakeHash = require("blake-hash");
+    defaultCircuitPath, defaultContractABI, defaultContractFile
+} from "./common";
 
 task("deposit", "Deposit asset from L1 to L2")
   .addParam("alias", "user alias")
@@ -17,39 +14,23 @@ task("deposit", "Deposit asset from L1 to L2")
   .addParam("value", "amount of transaction")
   .addParam("index", "user index for test")
   .setAction(async ({ alias, assetId, password, value, index }, { ethers }) => {
-    const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    let accountData = fs.readFileSync(accountFile(alias));
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
-    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
-    const contractJson = require(defaultContractFile);
-    let secretSDK = new SecretSDK(
-        sa,
-        defaultServerEndpoint,
-        defaultCircuitPath,
-        eddsa,
-        user,
-        contractJson.spongePoseidon,
-        contractJson.tokenRegistry,
-        contractJson.poseidon2,
-        contractJson.poseidon3,
-        contractJson.poseidon6,
-        contractJson.rollup,
-        contractJson.smtVerifier
-    );
-    await secretSDK.initialize(defaultContractABI);
+    const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     const ctx = {
-      alias: sa.alias,
+      alias: alias,
       ethAddress: user.address,
       rawMessage: rawMessage,
       timestamp: timestamp,
       signature: signature
     };
+    const contractJson = require(defaultContractFile);
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+    );
     let nonce = 0; // TODO: get nonce from Metamask
-    let receiver = sa.accountKey.pubKey.pubKey;
+    let receiver = secretSDK.account.accountKey.pubKey.pubKey;
 
     // get tokenAddress by asset id
     let tokenAddress = await secretSDK.getRegisteredToken(BigInt(assetId))
@@ -73,37 +54,21 @@ task("send", "Send asset to receiver in L2")
   .addParam("receiverAlias", "receiver_alias use for test")
   .setAction(async ({ alias, assetId, password, value, index, receiver, receiverAlias }, { ethers }) => {
     console.log("receiver: ", receiver)
-    const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    let accountData = fs.readFileSync(accountFile(alias));
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
-    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
-    const contractJson = require(defaultContractFile);
-    let secretSDK = new SecretSDK(
-        sa,
-        defaultServerEndpoint,
-        defaultCircuitPath,
-        eddsa,
-        user,
-        contractJson.spongePoseidon,
-        contractJson.tokenRegistry,
-        contractJson.poseidon2,
-        contractJson.poseidon3,
-        contractJson.poseidon6,
-        contractJson.rollup,
-        contractJson.smtVerifier
-    );
-    await secretSDK.initialize(defaultContractABI);
+    const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     const ctx = {
-      alias: sa.alias,
+      alias: alias,
       ethAddress: user.address,
       rawMessage: rawMessage,
       timestamp: timestamp,
       signature: signature
     };
+
+    const contractJson = require(defaultContractFile);
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI);
     let proofAndPublicSignals = await secretSDK.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
     await secretSDK.submitProofs(ctx, proofAndPublicSignals);
@@ -116,38 +81,21 @@ task("withdraw", "Withdraw asset from L2 to L1")
   .addParam("value", "amount of transaction")
   .addParam("index", "user index for test")
   .setAction(async ({ alias, assetId, password, value, index }, { ethers }) => {
-    const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    let accountData = fs.readFileSync(accountFile(alias));
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
-    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
-    const contractJson = require(defaultContractFile);
-    let secretSDK = new SecretSDK(
-        sa,
-        defaultServerEndpoint,
-        defaultCircuitPath,
-        eddsa,
-        user,
-        contractJson.spongePoseidon,
-        contractJson.tokenRegistry,
-        contractJson.poseidon2,
-        contractJson.poseidon3,
-        contractJson.poseidon6,
-        contractJson.rollup,
-        contractJson.smtVerifier
-    );
-    await secretSDK.initialize(defaultContractABI);
+    const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     const ctx = {
-      alias: sa.alias,
+      alias: alias,
       ethAddress: user.address,
       rawMessage: rawMessage,
       timestamp: timestamp,
       signature: signature
     };
-    let receiver = sa.accountKey.pubKey.pubKey;
+    const contractJson = require(defaultContractFile);
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI);
+    let receiver = secretSDK.account.accountKey.pubKey.pubKey;
     let proofAndPublicSignals = await secretSDK.withdraw(ctx, receiver, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
     await secretSDK.submitProofs(ctx, proofAndPublicSignals);
@@ -159,40 +107,25 @@ task("get-balance", "Get user's both L1 and L2 balance")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("index", "user index for test")
   .setAction(async ({ alias, assetId, password, index }, { ethers }) => {
-    const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    let accountData = fs.readFileSync(accountFile(alias));
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest(); // this password console: <your password>
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
-    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
-    const contractJson = require(defaultContractFile);
-    let secretSDK = new SecretSDK(
-        sa,
-        defaultServerEndpoint,
-        defaultCircuitPath,
-        eddsa,
-        user,
-        contractJson.spongePoseidon,
-        contractJson.tokenRegistry,
-        contractJson.poseidon2,
-        contractJson.poseidon3,
-        contractJson.poseidon6,
-        contractJson.rollup,
-        contractJson.smtVerifier
-    );
-    await secretSDK.initialize(defaultContractABI);
+    const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     const ctx = {
-      alias: sa.alias,
+      alias: alias,
       ethAddress: user.address,
       rawMessage: rawMessage,
       timestamp: timestamp,
       signature: signature
     };
-
+    const contractJson = require(defaultContractFile);
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI);
     let balance = await secretSDK.getAllBalance(ctx);
-    console.log("L2 balance", balance.toString());
+    let _balance = Object.fromEntries(
+      [...balance].map(([k, v]) => [k, v.toString()+"n"])
+    );
+    console.log("L2 balance", JSON.stringify(_balance));
 
     let address = await secretSDK.getRegisteredToken(BigInt(assetId));
     let tokenIns = new ethers.Contract(
@@ -212,37 +145,21 @@ task("get-balance", "Get user's both L1 and L2 balance")
   .addParam("page", "page")
   .addParam("pageSize", "page size")
   .setAction(async ({ alias, password, index, page, pageSize }, { ethers }) => {
-    const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    let accountData = fs.readFileSync(accountFile(alias));
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString());
-    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
-    const contractJson = require(defaultContractFile);
-    let secretSDK = new SecretSDK(
-        sa,
-        defaultServerEndpoint,
-        defaultCircuitPath,
-        eddsa,
-        user,
-        contractJson.spongePoseidon,
-        contractJson.tokenRegistry,
-        contractJson.poseidon2,
-        contractJson.poseidon3,
-        contractJson.poseidon6,
-        contractJson.rollup,
-        contractJson.smtVerifier
-    );
-    await secretSDK.initialize(defaultContractABI);
+    const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     const ctx = {
-      alias: sa.alias,
+      alias: alias,
       ethAddress: user.address,
       rawMessage: rawMessage,
       timestamp: timestamp,
       signature: signature
     };
+    const contractJson = require(defaultContractFile);
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+    );
     const transactions = await secretSDK.getTransactions(ctx, { page, pageSize });
     console.log("transactions", transactions);
   });

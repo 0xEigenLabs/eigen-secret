@@ -229,7 +229,8 @@ export enum ErrCode {
   InvalidAuth = 2,
   InvalidInput = 3,
   CryptoError = 4,
-  DBCreateError = 5
+  DBCreateError = 5,
+  DuplicatedRecordError = 6
 }
 
 const hasValue = function(variable: any) {
@@ -242,7 +243,38 @@ const hasValue = function(variable: any) {
   return true;
 };
 
+const checkSignature = function(
+    alias: string,
+    hexSignature: string,
+    rawMessage: string,
+    timestamp: string,
+    ethAddress: string
+) {
+    if (
+        !hasValue(alias) ||
+        !hasValue(hexSignature) ||
+        !hasValue(rawMessage) ||
+        !hasValue(timestamp) ||
+        !hasValue(ethAddress)) {
+        return ErrCode.InvalidInput;
+    }
+
+    let validAdddr = verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
+    if (!validAdddr) {
+        return ErrCode.InvalidInput;
+    }
+
+    const DURATION: number = 60; // seconds
+    let expireAt = Math.floor(Date.now() / 1000);
+
+    if (Number(timestamp) + DURATION <= expireAt) {
+        return ErrCode.InvalidAuth;
+    }
+
+    return ErrCode.Success;
+}
+
 const pathJoin = (parts: Array<string>, sep="/") => parts.join(sep).replace(new RegExp(sep+"{1,}", "g"), sep);
 
-export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson, pathJoin };
+export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson, pathJoin, checkSignature };
 
