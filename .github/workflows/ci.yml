@@ -44,7 +44,5 @@ jobs:
         run: nohup npx hardhat node &
       - name: Start server
         run: nohup npx run server &
-      - name: Generate circuits
-        run: git submodule update --init #bash -x scripts/zkit_zktx.sh
       - name: Start test
         run: bash -x test.sh
