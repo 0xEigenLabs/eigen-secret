@@ -10,17 +10,17 @@ function generateRandomVarName(prefix: string) {
 
 async function loadScriptFromBlob(blob: Blob, globalVarName: string) {
     return new Promise((resolve, reject) => {
-        const script = document.createElement("script");
+        const script = document.createElement('script');
         const url = URL.createObjectURL(blob);
         script.src = url;
-        script.type = "text/javascript";
+        script.type = 'text/javascript';
         script.onload = () => {
             URL.revokeObjectURL(url);
-            resolve(window[Number(globalVarName)]);
+            resolve(window[globalVarName]);
         };
         script.onerror = () => {
             URL.revokeObjectURL(url);
-            reject(new Error("Failed to load the script"));
+            reject(new Error('Failed to load the script'));
         };
         document.head.appendChild(script);
     });
@@ -117,7 +117,7 @@ export class Prover {
         const { data: wcContent } = await axios.get(wcUrl, { responseType: "text" });
         const wcBlob = new Blob([wcContent], { type: "text/javascript" });
         const wcImportUrl = URL.createObjectURL(wcBlob);
-        const { default: wc } = await import(wcImportUrl);
+        const { default: wc } = await import(/* @vite-ignore */ wcImportUrl);
         URL.revokeObjectURL(wcImportUrl);
 
         const wasmBuffer = await Prover.fetchRemoteFile(wasmUrl);

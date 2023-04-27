@@ -64,6 +64,9 @@ export async function createAccount(req: any, res: any) {
     const rawMessage = req.body.message;
     const secretAccount = req.body.secretAccount;
     const hexSignature = req.body.hexSignature;
+
+    consola.log('createAccount: ', alias, hexSignature, rawMessage, timestamp, ethAddress)
+
     if (
         !utils.hasValue(alias) ||
         !utils.hasValue(hexSignature) ||
