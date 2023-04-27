@@ -21,6 +21,50 @@ import { expect, assert } from "chai";
 
 const axios = require("axios").default;
 /**
+ * Create user account
+ */
+export class AccountClient {
+    serverAddr: any;
+
+    constructor(serverAddr: string) {
+        this.serverAddr = serverAddr;
+    }
+
+    async createAccount(
+        context: any,
+        secretAccount: any
+    ) {
+        const {
+            alias,
+            ethAddress,
+            rawMessage,
+            timestamp,
+            signature
+        } = context;
+
+        let options = {
+            method: "POST",
+            url: this.serverAddr + "/accounts/create",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: prepareJson({
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: ethAddress,
+                secretAccount: secretAccount
+            })
+        };
+        let response = await axios.request(options);
+        // consola.log(response);
+        return response.data.data;
+    }
+}
+
+/**
  * Update the status of the user account and transaction
  */
 export class StateTreeClient {
@@ -272,6 +316,7 @@ export class ProofClient {
 export class SecretSDK {
     alias: string;
     account: SecretAccount;
+    accountCreate: AccountClient;
     state: StateTreeClient;
     note: NoteClient;
     trans: TransactionClient;
@@ -298,6 +343,7 @@ export class SecretSDK {
     ) {
         this.alias = account.alias;
         this.account = account;
+        this.accountCreate = new AccountClient(serverAddr);
         this.state = new StateTreeClient(serverAddr);
         this.note = new NoteClient(serverAddr);
         this.trans = new TransactionClient(serverAddr);
@@ -828,7 +874,7 @@ notes.push(tmpNote);
      * @param {SigningKey} newSigningKey2
      * @return {Object} a batch of proof
      */
-    async createAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey) {
+    async createAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey, secretAccount: any) {
         let eddsa = await buildEddsa();
         const F = eddsa.F;
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
@@ -869,6 +915,8 @@ notes.push(tmpNote);
         this.siblings.push(tmpSiblings);
 
         await this.rollupSC.update(proofAndPublicSignals);
+        
+        await this.accountCreate.createAccount(ctx, secretAccount);
 
         return Prover.serialize(proofAndPublicSignals)
     }

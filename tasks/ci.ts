@@ -51,9 +51,8 @@ task("ci", "Run all task in one command")
       timestamp: timestamp,
       signature: signature
     };
-    let proofAndPublicSignals = await secretSDK.createAccount(ctx, sa.newSigningKey1, sa.newSigningKey2);
-
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+    let proofAndPublicSignals = await secretSDK.createAccount(ctx, sa.newSigningKey1, sa.newSigningKey2, sa.serialize(key));
     fs.writeFileSync(accountFile(alias), sa.serialize(key));
     console.log("create account", proofAndPublicSignals);
 
