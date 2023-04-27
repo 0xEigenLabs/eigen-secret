@@ -42,7 +42,9 @@ jobs:
         run: npm run build
       - name: Start hardhat node
         run: nohup npx hardhat node &
+      - name: Start server
+        run: nohup npx run server &
       - name: Generate circuits
         run: git submodule update --init #bash -x scripts/zkit_zktx.sh
       - name: Start test
-        run: nohup npx run server &; nohup npx hardhat node &; bash -x test.sh
+        run: bash -x test.sh
