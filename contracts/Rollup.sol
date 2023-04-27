@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.16;
 import "./UpdateStateVerifier.sol";
+import "./UpdateStateAggregationVerifier.sol";
 import "./WithdrawVerifier.sol";
 import "./SMT.sol";
 import "./libs/Poseidon.sol";
@@ -63,6 +64,7 @@ contract Rollup is SMT {
     uint256 public dataTreeRoot;
 
     UpdateStateVerifier updateStateVerifier;
+    KeysWithPlonkVerifier batchUpdateStateVerifier;
     WithdrawVerifier withdrawVerifier;
 
     struct TxInfo {
@@ -81,6 +83,7 @@ contract Rollup is SMT {
     event RegisteredToken(uint publicAssetId, address tokenContract);
     event RequestDeposit(uint[2] pubkey, uint publicValue, uint publicAssetId);
     event UpdatedState(uint, uint, uint); //newRoot, txRoot, oldRoot
+    event BatchUpdateState(uint); // new dataTreeRoot
     event Withdraw(TxInfo, address);
 
     constructor(
@@ -94,6 +97,7 @@ contract Rollup is SMT {
         coordinator = msg.sender;
         dataTreeRoot = 0;
         updateStateVerifier = new UpdateStateVerifier();
+        batchUpdateStateVerifier = new KeysWithPlonkVerifier();
         withdrawVerifier = new WithdrawVerifier();
     }
 
@@ -205,6 +209,23 @@ contract Rollup is SMT {
         dataTreeRoot = inDataTreeRoot;
         nullifierRoots[inDataTreeRoot] = true;
         emit UpdatedState(inDataTreeRoot, nullifier1, nullifier2);
+    }
+
+    function batchUpdate(
+        uint256[] memory _recursiveInput,
+        uint256[] memory _proof,
+        uint8[] memory _vkIndexes,
+        uint256[] memory _individualVksInputs,
+        uint256[16] memory _subproofsLimbs,
+        uint256 inDataTreeRoot
+    ) public payable {
+        require(!nullifierRoots[inDataTreeRoot], "Invalid data tree root");
+        require(batchUpdateStateVerifier.verifyAggregatedProof(_recursiveInput, _proof, _vkIndexes, _individualVksInputs, _subproofsLimbs),
+                "Invalid Aggregation Proof");
+
+        dataTreeRoot = inDataTreeRoot;
+        nullifierRoots[inDataTreeRoot] = true;
+        emit BatchUpdateState(inDataTreeRoot);
     }
 
     //TODO: fixme double spent
