@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { signEOASignature, rawMessage, prepareJson } from "@eigen-secret/core/dist-node/utils";
+import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account";
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
 import {
@@ -11,7 +11,6 @@ import {
 require("dotenv").config()
 const { buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
-const axios = require("axios").default;
 
 task("create-account", "Create secret account")
   .addParam("alias", "user alias")
@@ -78,7 +77,7 @@ task("migrate-account", "Migrate account to another ETH address")
       timestamp: timestamp,
       signature: signature
     };
-    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+    let response = await SecretSDK.getSecretAccunt(ctx);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     let newAccountKey = new SigningKey(eddsa);
@@ -124,7 +123,7 @@ task("update-account", "Update signing key")
       timestamp: timestamp,
       signature: signature
     };
-    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+    let response = await SecretSDK.getSecretAccunt(ctx);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
@@ -171,7 +170,7 @@ task("get-account", "Get account info")
       timestamp: timestamp,
       signature: signature
     };
-    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+    let response = await SecretSDK.getSecretAccunt(ctx);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     console.log(sa.toString(eddsa));

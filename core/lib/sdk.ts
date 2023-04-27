@@ -33,6 +33,7 @@ export class SecretSDK {
     valuesFound: any;
     siblings: any;
     serverAddr: any;
+    static getAccount: any;
 
     constructor(
         account: SecretAccount,
@@ -97,7 +98,7 @@ export class SecretSDK {
             secretAccount: secretAccount
         };
 
-        return this.curl("/accounts/create", input) 
+        return this.curl("accounts/create", input)
     }
 
     async getAccount(
@@ -117,8 +118,20 @@ export class SecretSDK {
             hexSignature: signature,
             ethAddress: ethAddress
         };
-
-        return this.curl("/accounts/get", input) 
+        let options = {
+            method: "POST",
+            url: this.serverAddr + "/accounts/get",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: prepareJson(input)
+        };
+        let response = await axios.request(options);
+        if (response.status != 200 || response.data.errno != 0) {
+            throw new Error(response.data.message);
+        }
+        return response.data.data;
     }
 
     async updateStateTree(
@@ -788,7 +801,7 @@ notes.push(tmpNote);
         return await this.rollupSC.getRegisteredToken(id);
     }
 
-    async getSecretAccunt(ctx: any) {
+    static async getSecretAccunt(ctx: any) {
         return await this.getAccount(ctx);
     }
 

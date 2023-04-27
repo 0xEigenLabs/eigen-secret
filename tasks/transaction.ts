@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { signEOASignature, rawMessage, prepareJson } from "@eigen-secret/core/dist-node/utils";
+import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { SecretAccount } from "@eigen-secret/core/dist-node/account";
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
 require("dotenv").config()
@@ -8,7 +8,6 @@ import {
     defaultServerEndpoint,
     defaultCircuitPath, defaultContractABI, defaultContractFile } from "./common";
 const createBlakeHash = require("blake-hash");
-const axios = require("axios").default;
 
 task("deposit", "Deposit asset from L1 to L2")
   .addParam("alias", "user alias")
@@ -29,7 +28,7 @@ task("deposit", "Deposit asset from L1 to L2")
       timestamp: timestamp,
       signature: signature
     };
-    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+    let response = await SecretSDK.getSecretAccunt(ctx);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
@@ -85,7 +84,7 @@ task("send", "Send asset to receiver in L2")
       timestamp: timestamp,
       signature: signature
     };
-    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+    let response = await SecretSDK.getSecretAccunt(ctx);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
@@ -128,7 +127,7 @@ task("withdraw", "Withdraw asset from L2 to L1")
       timestamp: timestamp,
       signature: signature
     };
-    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+    let response = await SecretSDK.getSecretAccunt(ctx);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
@@ -171,7 +170,7 @@ task("get-balance", "Get user's both L1 and L2 balance")
       timestamp: timestamp,
       signature: signature
     };
-    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+    let response = await SecretSDK.getSecretAccunt(ctx);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
@@ -227,7 +226,7 @@ task("get-balance", "Get user's both L1 and L2 balance")
       timestamp: timestamp,
       signature: signature
     };
-    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+    let response = await SecretSDK.getSecretAccunt(ctx);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
     let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);

@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { signEOASignature, rawMessage, prepareJson } from "@eigen-secret/core/dist-node/utils";
+import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { SecretAccount } from "@eigen-secret/core/dist-node/account";
 import {
     defaultServerEndpoint,
@@ -7,7 +7,6 @@ import {
 const { buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
-const axios = require("axios").default;
 
 task("setup-rollup", "Setup rollup coordinator")
       .addParam("alias", "user alias", "Alice")
@@ -24,7 +23,7 @@ task("setup-rollup", "Setup rollup coordinator")
         timestamp: timestamp,
         signature: signature
       };
-      let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+      let response = await SecretSDK.getSecretAccunt(ctx);
       let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
       let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
@@ -66,7 +65,7 @@ task("register-token", "Register token to Rollup")
             timestamp: timestamp,
             signature: signature
           };
-          let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+          let response = await SecretSDK.getSecretAccunt(ctx);
           let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
           let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
@@ -111,7 +110,7 @@ task("send-l1", "Send asset from L1 to L1")
             timestamp: timestamp,
             signature: signature
           };
-          let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+          let response = await SecretSDK.getSecretAccunt(ctx);
           let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
           let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
         const contractJson = require(defaultContractFile);
