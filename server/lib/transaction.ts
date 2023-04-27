@@ -168,7 +168,7 @@ export async function getTxByAlias(req: any, res: any) {
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
     const page = req.body.page;
-    const page_size = req.body.page_size;
+    const pageSize = req.body.pageSize;
 
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
@@ -177,7 +177,7 @@ export async function getTxByAlias(req: any, res: any) {
 
     let result: any;
     try {
-        result = await serch({ alias: alias }, page, page_size);
+        result = await search({ alias: alias }, page, pageSize);
     } catch (err: any) {
         consola.log(err)
         return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
@@ -272,34 +272,34 @@ export async function updateNotes(req: any, res: any) {
     return res.json(utils.succ(result));
 }
 
-async function serch(filter_dict: any, page: any, page_size: any) {
+async function search(filterDict: any, page: any, pageSize: any) {
     if (page) {
       consola.log("page = ", page);
-      consola.log("page_size = ", page_size);
+      consola.log("pageSize = ", pageSize);
 
       const { count, rows } = await TransactionModel.findAndCountAll({
-        where: filter_dict,
+        where: filterDict,
         order: [["createdAt", "DESC"]],
-        limit: page_size,
-        offset: (page - 1) * page_size,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
         raw: true
       });
       consola.log("count = ", count);
       consola.log("rows = ", rows);
-      const total_page = Math.ceil(count / page_size);
+      const totalPage = Math.ceil(count / pageSize);
       return {
         transactions: rows,
-        total_page
+        totalPage
       };
     } else {
       const list = await TransactionModel.findAll({
-        where: filter_dict,
+        where: filterDict,
         order: [["createdAt", "DESC"]],
         raw: true
       });
       return {
         transactions: list,
-        total_page: list.length
+        totalPage: list.length
       };
     }
   }

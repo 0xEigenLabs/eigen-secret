@@ -194,7 +194,7 @@ export class TransactionClient {
         return response.data.data;
     }
 
-    async getTransactions(context: any, page: any, page_size: any) {
+    async getTransactions(context: any, option: any) {
         const {
             alias,
             ethAddress,
@@ -215,8 +215,8 @@ export class TransactionClient {
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: ethAddress,
-                page: page,
-                page_size: page_size
+                page: option.page,
+                pageSize: option.pageSize
             })
         };
         console.log(`options: ${options}`)
@@ -993,11 +993,10 @@ notes.push(tmpNote);
      * get all transactions
      *
      * @param {Object} ctx
-     * @param {Object} page
-     * @param {Object} page_size
+     * @param {Object} option
      * @return {Object} transactions
      */
-    async getTransactions(ctx: any, page: any, page_size: any) {
-        return this.trans.getTransactions(ctx, page, page_size);
+    async getTransactions(ctx: any, option: any) {
+        return this.trans.getTransactions(ctx, option);
     }
 }
