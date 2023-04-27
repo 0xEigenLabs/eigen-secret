@@ -327,12 +327,11 @@ export class SecretSDK {
     /**
      * obtain user balance
      * @param {Object} ctx
-     * @return {string} user balance
+     * @return {Map} user balance
      */
     async getAllBalance(ctx: any) {
         let noteState = [NoteState.PROVED]
         let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
-        console.log("notes", notes)
         let notesByAssetId: Map<number, bigint> = new Map();
         for (const note of notes) {
             if (!notesByAssetId.has(note.assetId)) {
@@ -341,12 +340,7 @@ export class SecretSDK {
                 notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
             }
         }
-        console.log("notesByAssetId", notesByAssetId);
-        const userBalance = Object.fromEntries(
-            [...notesByAssetId].map(([k, v]) => [k, v.toString()+"n"])
-          );
-        const userBalanceJson = JSON.stringify(userBalance);
-        return userBalanceJson;
+        return notesByAssetId;
     }
 
     async getAndDecryptNote(ctx: any, noteState: Array<NoteState>) {
