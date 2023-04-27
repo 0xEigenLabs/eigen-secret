@@ -325,29 +325,22 @@ export class SecretSDK {
     }
 
     /**
-     * obtain the Notes value
+     * obtain user balance
      * @param {Object} ctx
-     * @param {number} assetId the token to be calculated
-     * @return {bigint} the notes value
+     * @return {Map} user balance
      */
-    async getNotesValue(ctx: any, assetId: number) {
+    async getAllBalance(ctx: any) {
         let noteState = [NoteState.PROVED]
         let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
-        consola.log("notes", notes)
-        let balance = 0n;
-        let _notes: Array<Note> = [];
-        for (let i = 0; i < notes.length; i++) {
-            if (notes[i].assetId == assetId) {
-                _notes.push(notes[i]);
+        let notesByAssetId: Map<number, bigint> = new Map();
+        for (const note of notes) {
+            if (!notesByAssetId.has(note.assetId)) {
+                notesByAssetId.set(note.assetId, note.val);
+            } else {
+                notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
             }
         }
-        for (let i = 0; i < _notes.length; i++) {
-            if (_notes[i]._owner.pubKey == this.account.accountKey.pubKey.pubKey) {
-                let tmpValue = _notes[i].val;
-                balance = balance + tmpValue;
-            }
-        }
-        return balance;
+        return notesByAssetId;
     }
 
     async getAndDecryptNote(ctx: any, noteState: Array<NoteState>) {

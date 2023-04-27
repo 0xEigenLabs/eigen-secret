@@ -191,7 +191,7 @@ task("get-balance", "Get user's both L1 and L2 balance")
       signature: signature
     };
 
-    let balance = await secretSDK.getNotesValue(ctx, assetId);
+    let balance = await secretSDK.getAllBalance(ctx);
     console.log("L2 balance", balance.toString());
 
     let address = await secretSDK.getRegisteredToken(BigInt(assetId));
