@@ -1,6 +1,6 @@
 # This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-name: Eigen Secret UT
+name: Eigen Secret CI
 on:
   push:
     branches: 
@@ -45,4 +45,4 @@ jobs:
       - name: Generate circuits
         run: git submodule update --init #bash -x scripts/zkit_zktx.sh
       - name: Start test
-        run: npm run test
+        run: nohup npx run server &; nohup npx hardhat node &; bash -x test.sh

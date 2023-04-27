@@ -36,7 +36,7 @@ app.post("/statetree", updateStateTree);
 app.post("/transactions/:alias", getTxByAlias);
 app.post("/notes/update", updateNotes);
 app.post("/notes/get", getNotes);
-app.post("/proof", submitProofs);
-app.post("/proof", getProofs);
+app.post("/proof/create", submitProofs);
+app.post("/proof/get", getProofs);
 
 export default app;

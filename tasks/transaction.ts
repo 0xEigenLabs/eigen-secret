@@ -60,7 +60,7 @@ task("deposit", "Deposit asset from L1 to L2")
 
     let proofAndPublicSignals = await secretSDK.deposit(ctx, receiver, BigInt(value), Number(assetId), nonce);
     console.log(proofAndPublicSignals);
-    await secretSDK.submitProof(ctx, proofAndPublicSignals);
+    await secretSDK.submitProofs(ctx, proofAndPublicSignals);
   })
 
 task("send", "Send asset to receiver in L2")
@@ -106,7 +106,7 @@ task("send", "Send asset to receiver in L2")
     };
     let proofAndPublicSignals = await secretSDK.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
-    await secretSDK.submitProof(ctx, proofAndPublicSignals);
+    await secretSDK.submitProofs(ctx, proofAndPublicSignals);
   })
 
 task("withdraw", "Withdraw asset from L2 to L1")
@@ -150,7 +150,7 @@ task("withdraw", "Withdraw asset from L2 to L1")
     let receiver = sa.accountKey.pubKey.pubKey;
     let proofAndPublicSignals = await secretSDK.withdraw(ctx, receiver, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
-    await secretSDK.submitProof(ctx, proofAndPublicSignals);
+    await secretSDK.submitProofs(ctx, proofAndPublicSignals);
   })
 
 task("get-balance", "Get user's both L1 and L2 balance")
