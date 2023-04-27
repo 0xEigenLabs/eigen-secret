@@ -10,7 +10,8 @@ AccountModel.init({
     // Model attributes are defined here
     alias: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     ethAddress: {
         type: DataTypes.STRING,
