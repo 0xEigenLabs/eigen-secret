@@ -21,7 +21,7 @@ import { expect, assert } from "chai";
 
 const axios = require("axios").default;
 /**
- * Create user account
+ * Create user account or get user secret account info
  */
 export class AccountClient {
     serverAddr: any;
@@ -60,6 +60,37 @@ export class AccountClient {
         };
         let response = await axios.request(options);
         // consola.log(response);
+        return response.data.data;
+    }
+
+    async getAccount(
+        context: any
+    ) {
+        const {
+            alias,
+            ethAddress,
+            rawMessage,
+            timestamp,
+            signature
+        } = context;
+
+        let options = {
+            method: "POST",
+            url: this.serverAddr + "/accounts/get",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: prepareJson({
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: ethAddress
+            })
+        };
+        let response = await axios.request(options);
+        console.log(response);
         return response.data.data;
     }
 }
@@ -326,6 +357,7 @@ export class SecretSDK {
     keysFound: any;
     valuesFound: any;
     siblings: any;
+    static accountCreate: AccountClient;
 
     constructor(
         account: SecretAccount,
@@ -1029,6 +1061,18 @@ notes.push(tmpNote);
         }
         await this.accountCreate.createAccount(ctx, newSecretAccount);
         return proofs;
+    }
+    /**
+     * get user secret account info
+     *
+     * @param {Object} ctx
+     * @param {string} serverAddr
+     * @return {Object} user secret account
+     */
+    static async getSecretAccunt(ctx: any, serverAddr: string){
+        this.accountCreate = new AccountClient(serverAddr);
+        let test = await this.accountCreate.getAccount(ctx);
+        return test;
     }
 
     /**

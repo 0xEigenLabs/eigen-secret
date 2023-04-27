@@ -17,25 +17,16 @@ task("setup-rollup", "Setup rollup coordinator")
     let [admin] = await ethers.getSigners();
     let eddsa = await buildEddsa();
     const signature = await signEOASignature(admin, rawMessage, admin.address, alias, timestamp);
-    let options = {
-      method: "POST",
-      url: defaultServerEndpoint + "/accounts/get",
-      headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-      },
-      data: prepareJson({
-          alias: alias,
-          timestamp: timestamp,
-          message: rawMessage,
-          hexSignature: signature,
-          ethAddress: admin.address
-      })
-  };
-  let response = await axios.request(options);
-    let accountData = response.data.data[0].secretAccount;
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData)
+    const ctx = {
+        alias: alias,
+        ethAddress: admin.address,
+        rawMessage: rawMessage,
+        timestamp: timestamp,
+        signature: signature
+      };
+      let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+      let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+      let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
 
     let secretSDK = new SecretSDK(
@@ -68,25 +59,16 @@ task("register-token", "Register token to Rollup")
         let [admin] = await ethers.getSigners();
         let eddsa = await buildEddsa();
         const signature = await signEOASignature(admin, rawMessage, admin.address, alias, timestamp);
-        let options = {
-          method: "POST",
-          url: defaultServerEndpoint + "/accounts/get",
-          headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-          },
-          data: prepareJson({
-              alias: alias,
-              timestamp: timestamp,
-              message: rawMessage,
-              hexSignature: signature,
-              ethAddress: admin.address
-          })
-      };
-      let response = await axios.request(options);
-        let accountData = response.data.data[0].secretAccount;
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData)
+        const ctx = {
+            alias: alias,
+            ethAddress: admin.address,
+            rawMessage: rawMessage,
+            timestamp: timestamp,
+            signature: signature
+          };
+          let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+          let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+          let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
 
     let secretSDK = new SecretSDK(
@@ -122,25 +104,16 @@ task("send-l1", "Send asset from L1 to L1")
         let [admin] = await ethers.getSigners();
         let eddsa = await buildEddsa();
         const signature = await signEOASignature(admin, rawMessage, admin.address, alias, timestamp);
-        let options = {
-          method: "POST",
-          url: defaultServerEndpoint + "/accounts/get",
-          headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-          },
-          data: prepareJson({
-              alias: alias,
-              timestamp: timestamp,
-              message: rawMessage,
-              hexSignature: signature,
-              ethAddress: admin.address
-          })
-      };
-      let response = await axios.request(options);
-        let accountData = response.data.data[0].secretAccount;
-        let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-        let sa = SecretAccount.deserialize(eddsa, key, accountData)
+        const ctx = {
+            alias: alias,
+            ethAddress: admin.address,
+            rawMessage: rawMessage,
+            timestamp: timestamp,
+            signature: signature
+          };
+          let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+          let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+          let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
         const contractJson = require(defaultContractFile);
         let secretSDK = new SecretSDK(
             sa,

@@ -22,26 +22,16 @@ task("deposit", "Deposit asset from L1 to L2")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    let options = {
-      method: "POST",
-      url: defaultServerEndpoint + "/accounts/get",
-      headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-      },
-      data: prepareJson({
-          alias: alias,
-          timestamp: timestamp,
-          message: rawMessage,
-          hexSignature: signature,
-          ethAddress: user.address
-      })
-  };
-  let response = await axios.request(options);
-    let accountData = response.data.data[0].secretAccount;
+    const ctx = {
+      alias: alias,
+      ethAddress: user.address,
+      rawMessage: rawMessage,
+      timestamp: timestamp,
+      signature: signature
+    };
+    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData);
-    console.log("-------", sa)
+    let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
     let secretSDK = new SecretSDK(
         sa,
@@ -58,13 +48,6 @@ task("deposit", "Deposit asset from L1 to L2")
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: sa.alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
     let nonce = 0; // TODO: get nonce from Metamask
     let receiver = sa.accountKey.pubKey.pubKey;
 
@@ -95,25 +78,16 @@ task("send", "Send asset to receiver in L2")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    let options = {
-      method: "POST",
-      url: defaultServerEndpoint + "/accounts/get",
-      headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-      },
-      data: prepareJson({
-          alias: alias,
-          timestamp: timestamp,
-          message: rawMessage,
-          hexSignature: signature,
-          ethAddress: user.address
-      })
-  };
-  let response = await axios.request(options);
-    let accountData = response.data.data[0].secretAccount;
+    const ctx = {
+      alias: alias,
+      ethAddress: user.address,
+      rawMessage: rawMessage,
+      timestamp: timestamp,
+      signature: signature
+    };
+    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData);
+    let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
     let secretSDK = new SecretSDK(
         sa,
@@ -130,13 +104,6 @@ task("send", "Send asset to receiver in L2")
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: sa.alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
     let proofAndPublicSignals = await secretSDK.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
     await secretSDK.submitProof(ctx, proofAndPublicSignals);
@@ -154,25 +121,16 @@ task("withdraw", "Withdraw asset from L2 to L1")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    let options = {
-      method: "POST",
-      url: defaultServerEndpoint + "/accounts/get",
-      headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-      },
-      data: prepareJson({
-          alias: alias,
-          timestamp: timestamp,
-          message: rawMessage,
-          hexSignature: signature,
-          ethAddress: user.address
-      })
-  };
-  let response = await axios.request(options);
-    let accountData = response.data.data[0].secretAccount;
+    const ctx = {
+      alias: alias,
+      ethAddress: user.address,
+      rawMessage: rawMessage,
+      timestamp: timestamp,
+      signature: signature
+    };
+    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData);
+    let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
     let secretSDK = new SecretSDK(
         sa,
@@ -189,13 +147,6 @@ task("withdraw", "Withdraw asset from L2 to L1")
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: sa.alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
     let receiver = sa.accountKey.pubKey.pubKey;
     let proofAndPublicSignals = await secretSDK.withdraw(ctx, receiver, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
@@ -213,25 +164,16 @@ task("get-balance", "Get user's both L1 and L2 balance")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    let options = {
-      method: "POST",
-      url: defaultServerEndpoint + "/accounts/get",
-      headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-      },
-      data: prepareJson({
-          alias: alias,
-          timestamp: timestamp,
-          message: rawMessage,
-          hexSignature: signature,
-          ethAddress: user.address
-      })
-  };
-  let response = await axios.request(options);
-    let accountData = response.data.data[0].secretAccount;
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest(); // this password console: <your password>
-    let sa = SecretAccount.deserialize(eddsa, key, accountData);
+    const ctx = {
+      alias: alias,
+      ethAddress: user.address,
+      rawMessage: rawMessage,
+      timestamp: timestamp,
+      signature: signature
+    };
+    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
+    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+    let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
     let secretSDK = new SecretSDK(
         sa,
@@ -248,13 +190,6 @@ task("get-balance", "Get user's both L1 and L2 balance")
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: sa.alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
 
     let balance = await secretSDK.getAllBalance(ctx);
     let _balance = Object.fromEntries(
@@ -285,25 +220,16 @@ task("get-balance", "Get user's both L1 and L2 balance")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    let options = {
-      method: "POST",
-      url: defaultServerEndpoint + "/accounts/get",
-      headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-      },
-      data: prepareJson({
-          alias: alias,
-          timestamp: timestamp,
-          message: rawMessage,
-          hexSignature: signature,
-          ethAddress: user.address
-      })
-  };
-  let response = await axios.request(options);
-    let accountData = response.data.data[0].secretAccount;
+    const ctx = {
+      alias: alias,
+      ethAddress: user.address,
+      rawMessage: rawMessage,
+      timestamp: timestamp,
+      signature: signature
+    };
+    let response = await SecretSDK.getSecretAccunt(ctx, defaultServerEndpoint);
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData);
+    let sa = SecretAccount.deserialize(eddsa, key, response[0].secretAccount);
     const contractJson = require(defaultContractFile);
     let secretSDK = new SecretSDK(
         sa,
@@ -320,13 +246,6 @@ task("get-balance", "Get user's both L1 and L2 balance")
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: sa.alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
     const transactions = await secretSDK.getTransactions(ctx, { page, pageSize });
     console.log("transactions", transactions);
   });
