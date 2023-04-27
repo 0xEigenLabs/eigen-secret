@@ -872,6 +872,7 @@ notes.push(tmpNote);
      * @param {Object} ctx
      * @param {SigningKey} newSigningKey
      * @param {SigningKey} newSigningKey2
+     * @param {Object} secretAccount
      * @return {Object} a batch of proof
      */
     async createAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey, secretAccount: any) {
@@ -915,7 +916,7 @@ notes.push(tmpNote);
         this.siblings.push(tmpSiblings);
 
         await this.rollupSC.update(proofAndPublicSignals);
-        
+
         await this.accountCreate.createAccount(ctx, secretAccount);
 
         return Prover.serialize(proofAndPublicSignals)
