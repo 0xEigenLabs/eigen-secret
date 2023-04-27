@@ -23,7 +23,7 @@ describe("POST /transactions", function() {
         tmpKey = new SigningKey(eddsa);
         pubKey = tmpKey.pubKey.pubKey;
         const response = await request(app)
-        .post("/transactions")
+        .post("/transactions/create")
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -68,7 +68,7 @@ describe("POST /transactions", function() {
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
         const response = await request(app)
-        .post("/transactions/" + alias)
+        .post("/transactions/get")
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -90,10 +90,10 @@ describe("POST /transactions", function() {
         let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
         const page = 1;
-        const page_size = 1;
+        const pageSize = 1;
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
         const response = await request(app)
-        .post("/transactions/" + alias)
+        .post("/transactions/get")
         .send({
             alias: alias,
             timestamp: timestamp,
@@ -101,7 +101,7 @@ describe("POST /transactions", function() {
             hexSignature: signature,
             ethAddress: newEOAAccount.address,
             page: page,
-            page_size: page_size
+            pageSize: pageSize
         })
         .set("Accept", "application/json");
 
@@ -109,7 +109,7 @@ describe("POST /transactions", function() {
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
         assert(response.body.data.transactions[0].alias, alias)
-        expect(response.body.data.transactions.length).to.eq(page_size);
+        expect(response.body.data.transactions.length).to.eq(pageSize);
     });
 
     it("update smt", async () => {

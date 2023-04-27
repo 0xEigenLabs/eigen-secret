@@ -10,17 +10,17 @@ function generateRandomVarName(prefix: string) {
 
 async function loadScriptFromBlob(blob: Blob, globalVarName: string) {
     return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
+        const script = document.createElement("script");
         const url = URL.createObjectURL(blob);
         script.src = url;
-        script.type = 'text/javascript';
+        script.type = "text/javascript";
         script.onload = () => {
             URL.revokeObjectURL(url);
             resolve(window[globalVarName]);
         };
         script.onerror = () => {
             URL.revokeObjectURL(url);
-            reject(new Error('Failed to load the script'));
+            reject(new Error("Failed to load the script"));
         };
         document.head.appendChild(script);
     });
