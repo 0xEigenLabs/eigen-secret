@@ -71,7 +71,6 @@ export class SecretSDK {
             data: prepareJson(params)
         };
         let response = await axios.request(options);
-        console.log(response);
         if (response.status != 200 || response.data.errno != 0) {
             throw new Error(response.data.message);
         }
