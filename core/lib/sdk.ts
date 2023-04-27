@@ -20,17 +20,64 @@ import { poseidonSponge } from "./sponge_poseidon";
 import { expect, assert } from "chai";
 
 const axios = require("axios").default;
+
 /**
- * Create user account or get user secret account info
+ * SecretSDK interface
  */
-export class AccountClient {
+export class SecretSDK {
+    alias: string;
+    account: SecretAccount;
+    circuitPath: string;
+    rollupSC: RollupSC;
+    keysFound: any;
+    valuesFound: any;
+    siblings: any;
     serverAddr: any;
 
-    constructor(serverAddr: string) {
+    constructor(
+        account: SecretAccount,
+        serverAddr: string,
+        circuitPath: string,
+        eddsa: any,
+        userAccount: any,
+        spongePoseidonAddress: string,
+        tokenRegistryAddress: string,
+        poseidon2Address: string,
+        poseidon3Address: string,
+        poseidon6Address: string,
+        rollupAddress: string,
+        smtVerifierAddress: string = ""
+    ) {
+        this.alias = account.alias;
+        this.account = account;
+        Prover.serverAddr = serverAddr; // init Prover client with serverAddr
         this.serverAddr = serverAddr;
+        this.circuitPath = circuitPath;
+        this.rollupSC = new RollupSC(eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
+            poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
+        this.keysFound = [];
+        this.valuesFound = [];
+        this.siblings = [];
     }
 
-    async createAccount(
+    async curl(resource: string, params: any) {
+        let options = {
+            method: "POST",
+            url: this.serverAddr + "/" + resource,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: prepareJson(params)
+        };
+        let response = await axios.request(options);
+        if (response.status != 200 || response.data.errno != 0) {
+            throw new Error(response.data.message);
+        }
+        return response.data.data;
+    }
+
+    async createUserAccount(
         context: any,
         secretAccount: any
     ) {
@@ -41,26 +88,16 @@ export class AccountClient {
             timestamp,
             signature
         } = context;
-
-        let options = {
-            method: "POST",
-            url: this.serverAddr + "/accounts/create",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: prepareJson({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: ethAddress,
-                secretAccount: secretAccount
-            })
+        let input = {
+            alias: alias,
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: ethAddress,
+            secretAccount: secretAccount
         };
-        let response = await axios.request(options);
-        // consola.log(response);
-        return response.data.data;
+
+        return this.curl("/accounts/create", input) 
     }
 
     async getAccount(
@@ -73,36 +110,15 @@ export class AccountClient {
             timestamp,
             signature
         } = context;
-
-        let options = {
-            method: "POST",
-            url: this.serverAddr + "/accounts/get",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: prepareJson({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: ethAddress
-            })
+        let input = {
+            alias: alias,
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: ethAddress
         };
-        let response = await axios.request(options);
-        console.log(response);
-        return response.data.data;
-    }
-}
 
-/**
- * Update the status of the user account and transaction
- */
-export class StateTreeClient {
-    serverAddr: any;
-
-    constructor(serverAddr: string) {
-        this.serverAddr = serverAddr;
+        return this.curl("/accounts/get", input) 
     }
 
     async updateStateTree(
@@ -121,7 +137,7 @@ export class StateTreeClient {
             timestamp,
             signature
         } = context;
-        let tmpInput = prepareJson({
+        let input = {
             alias: alias,
             timestamp: timestamp,
             message: rawMessage,
@@ -135,31 +151,9 @@ export class StateTreeClient {
                 nullifier2: nullifier2,
                 acStateKey: acStateKey
             }
-        });
-
-        let options = {
-            method: "POST",
-            url: this.serverAddr + "/statetree",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: tmpInput
         };
-        let response = await axios.request(options);
-        // consola.log(response);
-        return response.data.data;
-    }
-}
 
-/**
- * Get or update the user's Note information
- */
-export class NoteClient {
-    serverAddr: any;
-
-    constructor(serverAddr: string) {
-        this.serverAddr = serverAddr;
+        return this.curl("statetree", input)
     }
 
     async getNote(context: any, noteState: any) {
@@ -170,26 +164,15 @@ export class NoteClient {
             timestamp,
             signature
         } = context;
-
-        let options = {
-            method: "POST",
-            url: this.serverAddr + "/notes/get",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: prepareJson({
+        let input = {
                 alias: alias,
                 timestamp: timestamp,
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: ethAddress,
                 noteState: noteState
-            })
         };
-        let response = await axios.request(options);
-        // consola.log(response);
-        return response.data.data;
+        return this.curl("notes/get", input);
     }
 
     async updateNote(context: any, notes: any) {
@@ -200,37 +183,17 @@ export class NoteClient {
             timestamp,
             signature
         } = context;
-        let options = {
-            method: "POST",
-            url: this.serverAddr + "/notes/update",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: prepareJson({
+        let input = {
                 alias: alias,
                 timestamp: timestamp,
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: ethAddress,
                 notes
-            })
         };
-        let response = await axios.request(options);
-        // consola.log(response);
-        return response.data.data;
+        return this.curl("notes/update", input);
     }
-}
 
-/**
- * Create a new transaction
- */
-export class TransactionClient {
-    serverAddr: any;
-
-    constructor(serverAddr: string) {
-        this.serverAddr = serverAddr;
-    }
 
     async createTx(context: any, receiver_alias: any, txdata: any, input: any, proofAndPublicSignals: any) {
         const {
@@ -240,14 +203,7 @@ export class TransactionClient {
             timestamp,
             signature
         } = context;
-        let options = {
-            method: "POST",
-            url: this.serverAddr + "/transactions",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: prepareJson({
+        let inputData = {
                 alias: alias,
                 timestamp: timestamp,
                 message: rawMessage,
@@ -262,11 +218,8 @@ export class TransactionClient {
                 note2Index: input.outputNotes[1].index.toString(),
                 proof: Prover.serialize(proofAndPublicSignals.proof),
                 publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
-            })
         };
-        let response = await axios.request(options);
-        // consola.log(response);
-        return response.data.data;
+        return this.curl("transactions/create", inputData);
     }
 
     async getTransactions(context: any, option: any) {
@@ -277,14 +230,7 @@ export class TransactionClient {
             timestamp,
             signature
         } = context;
-        let options = {
-            method: "POST",
-            url: this.serverAddr + "/transactions/" + alias,
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: prepareJson({
+        let data = {
                 alias: alias,
                 timestamp: timestamp,
                 message: rawMessage,
@@ -292,23 +238,8 @@ export class TransactionClient {
                 ethAddress: ethAddress,
                 page: option.page,
                 pageSize: option.pageSize
-            })
         };
-        console.log(`options: ${options}`)
-        let response = await axios.request(options);
-        // console.log(response);
-        return response.data.data;
-    }
-}
-
-/**
- * submit proof
- */
-export class ProofClient {
-    serverAddr: any;
-
-    constructor(serverAddr: string) {
-        this.serverAddr = serverAddr;
+        return this.curl("transactions/get", data);
     }
 
     async submitProofs(context: any, proofs: any) {
@@ -319,75 +250,35 @@ export class ProofClient {
             timestamp,
             signature
         } = context;
-        let options = {
-            method: "POST",
-            url: this.serverAddr + "/proof",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            data: prepareJson({
+        let data = {
                 alias: alias,
                 timestamp: timestamp,
                 message: rawMessage,
                 hexSignature: signature,
                 ethAddress: ethAddress,
                 proofs: proofs
-            })
         };
-        let response = await axios.request(options);
-        return response.data.data;
+        return this.curl("proof/create", data);
     }
-}
 
-
-/**
- * SecretSDK interface
- */
-export class SecretSDK {
-    alias: string;
-    account: SecretAccount;
-    accountCreate: AccountClient;
-    state: StateTreeClient;
-    note: NoteClient;
-    trans: TransactionClient;
-    proof: ProofClient;
-    circuitPath: string;
-    rollupSC: RollupSC;
-    keysFound: any;
-    valuesFound: any;
-    siblings: any;
-    static accountCreate: AccountClient;
-
-    constructor(
-        account: SecretAccount,
-        serverAddr: string,
-        circuitPath: string,
-        eddsa: any,
-        userAccount: any,
-        spongePoseidonAddress: string,
-        tokenRegistryAddress: string,
-        poseidon2Address: string,
-        poseidon3Address: string,
-        poseidon6Address: string,
-        rollupAddress: string,
-        smtVerifierAddress: string = ""
-    ) {
-        this.alias = account.alias;
-        this.account = account;
-        this.accountCreate = new AccountClient(serverAddr);
-        this.state = new StateTreeClient(serverAddr);
-        this.note = new NoteClient(serverAddr);
-        this.trans = new TransactionClient(serverAddr);
-        this.proof = new ProofClient(serverAddr);
-        Prover.serverAddr = serverAddr; // init Prover client with serverAddr
-        this.circuitPath = circuitPath;
-        this.rollupSC = new RollupSC(eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
-            poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
-        this.keysFound = [];
-        this.valuesFound = [];
-        this.siblings = [];
+    async getProofs(context: any) {
+        const {
+            alias,
+            ethAddress,
+            rawMessage,
+            timestamp,
+            signature
+        } = context;
+        let data = {
+                alias: alias,
+                timestamp: timestamp,
+                message: rawMessage,
+                hexSignature: signature,
+                ethAddress: ethAddress
+        };
+        return this.curl("proof/create", data);
     }
+
     /**
      * connect the rollup contracts
      * @param {Object} contractABI the contracts ABI directory
@@ -425,7 +316,7 @@ export class SecretSDK {
 
     async getAndDecryptNote(ctx: any, noteState: Array<NoteState>) {
         let notes: Array<Note> = [];
-        let encryptedNotes = await this.note.getNote(ctx, noteState);
+        let encryptedNotes = await this.getNote(ctx, noteState);
         if (encryptedNotes) {
             encryptedNotes.forEach((item: any) => {
                 let sharedKey = this.account.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
@@ -484,7 +375,7 @@ notes.push(tmpNote);
         consola.log("deposit inputs", util.inspect(inputs, 1, 100));
         let batchProof: string[] = [];
         for (const input of inputs) {
-            const proof = await this.state.updateStateTree(
+            const proof = await this.updateStateTree(
                 ctx,
                 input.outputNCs[0],
                 input.outputNotes[0].inputNullifier,
@@ -514,7 +405,7 @@ notes.push(tmpNote);
 
             let txInput = new Transaction(input.inputNotes, this.account.signingKey);
             let txInputData = await txInput.encrypt();
-            await this.trans.createTx(ctx, this.alias, txdata, input, proofAndPublicSignals);
+            await this.createTx(ctx, this.alias, txdata, input, proofAndPublicSignals);
 
             await this.rollupSC.update(proofAndPublicSignals);
 
@@ -552,7 +443,7 @@ notes.push(tmpNote);
                 });
             }
             consola.log("deposit _note", input.inputNotes, input.outputNotes);
-            await this.note.updateNote(ctx, _notes);
+            await this.updateNote(ctx, _notes);
         }
         await this.rollupSC.processDeposits(this.rollupSC.userAccount, this.keysFound, this.valuesFound, this.siblings);
         return batchProof;
@@ -603,7 +494,7 @@ notes.push(tmpNote);
 
         let batchProof: string[] = [];
         for (const input of inputs) {
-            const proof = await this.state.updateStateTree(
+            const proof = await this.updateStateTree(
                 ctx,
                 input.outputNCs[0],
                 input.outputNotes[0].inputNullifier,
@@ -622,7 +513,7 @@ notes.push(tmpNote);
             let txInputData = await txInput.encrypt();
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            await this.trans.createTx(ctx, receiver_alias, txdata, input, proofAndPublicSignals);
+            await this.createTx(ctx, receiver_alias, txdata, input, proofAndPublicSignals);
 
             await this.rollupSC.update(proofAndPublicSignals);
 
@@ -659,7 +550,7 @@ notes.push(tmpNote);
                 });
             }
             consola.log("send _note", input.inputNotes, input.outputNotes);
-            await this.note.updateNote(ctx, _notes);
+            await this.updateNote(ctx, _notes);
         }
         return batchProof;
     }
@@ -712,7 +603,7 @@ notes.push(tmpNote);
         let siblings = [];
 
         for (const input of inputs) {
-            const proof = await this.state.updateStateTree(
+            const proof = await this.updateStateTree(
                 ctx,
                 input.outputNCs[0],
                 input.outputNotes[0].inputNullifier,
@@ -759,7 +650,7 @@ notes.push(tmpNote);
             let txInputData = await txInput.encrypt();
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            await this.trans.createTx(ctx, this.alias, txdata, input, proofAndPublicSignals);
+            await this.createTx(ctx, this.alias, txdata, input, proofAndPublicSignals);
             // call contract and deposit
             await this.rollupSC.update(proofAndPublicSignals);
             // settle down the spent notes
@@ -796,7 +687,7 @@ notes.push(tmpNote);
                 });
             }
             consola.log("withdraw _note", input.inputNotes, input.outputNotes);
-            await this.note.updateNote(ctx, _notes);
+            await this.updateNote(ctx, _notes);
         }
 
         let tmpP = this.account.signingKey.pubKey.unpack(eddsa.babyJub);
@@ -897,6 +788,10 @@ notes.push(tmpNote);
         return await this.rollupSC.getRegisteredToken(id);
     }
 
+    async getSecretAccunt(ctx: any) {
+        return await this.getAccount(ctx);
+    }
+
     // create proof for account operation, create, migrate or update
     /**
      * create proof for the secret account created
@@ -919,6 +814,7 @@ notes.push(tmpNote);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         let aliasHash = uint8Array2Bigint(aliasHashBuffer);
+        await this.createUserAccount(ctx, secretAccount);
         let input = await UpdateStatusCircuit.createAccountInput(
             proofId,
             this.account.accountKey,
@@ -931,7 +827,7 @@ notes.push(tmpNote);
         let accountRequired = false;
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         let acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
-        let smtProof = await this.state.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
+        let smtProof = await this.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
         let circuitInput = input.toCircuitInput(eddsa.babyJub, smtProof);
         // create final proof
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
@@ -949,8 +845,6 @@ notes.push(tmpNote);
 
         await this.rollupSC.update(proofAndPublicSignals);
 
-        await this.accountCreate.createAccount(ctx, secretAccount);
-
         return Prover.serialize(proofAndPublicSignals)
     }
 
@@ -963,7 +857,7 @@ notes.push(tmpNote);
      * @param {Object} newSecretAccount
      * @return {Object} a batch of proof
      */
-    async updateAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey, newSecretAccount: any) {
+    async updateAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey, newSecretAccount:any) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
         let newAccountPubKey = this.account.accountKey.toCircuitInput();
@@ -980,7 +874,7 @@ notes.push(tmpNote);
             newSigningPubKey2[0],
             aliasHash
         );
-        let smtProof = await this.state.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
+        let smtProof = await this.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
         let inputJson = input.toCircuitInput(eddsa.babyJub, smtProof);
 
         // create final proof
@@ -989,7 +883,7 @@ notes.push(tmpNote);
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
-        await this.accountCreate.createAccount(ctx, newSecretAccount);
+        await this.createUserAccount(ctx, newSecretAccount);
         return Prover.serialize(proofAndPublicSignals);
     }
 
@@ -1020,7 +914,7 @@ notes.push(tmpNote);
         );
         // insert the new account key
         consola.log("migrate input", input);
-        let smtProof = await this.state.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
+        let smtProof = await this.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
         let inputJson = input.toCircuitInput(eddsa.babyJub, smtProof);
 
         // create final proof
@@ -1059,41 +953,7 @@ notes.push(tmpNote);
                 proofs.concat(prf);
             }
         }
-        await this.accountCreate.createAccount(ctx, newSecretAccount);
+        await this.createUserAccount(ctx, newSecretAccount)
         return proofs;
-    }
-    /**
-     * get user secret account info
-     *
-     * @param {Object} ctx
-     * @param {string} serverAddr
-     * @return {Object} user secret account
-     */
-    static async getSecretAccunt(ctx: any, serverAddr: string){
-        this.accountCreate = new AccountClient(serverAddr);
-        let test = await this.accountCreate.getAccount(ctx);
-        return test;
-    }
-
-    /**
-     * submit proof
-     *
-     * @param {Object} ctx
-     * @param {Object} proofs
-     * @return {Object} request body
-     */
-    async submitProof(ctx: any, proofs: any) {
-        return this.proof.submitProofs(ctx, proofs);
-    }
-
-    /**
-     * get all transactions
-     *
-     * @param {Object} ctx
-     * @param {Object} option
-     * @return {Object} transactions
-     */
-    async getTransactions(ctx: any, option: any) {
-        return this.trans.getTransactions(ctx, option);
     }
 }

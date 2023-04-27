@@ -229,7 +229,7 @@ describe("POST /transactions", function() {
 
             // create tx. FIXME: should peg input?
             const responseTx = await request(app)
-            .post("/transactions")
+            .post("/transactions/create")
             .send({
                 alias: alias,
                 timestamp: timestamp,
@@ -396,7 +396,7 @@ describe("POST /transactions", function() {
 
             // create tx
             const responseTx = await request(app)
-            .post("/transactions")
+            .post("/transactions/create")
             .send({
                 alias: alias,
                 timestamp: timestamp,
@@ -597,7 +597,7 @@ describe("POST /transactions", function() {
 
             // create tx
             const responseTx = await request(app)
-            .post("/transactions")
+            .post("/transactions/create")
             .send({
                 alias: alias,
                 timestamp: timestamp,
