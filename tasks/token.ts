@@ -1,22 +1,41 @@
 import { task } from "hardhat/config";
+import { signEOASignature, rawMessage, prepareJson } from "@eigen-secret/core/dist-node/utils";
 import { SecretAccount } from "@eigen-secret/core/dist-node/account";
 import {
     defaultServerEndpoint,
-    defaultCircuitPath, defaultContractABI, defaultContractFile, accountFile } from "./common";
+    defaultCircuitPath, defaultContractABI, defaultContractFile } from "./common";
 const { buildEddsa } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
-const fs = require("fs");
+const axios = require("axios").default;
 
 task("setup-rollup", "Setup rollup coordinator")
       .addParam("alias", "user alias", "Alice")
       .addParam("password", "password for key sealing", "<your password>")
       .setAction(async ({ alias, password }, { ethers }) => {
+    let timestamp = Math.floor(Date.now()/1000).toString();
     let [admin] = await ethers.getSigners();
     let eddsa = await buildEddsa();
-    let accountData = fs.readFileSync(accountFile(alias));
+    const signature = await signEOASignature(admin, rawMessage, admin.address, alias, timestamp);
+    let options = {
+      method: "POST",
+      url: defaultServerEndpoint + "/accounts/get",
+      headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+      },
+      data: prepareJson({
+          alias: alias,
+          timestamp: timestamp,
+          message: rawMessage,
+          hexSignature: signature,
+          ethAddress: admin.address
+      })
+  };
+  let response = await axios.request(options);
+    let accountData = response.data.data[0].secretAccount;
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
+    let sa = SecretAccount.deserialize(eddsa, key, accountData)
     const contractJson = require(defaultContractFile);
 
     let secretSDK = new SecretSDK(
@@ -45,11 +64,29 @@ task("register-token", "Register token to Rollup")
       .addParam("token", "the token to be registered")
       .addParam("password", "password for key sealing", "<your password>")
       .setAction(async ({ alias, token, password }, { ethers }) => {
-    let [admin] = await ethers.getSigners();
-    let eddsa = await buildEddsa();
-    let accountData = fs.readFileSync(accountFile(alias));
+        let timestamp = Math.floor(Date.now()/1000).toString();
+        let [admin] = await ethers.getSigners();
+        let eddsa = await buildEddsa();
+        const signature = await signEOASignature(admin, rawMessage, admin.address, alias, timestamp);
+        let options = {
+          method: "POST",
+          url: defaultServerEndpoint + "/accounts/get",
+          headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+          },
+          data: prepareJson({
+              alias: alias,
+              timestamp: timestamp,
+              message: rawMessage,
+              hexSignature: signature,
+              ethAddress: admin.address
+          })
+      };
+      let response = await axios.request(options);
+        let accountData = response.data.data[0].secretAccount;
     let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
+    let sa = SecretAccount.deserialize(eddsa, key, accountData)
     const contractJson = require(defaultContractFile);
 
     let secretSDK = new SecretSDK(
@@ -81,11 +118,29 @@ task("send-l1", "Send asset from L1 to L1")
     .addParam("assetId", "asset id")
     .addParam("password", "password for key sealing", "<your password>")
     .setAction(async ({ alias, value, receiver, assetId, password }, { ethers }) => {
+        let timestamp = Math.floor(Date.now()/1000).toString();
         let [admin] = await ethers.getSigners();
         let eddsa = await buildEddsa();
-        let accountData = fs.readFileSync(accountFile(alias));
+        const signature = await signEOASignature(admin, rawMessage, admin.address, alias, timestamp);
+        let options = {
+          method: "POST",
+          url: defaultServerEndpoint + "/accounts/get",
+          headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+          },
+          data: prepareJson({
+              alias: alias,
+              timestamp: timestamp,
+              message: rawMessage,
+              hexSignature: signature,
+              ethAddress: admin.address
+          })
+      };
+      let response = await axios.request(options);
+        let accountData = response.data.data[0].secretAccount;
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-        let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
+        let sa = SecretAccount.deserialize(eddsa, key, accountData)
         const contractJson = require(defaultContractFile);
         let secretSDK = new SecretSDK(
             sa,

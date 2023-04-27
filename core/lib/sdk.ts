@@ -928,9 +928,10 @@ notes.push(tmpNote);
      * @param {Object} ctx
      * @param {SigningKey} newSigningKey
      * @param {SigningKey} newSigningKey2
+     * @param {Object} newSecretAccount
      * @return {Object} a batch of proof
      */
-    async updateAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey) {
+    async updateAccount(ctx: any, newSigningKey: SigningKey, newSigningKey2: SigningKey, newSecretAccount: any) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
         let newAccountPubKey = this.account.accountKey.toCircuitInput();
@@ -956,6 +957,7 @@ notes.push(tmpNote);
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
+        await this.accountCreate.createAccount(ctx, newSecretAccount);
         return Prover.serialize(proofAndPublicSignals);
     }
 
@@ -964,9 +966,10 @@ notes.push(tmpNote);
      *
      * @param {Object} ctx
      * @param {SigningKey} newAccountKey the account key that which user renews
+     * @param {Object} newSecretAccount
      * @return {Object} a batch of proof
      */
-    async migrateAccount(ctx: any, newAccountKey: SigningKey) {
+    async migrateAccount(ctx: any, newAccountKey: SigningKey, newSecretAccount: any) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         let newAccountPubKey = newAccountKey.toCircuitInput();
@@ -1024,6 +1027,7 @@ notes.push(tmpNote);
                 proofs.concat(prf);
             }
         }
+        await this.accountCreate.createAccount(ctx, newSecretAccount);
         return proofs;
     }
 
