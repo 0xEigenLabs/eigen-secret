@@ -79,9 +79,37 @@ describe("POST /transactions", function() {
         .set("Accept", "application/json");
 
         console.log(response.body);
+        console.log(response.body.data);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        assert(response.body.data[0].alias, alias)
+        assert(response.body.data.transactions[0].alias, alias)
+    });
+
+    it("get paging txs", async () => {
+        let newEOAAccount = await ethers.Wallet.createRandom();
+        let rawMessage = "Use Eigen Secret to shield your asset";
+        let timestamp = Math.floor(Date.now()/1000).toString();
+        const page = 1;
+        const page_size = 1;
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        const response = await request(app)
+        .post("/transactions/" + alias)
+        .send({
+            alias: alias,
+            timestamp: timestamp,
+            message: rawMessage,
+            hexSignature: signature,
+            ethAddress: newEOAAccount.address,
+            page: page,
+            page_size: page_size
+        })
+        .set("Accept", "application/json");
+
+        console.log(response.body);
+        expect(response.status).to.eq(200);
+        expect(response.body.errno).to.eq(0);
+        assert(response.body.data.transactions[0].alias, alias)
+        expect(response.body.data.transactions.length).to.eq(page_size);
     });
 
     it("update smt", async () => {

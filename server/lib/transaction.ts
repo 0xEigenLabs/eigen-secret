@@ -167,6 +167,9 @@ export async function getTxByAlias(req: any, res: any) {
     const timestamp = req.body.timestamp;
     const rawMessage = req.body.message;
     const hexSignature = req.body.hexSignature;
+    const page = req.body.page;
+    const pageSize = req.body.pageSize;
+
     let validAdddr = await utils.verifyEOASignature(rawMessage, hexSignature, ethAddress, alias, timestamp);
     if (!validAdddr) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid EOA address"));
@@ -174,7 +177,7 @@ export async function getTxByAlias(req: any, res: any) {
 
     let result: any;
     try {
-        result = await TransactionModel.findAll({ where: { alias: alias } });
+        result = await search({ alias: alias }, page, pageSize);
     } catch (err: any) {
         consola.log(err)
         return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
@@ -268,3 +271,35 @@ export async function updateNotes(req: any, res: any) {
     }
     return res.json(utils.succ(result));
 }
+
+async function search(filterDict: any, page: any, pageSize: any) {
+    if (page) {
+      consola.log("page = ", page);
+      consola.log("pageSize = ", pageSize);
+
+      const { count, rows } = await TransactionModel.findAndCountAll({
+        where: filterDict,
+        order: [["createdAt", "DESC"]],
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+        raw: true
+      });
+      consola.log("count = ", count);
+      consola.log("rows = ", rows);
+      const totalPage = Math.ceil(count / pageSize);
+      return {
+        transactions: rows,
+        totalPage
+      };
+    } else {
+      const list = await TransactionModel.findAll({
+        where: filterDict,
+        order: [["createdAt", "DESC"]],
+        raw: true
+      });
+      return {
+        transactions: list,
+        totalPage: list.length
+      };
+    }
+  }
