@@ -3,7 +3,6 @@ import { BigNumberish } from "ethers";
 import { ethers } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
-import { Context } from "./context";
 
 export const rawMessage = "Sign this message to generate your EigenSecret Key. " +
 "This key lets the application decrypt your balance on EigenSecret. " +
@@ -247,4 +246,3 @@ const hasValue = function(variable: any) {
 const pathJoin = (parts: Array<string>, sep="/") => parts.join(sep).replace(new RegExp(sep+"{1,}", "g"), sep);
 
 export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson, pathJoin };
-

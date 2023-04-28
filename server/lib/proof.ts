@@ -1,6 +1,6 @@
 const { DataTypes, Model } = require("sequelize");
 import * as utils from "@eigen-secret/core/dist-node/utils";
-import {Context} from "@eigen-secret/core/dist-node/context";
+import { Context } from "@eigen-secret/core/dist-node/context";
 import sequelize from "./db";
 import { ProofState } from "@eigen-secret/core/dist-node/prover";
 
