@@ -4,6 +4,7 @@ import app from "../server/dist/service";
 import { EigenAddress, SigningKey } from "@eigen-secret/core/dist-node/account";
 import { ethers } from "ethers";
 import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { NoteState } from "@eigen-secret/core/dist-node/note";
 import { TxData } from "@eigen-secret/core/dist-node/transaction";
@@ -22,14 +23,11 @@ describe("POST /transactions", function() {
 
         tmpKey = new SigningKey(eddsa);
         pubKey = tmpKey.pubKey.pubKey;
+        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/transactions/create")
         .send({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address,
+            context: ctx.serialize(),
             receiver_alias: alias,
             pubKey: pubKey,
             pubKey2: pubKey,
@@ -64,17 +62,13 @@ describe("POST /transactions", function() {
 
     it("get tx", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
-        let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/transactions/get")
         .send({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address
+            context: ctx.serialize()
         })
         .set("Accept", "application/json");
 
@@ -87,19 +81,15 @@ describe("POST /transactions", function() {
 
     it("get paging txs", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
-        let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
         const page = 1;
         const pageSize = 1;
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/transactions/get")
         .send({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address,
+            context: ctx.serialize(),
             page: page,
             pageSize: pageSize
         })
@@ -114,18 +104,13 @@ describe("POST /transactions", function() {
 
     it("update smt", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
-        let rawMessage = "Use Eigen Secret to shield your asset";
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
-
+        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/statetree")
         .send({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address,
+            context: ctx.serialize(),
             newStates: {
                 outputNc1: "1233",
                 nullifier1: "1",
@@ -144,11 +129,7 @@ describe("POST /transactions", function() {
         const responseNote = await request(app)
         .post("/notes/get")
         .send({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address,
+            context: ctx.serialize(),
             noteState: [NoteState.CREATING, NoteState.PROVED]
         })
         .set("Accept", "application/json");
@@ -159,11 +140,7 @@ describe("POST /transactions", function() {
         const response2 = await request(app)
         .post("/notes/update")
         .send({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address,
+            context: ctx.serialize(),
             notes: [
                 {
                     alias: alias,

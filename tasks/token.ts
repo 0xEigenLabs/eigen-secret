@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { Context } from "@eigen-secret/core/dist-node/context";
 import {
     defaultServerEndpoint,
     defaultCircuitPath, defaultContractABI, defaultContractFile
@@ -13,13 +14,7 @@ task("setup-rollup", "Setup rollup coordinator")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [admin] = await ethers.getSigners();
     const signature = await signEOASignature(admin, rawMessage, admin.address, alias, timestamp);
-    const ctx = {
-        alias: alias,
-        ethAddress: admin.address,
-        rawMessage: rawMessage,
-        timestamp: timestamp,
-        signature: signature
-    };
+    const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
@@ -38,13 +33,7 @@ task("register-token", "Register token to Rollup")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [admin] = await ethers.getSigners();
     const signature = await signEOASignature(admin, rawMessage, admin.address, alias, timestamp);
-    const ctx = {
-        alias: alias,
-        ethAddress: admin.address,
-        rawMessage: rawMessage,
-        timestamp: timestamp,
-        signature: signature
-    };
+    const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
@@ -65,13 +54,7 @@ task("send-l1", "Send asset from L1 to L1")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [admin] = await ethers.getSigners();
     const signature = await signEOASignature(admin, rawMessage, admin.address, alias, timestamp);
-    const ctx = {
-        alias: alias,
-        ethAddress: admin.address,
-        rawMessage: rawMessage,
-        timestamp: timestamp,
-        signature: signature
-    };
+    const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI

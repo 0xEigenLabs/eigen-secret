@@ -7,6 +7,7 @@ import { Prover } from "./prover";
 // const consola = require("consola");
 import { Note, NoteState } from "./note";
 import { Transaction } from "./transaction";
+import { Context } from "./context";
 import {
     AccountCircuit,
     compress as accountCompress,
@@ -88,25 +89,14 @@ export class SecretSDK {
     }
 
     async createOrUpdateAccount(
-        context: any,
+        ctx: Context,
         password: string,
         update: boolean = false
     ) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
         let secretAccount = this.account.serialize(key);
         let input = {
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: ethAddress,
+            context: ctx.serialize(),
             secretAccount: secretAccount
         };
 
@@ -117,7 +107,7 @@ export class SecretSDK {
     }
 
     static async initSDKFromAccount(
-        context: any,
+        ctx: Context,
         serverAddr: string,
         password: string,
         user: any,
@@ -125,26 +115,15 @@ export class SecretSDK {
         circuitPath: string,
         contractABI: any
     ) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
         let input = {
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: ethAddress
+            context: ctx.serialize()
         };
         let eddsa = await buildEddsa();
         let accountData = await SecretSDK.curlEx(serverAddr, "accounts/create", input);
 
         if (
-            accountData.alias !== alias ||
-            accountData.ethAddress !== ethAddress
+            accountData.alias !== ctx.alias ||
+            accountData.ethAddress !== ctx.ethAddress
         ) {
             throw new Error("Invalid alias");
         }
@@ -171,7 +150,7 @@ export class SecretSDK {
     }
 
     async updateStateTree(
-        context: any,
+        ctx: Context,
         outputNc1: bigint,
         nullifier1: bigint,
         outputNc2: bigint,
@@ -179,19 +158,8 @@ export class SecretSDK {
         acStateKey: bigint,
         padding: boolean = true
     ) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
         let input = {
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: ethAddress,
+            context: ctx.serialize(),
             padding: padding, // NOTE: DO NOT pad because we need call smtVerifier smartcontract
             newStates: {
                 outputNc1: outputNc1,
@@ -205,63 +173,29 @@ export class SecretSDK {
         return this.curl("statetree", input)
     }
 
-    async getNote(context: any, noteState: any) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
+    async getNote(ctx: Context, noteState: any) {
         let input = {
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: ethAddress,
-                noteState: noteState
+            context: ctx.serialize(),
+            noteState: noteState
         };
         return this.curl("notes/get", input);
     }
 
-    async updateNote(context: any, notes: any) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
+    async updateNote(ctx: Context, notes: any) {
         let input = {
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: ethAddress,
-                notes
+            context: ctx.serialize(),
+            notes
         };
         return this.curl("notes/update", input);
     }
 
-
-    async createTx(context: any, receiver_alias: any, txdata: any, input: any, proofAndPublicSignals: any) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
+    async createTx(ctx: Context, receiver_alias: any, txdata: any, input: any, proofAndPublicSignals: any) {
         let inputData = {
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: ethAddress,
-                receiver_alias: receiver_alias,
-                pubKey: txdata[0].pubKey.pubKey,
-                pubKey2: txdata[1].pubKey.pubKey,
-                content: txdata[0].content,
+            context: ctx.serialize(),
+            receiver_alias: receiver_alias,
+            pubKey: txdata[0].pubKey.pubKey,
+            pubKey2: txdata[1].pubKey.pubKey,
+            content: txdata[0].content,
                 content2: txdata[1].content,
                 noteIndex: input.outputNotes[0].index.toString(),
                 note2Index: input.outputNotes[1].index.toString(),
@@ -271,59 +205,26 @@ export class SecretSDK {
         return this.curl("transactions/create", inputData);
     }
 
-    async getTransactions(context: any, option: any) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
+    async getTransactions(ctx: Context, option: any) {
         let data = {
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: ethAddress,
-                page: option.page,
-                pageSize: option.pageSize
+            context: ctx.serialize(),
+            page: option.page,
+            pageSize: option.pageSize
         };
         return this.curl("transactions/get", data);
     }
 
-    async submitProofs(context: any, proofs: any) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
+    async submitProofs(ctx: Context, proofs: any) {
         let data = {
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: ethAddress,
-                proofs: proofs
+            context: ctx.serialize(),
+            proofs: proofs
         };
         return this.curl("proof/create", data);
     }
 
-    async getProofs(context: any) {
-        const {
-            alias,
-            ethAddress,
-            rawMessage,
-            timestamp,
-            signature
-        } = context;
+    async getProofs(ctx: Context) {
         let data = {
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: ethAddress
+            context: ctx.serialize()
         };
         return this.curl("proof/create", data);
     }
@@ -346,10 +247,10 @@ export class SecretSDK {
 
     /**
      * obtain user balance
-     * @param {Object} ctx
+     * @param {Context} ctx
      * @return {Map} user balance
      */
-    async getAllBalance(ctx: any) {
+    async getAllBalance(ctx: Context) {
         let noteState = [NoteState.PROVED]
         let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
         let notesByAssetId: Map<number, bigint> = new Map();
@@ -382,14 +283,14 @@ export class SecretSDK {
     /**
      * create proof for the deposit of the asset from L1 to L2
      *
-     * @param {Object} ctx
+     * @param {Context} ctx
      * @param {string} receiver
      * @param {bigint} value the amount to be deposited
      * @param {number} assetId the token to be deposited
      * @param {number} nonce the nonce of current transaction, usually obtained from Wallet like Metamask
      * @return {Object} a batch of proof
      */
-    async deposit(ctx: any, receiver: string, value: bigint, assetId: number, nonce: number) {
+    async deposit(ctx: Context, receiver: string, value: bigint, assetId: number, nonce: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let tmpP = this.account.accountKey.pubKey.unpack(eddsa.babyJub);
@@ -497,7 +398,7 @@ export class SecretSDK {
     /**
      * create proof for sending the asset to the receiver in L2
      *
-     * @param {Object} ctx
+     * @param {Context} ctx
      * @param {string} receiver
      * @param {string} receiver_alias use for test
      * @param {bigint} value the amount to be sent
@@ -506,7 +407,7 @@ export class SecretSDK {
      * @return {Object} a batch of proof
      */
     async send(
-        ctx: any,
+        ctx: Context,
         receiver: string,
         receiver_alias: string,
         value: bigint,
@@ -601,13 +502,13 @@ export class SecretSDK {
     /**
      * create proof for withdrawing asset from L2 to L1
      *
-     * @param {Object} ctx
+     * @param {Context} ctx
      * @param {string} receiver
      * @param {bigint} value the amount to be withdrawn
      * @param {number} assetId the token to be withdrawn
      * @return {Object} a batch of proof
      */
-    async withdraw(ctx: any, receiver: string, value: bigint, assetId: number) {
+    async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
@@ -824,11 +725,11 @@ export class SecretSDK {
     /**
      * create proof for the secret account created
      *
-     * @param {Object} ctx
+     * @param {Context} ctx
      * @param {string} password used to decrypto the siging key
      * @return {Object} a batch of proof
      */
-    async createAccount(ctx: any, password: string) {
+    async createAccount(ctx: Context, password: string) {
         let eddsa = await buildEddsa();
         const F = eddsa.F;
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
@@ -875,12 +776,12 @@ export class SecretSDK {
     /**
      * create proof for the user updating their signing key
      *
-     * @param {Object} ctx
+     * @param {Context} ctx
      * @param {SigningKey} newSigningKey
      * @param {string} password used to decrypto the siging key
      * @return {Object} a batch of proof
      */
-    async updateAccount(ctx: any, newSigningKey: SigningKey, password: string) {
+    async updateAccount(ctx: Context, newSigningKey: SigningKey, password: string) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
         let newAccountPubKey = this.account.accountKey.toCircuitInput();
@@ -953,7 +854,7 @@ export class SecretSDK {
      * @param {string} password used to decrypto the siging key
      * @return {Object} a batch of proof
      */
-    async migrateAccount(ctx: any, newAccountKey: SigningKey, password: string) {
+    async migrateAccount(ctx: Context, newAccountKey: SigningKey, password: string) {
         let eddsa = await buildEddsa();
         let proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         let newAccountPubKey = newAccountKey.toCircuitInput();

@@ -2,6 +2,7 @@ import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account";
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
+import { Context } from "@eigen-secret/core/dist-node/context";
 import {
     defaultServerEndpoint,
     defaultCircuitPath,
@@ -46,13 +47,7 @@ task("create-account", "Create secret account")
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
+    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     let proofAndPublicSignals = await secretSDK.createAccount(ctx, password);
     console.log("create account", proofAndPublicSignals);
   })
@@ -67,13 +62,7 @@ task("migrate-account", "Migrate account to another ETH address")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
+    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     let newAccountKey = new SigningKey(eddsa);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
@@ -95,13 +84,7 @@ task("update-account", "Update signing key")
     let accounts = await ethers.getSigners();
     let user = accounts[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
+    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
@@ -125,13 +108,7 @@ task("get-account", "Get account info")
     let user = account[index];
     console.log("ETH address", user.address);
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
+    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let sdk = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
