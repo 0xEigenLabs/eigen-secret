@@ -1,7 +1,8 @@
 const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
-import * as utils from "@eigen-secret/core/dist-node/utils"
+import * as utils from "@eigen-secret/core/dist-node/utils";
+import { Context } from "@eigen-secret/core/dist-node/context";
 
 class AccountModel extends Model {}
 
@@ -28,18 +29,15 @@ AccountModel.init({
 
 // add new key
 export async function createAccount(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
+    let ctx = Context.deserialize(req.body.context);
     const secretAccount = req.body.secretAccount;
-    const hexSignature = req.body.hexSignature;
-
-    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
-    if (code !== utils.ErrCode.Success) {
+    const code = ctx.check();
+    if (code !== utils.ErrCode.Success || !utils.hasValue(secretAccount)) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
+    const alias = ctx.alias;
+    const ethAddress = ctx.ethAddress;
     let newItem = { alias, ethAddress, secretAccount };
     const found: AccountModel | null = await AccountModel.findOne({ where: { alias } });
     if (found) {
@@ -65,21 +63,16 @@ export async function createAccount(req: any, res: any) {
 }
 
 export async function updateAccount(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
+    let ctx = Context.deserialize(req.body.context);
     const secretAccount = req.body.secretAccount;
-    const hexSignature = req.body.hexSignature;
-
-    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
-    if (code !== utils.ErrCode.Success) {
+    let code = ctx.check();
+    if (code !== utils.ErrCode.Success || !utils.hasValue(secretAccount)) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
-    let condition = { alias, ethAddress };
+    let condition = { alias: ctx.alias, ethAddress: ctx.ethAddress };
     let found: AccountModel | null = await AccountModel.findOne({ where: condition });
-    if (found && found.ethAddress !== ethAddress) {
+    if (found && found.ethAddress !== ctx.ethAddress) {
         return res.json(utils.err(utils.ErrCode.DuplicatedRecordError, "alias duplicated"));
     }
 
@@ -88,7 +81,8 @@ export async function updateAccount(req: any, res: any) {
         await AccountModel.update(
             { secretAccount },
             { where: condition, returning: true, plain: true },
-            transaction);
+            transaction
+        );
         transaction.commit();
     } catch (err: any) {
         consola.log(err)

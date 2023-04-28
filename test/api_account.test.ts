@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 const createBlakeHash = require("blake-hash");
 import app from "../server/dist/service";
 import * as utils from "@eigen-secret/core/dist-node/utils";
+import {Context} from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account";
 const { buildEddsa } = require("circomlibjs");
@@ -36,14 +37,11 @@ describe("POST /accounts", function() {
 
         let password = "12121";
         key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+        let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/accounts/create")
         .send({
-            alias: alias,
-            ethAddress: newEOAAccount.address,
-            message: utils.rawMessage,
-            timestamp: timestamp,
-            hexSignature: signature,
+            context: ctx.serialize(),
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");
@@ -62,14 +60,11 @@ describe("POST /accounts", function() {
             alias,
             timestamp
         );
+        let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/accounts/create")
         .send({
-            alias: alias,
-            ethAddress: newEOAAccount.address,
-            message: utils.rawMessage,
-            timestamp: timestamp,
-            hexSignature: signature
+            context: ctx.serialize()
         })
         .set("Accept", "application/json");
 
@@ -98,14 +93,11 @@ describe("POST /accounts", function() {
             timestamp
         );
 
+        let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/accounts/create")
         .send({
-            alias: alias,
-            ethAddress: newEOAAccount.address,
-            message: utils.rawMessage,
-            timestamp: timestamp,
-            hexSignature: signature,
+            context: ctx.serialize(),
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");
@@ -123,14 +115,11 @@ describe("POST /accounts", function() {
             timestamp
         );
 
+        let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/accounts/update")
         .send({
-            alias: alias,
-            ethAddress: newEOAAccount.address,
-            message: utils.rawMessage,
-            timestamp: timestamp,
-            hexSignature: signature,
+            context: ctx.serialize(),
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");

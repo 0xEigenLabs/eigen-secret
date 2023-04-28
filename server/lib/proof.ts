@@ -1,5 +1,6 @@
 const { DataTypes, Model } = require("sequelize");
 import * as utils from "@eigen-secret/core/dist-node/utils";
+import {Context} from "@eigen-secret/core/dist-node/context";
 import sequelize from "./db";
 import { ProofState } from "@eigen-secret/core/dist-node/prover";
 
@@ -46,12 +47,8 @@ export async function getDBProof(alias: string, state: ProofStateArray) {
 }
 
 export async function submitProofs(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
-    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    let ctx = Context.deserialize(req.body.context);
+    let code = ctx.check();
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
@@ -60,6 +57,7 @@ export async function submitProofs(req: any, res: any) {
     if (!Array.isArray(proofs)) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid Proofs"));
     }
+    const alias = ctx.alias;
     // get the confirmed note list
     let result: any;
     let transaction: any;
@@ -78,16 +76,12 @@ export async function submitProofs(req: any, res: any) {
 }
 
 export async function getProofs(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
-    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    let ctx = Context.deserialize(req.body.context);
+    let code = ctx.check();
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
-
+    const alias = ctx.alias;
     let states = req.body.states;
     if (!Array.isArray(states)) {
         states = [states];

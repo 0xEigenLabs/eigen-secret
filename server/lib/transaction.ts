@@ -3,6 +3,7 @@ import sequelize from "./db";
 import consola from "consola";
 import * as note from "@eigen-secret/core/dist-node/note";
 import * as utils from "@eigen-secret/core/dist-node/utils";
+import {Context} from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
 import { NoteModel, updateDBNotes, getDBNotes } from "./note";
 
@@ -49,7 +50,8 @@ export enum TransactionModelStatus {
 }
 
 export async function createTx(req: any, res: any) {
-    const alias = req.body.alias;
+    let ctx = Context.deserialize(req.body.context);
+    let code = ctx.check();
     const receiver_alias = req.body.receiver_alias;
     const pubKey = req.body.pubKey;
     const pubKey2 = req.body.pubKey2;
@@ -60,14 +62,7 @@ export async function createTx(req: any, res: any) {
     const content = req.body.content;
     const content2 = req.body.content2;
 
-    // context
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
-
-    if (!utils.hasValue(alias) ||
-        !utils.hasValue(receiver_alias) ||
+    if (!utils.hasValue(receiver_alias) ||
         !utils.hasValue(pubKey) ||
         !utils.hasValue(pubKey2) ||
         !utils.hasValue(noteIndex) ||
@@ -81,11 +76,11 @@ export async function createTx(req: any, res: any) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "missing input"));
     }
 
-    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
+    const alias = ctx.alias;
     let transaction: any;
     try {
         transaction = await sequelize.transaction();
@@ -163,19 +158,15 @@ export async function createTxInternal(
 }
 
 export async function getTxByAlias(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
+    let ctx = Context.deserialize(req.body.context);
+    let code = ctx.check();
     const page = req.body.page;
     const pageSize = req.body.pageSize;
-
-    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
+    const alias = ctx.alias;
     let result: any;
     try {
         result = await search({ alias: alias }, page, pageSize);
@@ -187,13 +178,9 @@ export async function getTxByAlias(req: any, res: any) {
 }
 
 export async function updateStateTree(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
+    let ctx = Context.deserialize(req.body.context);
+    let code = ctx.check();
     const padding: boolean = req.body.padding;
-    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
@@ -213,30 +200,21 @@ export async function updateStateTree(req: any, res: any) {
 }
 
 export async function getNotes(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
+    let ctx = Context.deserialize(req.body.context);
+    let code = ctx.check();
     const noteState = req.body.noteState;
-
-    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
 
     // get the confirmed note list, TODO: handle exception
-    let notes = await getDBNotes(alias, noteState);
+    let notes = await getDBNotes(ctx.alias, noteState);
     return res.json(utils.succ(notes));
 }
 
 export async function updateNotes(req: any, res: any) {
-    const alias = req.body.alias;
-    const ethAddress = req.body.ethAddress;
-    const timestamp = req.body.timestamp;
-    const rawMessage = req.body.message;
-    const hexSignature = req.body.hexSignature;
-    let code = utils.checkSignature(alias, hexSignature, rawMessage, timestamp, ethAddress);
+    let ctx = Context.deserialize(req.body.context);
+    let code = ctx.check();
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
