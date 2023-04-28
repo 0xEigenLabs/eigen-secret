@@ -59,8 +59,6 @@ template JoinSplit(nLevel) {
     signal input account_required;
 
     // TODO check: xx_note_account_required in [0, 1];
-    //log("proof_id JoinSplit");
-
     //account_required is 0 or 1
     signal aux0;
     aux0 <== account_required * (1 - account_required);

@@ -90,10 +90,9 @@ task("update-account", "Update signing key")
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
 
-    let newSigningKey1 = new SigningKey(eddsa);
-
+    let newSigningKey = new SigningKey(eddsa);
     let proofAndPublicSignals = await secretSDK.updateAccount(
-        ctx, newSigningKey1, password
+        ctx, newSigningKey, password
     );
     console.log(proofAndPublicSignals);
   })

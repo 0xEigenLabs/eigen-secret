@@ -43,6 +43,7 @@ describe("Account circuit test", function() {
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
 
         let input = await AccountCircuit.createProofInput(
+            eddsa,
             proofId,
             accountKey,
             signingKey,
@@ -65,6 +66,7 @@ describe("Account circuit test", function() {
         newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         input = await AccountCircuit.createProofInput(
+            eddsa,
             proofId,
             accountKey,
             signingKey,
@@ -83,6 +85,7 @@ describe("Account circuit test", function() {
         newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         input = await AccountCircuit.createProofInput(
+            eddsa,
             proofId,
             newAccountKey,
             signingKey,

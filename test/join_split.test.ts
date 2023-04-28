@@ -40,6 +40,7 @@ describe("Test JoinSplit Circuit", function() {
     it("JoinSplit deposit and send test", async () => {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await JoinSplitCircuit.createDepositInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,
@@ -75,6 +76,7 @@ describe("Test JoinSplit Circuit", function() {
         let noteReceiver = new SigningKey(eddsa);
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         let inputs2 = await JoinSplitCircuit.createProofInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,

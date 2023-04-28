@@ -80,6 +80,7 @@ describe("POST /transactions", function() {
         let valuesFound = [];
         let siblings = [];
         let input = await UpdateStatusCircuit.createAccountInput(
+            eddsa,
             proofId,
             accountKey,
             signingKey,
@@ -156,6 +157,7 @@ describe("POST /transactions", function() {
         // create notes
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,
@@ -213,10 +215,10 @@ describe("POST /transactions", function() {
 
             // output transaction
             let transaction = new Transaction(input.outputNotes, signingKey);
-            let txdata = await transaction.encrypt();
+            let txdata = await transaction.encrypt(eddsa);
 
             let txInput = new Transaction(input.inputNotes, signingKey);
-            let txInputData = await txInput.encrypt();
+            let txInputData = await txInput.encrypt(eddsa);
 
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             // create tx. FIXME: should peg input?
@@ -327,6 +329,7 @@ describe("POST /transactions", function() {
 
         // create notes
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,
@@ -367,10 +370,10 @@ describe("POST /transactions", function() {
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
             let transaction = new Transaction(input.outputNotes, signingKey);
-            let txdata = await transaction.encrypt();
+            let txdata = await transaction.encrypt(eddsa);
 
             let txInput = new Transaction(input.inputNotes, signingKey);
-            let txInputData = await txInput.encrypt();
+            let txInputData = await txInput.encrypt(eddsa);
             assert(txInputData[0].content, encryptedNotes[0].content);
 
             // create tx
@@ -476,6 +479,7 @@ describe("POST /transactions", function() {
 
         // create notes
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,
@@ -556,10 +560,10 @@ describe("POST /transactions", function() {
             }
 
             let transaction = new Transaction(input.outputNotes, signingKey);
-            let txdata = await transaction.encrypt();
+            let txdata = await transaction.encrypt(eddsa);
 
             let txInput = new Transaction(input.inputNotes, signingKey);
-            let txInputData = await txInput.encrypt();
+            let txInputData = await txInput.encrypt(eddsa);
             assert(txInputData[0].content, encryptedNotes[0].content);
 
             // create tx
