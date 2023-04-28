@@ -2,6 +2,7 @@ import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account";
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
+import { Context } from "@eigen-secret/core/dist-node/context";
 import {
     defaultServerEndpoint,
     defaultCircuitPath, defaultContractABI, defaultContractFile
@@ -42,13 +43,7 @@ task("ci", "Run all task in one command")
         contractJson.smtVerifier
     );
     await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
+    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     let proofAndPublicSignals = await secretSDK.createAccount(ctx, password);
     console.log("create account", proofAndPublicSignals);
 
