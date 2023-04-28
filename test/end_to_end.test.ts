@@ -125,7 +125,7 @@ describe("POST /transactions", function() {
         siblings.push(tmpSiblings);
 
         let circuitInput = input.toCircuitInput(babyJub, singleProof);
-        let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
+        await Prover.updateState(circuitPath, circuitInput);
 
         // 1. first transaction depositing to itself
         let receiver = accountKey;
