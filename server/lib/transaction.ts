@@ -7,7 +7,7 @@ import { WorldState } from "./state_tree";
 import { NoteModel, updateDBNotes, getDBNotes } from "./note";
 
 const { NoteState } = note;
-const sdk = require("api")("@tokeninsight-api/v1.2.2#457nalf1vname");
+const tisdk = require("api")("@tokeninsight-api/v1.2.2#457nalf1vname");
 const INSIGHT_KEY = process.env.INSIGHT_KEY as string
 
 class TransactionModel extends Model {}
@@ -307,7 +307,7 @@ async function search(filterDict: any, page: any, pageSize: any) {
 
 // TODO: convert all assetId to coinId
 function getAllCoinIds() {
-    return "ethereum"
+    return "bitcoin\,ethereum\,daidai"
 }
 
 export async function getTokenPrices(req: any, res: any) {
@@ -315,8 +315,8 @@ export async function getTokenPrices(req: any, res: any) {
 
     let result: any;
     try {
-        sdk.auth(INSIGHT_KEY);
-        result = await sdk.getSimplePrice({ ids: idsStr })
+        tisdk.auth(INSIGHT_KEY);
+        result = await tisdk.getSimplePrice({ ids: idsStr })
     } catch (err: any) {
         console.error(err)
         return res.json(utils.err(utils.ErrCode.Unknown, err));
