@@ -330,7 +330,7 @@ export class AccountCircuit {
         signingPubKey = [F.toObject(signingPubKey[0]), F.toObject(signingPubKey[1])];
 
         let accountNC = await rawCompress(accountPubKey, signingPubKey, aliasHash);
-        let newAccountNC = await rawCompress(newAccountPubKey, signingPubKey, aliasHash);
+        let newAccountNC = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
         let outputNC1 = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
         let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
 

@@ -911,7 +911,7 @@ export class SecretSDK {
         let proofs = new Array<string>(0);
         proofs.push(Prover.serialize(proofAndPublicSignals));
         let noteState = [NoteState.PROVED]
-        let accountRequired = true;
+        let accountRequired = false;
         let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState, accountRequired);
         let notesByAssetId: Map<number, bigint> = new Map();
         for (const note of notes) {
@@ -922,7 +922,7 @@ export class SecretSDK {
             }
         }
         // To re-encrypt the output notes with new signingKey, update signingKey immediately.
-        this.account.signingKey = this.account.newSigningKey1;
+        this.account.signingKey = this.account.newSigningKey2;
         this.account.newSigningKey1 = this.account.newSigningKey2;
         this.account.newSigningKey2 = newSigningKey;
 

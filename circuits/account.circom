@@ -98,7 +98,7 @@ template Account(nLevel) {
 
     component account_note_commitment = AccountNoteCompressor();
     account_note_commitment.npk <== new_account_note_npk;
-    account_note_commitment.spk <== account_note_spk;
+    account_note_commitment.spk <== new_account_note_spk1;
     account_note_commitment.alias_hash <== alias_hash;
 
     component output_note_commitment1 = AccountNoteCompressor();
