@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { Context } from "@eigen-secret/core/dist-node/context";
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
 require("dotenv").config()
 import {
@@ -18,13 +19,13 @@ task("deposit", "Deposit asset from L1 to L2")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
+    const ctx = new Context(
+      alias,
+      user.address,
+      rawMessage,
+      timestamp,
+      signature
+    );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
@@ -58,14 +59,13 @@ task("send", "Send asset to receiver in L2")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
-
+    const ctx = new Context(
+      alias,
+      user.address,
+      rawMessage,
+      timestamp,
+      signature
+    );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI);
@@ -85,13 +85,13 @@ task("withdraw", "Withdraw asset from L2 to L1")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
+    const ctx = new Context(
+      alias,
+      user.address,
+      rawMessage,
+      timestamp,
+      signature
+    );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI);
@@ -111,13 +111,13 @@ task("get-balance", "Get user's both L1 and L2 balance")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
+    const ctx = new Context(
+      alias,
+      user.address,
+      rawMessage,
+      timestamp,
+      signature
+    );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI);
@@ -149,13 +149,13 @@ task("get-balance", "Get user's both L1 and L2 balance")
     let account = await ethers.getSigners();
     let user = account[index];
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
+    const ctx = new Context(
+      alias,
+      user.address,
+      rawMessage,
+      timestamp,
+      signature
+    );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI

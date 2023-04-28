@@ -3,6 +3,7 @@ const createBlakeHash = require("blake-hash");
 import app from "../server/dist/service";
 import { ethers } from "ethers";
 import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { pad } from "@eigen-secret/core/dist-node/state_tree";
 import { NoteModel as DBNote } from "../server/dist/note";
@@ -91,12 +92,9 @@ describe("POST /transactions", function() {
         signer = accountRequired? accountKey: signingKey;
         let acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
+        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         let tmpInput = prepareJson({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address,
+            context: ctx.serialize(),
             padding: true,
             newStates: {
                 outputNc1: acStateKey,
@@ -127,20 +125,16 @@ describe("POST /transactions", function() {
         siblings.push(tmpSiblings);
 
         let circuitInput = input.toCircuitInput(babyJub, singleProof);
-        let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
-        console.log(proofAndPublicSignals)
+        await Prover.updateState(circuitPath, circuitInput);
 
         // 1. first transaction depositing to itself
         let receiver = accountKey;
 
+        ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const responseNote = await request(app)
             .post("/notes/get")
             .send({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: newEOAAccount.address,
+                context: ctx.serialize(),
                 noteState: [NoteState.CREATING, NoteState.PROVED]
             })
             .set("Accept", "application/json");
@@ -178,12 +172,9 @@ describe("POST /transactions", function() {
         );
 
         for (const input of inputs) {
+            ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             let tmpInput = prepareJson({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: newEOAAccount.address,
+                context: ctx.serialize(),
                 padding: true,
                 newStates: {
                     outputNc1: input.outputNCs[0],
@@ -227,15 +218,12 @@ describe("POST /transactions", function() {
             let txInput = new Transaction(input.inputNotes, signingKey);
             let txInputData = await txInput.encrypt();
 
+            ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             // create tx. FIXME: should peg input?
             const responseTx = await request(app)
             .post("/transactions/create")
             .send({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: newEOAAccount.address,
+                context: ctx.serialize(),
                 receiver_alias: alias,
                 pubKey: txdata[0].pubKey.pubKey,
                 pubKey2: txdata[1].pubKey.pubKey,
@@ -255,14 +243,11 @@ describe("POST /transactions", function() {
             await rollupHelper.update(0, proofAndPublicSignals);
 
             // settle down the spent notes
+            ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseSt = await request(app)
             .post("/notes/update")
             .send(prepareJson({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: newEOAAccount.address,
+                context: ctx.serialize(),
                 notes: [
                     {
                         alias: alias,
@@ -319,14 +304,11 @@ describe("POST /transactions", function() {
         let receiver = rollupHelper.eigenAccountKey[0];
 
         // 1. first transaction
+        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const responseNote = await request(app)
         .post("/notes/get")
         .send({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address,
+            context: ctx.serialize(),
             noteState: [NoteState.CREATING, NoteState.PROVED]
         })
         .set("Accept", "application/json");
@@ -360,14 +342,11 @@ describe("POST /transactions", function() {
             accountRequired
         );
         for (const input of inputs) {
+            ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const response = await request(app)
             .post("/statetree")
             .send(prepareJson({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: newEOAAccount.address,
+                context: ctx.serialize(),
                 padding: true,
                 newStates: {
                     outputNc1: input.outputNCs[0],
@@ -395,14 +374,11 @@ describe("POST /transactions", function() {
             assert(txInputData[0].content, encryptedNotes[0].content);
 
             // create tx
+            ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseTx = await request(app)
             .post("/transactions/create")
             .send({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: newEOAAccount.address,
+                context: ctx.serialize(),
                 receiver_alias: alias,
                 pubKey: txdata[0].pubKey.pubKey,
                 pubKey2: txdata[1].pubKey.pubKey,
@@ -421,14 +397,11 @@ describe("POST /transactions", function() {
             await rollupHelper.update(0, proofAndPublicSignals);
 
             // settle down the spent notes
+            ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseSt = await request(app)
             .post("/notes/update")
             .send(prepareJson({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: newEOAAccount.address,
+                context: ctx.serialize(),
                 notes: [
                     {
                         alias: alias,
@@ -480,14 +453,11 @@ describe("POST /transactions", function() {
         const value = 5;
 
         // 1. first transaction
+        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const responseNote = await request(app)
         .post("/notes/get")
         .send({
-            alias: alias,
-            timestamp: timestamp,
-            message: rawMessage,
-            hexSignature: signature,
-            ethAddress: newEOAAccount.address,
+            context: ctx.serialize(),
             noteState: [NoteState.CREATING, NoteState.PROVED]
         })
         .set("Accept", "application/json");
@@ -529,14 +499,11 @@ describe("POST /transactions", function() {
         let lastDataTreeRoot: bigint = 0n;
         let siblings: Array<Array<bigint>> = [];
         for (const input of inputs) {
+            ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const response = await request(app)
             .post("/statetree")
             .send(prepareJson({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: newEOAAccount.address,
+                context: ctx.serialize(),
                 padding: false, // NOTE: DO NOT pad because we need call smtVerifier smartcontract
                 newStates: {
                     outputNc1: input.outputNCs[0],
@@ -596,13 +563,11 @@ describe("POST /transactions", function() {
             assert(txInputData[0].content, encryptedNotes[0].content);
 
             // create tx
+            ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseTx = await request(app)
             .post("/transactions/create")
             .send({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
+                context: ctx.serialize(),
                 ethAddress: newEOAAccount.address,
                 receiver_alias: alias,
                 pubKey: txdata[0].pubKey.pubKey,
@@ -622,14 +587,11 @@ describe("POST /transactions", function() {
             await rollupHelper.update(0, proofAndPublicSignals);
 
             // settle down the spent notes
+            ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseSt = await request(app)
             .post("/notes/update")
             .send(prepareJson({
-                alias: alias,
-                timestamp: timestamp,
-                message: rawMessage,
-                hexSignature: signature,
-                ethAddress: newEOAAccount.address,
+                context: ctx.serialize(),
                 notes: [
                     {
                         alias: alias,
