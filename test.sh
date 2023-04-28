@@ -30,3 +30,6 @@ npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network dev
 
 npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network dev
 # TODO: test send & update
+
+npx hardhat update-account --alias Alice --index 0
+npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network dev

@@ -26,11 +26,11 @@ task("create-account", "Create secret account")
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
     let signingKey = new SigningKey(eddsa);
     let accountKey = new SigningKey(eddsa);
-    // let newSigningKey1 = new SigningKey(eddsa);
+    let newSigningKey1 = new SigningKey(eddsa);
     let newSigningKey2 = new SigningKey(eddsa);
     const contractJson = require(defaultContractFile);
     let sa = new SecretAccount(
-        alias, accountKey, signingKey, accountKey, signingKey, newSigningKey2
+        alias, accountKey, signingKey, accountKey, newSigningKey1, newSigningKey2
     );
     let secretSDK = new SecretSDK(
         sa,

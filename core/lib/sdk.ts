@@ -264,7 +264,7 @@ export class SecretSDK {
         return notesByAssetId;
     }
 
-    async getAndDecryptNote(ctx: any, noteState: Array<NoteState>, accountRequired: boolean = false) {
+    async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>, accountRequired: boolean = false) {
         let notes: Array<Note> = [];
         let encryptedNotes = await this.getNote(ctx, noteState);
         if (encryptedNotes) {
@@ -793,7 +793,7 @@ export class SecretSDK {
         let input = await UpdateStatusCircuit.createAccountInput(
             proofId,
             this.account.accountKey,
-            this.account.signingKey,
+            this.account.newSigningKey1, // update signing key
             newAccountPubKey[0],
             newSigningPubKey2[0],
             newSigningPubKey[0],
@@ -823,7 +823,7 @@ export class SecretSDK {
             }
         }
         // To re-encrypt the output notes with new signingKey, update signingKey immediately.
-        this.account.signingKey = this.account.newSigningKey2;
+        this.account.signingKey = this.account.newSigningKey1;
         this.account.newSigningKey1 = this.account.newSigningKey2;
         this.account.newSigningKey2 = newSigningKey;
 
