@@ -57,6 +57,7 @@ describe("Test JoinSplit Circuit", function() {
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
 
         let input = await UpdateStatusCircuit.createAccountInput(
+            eddsa,
             proofId,
             accountKey,
             signingKey,
@@ -77,6 +78,7 @@ describe("Test JoinSplit Circuit", function() {
         newSigningPubKey2 = newSigningKey2.pubKey.unpack(babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
         input = await UpdateStatusCircuit.createAccountInput(
+            eddsa,
             proofId,
             accountKey,
             signingKey,
@@ -100,6 +102,7 @@ describe("Test JoinSplit Circuit", function() {
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,
@@ -136,6 +139,7 @@ describe("Test JoinSplit Circuit", function() {
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
 
         let inputs2 = await UpdateStatusCircuit.createJoinSplitInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,
@@ -171,6 +175,7 @@ describe("Test JoinSplit Circuit", function() {
         }
         let withrawReceiver = new SigningKey(eddsa);
         let inputs3 = await UpdateStatusCircuit.createJoinSplitInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,
