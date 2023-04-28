@@ -363,7 +363,7 @@ export class SecretSDK {
         return notesByAssetId;
     }
 
-    async getAndDecryptNote(ctx: any, noteState: Array<NoteState>) {
+    async getAndDecryptNote(ctx: any, noteState: Array<NoteState>, accountRequired: boolean = false) {
         let notes: Array<Note> = [];
         let encryptedNotes = await this.getNote(ctx, noteState);
         if (encryptedNotes) {
@@ -371,6 +371,7 @@ export class SecretSDK {
                 let sharedKey = this.account.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
                 let tmpNote = Note.decrypt(item.content, sharedKey);
                 if (tmpNote.val > 0) {
+                    tmpNote.accountRequired = accountRequired;
                     notes.push(tmpNote);
                 }
             });
@@ -501,6 +502,7 @@ export class SecretSDK {
      * @param {string} receiver_alias use for test
      * @param {bigint} value the amount to be sent
      * @param {number} assetId the token to be sent
+     * @param {boolean} accountRequired enables signing with account key only
      * @return {Object} a batch of proof
      */
     async send(
@@ -508,17 +510,17 @@ export class SecretSDK {
         receiver: string,
         receiver_alias: string,
         value: bigint,
-        assetId: number
+        assetId: number,
+        accountRequired: boolean = false
     ) {
         let eddsa = await buildEddsa();
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
-        let accountRequired = false;
         const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
         const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
-        let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
+        let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState, accountRequired);
         let _receiver = new EigenAddress(receiver);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.account.accountKey,
@@ -557,7 +559,6 @@ export class SecretSDK {
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
             await this.createTx(ctx, receiver_alias, txdata, input, proofAndPublicSignals);
-
             await this.rollupSC.update(proofAndPublicSignals);
 
             let _notes: Array<any> = [
@@ -906,11 +907,42 @@ export class SecretSDK {
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
+
+        let proofs = new Array<string>(0);
+        proofs.push(Prover.serialize(proofAndPublicSignals));
+        let noteState = [NoteState.PROVED]
+        let accountRequired = true;
+        let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState, accountRequired);
+        let notesByAssetId: Map<number, bigint> = new Map();
+        for (const note of notes) {
+            if (!notesByAssetId.has(note.assetId)) {
+                notesByAssetId.set(note.assetId, note.val);
+            } else {
+                notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
+            }
+        }
+        // To re-encrypt the output notes with new signingKey, update signingKey immediately.
         this.account.signingKey = this.account.newSigningKey1;
         this.account.newSigningKey1 = this.account.newSigningKey2;
         this.account.newSigningKey2 = newSigningKey;
+
+        for (let aid of notesByAssetId.keys()) {
+            let val = notesByAssetId.get(aid);
+            if (val !== undefined && BigInt(val) > 0n) {
+                let prf = await this.send(
+                    ctx,
+                    this.account.accountKey.pubKey.pubKey,
+                    this.alias,
+                    val,
+                    Number(aid),
+                    accountRequired
+                );
+                proofs.concat(prf);
+            }
+        }
+
         await this.createOrUpdateAccount(ctx, password, true);
-        return Prover.serialize(proofAndPublicSignals);
+        return proofs;
     }
 
     /**
