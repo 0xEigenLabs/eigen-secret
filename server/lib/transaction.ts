@@ -307,7 +307,7 @@ async function search(filterDict: any, page: any, pageSize: any) {
 
 // TODO: convert all assetId to coinId
 function getAllCoinIds() {
-    return "bitcoin\,ethereum\,daidai"
+    return "bitcoin,ethereum,daidai"
 }
 
 export async function getTokenPrices(req: any, res: any) {
