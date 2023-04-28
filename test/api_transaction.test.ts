@@ -163,4 +163,15 @@ describe("POST /transactions", function() {
         expect(response2.status).to.eq(200);
         expect(response2.body.errno).to.eq(0);
     })
+
+    it("get token price", async () => {
+        const response = await request(app)
+        .post("/token/price")
+        .send({})
+        .set("Accept", "application/json");
+
+        console.log(response.body);
+        expect(response.status).to.eq(200);
+        expect(response.body.errno).to.eq(0);
+    })
 });
