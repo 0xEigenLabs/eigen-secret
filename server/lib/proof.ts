@@ -49,6 +49,7 @@ export async function getDBProof(alias: string, state: ProofStateArray) {
 export async function submitProofs(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
+    console.log("submitProof code", code)
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
