@@ -1,4 +1,4 @@
-const { buildPoseidon, buildEddsa } = require("circomlibjs");
+const { buildPoseidon } = require("circomlibjs");
 const createBlakeHash = require("blake-hash");
 import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
@@ -146,6 +146,7 @@ export class JoinSplitCircuit {
     }
 
     static async createDepositInput(
+        eddsa: any,
         accountKey: SigningKey,
         signingKey: SigningKey,
         acStateKey: bigint,
@@ -165,6 +166,7 @@ export class JoinSplitCircuit {
         }
 
         let res = await JoinSplitCircuit.createProofInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,
@@ -187,6 +189,7 @@ export class JoinSplitCircuit {
     }
 
     static async createProofInput(
+        eddsa: any,
         accountKey: SigningKey,
         signingKey: SigningKey,
         acStateKey: bigint,
@@ -201,7 +204,6 @@ export class JoinSplitCircuit {
         confirmedAndPendingInputNotes: Array<Note>,
         accountRequired: boolean
     ) {
-        let eddsa = await buildEddsa();
         const F = eddsa.F;
         const babyJub = eddsa.babyJub;
         const confirmedNote = confirmedAndPendingInputNotes.filter((n) => !n.pending);
@@ -227,10 +229,10 @@ export class JoinSplitCircuit {
         for (const note of confirmedNote) {
             assert(firstNote);
             let nc1 = await firstNote.compress(babyJub);
-            let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, 1n, accountKey);
+            let nullifier1 = await JoinSplitCircuit.calculateNullifier(eddsa, nc1, 1n, accountKey);
 
             let nc2 = await note.compress(babyJub);
-            let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, 1n, accountKey);
+            let nullifier2 = await JoinSplitCircuit.calculateNullifier(eddsa, nc2, 1n, accountKey);
 
             numInputNote = 2;
             let secret = F.toObject(F.random());
@@ -293,7 +295,7 @@ export class JoinSplitCircuit {
             console.log("inputNoteInUse", inputNoteInUse);
 
             let nc1 = await inputNotes[0].compress(babyJub);
-            let nullifier1 = await JoinSplitCircuit.calculateNullifier(nc1, inputNoteInUse[0], accountKey);
+            let nullifier1 = await JoinSplitCircuit.calculateNullifier(eddsa, nc1, inputNoteInUse[0], accountKey);
             let secret = F.toObject(F.random());
             let outputNote1 = new Note(
                 recipientPrivateOutput,
@@ -333,7 +335,7 @@ export class JoinSplitCircuit {
 
             assert(inputNotes[1]);
             let nc2 = await inputNotes[1].compress(babyJub);
-            let nullifier2 = await JoinSplitCircuit.calculateNullifier(nc2, inputNoteInUse[1], accountKey);
+            let nullifier2 = await JoinSplitCircuit.calculateNullifier(eddsa, nc2, inputNoteInUse[1], accountKey);
             secret = F.toObject(F.random());
             let outputNote2: Note = new Note(
                 change, secret, owner, assetId, nullifier2, false,
@@ -390,8 +392,7 @@ export class JoinSplitCircuit {
         return sig;
     }
 
-    static async calculateNullifier(nc: bigint, inputNoteInUse: bigint, nk: SigningKey) {
-        let eddsa = await buildEddsa();
+    static async calculateNullifier(eddsa: any, nc: bigint, inputNoteInUse: bigint, nk: SigningKey) {
         let poseidon = await buildPoseidon();
         const pvk = eddsa.pruneBuffer(createBlakeHash("blake512").update(nk.prvKey).digest().slice(0, 32));
         const ak = Scalar.shr(utils.leBuff2int(pvk), 3);

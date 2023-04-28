@@ -170,6 +170,7 @@ export class UpdateStatusInput {
 
 export class UpdateStatusCircuit {
     static async createAccountInput(
+        eddsa: any,
         proofId: number,
         accountKey: SigningKey,
         signingKey: SigningKey,
@@ -179,6 +180,7 @@ export class UpdateStatusCircuit {
         aliasHash: bigint
     ) {
         let accountInput = await AccountCircuit.createProofInput(
+            eddsa,
             proofId,
             accountKey,
             signingKey,
@@ -213,6 +215,7 @@ export class UpdateStatusCircuit {
     }
 
     static async createJoinSplitInput(
+        eddsa: any,
         accountKey: SigningKey,
         signingKey: SigningKey,
         acStateKey: bigint,
@@ -228,6 +231,7 @@ export class UpdateStatusCircuit {
         accountRequired: boolean
     ) {
         let joinSplitInput = await JoinSplitCircuit.createProofInput(
+            eddsa,
             accountKey,
             signingKey,
             acStateKey,

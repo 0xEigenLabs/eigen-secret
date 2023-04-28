@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-const { buildEddsa, buildPoseidon } = require("circomlibjs");
+const { buildPoseidon } = require("circomlibjs");
 const { Scalar, utils } = require("ffjavascript-browser");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
@@ -312,6 +312,7 @@ export class AccountCircuit {
     }
 
     static async createProofInput(
+        eddsa: any,
         proofId: number,
         accountKey: SigningKey,
         signingKey: SigningKey,
@@ -320,7 +321,6 @@ export class AccountCircuit {
         newSigningPubKey2: bigint[],
         aliasHash: bigint
     ) {
-        let eddsa = await buildEddsa();
         const F = eddsa.F;
 
         let accountPubKey = accountKey.pubKey.unpack(eddsa.babyJub);

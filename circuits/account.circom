@@ -53,9 +53,6 @@ template Account(nLevel) {
     signal input signatureS;
     signal input siblings_ac[nLevel];
 
-    //log("proof_id account");
-    //log(proof_id);
-    //log(enabled);
     enabled * public_owner === 0;
     enabled * public_value === 0;
     enabled * num_input_notes === 0;
@@ -154,14 +151,6 @@ template Account(nLevel) {
     msghash.new_account_note_spk2_x <== new_account_note_spk2[0];
     msghash.nullifier1 <== nullifier1;
     msghash.nullifier2 <== nullifier2;
-    //log("message");
-    //log(alias_hash);
-    //log(account_note_npk[0]);
-    //log(new_account_note_npk[0]);
-    //log(new_account_note_spk1[0]);
-    //log(new_account_note_spk2[0]);
-    //log(nullifier1);
-    //log(nullifier2);
 
     component sig_verifier = EdDSAPoseidonVerifier();
     sig_verifier.enabled <== enabled;
@@ -169,8 +158,6 @@ template Account(nLevel) {
     sig_verifier.R8y <== signatureR8[1];
     sig_verifier.S <== signatureS;
     sig_verifier.M <== msghash.out;
-    //log("msghash");
-    //log(msghash.out);
     sig_verifier.Ax <== account_note_spk[0];
     sig_verifier.Ay <== account_note_spk[1];
 
@@ -183,10 +170,7 @@ template Account(nLevel) {
     ms.root <== data_tree_root;
     ms.enabled <== (1 - is_create) * enabled;
 
-    //log(account_note_commitment.out);
-    //log(data_tree_root);
     for (var j = 0; j < nLevel; j++) {
         ms.siblings[j] <== siblings_ac[j];
-        //log(siblings_ac[j]);
     }
 }

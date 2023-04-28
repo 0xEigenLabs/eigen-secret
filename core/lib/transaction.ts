@@ -4,7 +4,6 @@
  */
 import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
-const buildEddsa = require("circomlibjs").buildEddsa;
 
 export class TxData {
     pubKey: EigenAddress;
@@ -37,8 +36,7 @@ export class Transaction {
         this.sender = sender;
     }
 
-    async encrypt(): Promise<Array<TxData>> {
-        let eddsa = await buildEddsa();
+    async encrypt(eddsa: any): Promise<Array<TxData>> {
         let tmpKey = new SigningKey(eddsa);
         let tes = [];
         for (let note of this.notes) {
