@@ -305,6 +305,7 @@ async function search(filterDict: any, page: any, pageSize: any) {
     }
 }
 
+// TODO: convert all assetId to coinId
 function getAllCoinIds() {
     return "ethereum"
 }
@@ -318,7 +319,7 @@ export async function getTokenPrices(req: any, res: any) {
         result = await sdk.getSimplePrice({ ids: idsStr })
     } catch (err: any) {
         console.error(err)
-        return res.json(utils.err(utils.ErrCode.CryptoError, err));
+        return res.json(utils.err(utils.ErrCode.Unknown, err));
     }
     let tokenPrices = []
     for (const token of result.data.data) {
