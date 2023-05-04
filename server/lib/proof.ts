@@ -21,6 +21,11 @@ ProofModel.init({
         allowNull: false,
         unique: true
     },
+    input: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        unique: true
+    },
     state: {
         type: DataTypes.INTEGER,
         allowNull: false
@@ -31,8 +36,8 @@ ProofModel.init({
     modelName: "ProofModel" // We need to choose the model name
 });
 
-export async function submitDBProof(alias: string, proofs: Array<string>, transaction: any) {
-    let insData = proofs.map((proof, _) => ({ alias: alias, proof: proof, state: ProofState.NEW }));
+export async function submitDBProof(alias: string, proofs: Array<string>, inputs: Array<string>, transaction: any) {
+    let insData = proofs.map((proof, index) => ({ alias: alias, proof: proof, input: inputs[index], state: ProofState.NEW }));
     return await ProofModel.bulkCreate(
         insData,
         {
@@ -55,8 +60,15 @@ export async function submitProofs(req: any, res: any) {
     }
 
     const proofs = req.body.proofs;
+    const inputs = req.body.inputs;
     if (!Array.isArray(proofs)) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid Proofs"));
+    }
+    if (!Array.isArray(inputs)) {
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid Inputs"));
+    }
+    if (inputs.length != proofs.length) {
+        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid proofs and inputs length"));
     }
     const alias = ctx.alias;
     // get the confirmed note list
@@ -64,7 +76,7 @@ export async function submitProofs(req: any, res: any) {
     let transaction: any;
     try {
         transaction = await sequelize.transaction();
-        result = await submitDBProof(alias, proofs, transaction);
+        result = await submitDBProof(alias, proofs, inputs, transaction);
         transaction.commit();
     } catch (err: any) {
         consola.log(err)

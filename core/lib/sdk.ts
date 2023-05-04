@@ -215,10 +215,11 @@ export class SecretSDK {
         return this.curl("transactions/get", data);
     }
 
-    async submitProofs(ctx: Context, proofs: any) {
+    async submitProofs(ctx: Context, proofs: any, inputs: any) {
         let data = {
             context: ctx.serialize(),
-            proofs: proofs
+            proofs: proofs,
+            inputs: inputs
         };
         return this.curl("proof/create", data);
     }
@@ -321,6 +322,7 @@ export class SecretSDK {
             notes,
             accountRequired
         );
+        let batchInput: string[] = [];
         let batchProof: string[] = [];
         for (const input of inputs) {
             const proof = await this.updateStateTree(
@@ -333,6 +335,12 @@ export class SecretSDK {
             );
             let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
+            batchInput.push(JSON.stringify(
+                circuitInput,
+                (key, value) => typeof value === "bigint" ?
+                    value.toString() :
+                    value
+            ));
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
             this.keysFound.push(input.outputNCs[0]);
@@ -392,6 +400,7 @@ export class SecretSDK {
             await this.updateNote(ctx, _notes);
         }
         await this.rollupSC.processDeposits(this.rollupSC.userAccount, this.keysFound, this.valuesFound, this.siblings);
+        await this.submitProofs(ctx, batchProof, batchInput);
         return batchProof;
     }
 
@@ -438,7 +447,8 @@ export class SecretSDK {
             notes,
             accountRequired
         );
-
+        
+        let batchInput: string[] = [];
         let batchProof: string[] = [];
         for (const input of inputs) {
             const proof = await this.updateStateTree(
@@ -451,6 +461,12 @@ export class SecretSDK {
             );
             let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
+            batchInput.push(JSON.stringify(
+                circuitInput,
+                (key, value) => typeof value === "bigint" ?
+                    value.toString() :
+                    value
+            ));
             batchProof.push(Prover.serialize(proofAndPublicSignals));
             let transaction = new Transaction(input.outputNotes, this.account.signingKey);
             let txdata = await transaction.encrypt(this.eddsa);
@@ -496,6 +512,7 @@ export class SecretSDK {
             }
             await this.updateNote(ctx, _notes);
         }
+        await this.submitProofs(ctx, batchProof, batchInput);
         return batchProof;
     }
 
@@ -535,6 +552,7 @@ export class SecretSDK {
             accountRequired
         );
 
+        let batchInput: string[] = [];
         let batchProof: string[] = [];
         let lastKeys: Array<bigint> = [];
         let keysFound = [];
@@ -562,6 +580,12 @@ export class SecretSDK {
             proof.siblingsAC = pad(proof.siblingsAC);
             let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
+            batchInput.push(JSON.stringify(
+                circuitInput,
+                (key, value) => typeof value === "bigint" ?
+                    value.toString() :
+                    value
+            ));
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
             keysFound.push(input.outputNCs[0]);
@@ -687,6 +711,7 @@ export class SecretSDK {
             txInfo,
             proofAndPublicSignals
         );
+        await this.submitProofs(ctx, batchProof, batchInput);
         return batchProof;
     }
 
