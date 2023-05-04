@@ -51,10 +51,8 @@ task("send", "Send asset to receiver in L2")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("value", "amount of transaction")
   .addParam("index", "user index for test")
-  .addParam("receiver", "receiver account public key")
   .addParam("receiverAlias", "receiver_alias use for test")
-  .setAction(async ({ alias, assetId, password, value, index, receiver, receiverAlias }, { ethers }) => {
-    console.log("receiver: ", receiver)
+  .setAction(async ({ alias, assetId, password, value, index, receiverAlias }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
@@ -69,7 +67,7 @@ task("send", "Send asset to receiver in L2")
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI);
-    let proofAndPublicSignals = await secretSDK.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
+    let proofAndPublicSignals = await secretSDK.send(ctx, receiverAlias, BigInt(value), Number(assetId));
     console.log(proofAndPublicSignals);
     await secretSDK.submitProofs(ctx, proofAndPublicSignals);
   })

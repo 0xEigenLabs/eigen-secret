@@ -17,6 +17,10 @@ AccountModel.init({
         type: DataTypes.STRING,
         allowNull: false
     },
+    accountPubKey: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     secretAccount: {
         type: DataTypes.TEXT,
         allowNull: false
@@ -28,14 +32,24 @@ AccountModel.init({
 });
 
 // add new key
-export async function createAccount(req: any, res: any) {
+export async function createOrGetAccount(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
+    const receiverAlias = req.body.receiverAlias;
+    const accountPubKey = req.body.accountPubKey;
     const secretAccount = req.body.secretAccount;
     const code = ctx.check();
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
-
+    if (receiverAlias != undefined) {
+        const alias = receiverAlias;
+        let found: AccountModel | null = await AccountModel.findOne({ where: { alias } });
+        if (found) {
+            return res.json(utils.succ(found.accountPubKey));
+        } else {
+            return res.json(utils.err(utils.ErrCode.DuplicatedRecordError, "alias does not exist"));
+        }
+    }
     const alias = ctx.alias;
     const ethAddress = ctx.ethAddress;
     let found: AccountModel | null = await AccountModel.findOne({ where: { alias } });
@@ -55,7 +69,10 @@ export async function createAccount(req: any, res: any) {
     if (!utils.hasValue(secretAccount)) {
         return res.json(utils.err(utils.ErrCode.DBCreateError, "Invalid secret account"));
     }
-    let newItem = { alias, ethAddress, secretAccount };
+    if (!utils.hasValue(accountPubKey)) {
+        return res.json(utils.err(utils.ErrCode.DBCreateError, "Invalid account public key"));
+    }
+    let newItem = { alias, ethAddress, accountPubKey, secretAccount };
 
     let transaction = await sequelize.transaction();
     try {
@@ -73,6 +90,7 @@ export async function createAccount(req: any, res: any) {
 
 export async function updateAccount(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
+    const accountPubKey = req.body.accountPubKey;
     const secretAccount = req.body.secretAccount;
     let code = ctx.check();
     if (code !== utils.ErrCode.Success) {
@@ -87,10 +105,13 @@ export async function updateAccount(req: any, res: any) {
     if (!utils.hasValue(secretAccount)) {
         return res.json(utils.err(utils.ErrCode.DBCreateError, "Invalid secret account"));
     }
+    if (!utils.hasValue(accountPubKey)) {
+        return res.json(utils.err(utils.ErrCode.DBCreateError, "Invalid account public key"));
+    }
     let transaction = await sequelize.transaction();
     try {
         await AccountModel.update(
-            { secretAccount },
+            { accountPubKey, secretAccount },
             { where: condition, returning: true, plain: true },
             transaction
         );

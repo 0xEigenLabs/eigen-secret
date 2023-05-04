@@ -34,3 +34,5 @@ npx hardhat update-account --alias Alice --index 0
 npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network dev
 
 # TODO: test send & withdraw
+npx hardhat send --alias Alice --index 0 --value 10 --asset-id 2 --receiver-alias Bob --network dev
+npx hardhat withdraw  --alias Alice --index 0 --value 40 --asset-id 2 --network dev

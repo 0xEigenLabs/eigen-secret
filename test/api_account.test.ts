@@ -12,6 +12,7 @@ const { buildEddsa } = require("circomlibjs");
 describe("POST /accounts", function() {
     let alias = "eigen.eth";
     let newEOAAccount: any;
+    let accountKey: any;
     let secretAccount: any;
     let signature: any;
     let eddsa: any;
@@ -23,7 +24,7 @@ describe("POST /accounts", function() {
         eddsa = await buildEddsa();
         timestamp = Math.floor(Date.now()/1000).toString();
         let signingKey = new SigningKey(eddsa);
-        let accountKey = new SigningKey(eddsa);
+        accountKey = new SigningKey(eddsa);
         let newSigningKey1 = new SigningKey(eddsa);
         let newSigningKey2 = new SigningKey(eddsa);
         secretAccount = new SecretAccount(
@@ -44,6 +45,7 @@ describe("POST /accounts", function() {
         .post("/accounts/create")
         .send({
             context: ctx.serialize(),
+            accountPubKey: accountKey.pubKey.pubKey,
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");
@@ -51,6 +53,7 @@ describe("POST /accounts", function() {
         expect(response.body.errno).to.eq(0);
         expect(response.body.data["id"]).to.gt(0);
         expect(response.body.data["ethAddress"]).to.eq(newEOAAccount.address);
+        expect(response.body.data["accountPubKey"]).to.eq(accountKey.pubKey.pubKey);
     });
 
     it("responds with json", async () => {
@@ -90,6 +93,7 @@ describe("POST /accounts", function() {
         .post("/accounts/create")
         .send({
             context: ctx.serialize(),
+            accountPubKey: accountKey.pubKey.pubKey,
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");
@@ -103,6 +107,7 @@ describe("POST /accounts", function() {
         .post("/accounts/update")
         .send({
             context: ctx.serialize(),
+            accountPubKey: accountKey.pubKey.pubKey,
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");
@@ -110,5 +115,6 @@ describe("POST /accounts", function() {
         expect(response.body.errno).to.eq(0);
         expect(response.body.data["id"]).to.gt(0);
         expect(response.body.data["ethAddress"]).to.eq(newEOAAccount.address);
+        expect(response.body.data["accountPubKey"]).to.eq(accountKey.pubKey.pubKey);
     });
 });

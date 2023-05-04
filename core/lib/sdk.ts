@@ -93,14 +93,25 @@ export class SecretSDK {
     async createOrUpdateAccount(
         ctx: Context,
         password: string,
+        receiverAlias: string = "",
         update: boolean = false
     ) {
-        let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-        let secretAccount = this.account.serialize(key);
-        let input = {
-            context: ctx.serialize(),
-            secretAccount: secretAccount
-        };
+        let input;
+        if (password!="") {
+            let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+            let secretAccount = this.account.serialize(key);
+            console.log("has password!")
+            input = {
+                context: ctx.serialize(),
+                accountPubKey: this.account.accountKey.pubKey.pubKey,
+                secretAccount: secretAccount
+            };
+        } else {
+            input = {
+                context: ctx.serialize(),
+                receiverAlias: receiverAlias
+            };
+        }
 
         if (update) {
             return this.curl("accounts/update", input)
@@ -399,19 +410,18 @@ export class SecretSDK {
      * create proof for sending the asset to the receiver in L2
      *
      * @param {Context} ctx
-     * @param {string} receiver
      * @param {string} receiver_alias use for test
      * @param {bigint} value the amount to be sent
      * @param {number} assetId the token to be sent
-     * @param {boolean} accountRequired enables signing with account key only
+     * @param {boolean} receiverPubKey use for migrate account
      * @return {Object} a batch of proof
      */
     async send(
         ctx: Context,
-        receiver: string,
         receiver_alias: string,
         value: bigint,
-        assetId: number
+        assetId: number,
+        receiverPubKey: string = ""
     ) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -421,7 +431,14 @@ export class SecretSDK {
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
         let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
-        let _receiver = new EigenAddress(receiver);
+        let receiver;
+        let _receiver;
+        if (receiverPubKey=="") {
+            receiver = await this.createOrUpdateAccount(ctx, "", receiver_alias);
+            _receiver = new EigenAddress(receiver);
+        } else {
+            _receiver = new EigenAddress(receiverPubKey);
+        }
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -830,7 +847,6 @@ export class SecretSDK {
             if (val !== undefined && BigInt(val) > 0n) {
                 let prf = await this.send(
                     ctx,
-                    this.account.accountKey.pubKey.pubKey,
                     this.alias,
                     val,
                     Number(aid)
@@ -839,7 +855,7 @@ export class SecretSDK {
             }
         }
 
-        await this.createOrUpdateAccount(ctx, password, true);
+        await this.createOrUpdateAccount(ctx, password, "", true);
         return proofs;
     }
 
@@ -897,17 +913,17 @@ export class SecretSDK {
             if (val !== undefined && BigInt(val) > 0n) {
                 let prf = await this.send(
                     ctx,
-                    newAccountKey.pubKey.pubKey,
                     this.alias,
                     val,
-                    Number(aid)
+                    Number(aid),
+                    newAccountKey.pubKey.pubKey
                 );
                 proofs.concat(prf);
             }
         }
         this.account.accountKey = newAccountKey;
         this.account.newAccountKey = newAccountKey;
-        await this.createOrUpdateAccount(ctx, password, true)
+        await this.createOrUpdateAccount(ctx, password, "", true)
         return proofs;
     }
 }
