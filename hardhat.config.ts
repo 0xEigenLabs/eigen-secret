@@ -3,6 +3,7 @@ import "@typechain/hardhat";
 import { task, HardhatUserConfig } from "hardhat/config";
 import { resolve } from "path";
 import { config as dotenvConfig } from "dotenv";
+import "hardhat-gas-reporter";
 require("./tasks/index");
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });

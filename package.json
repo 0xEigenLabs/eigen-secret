@@ -51,6 +51,7 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-unused-imports": "^2.0.0",
     "hardhat": "^2.13.0",
+    "hardhat-gas-reporter": "^1.0.9",
     "lerna": "^3.22.1",
     "solhint": "^3.3.7",
     "supertest": "^6.3.3",
