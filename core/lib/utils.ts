@@ -168,10 +168,9 @@ export function verifyEOASignature(
     rawMessage: string,
     hexSignature: string,
     ethAddress: string,
-    alias: string,
     timestamp: string
 ) {
-    let rawMessageAll = rawMessage + ethAddress + alias + timestamp;
+    let rawMessageAll = rawMessage + ethAddress + timestamp;
     let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
     let message = ethers.utils.toUtf8Bytes(strRawMessage);
     let messageHash = ethers.utils.hashMessage(message);
@@ -183,10 +182,9 @@ export async function signEOASignature(
     EOAAccount: any,
     rawMessage: string,
     ethAddress: string,
-    alias: string,
     timestamp: string
 ) {
-    let rawMessageAll = rawMessage + ethAddress + alias + timestamp;
+    let rawMessageAll = rawMessage + ethAddress + timestamp;
     let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
     return await EOAAccount.signMessage(strRawMessage)
 }
@@ -231,7 +229,8 @@ export enum ErrCode {
   CryptoError = 4,
   DBCreateError = 5,
   DuplicatedRecordError = 6,
-  RecordNotExist = 7
+  RecordNotExist = 7,
+  InvalidProof = 8
 }
 
 const hasValue = function(variable: any) {
@@ -245,5 +244,7 @@ const hasValue = function(variable: any) {
 };
 
 const pathJoin = (parts: Array<string>, sep="/") => parts.join(sep).replace(new RegExp(sep+"{1,}", "g"), sep);
+const __DEFAULT_ALIAS__ = "EIGEN_BUILTIN_PLACEHOLDER";
+const SESSION_DURATION = 5 * 60; // seconds
 
-export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson, pathJoin };
+export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION };

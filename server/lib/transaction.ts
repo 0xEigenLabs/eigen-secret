@@ -7,7 +7,6 @@ import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
 import { NoteModel, updateDBNotes, getDBNotes } from "./note";
 
-const { NoteState } = note;
 const tisdk = require("api")("@tokeninsight-api/v1.2.2#457nalf1vname");
 const INSIGHT_KEY = process.env.INSIGHT_KEY as string
 
@@ -54,24 +53,14 @@ export enum TransactionModelStatus {
 export async function createTx(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    const receiverAlias = req.body.receiverAlias;
-    const pubKey = req.body.pubKey;
-    const pubKey2 = req.body.pubKey2;
     const proof = req.body.proof;
     const publicInput = req.body.publicInput;
     const noteIndex = req.body.noteIndex;
     const note2Index = req.body.note2Index;
-    const content = req.body.content;
-    const content2 = req.body.content2;
 
-    if (!utils.hasValue(receiverAlias) ||
-        !utils.hasValue(pubKey) ||
-        !utils.hasValue(pubKey2) ||
-        !utils.hasValue(noteIndex) ||
+    if (!utils.hasValue(noteIndex) ||
         !utils.hasValue(note2Index) ||
         !utils.hasValue(proof) ||
-        !utils.hasValue(content) ||
-        !utils.hasValue(content2) ||
         !utils.hasValue(publicInput)
     ) {
         consola.error("missing one or more arguments");
@@ -92,8 +81,7 @@ export async function createTx(req: any, res: any) {
 
         if (isAliasAvailable === null) {
             let result = await createTxInternal(
-                alias, receiverAlias, pubKey, pubKey2, content, content2,
-                noteIndex, note2Index, proof, publicInput, transaction
+                alias, noteIndex, note2Index, proof, publicInput, transaction
             );
             await transaction.commit();
             return res.json(utils.succ(result))
@@ -109,11 +97,6 @@ export async function createTx(req: any, res: any) {
 
 export async function createTxInternal(
     alias: string,
-    receiverAlias: string,
-    pubKey: string,
-    pubKey2: string,
-    content: string,
-    content2: string,
     noteIndex: string,
     note2Index: string,
     proof: any,
@@ -129,30 +112,9 @@ export async function createTxInternal(
         status: TransactionModelStatus.CREATED
     }, { transaction });
 
-    // update Notes
-    let result2 = await updateDBNotes(
-        [
-            {
-                alias: receiverAlias,
-                index: noteIndex,
-                pubKey: pubKey,
-                content: content,
-                state: NoteState.CREATING
-            },
-            {
-                alias: alias,
-                index: note2Index,
-                pubKey: pubKey2,
-                content: content2,
-                state: NoteState.CREATING
-            }
-        ],
-        transaction
-    );
-    if (!result || !result2) {
+    if (!result) {
         consola.log(
-            result,
-            result2
+            result
         );
         throw new Error("Update database error");
     }
@@ -225,7 +187,6 @@ export async function updateNotes(req: any, res: any) {
     // get the confirmed note list
     let insertings: Array<NoteModel> = [];
     notes.forEach((item: any) => {
-        console.log("item", item);
         insertings.push({
             alias: item.alias,
             index: item.index,

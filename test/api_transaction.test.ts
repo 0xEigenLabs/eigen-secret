@@ -19,7 +19,7 @@ describe("POST /transactions", function() {
         eddsa = await buildEddsa();
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
 
         tmpKey = new SigningKey(eddsa);
         pubKey = tmpKey.pubKey.pubKey;
@@ -28,11 +28,6 @@ describe("POST /transactions", function() {
         .post("/transactions/create")
         .send({
             context: ctx.serialize(),
-            receiverAlias: alias,
-            pubKey: pubKey,
-            pubKey2: pubKey,
-            content: "0x12",
-            content2: "0x123",
             noteIndex: index().toString(),
             note2Index: index().toString(),
             proof: "0x12",
@@ -63,7 +58,7 @@ describe("POST /transactions", function() {
     it("get tx", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
         let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/transactions/get")
@@ -84,7 +79,7 @@ describe("POST /transactions", function() {
         let timestamp = Math.floor(Date.now()/1000).toString();
         const page = 1;
         const pageSize = 1;
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
         let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/transactions/get")
@@ -105,7 +100,7 @@ describe("POST /transactions", function() {
     it("update smt", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
         let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/statetree")
@@ -125,43 +120,6 @@ describe("POST /transactions", function() {
         expect(response.body.errno).to.eq(0);
         assert(response.body.data.dataTreeRoot,
             "11789410253405726493196100626786015322476180488220624361762052237583743243512")
-
-        const responseNote = await request(app)
-        .post("/notes/get")
-        .send({
-            context: ctx.serialize(),
-            noteState: [NoteState.CREATING, NoteState.PROVED]
-        })
-        .set("Accept", "application/json");
-
-        let encryptedNotes = responseNote.body.data;
-        console.log(pubKey);
-        // update notes
-        const response2 = await request(app)
-        .post("/notes/update")
-        .send({
-            context: ctx.serialize(),
-            notes: [
-                {
-                    alias: alias,
-                    index: encryptedNotes[0].index,
-                    content: encryptedNotes[0].content,
-                    pubKey: pubKey,
-                    state: NoteState.SPENT
-                },
-                {
-                    alias: alias,
-                    index: encryptedNotes[1].index,
-                    content: encryptedNotes[1].content,
-                    pubKey: pubKey,
-                    state: NoteState.SPENT
-                }
-            ]
-        })
-        .set("Accept", "application/json");
-        console.log(response2.body.data);
-        expect(response2.status).to.eq(200);
-        expect(response2.body.errno).to.eq(0);
     })
 
     it("get token price", async () => {

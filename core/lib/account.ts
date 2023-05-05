@@ -4,6 +4,9 @@ const { Scalar, utils } = require("ffjavascript-browser");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { Aes256gcm } from "./aes_gcm";
+import { Note } from "./note";
+import { __DEFAULT_ALIAS__ } from "./utils";
+const consola = require("consola");
 
 type UnpackFunc = (babyJub: any) => [any, any];
 interface Address {
@@ -81,7 +84,10 @@ export class SigningKey implements IKey {
         let s = Scalar.fromRprLE(sBuff, 0, 32);
         let prvKey = Scalar.shr(s, 3);
         let rawSharedKey = babyJub.mulPointEscalar(receiverPoint, prvKey);
-        let sharedKey = createBlakeHash("blake256").update(Buffer.from(rawSharedKey)).digest();
+        let sharedKey = createBlakeHash("blake256").
+            update(Buffer.from(rawSharedKey[0])).
+            update(Buffer.from(rawSharedKey[1])).
+            digest();
         return sharedKey;
     }
     toCircuitInput: KeyToCircuitInput = () => {
@@ -195,16 +201,12 @@ export class SecretAccount {
         ].join(",");
         let aes = new Aes256gcm(key);
         let cipher = aes.encrypt(keys);
-        return cipher.join(",");
+        return cipher;
     }
 
     static deserialize(eddsa: any, key: any, ciphertext: string): SecretAccount {
         let aes = new Aes256gcm(key);
-        let cipherData = ciphertext.split(",");
-        if (cipherData.length != 3) {
-            throw new Error(`Invalid cipher: ${ciphertext}`)
-        }
-        let keyData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
+        let keyData = aes.decrypt(ciphertext);
         let keys = keyData.split(",");
         return new SecretAccount(
             keys[0],
@@ -410,4 +412,31 @@ export class AccountCircuit {
         // fs.writeFileSync("circuits/main_update_state.input.json", JSON.stringify(result));
         return result;
     }
+}
+
+export function decryptNotes(accountKey: SigningKey, encryptedNotes: any) {
+    let notes: Array<Note> = [];
+    if (encryptedNotes) {
+        encryptedNotes.forEach((item: any) => {
+            let sharedKey = accountKey.makeSharedKey(new EigenAddress(item.pubKey));
+            try {
+                // fetch all the notes that current user can decrypt
+                let tmpNote = Note.decrypt(item.content, sharedKey);
+                // mark the wild notes
+                if (item.alias === __DEFAULT_ALIAS__) {
+                    tmpNote.adopted = false;
+                }
+                if (tmpNote.val > 0) {
+                    notes.push(tmpNote);
+                }
+            } catch (err: any) {
+                consola.log(item);
+                consola.log(`try to decrypt but failed ${err} for note ${item.alias}`);
+                if (item.alias !== __DEFAULT_ALIAS__) {
+                    throw (err)
+                }
+            }
+        });
+    }
+    return notes;
 }
