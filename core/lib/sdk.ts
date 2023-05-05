@@ -133,7 +133,7 @@ export class SecretSDK {
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
 
         if (sa === undefined) {
-            let accountData = await SecretSDK.curlEx(serverAddr, "accounts/create", input);
+            let accountData = await SecretSDK.curlEx(serverAddr, "accounts/get", input);
             if (
                 accountData.alias !== ctx.alias ||
                 accountData.ethAddress !== ctx.ethAddress
