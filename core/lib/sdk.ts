@@ -190,10 +190,10 @@ export class SecretSDK {
         return this.curl("notes/update", input);
     }
 
-    async createTx(ctx: Context, receiver_alias: any, txdata: any, input: any, proofAndPublicSignals: any) {
+    async createTx(ctx: Context, receiverAlias: any, txdata: any, input: any, proofAndPublicSignals: any) {
         let inputData = {
             context: ctx.serialize(),
-            receiver_alias: receiver_alias,
+            receiverAlias: receiverAlias,
             pubKey: txdata[0].pubKey.pubKey,
             pubKey2: txdata[1].pubKey.pubKey,
             content: txdata[0].content,
@@ -400,7 +400,7 @@ export class SecretSDK {
      *
      * @param {Context} ctx
      * @param {string} receiver
-     * @param {string} receiver_alias use for test
+     * @param {string} receiverAlias use for test
      * @param {bigint} value the amount to be sent
      * @param {number} assetId the token to be sent
      * @param {boolean} accountRequired enables signing with account key only
@@ -409,7 +409,7 @@ export class SecretSDK {
     async send(
         ctx: Context,
         receiver: string,
-        receiver_alias: string,
+        receiverAlias: string,
         value: bigint,
         assetId: number
     ) {
@@ -459,7 +459,7 @@ export class SecretSDK {
             let txInputData = await txInput.encrypt(this.eddsa);
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            await this.createTx(ctx, receiver_alias, txdata, input, proofAndPublicSignals);
+            await this.createTx(ctx, receiverAlias, txdata, input, proofAndPublicSignals);
             await this.rollupSC.update(proofAndPublicSignals);
 
             let _notes: Array<any> = [
@@ -478,7 +478,7 @@ export class SecretSDK {
                     state: NoteState.SPENT
                 },
                 {
-                    alias: receiver_alias,
+                    alias: receiverAlias,
                     index: input.outputNotes[0].index,
                     pubKey: txdata[0].pubKey.pubKey,
                     content: txdata[0].content,

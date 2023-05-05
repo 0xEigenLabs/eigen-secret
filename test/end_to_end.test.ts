@@ -226,7 +226,7 @@ describe("POST /transactions", function() {
             .post("/transactions/create")
             .send({
                 context: ctx.serialize(),
-                receiver_alias: alias,
+                receiverAlias: alias,
                 pubKey: txdata[0].pubKey.pubKey,
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
@@ -382,7 +382,7 @@ describe("POST /transactions", function() {
             .post("/transactions/create")
             .send({
                 context: ctx.serialize(),
-                receiver_alias: alias,
+                receiverAlias: alias,
                 pubKey: txdata[0].pubKey.pubKey,
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,
@@ -573,7 +573,7 @@ describe("POST /transactions", function() {
             .send({
                 context: ctx.serialize(),
                 ethAddress: newEOAAccount.address,
-                receiver_alias: alias,
+                receiverAlias: alias,
                 pubKey: txdata[0].pubKey.pubKey,
                 pubKey2: txdata[1].pubKey.pubKey,
                 content: txdata[0].content,

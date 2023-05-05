@@ -28,7 +28,7 @@ describe("POST /transactions", function() {
         .post("/transactions/create")
         .send({
             context: ctx.serialize(),
-            receiver_alias: alias,
+            receiverAlias: alias,
             pubKey: pubKey,
             pubKey2: pubKey,
             content: "0x12",

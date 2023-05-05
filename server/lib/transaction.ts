@@ -54,7 +54,7 @@ export enum TransactionModelStatus {
 export async function createTx(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    const receiver_alias = req.body.receiver_alias;
+    const receiverAlias = req.body.receiverAlias;
     const pubKey = req.body.pubKey;
     const pubKey2 = req.body.pubKey2;
     const proof = req.body.proof;
@@ -64,7 +64,7 @@ export async function createTx(req: any, res: any) {
     const content = req.body.content;
     const content2 = req.body.content2;
 
-    if (!utils.hasValue(receiver_alias) ||
+    if (!utils.hasValue(receiverAlias) ||
         !utils.hasValue(pubKey) ||
         !utils.hasValue(pubKey2) ||
         !utils.hasValue(noteIndex) ||
@@ -92,7 +92,7 @@ export async function createTx(req: any, res: any) {
 
         if (isAliasAvailable === null) {
             let result = await createTxInternal(
-                alias, receiver_alias, pubKey, pubKey2, content, content2,
+                alias, receiverAlias, pubKey, pubKey2, content, content2,
                 noteIndex, note2Index, proof, publicInput, transaction
             );
             await transaction.commit();
@@ -109,7 +109,7 @@ export async function createTx(req: any, res: any) {
 
 export async function createTxInternal(
     alias: string,
-    receiver_alias: string,
+    receiverAlias: string,
     pubKey: string,
     pubKey2: string,
     content: string,
@@ -133,7 +133,7 @@ export async function createTxInternal(
     let result2 = await updateDBNotes(
         [
             {
-                alias: receiver_alias,
+                alias: receiverAlias,
                 index: noteIndex,
                 pubKey: pubKey,
                 content: content,
