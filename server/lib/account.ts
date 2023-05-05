@@ -27,31 +27,21 @@ AccountModel.init({
     modelName: "AccountModel" // We need to choose the model name
 });
 
-// add new key
+// create account
 export async function createAccount(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
-    const secretAccount = req.body.secretAccount;
     const code = ctx.check();
     if (code !== utils.ErrCode.Success) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
-
     const alias = ctx.alias;
     const ethAddress = ctx.ethAddress;
-    let found: AccountModel | null = await AccountModel.findOne({ where: { alias } });
-    if (found) {
-        if (found.ethAddress !== ethAddress) {
-            return res.json(utils.err(utils.ErrCode.DuplicatedRecordError, "alias duplicated"));
-        } else {
-            return res.json(utils.succ(found));
-        }
+    let found: utils.ErrCode | AccountModel = await getAccountInternal(alias, ethAddress);
+    if (found.errno !== utils.ErrCode.RecordNotExist) {
+        return res.json(utils.err(found.errno, "Invalid secret account"));
     }
-
-    found = await AccountModel.findOne({ where: { ethAddress } });
-    if (found) {
-        return res.json(utils.err(utils.ErrCode.DuplicatedRecordError, "Invalid alias"));
-    }
-
+    // account is AccountModel or found is RecordNotExist
+    const secretAccount = req.body.secretAccount;
     if (!utils.hasValue(secretAccount)) {
         return res.json(utils.err(utils.ErrCode.DBCreateError, "Invalid secret account"));
     }
@@ -69,6 +59,39 @@ export async function createAccount(req: any, res: any) {
         }
     }
     return res.json(utils.err(utils.ErrCode.DBCreateError, "Unknown error"));
+}
+
+async function getAccountInternal(alias: string, ethAddress: string) {
+    let found: AccountModel | null = await AccountModel.findOne({ where: { alias } });
+    if (found) {
+        if (found.ethAddress !== ethAddress) {
+            return { errno: utils.ErrCode.DuplicatedRecordError };
+        } else {
+            return { errno: utils.ErrCode.Success, data: found };
+        }
+    }
+    found = await AccountModel.findOne({ where: { ethAddress } });
+    if (found) {
+        return { errno: utils.ErrCode.DuplicatedRecordError };
+    }
+    return { errno: utils.ErrCode.RecordNotExist };
+}
+
+// get account
+export async function getAccount(req: any, res: any) {
+    let ctx = Context.deserialize(req.body.context);
+    const code = ctx.check();
+    if (code !== utils.ErrCode.Success) {
+        return res.json(utils.err(code, utils.ErrCode[code]));
+    }
+
+    const alias = ctx.alias;
+    const ethAddress = ctx.ethAddress;
+    let found = await getAccountInternal(alias, ethAddress);
+    if (found.errno !== utils.ErrCode.Success) {
+        return res.json(utils.err(found.errno, "Invalid secret account"));
+    }
+    return res.json(utils.succ(found?.data));
 }
 
 export async function updateAccount(req: any, res: any) {

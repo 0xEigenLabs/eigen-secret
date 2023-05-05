@@ -230,7 +230,8 @@ export enum ErrCode {
   InvalidInput = 3,
   CryptoError = 4,
   DBCreateError = 5,
-  DuplicatedRecordError = 6
+  DuplicatedRecordError = 6,
+  RecordNotExist = 7
 }
 
 const hasValue = function(variable: any) {

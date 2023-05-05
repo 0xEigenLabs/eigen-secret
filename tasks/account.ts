@@ -32,22 +32,10 @@ task("create-account", "Create secret account")
     let sa = new SecretAccount(
         alias, accountKey, signingKey, accountKey, newSigningKey1, newSigningKey2
     );
-    let secretSDK = new SecretSDK(
-        sa,
-        defaultServerEndpoint,
-        defaultCircuitPath,
-        eddsa,
-        user,
-        contractJson.spongePoseidon,
-        contractJson.tokenRegistry,
-        contractJson.poseidon2,
-        contractJson.poseidon3,
-        contractJson.poseidon6,
-        contractJson.rollup,
-        contractJson.smtVerifier
-    );
-    await secretSDK.initialize(defaultContractABI);
     const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, sa
+    );
     let proofAndPublicSignals = await secretSDK.createAccount(ctx, password);
     console.log("create account", proofAndPublicSignals);
   })

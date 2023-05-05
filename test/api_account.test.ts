@@ -56,7 +56,7 @@ describe("POST /accounts", function() {
     it("responds with json", async () => {
         let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, signature);
         const response = await request(app)
-        .post("/accounts/create")
+        .post("/accounts/get")
         .send({
             context: ctx.serialize()
         })

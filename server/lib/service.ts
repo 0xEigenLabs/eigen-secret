@@ -11,7 +11,7 @@ import consola from "consola";
 import { BasicReporter } from "consola";
 import "dotenv/config";
 import bodyParser from "body-parser";
-import { updateAccount, createAccount } from "./account";
+import { updateAccount, createAccount, getAccount } from "./account";
 import { createTx, getTxByAlias, updateStateTree, updateNotes, getNotes, getTokenPrices } from "./transaction";
 import { submitProofs, getProofs } from "./proof";
 
@@ -30,6 +30,7 @@ const issueOptions = {
 app.use(cors(issueOptions));
 
 app.post("/accounts/create", createAccount);
+app.post("/accounts/get", getAccount);
 app.post("/accounts/update", updateAccount);
 app.post("/transactions/create", createTx);
 app.post("/transactions/get", getTxByAlias);

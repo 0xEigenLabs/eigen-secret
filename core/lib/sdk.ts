@@ -90,10 +90,9 @@ export class SecretSDK {
         return response.data.data;
     }
 
-    async createOrUpdateAccount(
+    private async createServerAccount(
         ctx: Context,
-        password: string,
-        update: boolean = false
+        password: string
     ) {
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
         let secretAccount = this.account.serialize(key);
@@ -101,11 +100,20 @@ export class SecretSDK {
             context: ctx.serialize(),
             secretAccount: secretAccount
         };
-
-        if (update) {
-            return this.curl("accounts/update", input)
-        }
         return this.curl("accounts/create", input)
+    }
+
+    private async updateServerAccount(
+        ctx: Context,
+        password: string
+    ) {
+        let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+        let secretAccount = this.account.serialize(key);
+        let input = {
+            context: ctx.serialize(),
+            secretAccount: secretAccount
+        };
+        return this.curl("accounts/update", input)
     }
 
     static async initSDKFromAccount(
@@ -115,22 +123,25 @@ export class SecretSDK {
         user: any,
         contractJson: any,
         circuitPath: string,
-        contractABI: any
+        contractABI: any,
+        sa: SecretAccount | undefined = undefined
     ) {
         let input = {
             context: ctx.serialize()
         };
         let eddsa = await buildEddsa();
-        let accountData = await SecretSDK.curlEx(serverAddr, "accounts/create", input);
-
-        if (
-            accountData.alias !== ctx.alias ||
-            accountData.ethAddress !== ctx.ethAddress
-        ) {
-            throw new Error("Invalid alias");
-        }
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-        let sa = SecretAccount.deserialize(eddsa, key, accountData.secretAccount)
+
+        if (sa === undefined) {
+            let accountData = await SecretSDK.curlEx(serverAddr, "accounts/create", input);
+            if (
+                accountData.alias !== ctx.alias ||
+                accountData.ethAddress !== ctx.ethAddress
+            ) {
+                throw new Error("Invalid alias");
+            }
+            sa = SecretAccount.deserialize(eddsa, key, accountData.secretAccount)
+        }
 
         let secretSDK = new SecretSDK(
             sa,
@@ -768,7 +779,7 @@ export class SecretSDK {
         }
         this.siblings.push(tmpSiblings);
         await this.rollupSC.update(proofAndPublicSignals);
-        await this.createOrUpdateAccount(ctx, password);
+        await this.createServerAccount(ctx, password);
         return Prover.serialize(proofAndPublicSignals)
     }
 
@@ -839,7 +850,7 @@ export class SecretSDK {
             }
         }
 
-        await this.createOrUpdateAccount(ctx, password, true);
+        await this.updateServerAccount(ctx, password);
         return proofs;
     }
 
@@ -907,7 +918,7 @@ export class SecretSDK {
         }
         this.account.accountKey = newAccountKey;
         this.account.newAccountKey = newAccountKey;
-        await this.createOrUpdateAccount(ctx, password, true)
+        await this.updateServerAccount(ctx, password)
         return proofs;
     }
 }
