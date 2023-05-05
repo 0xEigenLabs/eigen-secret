@@ -24,17 +24,10 @@ task("create-account", "Create secret account")
     console.log("ETH address", user.address);
 
     const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    let signingKey = new SigningKey(eddsa);
-    let accountKey = new SigningKey(eddsa);
-    let newSigningKey1 = new SigningKey(eddsa);
-    let newSigningKey2 = new SigningKey(eddsa);
     const contractJson = require(defaultContractFile);
-    let sa = new SecretAccount(
-        alias, accountKey, signingKey, accountKey, newSigningKey1, newSigningKey2
-    );
     const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, sa
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, true
     );
     let proofAndPublicSignals = await secretSDK.createAccount(ctx, password);
     console.log("create account", proofAndPublicSignals);

@@ -124,7 +124,7 @@ export class SecretSDK {
         contractJson: any,
         circuitPath: string,
         contractABI: any,
-        sa: SecretAccount | undefined = undefined
+        isCreate: boolean = false
     ) {
         let input = {
             context: ctx.serialize()
@@ -132,7 +132,16 @@ export class SecretSDK {
         let eddsa = await buildEddsa();
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
 
-        if (sa === undefined) {
+        let sa: any;
+        if (isCreate) {
+            let signingKey = new SigningKey(eddsa);
+            let accountKey = new SigningKey(eddsa);
+            let newSigningKey1 = new SigningKey(eddsa);
+            let newSigningKey2 = new SigningKey(eddsa);
+            sa = new SecretAccount(
+                ctx.alias, accountKey, signingKey, accountKey, newSigningKey1, newSigningKey2
+            );
+        } else {
             let accountData = await SecretSDK.curlEx(serverAddr, "accounts/get", input);
             if (
                 accountData.alias !== ctx.alias ||
