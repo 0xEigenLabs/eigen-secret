@@ -1,19 +1,16 @@
 const request = require("supertest");
 const consola = require("consola");
 import app from "../server/dist/service";
-import { EigenAddress, SigningKey } from "@eigen-secret/core/dist-node/account";
+import { EigenAddress } from "@eigen-secret/core/dist-node/account";
 import { ethers } from "ethers";
 import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { TxData } from "@eigen-secret/core/dist-node/transaction";
-const { buildEddsa } = require("circomlibjs");
 /* globals describe, before, it */
 describe("POST /transactions", function() {
     const alias = "api.eigen.eth";
-    let eddsa: any;
     before(async () => {
-        eddsa = await buildEddsa();
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
