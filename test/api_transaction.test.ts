@@ -6,14 +6,11 @@ import { ethers } from "ethers";
 import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
-import { NoteState } from "@eigen-secret/core/dist-node/note";
 import { TxData } from "@eigen-secret/core/dist-node/transaction";
 const { buildEddsa } = require("circomlibjs");
 /* globals describe, before, it */
 describe("POST /transactions", function() {
     const alias = "api.eigen.eth";
-    let tmpKey: any;
-    let pubKey: any;
     let eddsa: any;
     before(async () => {
         eddsa = await buildEddsa();
@@ -21,8 +18,6 @@ describe("POST /transactions", function() {
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
 
-        tmpKey = new SigningKey(eddsa);
-        pubKey = tmpKey.pubKey.pubKey;
         let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         const response = await request(app)
         .post("/transactions/create")

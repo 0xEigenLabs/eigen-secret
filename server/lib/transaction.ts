@@ -1,7 +1,6 @@
 const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
-import * as note from "@eigen-secret/core/dist-node/note";
 import * as utils from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
