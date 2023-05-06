@@ -1,4 +1,5 @@
-import { ErrCode, verifyEOASignature, hasValue, SESSION_DURATION } from "./utils";
+import { verifyEOASignature, hasValue, SESSION_DURATION } from "./utils";
+import { ErrCode } from "./error";
 export class Context {
     alias: string;
     ethAddress: string;

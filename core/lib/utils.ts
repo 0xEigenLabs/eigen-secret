@@ -198,39 +198,10 @@ const requireEnvVariables = (envVars: Array<string>) => {
   consola.success("Environmental variables properly set 👍");
 };
 
-const baseResp = function(errno: ErrCode, message: string, data: string) {
-  return { errno: errno, message: message, data: data };
-}
-
 const prepareJson = function(data: any) {
   return JSON.parse(JSON.stringify(data, (key, value) =>
     typeof value === "bigint"? value.toString() : value
   ));
-}
-
-const succ = function(data: any) {
-  data = prepareJson(data);
-  return baseResp(0, "", data);
-}
-const err = function(errno: ErrCode, message: string) {
-  return baseResp(errno, message, "");
-}
-
-/**
- * Error code for a JSON responce.
- *
- * @enum
- */
-export enum ErrCode {
-  Success = 0,
-  Unknown = 1,
-  InvalidAuth = 2,
-  InvalidInput = 3,
-  CryptoError = 4,
-  DBCreateError = 5,
-  DuplicatedRecordError = 6,
-  RecordNotExist = 7,
-  InvalidProof = 8
 }
 
 const hasValue = function(variable: any) {
@@ -247,4 +218,4 @@ const pathJoin = (parts: Array<string>, sep="/") => parts.join(sep).replace(new 
 const __DEFAULT_ALIAS__ = "EIGEN_BUILTIN_PLACEHOLDER";
 const SESSION_DURATION = 5 * 60; // seconds
 
-export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION };
+export { hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION };

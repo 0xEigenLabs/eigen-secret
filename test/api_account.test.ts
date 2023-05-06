@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 const createBlakeHash = require("blake-hash");
 import app from "../server/dist/service";
 import * as utils from "@eigen-secret/core/dist-node/utils";
+import { ErrCode } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account";
@@ -92,7 +93,7 @@ describe("POST /accounts", function() {
         })
         .set("Accept", "application/json");
         expect(response.status).to.eq(200);
-        expect(response.body.errno).to.eq(utils.ErrCode.DuplicatedRecordError);
+        expect(response.body.errno).to.eq(ErrCode.DuplicatedRecordError);
     });
 
     it("get account by eth address only", async () => {
