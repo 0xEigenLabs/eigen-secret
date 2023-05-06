@@ -3,7 +3,7 @@ import { Aes256gcm } from "./aes_gcm";
 import { EigenAddress } from "./account";
 
 export enum NoteState {
-    CREATING = 1,
+    _CREATING = 1,
     PROVED,
     SPENT,
 }
@@ -17,6 +17,7 @@ export class Note {
     accountRequired: boolean;
     index: bigint;
     poseidon: any;
+    adopted: boolean;
 
     constructor(val: bigint, secret: bigint, owner: EigenAddress, assetId: number,
                 inputNullifier: bigint, accountRequired: boolean, index: bigint) {
@@ -27,6 +28,7 @@ export class Note {
         this.inputNullifier = inputNullifier;
         this.accountRequired = accountRequired;
         this.index = index;
+        this.adopted = true;
     }
 
     get pending(): boolean {
@@ -67,8 +69,8 @@ export class Note {
         return poseidon.F.toObject(res);
     }
 
-    encrypt(secret: any): any {
-        let aes = new Aes256gcm(secret);
+    encrypt(key: any): any {
+        let aes = new Aes256gcm(key);
         let data = JSON.stringify({
             val: this.val,
             secret: this.secret,
@@ -78,20 +80,14 @@ export class Note {
             accountRequired: this.accountRequired,
             index: this.index
         }, (_, v) => typeof v === "bigint" ? v.toString() : v);
-        // console.log("encrypt", data);
         let cipher = aes.encrypt(data)
-        return cipher.join(",")
+        return cipher;
     }
 
-    static decrypt(_cipherData: string, secret: any): Note {
-        let aes = new Aes256gcm(secret);
-        let cipherData = _cipherData.split(",");
-        if (cipherData.length != 3) {
-            throw new Error(`Invalid cipher: ${_cipherData}`)
-        }
-        let jsonData = aes.decrypt(cipherData[0], cipherData[1], cipherData[2]);
+    static decrypt(_cipherData: string, key: any): Note {
+        let aes = new Aes256gcm(key);
+        let jsonData = aes.decrypt(_cipherData);
         let data = JSON.parse(jsonData);
-        // console.log("cipher", cipherData, data);
         let n = new Note(
             BigInt(data.val),
             BigInt(data.secret),

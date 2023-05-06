@@ -4,7 +4,6 @@ import { prepareJson, uint8Array2Bigint } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
 import { Prover } from "./prover";
-// const consola = require("consola");
 import { Note, NoteState } from "./note";
 import { Transaction } from "./transaction";
 import { Context } from "./context";
@@ -13,6 +12,7 @@ import {
     compress as accountCompress,
     EigenAddress,
     SecretAccount,
+    decryptNotes,
     SigningKey
 } from "./account";
 import { RollupSC } from "./rollup.sc";
@@ -86,6 +86,7 @@ export class SecretSDK {
         let response = await axios.request(options);
         if (response.status != 200 || response.data.errno != 0) {
             throw new Error(response.data.message);
+            // return ErrCode(response.data.errno);
         }
         return response.data.data;
     }
@@ -124,23 +125,34 @@ export class SecretSDK {
         contractJson: any,
         circuitPath: string,
         contractABI: any,
-        sa: SecretAccount | undefined = undefined
+        isCreate: boolean = false
     ) {
-        let input = {
-            context: ctx.serialize()
-        };
         let eddsa = await buildEddsa();
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
 
-        if (sa === undefined) {
+        let sa: any;
+        if (isCreate) {
+            let signingKey = new SigningKey(eddsa);
+            let accountKey = new SigningKey(eddsa);
+            let newSigningKey1 = new SigningKey(eddsa);
+            let newSigningKey2 = new SigningKey(eddsa);
+            sa = new SecretAccount(
+                ctx.alias, accountKey, signingKey, accountKey, newSigningKey1, newSigningKey2
+            );
+        } else {
+            // NOTICE: login, alias should be filled with utils.__DEFAULT_ALIAS__
+            let input = {
+                context: ctx.serialize()
+            };
             let accountData = await SecretSDK.curlEx(serverAddr, "accounts/get", input);
             if (
-                accountData.alias !== ctx.alias ||
                 accountData.ethAddress !== ctx.ethAddress
             ) {
-                throw new Error("Invalid alias");
+                throw new Error("Invalid ETH Address");
             }
             sa = SecretAccount.deserialize(eddsa, key, accountData.secretAccount)
+            // IMPORTANT: override the ctx.alias
+            ctx.alias = sa.alias;
         }
 
         let secretSDK = new SecretSDK(
@@ -185,7 +197,7 @@ export class SecretSDK {
         return this.curl("statetree", input)
     }
 
-    async getNote(ctx: Context, noteState: any) {
+    async getNotes(ctx: Context, noteState: any) {
         let input = {
             context: ctx.serialize(),
             noteState: noteState
@@ -193,26 +205,21 @@ export class SecretSDK {
         return this.curl("notes/get", input);
     }
 
-    async updateNote(ctx: Context, notes: any) {
+    async updateNote(ctx: Context, encryptedNotes: any) {
         let input = {
             context: ctx.serialize(),
-            notes
+            notes: encryptedNotes
         };
         return this.curl("notes/update", input);
     }
 
-    async createTx(ctx: Context, receiverAlias: any, txdata: any, input: any, proofAndPublicSignals: any) {
+    async createTx(ctx: Context, input: any, proofAndPublicSignals: any) {
         let inputData = {
             context: ctx.serialize(),
-            receiverAlias: receiverAlias,
-            pubKey: txdata[0].pubKey.pubKey,
-            pubKey2: txdata[1].pubKey.pubKey,
-            content: txdata[0].content,
-                content2: txdata[1].content,
-                noteIndex: input.outputNotes[0].index.toString(),
-                note2Index: input.outputNotes[1].index.toString(),
-                proof: Prover.serialize(proofAndPublicSignals.proof),
-                publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
+            noteIndex: input.outputNotes[0].index.toString(),
+            note2Index: input.outputNotes[1].index.toString(),
+            proof: Prover.serialize(proofAndPublicSignals.proof),
+            publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
         };
         return this.curl("transactions/create", inputData);
     }
@@ -276,19 +283,48 @@ export class SecretSDK {
         return notesByAssetId;
     }
 
+    /**
+     * @param {Context} ctx
+     * @param {Array<NoteState>} noteState: get current user's adopted notes and wild notes. A wild note's alias is __DEFAULT_ALIAS__
+     * @return {Array<Note>} all current user's unspent notes
+     */
     async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>) {
-        let notes: Array<Note> = [];
-        let encryptedNotes = await this.getNote(ctx, noteState);
-        if (encryptedNotes) {
-            encryptedNotes.forEach((item: any) => {
-                let sharedKey = this.account.signingKey.makeSharedKey(new EigenAddress(item.pubKey));
-                let tmpNote = Note.decrypt(item.content, sharedKey);
-                if (tmpNote.val > 0) {
-                    notes.push(tmpNote);
+        let encryptedNotes = await this.getNotes(ctx, noteState);
+        let allNotes = decryptNotes(this.account.accountKey, encryptedNotes);
+        await this.adoptNotes(ctx, allNotes, encryptedNotes);
+        return allNotes;
+    }
+
+    /**
+     * @param {Context} ctx
+     * @param {Array<Note>} notes: all the notes including wild and adopted notes
+     * @param {Array<any>} encryptedNotes: the original encrypted notes
+     * @return {Array<Note>} the adopted notes
+     */
+    private async adoptNotes(ctx: Context, notes: Array<Note>, encryptedNotes: Array<any>) {
+        const wildNotes = notes.filter((n) => n.adopted === false);
+        // encrypt wild notes, namely NoteModel
+        let wildNoteModels: Array<any> = [];
+        wildNotes.forEach((n: Note) => {
+            // find the encrypted note for current decrypted note
+            for (const en of encryptedNotes) {
+                if (en.index.toString() === n.index.toString()) {
+                    wildNoteModels.push({
+                        alias: ctx.alias, // the only updated field
+                        index: en.index,
+                        pubKey: en.pubKey,
+                        content: en.content,
+                        state: en.state
+                    });
                 }
-            });
+            }
+        });
+        // updates notes
+        if (wildNoteModels.length > 0) {
+            return await this.updateNote(ctx, wildNoteModels);
         }
-        return notes;
+        // return empty array
+        return wildNoteModels;
     }
 
     /**
@@ -314,7 +350,7 @@ export class SecretSDK {
 
         const signer = accountRequired ? this.account.accountKey: this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
-        let noteState = [NoteState.CREATING, NoteState.PROVED]
+        let noteState = [NoteState.PROVED]
         let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
@@ -358,12 +394,12 @@ export class SecretSDK {
                 this.siblings.push(tmpSiblings);
             }
 
-            let transaction = new Transaction(input.outputNotes, this.account.signingKey);
+            let transaction = new Transaction(input.outputNotes, this.account.accountKey);
             let txdata = await transaction.encrypt(this.eddsa);
 
-            let txInput = new Transaction(input.inputNotes, this.account.signingKey);
+            let txInput = new Transaction(input.inputNotes, this.account.accountKey);
             let txInputData = await txInput.encrypt(this.eddsa);
-            await this.createTx(ctx, this.alias, txdata, input, proofAndPublicSignals);
+            await this.createTx(ctx, input, proofAndPublicSignals);
 
             await this.rollupSC.update(proofAndPublicSignals);
 
@@ -411,11 +447,11 @@ export class SecretSDK {
      *
      * @param {Context} ctx
      * @param {string} receiver
-     * @param {string} receiverAlias use for test
+     * @param {string} receiverAlias the receiver's alias or __DEFAULT_ALIAS__
      * @param {bigint} value the amount to be sent
      * @param {number} assetId the token to be sent
      * @param {boolean} accountRequired enables signing with account key only
-     * @return {Object} a batch of proof
+     * @return {Object} proof batch
      */
     async send(
         ctx: Context,
@@ -463,14 +499,14 @@ export class SecretSDK {
             let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
-            let transaction = new Transaction(input.outputNotes, this.account.signingKey);
+            let transaction = new Transaction(input.outputNotes, this.account.accountKey);
             let txdata = await transaction.encrypt(this.eddsa);
 
-            let txInput = new Transaction(input.inputNotes, this.account.signingKey);
+            let txInput = new Transaction(input.inputNotes, this.account.accountKey);
             let txInputData = await txInput.encrypt(this.eddsa);
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            await this.createTx(ctx, receiverAlias, txdata, input, proofAndPublicSignals);
+            await this.createTx(ctx, input, proofAndPublicSignals);
             await this.rollupSC.update(proofAndPublicSignals);
 
             let _notes: Array<any> = [
@@ -591,14 +627,14 @@ export class SecretSDK {
                 siblings.push(tmpSiblings);
             }
 
-            let transaction = new Transaction(input.outputNotes, this.account.signingKey);
+            let transaction = new Transaction(input.outputNotes, this.account.accountKey);
             let txdata = await transaction.encrypt(this.eddsa);
 
-            let txInput = new Transaction(input.inputNotes, this.account.signingKey);
+            let txInput = new Transaction(input.inputNotes, this.account.accountKey);
             let txInputData = await txInput.encrypt(this.eddsa);
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            await this.createTx(ctx, this.alias, txdata, input, proofAndPublicSignals);
+            await this.createTx(ctx, input, proofAndPublicSignals);
             // call contract and deposit
             await this.rollupSC.update(proofAndPublicSignals);
             // settle down the spent notes
@@ -892,7 +928,7 @@ export class SecretSDK {
         let proofs = new Array<string>(0);
         proofs.push(Prover.serialize(proofAndPublicSignals));
 
-        let noteState = [NoteState.PROVED]
+        let noteState = [NoteState.PROVED, NoteState.PROVED]
         let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
         let notesByAssetId: Map<number, bigint> = new Map();
         for (const note of notes) {

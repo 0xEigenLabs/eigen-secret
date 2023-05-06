@@ -6,11 +6,10 @@ import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "@e
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { pad } from "@eigen-secret/core/dist-node/state_tree";
-import { NoteModel as DBNote } from "../server/dist/note";
 import { Note, NoteState } from "@eigen-secret/core/dist-node/note";
-import { compress as accountCompress, EigenAddress } from "@eigen-secret/core/dist-node/account";
+import { compress as accountCompress } from "@eigen-secret/core/dist-node/account";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist-node/join_split";
-import { AccountCircuit } from "@eigen-secret/core/dist-node/account";
+import { AccountCircuit, decryptNotes } from "@eigen-secret/core/dist-node/account";
 import { UpdateStatusCircuit } from "@eigen-secret/core/dist-node/update_state";
 import { Prover } from "@eigen-secret/core/dist-node/prover";
 import { Transaction } from "@eigen-secret/core/dist-node/transaction";
@@ -50,7 +49,7 @@ describe("POST /transactions", function() {
         assetId = (await rollupHelper.deploy()).toNumber();
         newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
 
         eddsa = await buildEddsa();
         babyJub = eddsa.babyJub;
@@ -136,20 +135,14 @@ describe("POST /transactions", function() {
             .post("/notes/get")
             .send({
                 context: ctx.serialize(),
-                noteState: [NoteState.CREATING, NoteState.PROVED]
+                noteState: [NoteState.PROVED]
             })
             .set("Accept", "application/json");
-        // console.log(responseNote.body.data);
+        console.log(responseNote.body.data);
         let encryptedNotes = responseNote.body.data;
 
         // decrypt
-        let notes: Array<Note> = [];
-        if (encryptedNotes) {
-            encryptedNotes.forEach((item: DBNote) => {
-                let sharedKey = signingKey.makeSharedKey(new EigenAddress(item.pubKey));
-                notes.push(Note.decrypt(item.content, sharedKey));
-            });
-        }
+        let notes: Array<Note> = decryptNotes(accountKey, encryptedNotes);
 
         // console.log("note: ", notes);
         let nonce = 0; // get nonce from metamask
@@ -214,10 +207,10 @@ describe("POST /transactions", function() {
             }
 
             // output transaction
-            let transaction = new Transaction(input.outputNotes, signingKey);
-            let txdata = await transaction.encrypt(eddsa);
+            let transaction = new Transaction(input.outputNotes, accountKey);
+            let txOutputData = await transaction.encrypt(eddsa);
 
-            let txInput = new Transaction(input.inputNotes, signingKey);
+            let txInput = new Transaction(input.inputNotes, accountKey);
             let txInputData = await txInput.encrypt(eddsa);
 
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
@@ -226,11 +219,6 @@ describe("POST /transactions", function() {
             .post("/transactions/create")
             .send({
                 context: ctx.serialize(),
-                receiverAlias: alias,
-                pubKey: txdata[0].pubKey.pubKey,
-                pubKey2: txdata[1].pubKey.pubKey,
-                content: txdata[0].content,
-                content2: txdata[1].content,
                 noteIndex: input.outputNotes[0].index.toString(),
                 note2Index: input.outputNotes[1].index.toString(),
                 proof: Prover.serialize(proofAndPublicSignals.proof),
@@ -269,21 +257,21 @@ describe("POST /transactions", function() {
                     {
                         alias: alias,
                         index: input.outputNotes[0].index,
-                        pubKey: txdata[0].pubKey.pubKey,
-                        content: txdata[0].content,
+                        pubKey: txOutputData[0].pubKey.pubKey,
+                        content: txOutputData[0].content,
                         state: NoteState.PROVED
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[1].index,
-                        pubKey: txdata[1].pubKey.pubKey,
-                        content: txdata[1].content,
+                        pubKey: txOutputData[1].pubKey.pubKey,
+                        content: txOutputData[1].content,
                         state: NoteState.PROVED
                     }
                 ]
             }))
             .set("Accept", "application/json");
-            // console.log(responseSt.body.data);
+            console.log(responseSt.body.data);
             expect(responseSt.status).to.eq(200);
             expect(responseSt.body.errno).to.eq(0);
         }
@@ -293,7 +281,7 @@ describe("POST /transactions", function() {
 
     it("end2end send", async () => {
         let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
         let accountKey = rollupHelper.eigenAccountKey[0];
         let accountRequired = false;
@@ -311,20 +299,14 @@ describe("POST /transactions", function() {
         .post("/notes/get")
         .send({
             context: ctx.serialize(),
-            noteState: [NoteState.CREATING, NoteState.PROVED]
+            noteState: [NoteState.PROVED]
         })
         .set("Accept", "application/json");
-        // console.log(responseNote.body.data);
+        console.log(responseNote.body.data);
         let encryptedNotes = responseNote.body.data;
 
         // decrypt
-        let notes: Array<Note> = [];
-        if (encryptedNotes) {
-            encryptedNotes.forEach((item: DBNote) => {
-                let sharedKey = signingKey.makeSharedKey(new EigenAddress(item.pubKey));
-                notes.push(Note.decrypt(item.content, sharedKey));
-            });
-        }
+        let notes: Array<Note> = decryptNotes(accountKey, encryptedNotes);
         assert(notes.length > 0, "Invalid notes");
 
         // create notes
@@ -369,10 +351,10 @@ describe("POST /transactions", function() {
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
-            let transaction = new Transaction(input.outputNotes, signingKey);
-            let txdata = await transaction.encrypt(eddsa);
+            let transaction = new Transaction(input.outputNotes, accountKey);
+            let txOutputData = await transaction.encrypt(eddsa);
 
-            let txInput = new Transaction(input.inputNotes, signingKey);
+            let txInput = new Transaction(input.inputNotes, accountKey);
             let txInputData = await txInput.encrypt(eddsa);
             assert(txInputData[0].content, encryptedNotes[0].content);
 
@@ -382,11 +364,6 @@ describe("POST /transactions", function() {
             .post("/transactions/create")
             .send({
                 context: ctx.serialize(),
-                receiverAlias: alias,
-                pubKey: txdata[0].pubKey.pubKey,
-                pubKey2: txdata[1].pubKey.pubKey,
-                content: txdata[0].content,
-                content2: txdata[1].content,
                 noteIndex: input.outputNotes[0].index.toString(),
                 note2Index: input.outputNotes[1].index.toString(),
                 proof: Prover.serialize(proofAndPublicSignals.proof),
@@ -423,15 +400,15 @@ describe("POST /transactions", function() {
                     {
                         alias: alias,
                         index: input.outputNotes[0].index,
-                        pubKey: txdata[0].pubKey.pubKey,
-                        content: txdata[0].content,
+                        pubKey: txOutputData[0].pubKey.pubKey,
+                        content: txOutputData[0].content,
                         state: NoteState.PROVED
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[1].index,
-                        pubKey: txdata[1].pubKey.pubKey,
-                        content: txdata[1].content,
+                        pubKey: txOutputData[1].pubKey.pubKey,
+                        content: txOutputData[1].content,
                         state: NoteState.PROVED
                     }
                 ]
@@ -445,7 +422,7 @@ describe("POST /transactions", function() {
 
     it("should accept valid withdrawals", async () => {
         let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, alias, timestamp);
+        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
         let accountKey = rollupHelper.eigenAccountKey[0];
 
@@ -461,20 +438,14 @@ describe("POST /transactions", function() {
         .post("/notes/get")
         .send({
             context: ctx.serialize(),
-            noteState: [NoteState.CREATING, NoteState.PROVED]
+            noteState: [NoteState.PROVED]
         })
         .set("Accept", "application/json");
         // console.log(responseNote.body.data);
         let encryptedNotes = responseNote.body.data;
 
         // decrypt
-        let notes: Array<Note> = [];
-        if (encryptedNotes) {
-            encryptedNotes.forEach((item: DBNote) => {
-                let sharedKey = signingKey.makeSharedKey(new EigenAddress(item.pubKey));
-                notes.push(Note.decrypt(item.content, sharedKey));
-            });
-        }
+        let notes: Array<Note> = decryptNotes(accountKey, encryptedNotes);
         assert(notes.length > 0, "Invalid notes");
 
         // create notes
@@ -559,10 +530,10 @@ describe("POST /transactions", function() {
                 siblings.push(tmpSiblings);
             }
 
-            let transaction = new Transaction(input.outputNotes, signingKey);
-            let txdata = await transaction.encrypt(eddsa);
+            let transaction = new Transaction(input.outputNotes, accountKey);
+            let txOutputData = await transaction.encrypt(eddsa);
 
-            let txInput = new Transaction(input.inputNotes, signingKey);
+            let txInput = new Transaction(input.inputNotes, accountKey);
             let txInputData = await txInput.encrypt(eddsa);
             assert(txInputData[0].content, encryptedNotes[0].content);
 
@@ -572,12 +543,6 @@ describe("POST /transactions", function() {
             .post("/transactions/create")
             .send({
                 context: ctx.serialize(),
-                ethAddress: newEOAAccount.address,
-                receiverAlias: alias,
-                pubKey: txdata[0].pubKey.pubKey,
-                pubKey2: txdata[1].pubKey.pubKey,
-                content: txdata[0].content,
-                content2: txdata[1].content,
                 noteIndex: input.outputNotes[0].index.toString(),
                 note2Index: input.outputNotes[1].index.toString(),
                 proof: Prover.serialize(proofAndPublicSignals.proof),
@@ -614,15 +579,15 @@ describe("POST /transactions", function() {
                     {
                         alias: alias,
                         index: input.outputNotes[0].index,
-                        pubKey: txdata[0].pubKey.pubKey,
-                        content: txdata[0].content,
+                        pubKey: txOutputData[0].pubKey.pubKey,
+                        content: txOutputData[0].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[1].index,
-                        pubKey: txdata[1].pubKey.pubKey,
-                        content: txdata[1].content,
+                        pubKey: txOutputData[1].pubKey.pubKey,
+                        content: txOutputData[1].content,
                         state: NoteState.SPENT
                     }
                 ]

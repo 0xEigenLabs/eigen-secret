@@ -35,6 +35,9 @@ export async function createAccount(req: any, res: any) {
         return res.json(utils.err(code, utils.ErrCode[code]));
     }
     const alias = ctx.alias;
+    if (alias === utils.__DEFAULT_ALIAS__) {
+        return res.json(utils.err(utils.ErrCode.DBCreateError, `${utils.__DEFAULT_ALIAS__} is reserved by Eigen Secret`));
+    }
     const ethAddress = ctx.ethAddress;
     let found: utils.ErrCode | AccountModel = await getAccountInternal(alias, ethAddress);
     if (found.errno !== utils.ErrCode.RecordNotExist) {
@@ -72,6 +75,10 @@ async function getAccountInternal(alias: string, ethAddress: string) {
     }
     found = await AccountModel.findOne({ where: { ethAddress } });
     if (found) {
+        if (alias === utils.__DEFAULT_ALIAS__) {
+            // fetch account by eth address only
+            return { errno: utils.ErrCode.Success, data: found };
+        }
         return { errno: utils.ErrCode.DuplicatedRecordError };
     }
     return { errno: utils.ErrCode.RecordNotExist };

@@ -18,7 +18,7 @@ task("ci", "Run all task in one command")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[0];
-    const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
+    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
     let signingKey = new SigningKey(eddsa);
     let accountKey = new SigningKey(eddsa);
     let newSigningKey1 = new SigningKey(eddsa);

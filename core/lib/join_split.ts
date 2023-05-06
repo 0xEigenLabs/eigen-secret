@@ -4,6 +4,7 @@ import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
 import { strict as assert } from "assert";
 import { index } from "./utils";
+import consola from "consola";
 const { Scalar, utils } = require("ffjavascript-browser");
 
 export class JoinSplitInput {
@@ -292,7 +293,7 @@ export class JoinSplitCircuit {
                 );
                 inputNoteInUse[i] = 0n;
             }
-            console.log("inputNoteInUse", inputNoteInUse);
+            consola.log("inputNoteInUse", inputNoteInUse);
 
             let nc1 = await inputNotes[0].compress(babyJub);
             let nullifier1 = await JoinSplitCircuit.calculateNullifier(eddsa, nc1, inputNoteInUse[0], accountKey);
@@ -311,7 +312,7 @@ export class JoinSplitCircuit {
             let outputNotes = [outputNote1];
             let outputNCs = [outputNc1];
             let totalInputNoteValue = inputNotes.reduce((sum, n) => sum + n.val, 0n);
-            console.log(`init: totalIn ${totalInputNoteValue}, publicValue: ${publicValue}, recipientPrivateOutput: ${recipientPrivateOutput}`);
+            consola.log(`init: totalIn ${totalInputNoteValue}, publicValue: ${publicValue}, recipientPrivateOutput: ${recipientPrivateOutput}`);
             if (proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT) {
                 if (totalInputNoteValue < recipientPrivateOutput) {
                     throw new Error(
@@ -321,9 +322,9 @@ export class JoinSplitCircuit {
             } else {
                 totalInputNoteValue += publicValue;
             }
-            console.log(`total: totalIn ${totalInputNoteValue}, publicValue: ${publicValue}, recipientPrivateOutput: ${recipientPrivateOutput}`);
+            consola.log(`total: totalIn ${totalInputNoteValue}, publicValue: ${publicValue}, recipientPrivateOutput: ${recipientPrivateOutput}`);
             let change = totalInputNoteValue - recipientPrivateOutput;
-            console.log(`sub private: totalIn ${totalInputNoteValue}, publicValue: ${publicValue}, recipientPrivateOutput: ${recipientPrivateOutput}, change ${change}`);
+            consola.log(`sub private: totalIn ${totalInputNoteValue}, publicValue: ${publicValue}, recipientPrivateOutput: ${recipientPrivateOutput}, change ${change}`);
 
             if (proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT) {
                 if (change < publicValue) {
@@ -331,7 +332,7 @@ export class JoinSplitCircuit {
                 }
                 change = change - publicValue;
             }
-            console.log(`sub public: totalIn ${totalInputNoteValue}, publicValue: ${publicValue}, recipientPrivateOutput: ${recipientPrivateOutput}, change ${change}`);
+            consola.log(`sub public: totalIn ${totalInputNoteValue}, publicValue: ${publicValue}, recipientPrivateOutput: ${recipientPrivateOutput}, change ${change}`);
 
             assert(inputNotes[1]);
             let nc2 = await inputNotes[1].compress(babyJub);

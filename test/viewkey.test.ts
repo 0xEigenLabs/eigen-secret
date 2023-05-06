@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 const Scalar = require("ffjavascript").Scalar;
 const ffutils = require("ffjavascript").utils;
 import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account";
-const crypto = require("crypto");
+import { Aes256gcm } from "@eigen-secret/core/dist-node/aes_gcm";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 /* globals describe, before, it */
@@ -72,7 +72,7 @@ describe("Test View Key", function() {
             keys[3],
             keys[4]
         );
-        const secret = crypto.generateKeySync("aes", { length: 256 });
+        const secret = "sec11111";
         let serKeys = sa.serialize(secret);
         let derKeys = SecretAccount.deserialize(eddsa, secret, serKeys);
         expect(keys[0].prvKey).to.eq(derKeys.accountKey.prvKey);
@@ -109,3 +109,35 @@ describe("Test Proof knowledge of Private Key", function() {
         await circuit.assertOut(wtns, { Ax: F.toObject(pubKey[0]), Ay: F.toObject(pubKey[1]) });
     })
 });
+
+describe("Test AES", () => {
+    let eddsa: any;
+    before(async () => {
+        eddsa = await buildEddsa();
+    })
+    it("AES simple test", () => {
+        let key = Buffer.from("112121");
+        let aes = new Aes256gcm(key);
+        let msg = "my message".repeat(20);
+        let cipher = aes.encrypt(msg);
+        let data = aes.decrypt(cipher);
+        expect(msg).eq(data);
+    })
+
+    it("AES real test", () => {
+        let sender = new SigningKey(eddsa);
+        let receiver = new SigningKey(eddsa);
+        let key = sender.makeSharedKey(receiver.pubKey)
+        let aes = new Aes256gcm(key);
+        let msg = "my message".repeat(20);
+        let cipher = aes.encrypt(msg);
+        let data = aes.decrypt(cipher);
+        expect(msg).eq(data);
+
+        key = receiver.makeSharedKey(sender.pubKey);
+        aes = new Aes256gcm(key);
+        cipher = aes.encrypt(msg);
+        data = aes.decrypt(cipher);
+        expect(msg).eq(data);
+    })
+})
