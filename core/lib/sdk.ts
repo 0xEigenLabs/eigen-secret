@@ -90,8 +90,8 @@ export class SecretSDK {
         }
         return new AppError({
             errno: response.data.errno,
-            message: response.data.message || "",
-            data: response.data.data || "",
+            message: response.data.message,
+            data: response.data.data,
         });
     }
 
