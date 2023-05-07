@@ -31,9 +31,6 @@ export class SecretSDK {
     account: SecretAccount;
     circuitPath: string;
     rollupSC: RollupSC;
-    keysFound: any;
-    valuesFound: any;
-    siblings: any;
     serverAddr: any;
     eddsa: any;
 
@@ -59,9 +56,6 @@ export class SecretSDK {
         this.eddsa = eddsa;
         this.rollupSC = new RollupSC(this.eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
             poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
-        this.keysFound = [];
-        this.valuesFound = [];
-        this.siblings = [];
     }
 
     private async curl(resource: string, params: any) {
@@ -378,6 +372,9 @@ export class SecretSDK {
         let tmpPub = [this.eddsa.F.toObject(tmpP[0]), this.eddsa.F.toObject(tmpP[1])];
 
         await this.rollupSC.deposit(tmpPub, assetId, value, nonce);
+        let keysFound = [];
+        let valuesFound = [];
+        let siblings = [];
 
         let accountRequired = false;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -423,16 +420,16 @@ export class SecretSDK {
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
-            this.keysFound.push(input.outputNCs[0]);
-            this.valuesFound.push(input.outputNotes[0].inputNullifier);
-            this.keysFound.push(input.outputNCs[1]);
-            this.valuesFound.push(input.outputNotes[1].inputNullifier);
+            keysFound.push(input.outputNCs[0]);
+            valuesFound.push(input.outputNotes[0].inputNullifier);
+            keysFound.push(input.outputNCs[1]);
+            valuesFound.push(input.outputNotes[1].inputNullifier);
             for (const item of proof.data.siblings) {
                 let tmpSiblings = [];
                 for (const sib of item) {
                     tmpSiblings.push(BigInt(sib));
                 }
-                this.siblings.push(tmpSiblings);
+                siblings.push(tmpSiblings);
             }
 
             let transaction = new Transaction(input.outputNotes, this.account.accountKey);
@@ -484,7 +481,7 @@ export class SecretSDK {
                 return resp;
             }
         }
-        await this.rollupSC.processDeposits(this.rollupSC.userAccount, this.keysFound, this.valuesFound, this.siblings);
+        await this.rollupSC.processDeposits(this.rollupSC.userAccount, keysFound, valuesFound, siblings);
         return new AppError({
             errno: 0,
             data: batchProof
@@ -872,6 +869,9 @@ export class SecretSDK {
             newSigningPubKey2,
             aliasHash
         );
+        let keysFound = [];
+        let valuesFound = [];
+        let siblings = [];
         let accountRequired = false;
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         let acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
@@ -886,13 +886,13 @@ export class SecretSDK {
             throw new Error("Invalid proof")
         }
 
-        this.keysFound.push(acStateKey);
-        this.valuesFound.push(1n);
+        keysFound.push(acStateKey);
+        valuesFound.push(1n);
         let tmpSiblings = [];
         for (const sib of smtProof.data.siblings[0]) {
             tmpSiblings.push(BigInt(sib));
         }
-        this.siblings.push(tmpSiblings);
+        siblings.push(tmpSiblings);
         await this.rollupSC.update(proofAndPublicSignals);
         let resp = await this.createServerAccount(ctx, password);
         if (resp.errno != ErrCode.Success) {
