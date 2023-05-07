@@ -49,6 +49,7 @@ export class Transaction {
         return Promise.resolve(tes);
     }
 
+    // dead code
     async decrypt(content: Array<TxData>): Promise<Array<Note>> {
         let result = [];
         for (let data of content) {

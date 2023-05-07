@@ -1,3 +1,5 @@
+docs
+circuits/main_withdraw.input.json
 dist/
 dist-node/
 dist-browser/
@@ -27,4 +29,3 @@ circuits/*.ptau
 circuits/circuit_final.zkey
 circuits/*.input.json
 contracts/main_*.sol
-docs

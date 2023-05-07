@@ -1,16 +1,12 @@
 import { prepareJson } from "./utils";
 
-export const baseResp = function(errno: ErrCode, message: string, data: string) {
-  return { errno: errno, message: message, data: data };
-}
-
 export const succResp = function(data: any) {
   data = prepareJson(data);
-  return baseResp(0, "", data);
+  return new AppError({ errno: 0, data: data });
 }
 
 export const errResp = function(errno: ErrCode, message: string) {
-  return baseResp(errno, message, "");
+  return new AppError({ errno: errno, message: message });
 }
 
 /**
@@ -28,5 +24,36 @@ export enum ErrCode {
   DuplicatedRecordError = 6,
   RecordNotExist = 7,
   InvalidProof = 8
+}
+
+interface AppErrorArgs {
+  data?: any;
+  errno: ErrCode;
+  message?: string;
+  isOperational?: boolean;
+}
+
+export class AppError extends Error {
+  public readonly message: string;
+  public readonly data: any;
+  public readonly errno: ErrCode;
+  // set isOperational to false when throwing a critical error.
+  public readonly isOperational: boolean = true;
+
+  constructor(args: AppErrorArgs) {
+    super(args.message);
+
+    Object.setPrototypeOf(this, new.target.prototype);
+
+    this.message = args.message || "";
+    this.errno = args.errno;
+    this.data = args.data || "";
+
+    if (args.isOperational !== undefined) {
+      this.isOperational = args.isOperational;
+    }
+
+    Error.captureStackTrace(this);
+  }
 }
 
