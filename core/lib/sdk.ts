@@ -192,7 +192,6 @@ export class SecretSDK {
         await secretSDK.initialize(contractABI);
         return new AppError({
             errno: 0,
-            message: undefined,
             data: secretSDK
         });
     }
@@ -309,7 +308,6 @@ export class SecretSDK {
         }
         return new AppError({
             errno: 0,
-            message: undefined,
             data: notesByAssetId
         });
     }
@@ -332,7 +330,6 @@ export class SecretSDK {
         }
         return new AppError({
             errno: 0,
-            message: undefined,
             data: allNotes
         });
     }
@@ -362,7 +359,6 @@ export class SecretSDK {
         // return empty array
         return new AppError({
             errno: 0,
-            message: undefined,
             data: wildNoteModels
         });
     }
@@ -491,7 +487,6 @@ export class SecretSDK {
         await this.rollupSC.processDeposits(this.rollupSC.userAccount, this.keysFound, this.valuesFound, this.siblings);
         return new AppError({
             errno: 0,
-            message: undefined,
             data: batchProof
         });
     }
@@ -610,7 +605,6 @@ export class SecretSDK {
         }
         return new AppError({
             errno: 0,
-            message: undefined,
             data: batchProof
         });
     }
@@ -646,7 +640,7 @@ export class SecretSDK {
             assetId,
             assetId,
             value,
-            this.account.accountKey.pubKey,
+            new EigenAddress(receiver),
             0n,
             this.account.accountKey.pubKey,
             notes.data,
@@ -816,7 +810,6 @@ export class SecretSDK {
         );
         return new AppError({
             errno: 0,
-            message: undefined,
             data: batchProof
         });
     }
@@ -907,7 +900,6 @@ export class SecretSDK {
         }
         return new AppError({
             errno: 0,
-            message: undefined,
             data: proofAndPublicSignals
         });
     }
@@ -992,7 +984,6 @@ export class SecretSDK {
         }
         return new AppError({
             errno: 0,
-            message: undefined,
             data: proofs
         });
     }
@@ -1075,7 +1066,6 @@ export class SecretSDK {
         }
         return new AppError({
             errno: 0,
-            message: undefined,
             data: proofs
         });
     }
