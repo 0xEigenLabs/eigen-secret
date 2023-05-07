@@ -33,6 +33,30 @@ export enum ProofState {
 
 export class Prover {
     static serverAddr: string;
+    static witnessCalculatorUpdateState: any;
+    static witnessCalculatorWithdraw: any;
+
+    static async init() {
+        const witnessCalculatorUpdateStateUrl = `${Prover.serverAddr}/public/main_update_state_js/witness_calculator.js`;
+        const witnessCalculatorWithdrawUrl = `${Prover.serverAddr}/public/main_withdraw_js/witness_calculator.js`;
+
+        if (!Prover.witnessCalculatorUpdateState) {
+            Prover.witnessCalculatorUpdateState = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorUpdateStateUrl);
+        }
+        if (!Prover.witnessCalculatorWithdraw) {
+            Prover.witnessCalculatorWithdraw = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorWithdrawUrl);
+        }
+    }
+
+    static async loadAndModifyWitnessCalculator(url: string) {
+        const { data: wcContent } = await axios.get(url, { responseType: "text" });
+
+        const uniqueGlobalVarName = generateRandomVarName("witnessCalculatorModule");
+        const modifiedWcContent = wcContent.replace(/module\.exports\s*=/, `window.${uniqueGlobalVarName} =`);
+        const wcBlob = new Blob([modifiedWcContent], { type: "text/javascript" });
+
+        return await loadScriptFromBlob(wcBlob, uniqueGlobalVarName);
+    }
 
     static async fetchRemoteFile(url: string) {
         const response = await axios.get(url, { responseType: "arraybuffer" });
@@ -41,7 +65,7 @@ export class Prover {
 
     static async updateState(circuitPath: string, input: any) {
         if (typeof window !== "undefined") {
-            return Prover.updateStateForClient(circuitPath, input);
+            return Prover.updateStateForClient(input);
         } else {
             return Prover.updateStateForBackend(circuitPath, input);
         }
@@ -49,7 +73,7 @@ export class Prover {
 
     static async verifyState(circuitPath: string, proofAndPublicSignals: any) {
         if (typeof window !== "undefined") {
-            return Prover.verifyStateForClient(circuitPath, proofAndPublicSignals);
+            return Prover.verifyStateForClient(proofAndPublicSignals);
         } else {
             return Prover.verifyStateForBackend(circuitPath, proofAndPublicSignals);
         }
@@ -57,7 +81,7 @@ export class Prover {
 
     static async withdraw(circuitPath: string, input: any) {
         if (typeof window !== "undefined") {
-            return Prover.withdrawForClient(circuitPath, input);
+            return Prover.withdrawForClient(input);
         } else {
             return Prover.withdrawForBackend(circuitPath, input);
         }
@@ -65,28 +89,18 @@ export class Prover {
 
     static async verifyWithrawal(circuitPath: string, proofAndPublicSignals: any) {
         if (typeof window !== "undefined") {
-            return Prover.verifyWithdrawalForClient(circuitPath, proofAndPublicSignals);
+            return Prover.verifyWithdrawalForClient(proofAndPublicSignals);
         } else {
             return Prover.verifyWithdrawalForBackend(circuitPath, proofAndPublicSignals);
         }
     }
 
-    static async updateStateForClient(circuitPath: string, input: any) {
+    static async updateStateForClient(input: any) {
         let wasmUrl = `${Prover.serverAddr}/public/main_update_state_js/main_update_state.wasm`;
         let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.16`;
 
-        let wcUrl = `${Prover.serverAddr}/public/main_update_state_js/witness_calculator.js`;
-        const { data: wcContent } = await axios.get(wcUrl, { responseType: "text" });
-
-        const globalVarName = generateRandomVarName("witnessCalculatorModule");
-
-        const wcContentModified = wcContent.replace(/module\.exports\s*=/, `window.${globalVarName} =`);
-        const wcBlob = new Blob([wcContentModified], { type: "text/javascript" });
-
-        const wc = await loadScriptFromBlob(wcBlob, globalVarName);
-
         const wasmBuffer = await Prover.fetchRemoteFile(wasmUrl);
-        const witnessCalculator = await (wc as Function)(wasmBuffer);
+        const witnessCalculator = await Prover.witnessCalculatorUpdateState(wasmBuffer);
 
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(input, 0);
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkeyUrl, witnessBuffer);
@@ -98,7 +112,7 @@ export class Prover {
         return proofAndPublicSignals;
     }
 
-    static async verifyStateForClient(circuitPath: string, proofAndPublicSignals: any) {
+    static async verifyStateForClient(proofAndPublicSignals: any) {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
@@ -109,28 +123,16 @@ export class Prover {
         return res;
     }
 
-    static async withdrawForClient(circuitPath: string, input: any) {
+    static async withdrawForClient(input: any) {
         let wasmUrl = `${Prover.serverAddr}/public/main_withdraw_js/main_update_state.wasm`;
         let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.14`;
 
-        let wcUrl = `${Prover.serverAddr}/public/main_withdraw_js/witness_calculator.js`;
-        const { data: wcContent } = await axios.get(wcUrl, { responseType: "text" });
-        const wcBlob = new Blob([wcContent], { type: "text/javascript" });
-        const wcImportUrl = URL.createObjectURL(wcBlob);
-        const { default: wc } = await import(/* @vite-ignore */ wcImportUrl);
-        URL.revokeObjectURL(wcImportUrl);
-
         const wasmBuffer = await Prover.fetchRemoteFile(wasmUrl);
-        const witnessCalculator = await wc(wasmBuffer);
+        const witnessCalculator = await Prover.witnessCalculatorWithdraw(wasmBuffer);
 
-        // console.log("withdraw prover input", input);
-        const witnessBuffer = await witnessCalculator.calculateWTNSBin(
-          input,
-          0
-        );
+        const witnessBuffer = await witnessCalculator.calculateWTNSBin(input, 0);
 
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkeyUrl, witnessBuffer);
-        // console.log("proof", proof, publicSignals)
         const proofAndPublicSignals = {
             proof,
             publicSignals
@@ -138,7 +140,7 @@ export class Prover {
         return proofAndPublicSignals;
     }
 
-    static async verifyWithdrawalForClient(circuitPath: string, proofAndPublicSignals: any) {
+    static async verifyWithdrawalForClient(proofAndPublicSignals: any) {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
