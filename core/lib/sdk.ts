@@ -54,6 +54,9 @@ export class SecretSDK {
         this.alias = account.alias;
         this.account = account;
         Prover.serverAddr = serverAddr; // init Prover client with serverAddr
+        if (typeof window !== "undefined") {
+            Prover.init()
+        }
         this.serverAddr = serverAddr;
         this.circuitPath = circuitPath;
         this.eddsa = eddsa;
