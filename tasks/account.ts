@@ -9,6 +9,7 @@ import {
     defaultContractABI,
     defaultContractFile
 } from "./common";
+import { ErrCode } from "@eigen-secret/core/dist-node/error";
 require("dotenv").config()
 const { buildEddsa } = require("circomlibjs");
 
@@ -28,8 +29,14 @@ task("create-account", "Create secret account")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, true
     );
-    let proofAndPublicSignals = await secretSDK.createAccount(ctx, password);
-    console.log("create account", proofAndPublicSignals);
+    if (secretSDK.errno != ErrCode.Success) {
+      console.log("initSDKFromAccount failed: ", secretSDK);
+    }
+    let proofAndPublicSignals = await secretSDK.data.createAccount(ctx, password);
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
+      console.log("createAccount failed: ", proofAndPublicSignals);
+    }
+    console.log("create account", proofAndPublicSignals.data);
   })
 
 task("migrate-account", "Migrate account to another ETH address")
@@ -48,10 +55,16 @@ task("migrate-account", "Migrate account to another ETH address")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    let proofAndPublicSignals = await secretSDK.migrateAccount(
+    if (secretSDK.errno != ErrCode.Success) {
+      console.log("initSDKFromAccount failed: ", secretSDK);
+    }
+    let proofAndPublicSignals = await secretSDK.data.migrateAccount(
         ctx, newAccountKey, password
     );
-    console.log(proofAndPublicSignals);
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
+      console.log("migrateAccount failed: ", proofAndPublicSignals);
+    }
+    console.log(proofAndPublicSignals.data);
   })
 
 task("update-account", "Update signing key")
@@ -69,12 +82,17 @@ task("update-account", "Update signing key")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-
+    if (secretSDK.errno != ErrCode.Success) {
+      console.log("initSDKFromAccount failed: ", secretSDK);
+    }
     let newSigningKey = new SigningKey(eddsa);
-    let proofAndPublicSignals = await secretSDK.updateAccount(
+    let proofAndPublicSignals = await secretSDK.data.updateAccount(
         ctx, newSigningKey, password
     );
-    console.log(proofAndPublicSignals);
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
+      console.log("updateAccount failed: ", proofAndPublicSignals);
+    }
+    console.log(proofAndPublicSignals.data);
   })
 
 task("get-account", "Get account info")
@@ -90,8 +108,11 @@ task("get-account", "Get account info")
     const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
     const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
-    let sdk = await SecretSDK.initSDKFromAccount(
+    let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    console.log(sdk.account.toString(eddsa));
+    if (secretSDK.errno != ErrCode.Success) {
+      console.log("initSDKFromAccount failed: ", secretSDK);
+    }
+    console.log(secretSDK.data.account.toString(eddsa));
   })

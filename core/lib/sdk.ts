@@ -7,7 +7,7 @@ import { Prover } from "./prover";
 import { Note, NoteState } from "./note";
 import { Transaction } from "./transaction";
 import { Context } from "./context";
-import { AppError, ErrCode, succResp, errResp } from "./error";
+import { AppError, ErrCode, errResp } from "./error";
 import {
     AccountCircuit,
     compress as accountCompress,
@@ -91,7 +91,7 @@ export class SecretSDK {
         return new AppError({
             errno: response.data.errno,
             message: response.data.message,
-            data: response.data.data,
+            data: response.data.data
         });
     }
 
@@ -121,6 +121,18 @@ export class SecretSDK {
         return this.curl("accounts/update", input)
     }
 
+    /**
+     * Initializes the SDK from either an existing account or no account.
+     * @param {Context} ctx
+     * @param {string} serverAddr The address of the server to connect to.
+     * @param {string} password The password used to encrypt the SecretAccount for secure storage.
+     * @param {any} user The Ethereum address of the user.
+     * @param {any} contractJson The JSON object for the contract.
+     * @param {string} circuitPath The path to the circuit file.
+     * @param {any} contractABI The ABI of the contract.
+     * @param {boolean} [isCreate=false] Flag indicating whether to create a new account. Optional.
+     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'class' that contains the initialized `SecretSDK` instance.
+    */
     static async initSDKFromAccount(
         ctx: Context,
         serverAddr: string,
@@ -156,7 +168,7 @@ export class SecretSDK {
             if (
                 accountData.ethAddress !== ctx.ethAddress
             ) {
-                throw new Error("Invalid ETH Address");
+                return errResp(ErrCode.InvalidAuth, "Invalid ETH Address");
             }
             sa = SecretAccount.deserialize(eddsa, key, accountData.secretAccount)
             // IMPORTANT: override the ctx.alias
@@ -178,7 +190,11 @@ export class SecretSDK {
             contractJson.smtVerifier
         );
         await secretSDK.initialize(contractABI);
-        return succResp(secretSDK);
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: secretSDK
+        });
     }
 
     async updateStateTree(
@@ -257,7 +273,7 @@ export class SecretSDK {
     }
 
     /**
-     * connect the rollup contracts
+     * Connect the rollup contracts.
      * @param {Object} contractABI the contracts ABI directory
      */
     async initialize(
@@ -273,42 +289,54 @@ export class SecretSDK {
     }
 
     /**
-     * obtain user balance
+     * Obtain user balance.
      * @param {Context} ctx
-     * @return {Map} user balance
+     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'Map' which contains user balance.
      */
     async getAllBalance(ctx: Context) {
         let noteState = [NoteState.PROVED]
-        let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
+        let notes = await this.getAndDecryptNote(ctx, noteState);
+        if (notes.errno != ErrCode.Success) {
+            return notes;
+        }
         let notesByAssetId: Map<number, bigint> = new Map();
-        for (const note of notes) {
+        for (const note of notes.data) {
             if (!notesByAssetId.has(note.assetId)) {
                 notesByAssetId.set(note.assetId, note.val);
             } else {
                 notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
             }
         }
-        return notesByAssetId;
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: notesByAssetId
+        });
     }
 
     /**
+     * Retrieve all current user's unspent notes.
      * @param {Context} ctx
-     * @param {Array<NoteState>} noteState: get current user's adopted notes and wild notes. A wild note's alias is __DEFAULT_ALIAS__
-     * @return {Array<Note>} all current user's unspent notes
+     * @param {Array<NoteState>} noteState: Get current user's adopted notes and wild notes. A wild note's alias is ‘__DEFAULT_ALIAS__’.
+     * @return {Promise<AppError>} An `AppError` object with `data` property of type `Array<Note>` if notes are successfully retrieved.
      */
     async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>) {
         let encryptedNotes = await this.getNotes(ctx, noteState);
-        let allNotes = decryptNotes(this.account.accountKey, encryptedNotes);
-        await this.adoptNotes(ctx, allNotes, encryptedNotes);
-        return allNotes;
+        if (encryptedNotes.errno != ErrCode.Success) {
+            return encryptedNotes;
+        }
+        let allNotes = decryptNotes(this.account.accountKey, encryptedNotes.data);
+        let resp = await this.adoptNotes(ctx, allNotes, encryptedNotes.data);
+        if (resp.errno != ErrCode.Success) {
+            return resp;
+        }
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: allNotes
+        });
     }
 
-    /**
-     * @param {Context} ctx
-     * @param {Array<Note>} notes: all the notes including wild and adopted notes
-     * @param {Array<any>} encryptedNotes: the original encrypted notes
-     * @return {Array<Note>} the adopted notes
-     */
     private async adoptNotes(ctx: Context, notes: Array<Note>, encryptedNotes: Array<any>) {
         const wildNotes = notes.filter((n) => n.adopted === false);
         // encrypt wild notes, namely NoteModel
@@ -332,18 +360,21 @@ export class SecretSDK {
             return await this.updateNote(ctx, wildNoteModels);
         }
         // return empty array
-        return wildNoteModels;
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: wildNoteModels
+        });
     }
 
     /**
-     * create proof for the deposit of the asset from L1 to L2
-     *
+     * Create proof for the deposit of the asset from L1 to L2.
      * @param {Context} ctx
-     * @param {string} receiver
-     * @param {bigint} value the amount to be deposited
-     * @param {number} assetId the token to be deposited
-     * @param {number} nonce the nonce of current transaction, usually obtained from Wallet like Metamask
-     * @return {Object} a batch of proof
+     * @param {string} receiver The receiver account address for the deposit.
+     * @param {bigint} value The amount of asset to be deposited.
+     * @param {number} assetId The token to be deposited.
+     * @param {number} nonce The nonce of the current transaction, usually obtained from a wallet like Metamask.
+     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the deposit.
      */
     async deposit(ctx: Context, receiver: string, value: bigint, assetId: number, nonce: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
@@ -358,8 +389,11 @@ export class SecretSDK {
 
         const signer = accountRequired ? this.account.accountKey: this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
-        let noteState = [NoteState.PROVED]
-        let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
+        let noteState = [NoteState.PROVED];
+        let notes = await this.getAndDecryptNote(ctx, noteState);
+        if (notes.errno != ErrCode.Success) {
+            return notes;
+        }
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -373,7 +407,7 @@ export class SecretSDK {
             this.account.accountKey.pubKey,
             value,
             new EigenAddress(receiver),
-            notes,
+            notes.data,
             accountRequired
         );
         let batchProof: string[] = [];
@@ -386,7 +420,10 @@ export class SecretSDK {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof);
+            if (proof.errno != ErrCode.Success) {
+                return proof;
+            }
+            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof.data);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
@@ -394,7 +431,7 @@ export class SecretSDK {
             this.valuesFound.push(input.outputNotes[0].inputNullifier);
             this.keysFound.push(input.outputNCs[1]);
             this.valuesFound.push(input.outputNotes[1].inputNullifier);
-            for (const item of proof.siblings) {
+            for (const item of proof.data.siblings) {
                 let tmpSiblings = [];
                 for (const sib of item) {
                     tmpSiblings.push(BigInt(sib));
@@ -407,8 +444,10 @@ export class SecretSDK {
 
             let txInput = new Transaction(input.inputNotes, this.account.accountKey);
             let txInputData = await txInput.encrypt(this.eddsa);
-            await this.createTx(ctx, input, proofAndPublicSignals);
-
+            let resp = await this.createTx(ctx, input, proofAndPublicSignals);
+            if (resp.errno != ErrCode.Success) {
+                return resp;
+            }
             await this.rollupSC.update(proofAndPublicSignals);
 
             let _notes = [
@@ -444,22 +483,28 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 });
             }
-            await this.updateNote(ctx, _notes);
+            resp = await this.updateNote(ctx, _notes);
+            if (resp.errno != ErrCode.Success) {
+                return resp;
+            }
         }
         await this.rollupSC.processDeposits(this.rollupSC.userAccount, this.keysFound, this.valuesFound, this.siblings);
-        return batchProof;
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: batchProof
+        });
     }
 
     /**
-     * create proof for sending the asset to the receiver in L2
-     *
+     * Creates proof for sending an asset from the sender to the receiver in L2.
      * @param {Context} ctx
-     * @param {string} receiver
-     * @param {string} receiverAlias the receiver's alias or __DEFAULT_ALIAS__
-     * @param {bigint} value the amount to be sent
-     * @param {number} assetId the token to be sent
-     * @param {boolean} accountRequired enables signing with account key only
-     * @return {Object} proof batch
+     * @param {string} receiver The receiver account address for the send.
+     * @param {string} receiverAlias The receiver's alias or ‘__DEFAULT_ALIAS__’.
+     * @param {bigint} value The amount of asset to be sent.
+     * @param {number} assetId The token to be sent.
+     * @param {boolean} accountRequired Enables signing with account key only.
+     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the send.
      */
     async send(
         ctx: Context,
@@ -475,7 +520,10 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
-        let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
+        let notes = await this.getAndDecryptNote(ctx, noteState);
+        if (notes.errno != ErrCode.Success) {
+            return notes;
+        }
         let _receiver = new EigenAddress(receiver);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
@@ -490,7 +538,7 @@ export class SecretSDK {
             undefined,
             value,
             _receiver,
-            notes,
+            notes.data,
             accountRequired
         );
 
@@ -504,7 +552,10 @@ export class SecretSDK {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof);
+            if (proof.errno != ErrCode.Success) {
+                return proof;
+            }
+            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof.data);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
             let transaction = new Transaction(input.outputNotes, this.account.accountKey);
@@ -514,7 +565,10 @@ export class SecretSDK {
             let txInputData = await txInput.encrypt(this.eddsa);
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            await this.createTx(ctx, input, proofAndPublicSignals);
+            let resp = await this.createTx(ctx, input, proofAndPublicSignals);
+            if (resp.errno != ErrCode.Success) {
+                return resp;
+            }
             await this.rollupSC.update(proofAndPublicSignals);
 
             let _notes: Array<any> = [
@@ -549,19 +603,25 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 });
             }
-            await this.updateNote(ctx, _notes);
+            resp = await this.updateNote(ctx, _notes);
+            if (resp.errno != ErrCode.Success) {
+                return resp;
+            }
         }
-        return batchProof;
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: batchProof
+        });
     }
 
     /**
-     * create proof for withdrawing asset from L2 to L1
-     *
+     * Creates a proof for withdrawing an asset from L2 to L1.
      * @param {Context} ctx
      * @param {string} receiver
-     * @param {bigint} value the amount to be withdrawn
-     * @param {number} assetId the token to be withdrawn
-     * @return {Object} a batch of proof
+     * @param {bigint} value The amount to be withdrawn.
+     * @param {number} assetId The token to be withdrawn.
+     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
      */
     async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
@@ -571,8 +631,11 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
-        let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
-        assert(notes.length > 0, "Invalid notes");
+        let notes = await this.getAndDecryptNote(ctx, noteState);
+        if (notes.errno != ErrCode.Success) {
+            return notes;
+        }
+        assert(notes.data.length > 0, "Invalid notes");
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -586,7 +649,7 @@ export class SecretSDK {
             this.account.accountKey.pubKey,
             0n,
             this.account.accountKey.pubKey,
-            notes,
+            notes.data,
             accountRequired
         );
 
@@ -608,14 +671,17 @@ export class SecretSDK {
                 acStateKey,
                 false
             );
-            let rawSiblings = proof.siblings;
+            if (proof.errno != ErrCode.Success) {
+                return proof;
+            }
+            let rawSiblings = proof.data.siblings;
             let paddedSiblings = [
                 pad(rawSiblings[0]),
                 pad(rawSiblings[1])
             ];
-            proof.siblings = paddedSiblings;
-            proof.siblingsAC = pad(proof.siblingsAC);
-            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof);
+            proof.data.siblings = paddedSiblings;
+            proof.data.siblingsAC = pad(proof.data.siblingsAC);
+            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof.data);
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
@@ -623,8 +689,8 @@ export class SecretSDK {
             valuesFound.push(input.outputNotes[0].inputNullifier);
             keysFound.push(input.outputNCs[1]);
             valuesFound.push(input.outputNotes[1].inputNullifier);
-            dataTreeRootsFound.push(BigInt(proof.dataTreeRoot));
-            lastDataTreeRoot = BigInt(proof.dataTreeRoot);
+            dataTreeRootsFound.push(BigInt(proof.data.dataTreeRoot));
+            lastDataTreeRoot = BigInt(proof.data.dataTreeRoot);
             lastKeys = input.outputNCs;
 
             for (const item of rawSiblings) {
@@ -642,7 +708,10 @@ export class SecretSDK {
             let txInputData = await txInput.encrypt(this.eddsa);
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            await this.createTx(ctx, input, proofAndPublicSignals);
+            let resp = await this.createTx(ctx, input, proofAndPublicSignals);
+            if (resp.errno != ErrCode.Success) {
+                return resp;
+            }
             // call contract and deposit
             await this.rollupSC.update(proofAndPublicSignals);
             // settle down the spent notes
@@ -678,7 +747,10 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 });
             }
-            await this.updateNote(ctx, _notes);
+            resp = await this.updateNote(ctx, _notes);
+            if (resp.errno != ErrCode.Success) {
+                return resp;
+            }
         }
 
         let tmpP = this.account.signingKey.pubKey.unpack(this.eddsa.babyJub);
@@ -742,7 +814,11 @@ export class SecretSDK {
             txInfo,
             proofAndPublicSignals
         );
-        return batchProof;
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: batchProof
+        });
     }
 
     /**
@@ -777,11 +853,10 @@ export class SecretSDK {
     }
 
     /**
-     * create proof for the secret account created
-     *
+     * Create proof for the secret account created.
      * @param {Context} ctx
-     * @param {string} password used to decrypto the siging key
-     * @return {Object} a batch of proof
+     * @param {string} password The password used to decrypt the SecretAccount.
+     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the createAccount.
      */
     async createAccount(ctx: Context, password: string) {
         const F = this.eddsa.F;
@@ -808,7 +883,10 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         let acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let smtProof = await this.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
-        let circuitInput = input.toCircuitInput(this.eddsa.babyJub, smtProof);
+        if (smtProof.errno != ErrCode.Success) {
+            return smtProof;
+        }
+        let circuitInput = input.toCircuitInput(this.eddsa.babyJub, smtProof.data);
         // create final proof
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
@@ -818,22 +896,28 @@ export class SecretSDK {
         this.keysFound.push(acStateKey);
         this.valuesFound.push(1n);
         let tmpSiblings = [];
-        for (const sib of smtProof.siblings[0]) {
+        for (const sib of smtProof.data.siblings[0]) {
             tmpSiblings.push(BigInt(sib));
         }
         this.siblings.push(tmpSiblings);
         await this.rollupSC.update(proofAndPublicSignals);
-        await this.createServerAccount(ctx, password);
-        return Prover.serialize(proofAndPublicSignals)
+        let resp = await this.createServerAccount(ctx, password);
+        if (resp.errno != ErrCode.Success) {
+            return resp;
+        }
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: proofAndPublicSignals
+        });
     }
 
     /**
-     * create proof for the user updating their signing key
-     *
+     * Create a proof for updating the user's signing key.
      * @param {Context} ctx
-     * @param {SigningKey} newSigningKey
-     * @param {string} password used to decrypto the siging key
-     * @return {Object} a batch of proof
+     * @param {SigningKey} newSigningKey The new signing key to be updated to.
+     * @param {string} password The password used to decrypt the SecretAccount.
+     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the updateAccount.
      */
     async updateAccount(ctx: Context, newSigningKey: SigningKey, password: string) {
         let proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
@@ -854,7 +938,10 @@ export class SecretSDK {
             aliasHash
         );
         let smtProof = await this.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
-        let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof);
+        if (smtProof.errno != ErrCode.Success) {
+            return smtProof;
+        }
+        let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof.data);
 
         // create final proof
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, inputJson);
@@ -866,9 +953,12 @@ export class SecretSDK {
         let proofs = new Array<string>(0);
         proofs.push(Prover.serialize(proofAndPublicSignals));
         let noteState = [NoteState.PROVED]
-        let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
+        let notes = await this.getAndDecryptNote(ctx, noteState);
+        if (notes.errno != ErrCode.Success) {
+            return notes;
+        }
         let notesByAssetId: Map<number, bigint> = new Map();
-        for (const note of notes) {
+        for (const note of notes.data) {
             if (!notesByAssetId.has(note.assetId)) {
                 notesByAssetId.set(note.assetId, note.val);
             } else {
@@ -890,21 +980,29 @@ export class SecretSDK {
                     val,
                     Number(aid)
                 );
-                proofs.concat(prf);
+                if (prf.errno != ErrCode.Success) {
+                    return prf;
+                }
+                proofs.concat(prf.data);
             }
         }
-
-        await this.updateServerAccount(ctx, password);
-        return proofs;
+        let resp = await this.updateServerAccount(ctx, password);
+        if (resp.errno != ErrCode.Success) {
+            return resp;
+        }
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: proofs
+        });
     }
 
     /**
-     * create proof for migrating the account to another ETH address
-     *
+     * Create proof for migrating the account to another ETH address.
      * @param {Object} ctx
-     * @param {SigningKey} newAccountKey the account key that which user renews
-     * @param {string} password used to decrypto the siging key
-     * @return {Object} a batch of proof
+     * @param {SigningKey} newAccountKey The account key that which user renews.
+     * @param {string} password The password used to decrypt the SecretAccount.
+     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the migrateAccount.
      */
     async migrateAccount(ctx: Context, newAccountKey: SigningKey, password: string) {
         let proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
@@ -925,7 +1023,10 @@ export class SecretSDK {
         );
         // insert the new account key
         let smtProof = await this.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
-        let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof);
+        if (smtProof.errno != ErrCode.Success) {
+            return smtProof;
+        }
+        let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof.data);
 
         // create final proof
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, inputJson);
@@ -937,9 +1038,12 @@ export class SecretSDK {
         proofs.push(Prover.serialize(proofAndPublicSignals));
 
         let noteState = [NoteState.PROVED, NoteState.PROVED]
-        let notes: Array<Note> = await this.getAndDecryptNote(ctx, noteState);
+        let notes = await this.getAndDecryptNote(ctx, noteState);
+        if (notes.errno != ErrCode.Success) {
+            return notes;
+        }
         let notesByAssetId: Map<number, bigint> = new Map();
-        for (const note of notes) {
+        for (const note of notes.data) {
             if (!notesByAssetId.has(note.assetId)) {
                 notesByAssetId.set(note.assetId, note.val);
             } else {
@@ -957,12 +1061,22 @@ export class SecretSDK {
                     val,
                     Number(aid)
                 );
-                proofs.concat(prf);
+                if (prf.errno != ErrCode.Success) {
+                    return prf;
+                }
+                proofs.concat(prf.data);
             }
         }
         this.account.accountKey = newAccountKey;
         this.account.newAccountKey = newAccountKey;
-        await this.updateServerAccount(ctx, password)
-        return proofs;
+        let resp = await this.updateServerAccount(ctx, password);
+        if (resp.errno != ErrCode.Success) {
+            return resp;
+        }
+        return new AppError({
+            errno: 0,
+            message: undefined,
+            data: proofs
+        });
     }
 }
