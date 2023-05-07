@@ -7,6 +7,7 @@ import { Prover } from "./prover";
 import { Note, NoteState } from "./note";
 import { Transaction } from "./transaction";
 import { Context } from "./context";
+import { AppError, ErrCode, succResp, errResp } from "./error";
 import {
     AccountCircuit,
     compress as accountCompress,
@@ -84,11 +85,14 @@ export class SecretSDK {
             data: prepareJson(params)
         };
         let response = await axios.request(options);
-        if (response.status != 200 || response.data.errno != 0) {
-            throw new Error(response.data.message);
-            // return ErrCode(response.data.errno);
+        if (response.status != 200) {
+            return errResp(ErrCode.Unknown, "Server Internal Error")
         }
-        return response.data.data;
+        return new AppError({
+            errno: response.data.errno,
+            message: response.data.message || "",
+            data: response.data.data || "",
+        });
     }
 
     private async createServerAccount(
@@ -144,7 +148,11 @@ export class SecretSDK {
             let input = {
                 context: ctx.serialize()
             };
-            let accountData = await SecretSDK.curlEx(serverAddr, "accounts/get", input);
+            let resp = await SecretSDK.curlEx(serverAddr, "accounts/get", input);
+            if (resp.errno != ErrCode.Success) {
+                return resp;
+            }
+            let accountData = resp.data;
             if (
                 accountData.ethAddress !== ctx.ethAddress
             ) {
@@ -170,7 +178,7 @@ export class SecretSDK {
             contractJson.smtVerifier
         );
         await secretSDK.initialize(contractABI);
-        return secretSDK;
+        return succResp(secretSDK);
     }
 
     async updateStateTree(
