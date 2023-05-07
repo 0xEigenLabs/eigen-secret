@@ -6,6 +6,7 @@ import {
     defaultCircuitPath, defaultContractABI, defaultContractFile
 } from "./common";
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
+import { ErrCode } from "@eigen-secret/core/dist-node/error";
 
 task("setup-rollup", "Setup rollup coordinator")
 .addParam("alias", "user alias", "Alice")
@@ -19,9 +20,11 @@ task("setup-rollup", "Setup rollup coordinator")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
     );
-
+    if (secretSDK.errno != ErrCode.Success) {
+        console.log("initSDKFromAccount failed: ", secretSDK);
+      }
     // set rollup nc
-    await secretSDK.setRollupNC();
+    await secretSDK.data.setRollupNC();
     console.log("setup Rollup NC done");
 })
 
@@ -38,9 +41,11 @@ task("register-token", "Register token to Rollup")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
     );
-
-    await secretSDK.registerToken(token);
-    let assetId = await secretSDK.approveToken(token);
+    if (secretSDK.errno != ErrCode.Success) {
+        console.log("initSDKFromAccount failed: ", secretSDK);
+    }
+    await secretSDK.data.registerToken(token);
+    let assetId = await secretSDK.data.approveToken(token);
     console.log("approve token done, assetId is", assetId.toString())
 })
 
@@ -59,8 +64,11 @@ task("send-l1", "Send asset from L1 to L1")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
     );
+    if (secretSDK.errno != ErrCode.Success) {
+        console.log("initSDKFromAccount failed: ", secretSDK);
+      }
     // get token address
-    let address = await secretSDK.getRegisteredToken(BigInt(assetId));
+    let address = await secretSDK.data.getRegisteredToken(BigInt(assetId));
     let tokenIns = new ethers.Contract(
         address,
         defaultContractABI.testTokenContractABI,

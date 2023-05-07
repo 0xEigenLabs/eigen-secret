@@ -2,7 +2,7 @@ const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
 import * as utils from "@eigen-secret/core/dist-node/utils";
-import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
+import { AppError, ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 
 class AccountModel extends Model {}
@@ -40,9 +40,9 @@ export async function createAccount(req: any, res: any) {
         return res.json(errResp(ErrCode.DBCreateError, `${utils.__DEFAULT_ALIAS__} is reserved by Eigen Secret`));
     }
     const ethAddress = ctx.ethAddress;
-    let found: ErrCode | AccountModel = await getAccountInternal(alias, ethAddress);
+    let found: AppError = await getAccountInternal(alias, ethAddress);
     if (found.errno !== ErrCode.RecordNotExist) {
-        return res.json(errResp(found.errno, "Invalid secret account"));
+        return res.json(found);
     }
     // account is AccountModel or found is RecordNotExist
     const secretAccount = req.body.secretAccount;
@@ -69,20 +69,20 @@ async function getAccountInternal(alias: string, ethAddress: string) {
     let found: AccountModel | null = await AccountModel.findOne({ where: { alias } });
     if (found) {
         if (found.ethAddress !== ethAddress) {
-            return { errno: ErrCode.DuplicatedRecordError };
+            return errResp(ErrCode.DuplicatedRecordError, "ETH Address not match");
         } else {
-            return { errno: ErrCode.Success, data: found };
+            return succResp(found);
         }
     }
     found = await AccountModel.findOne({ where: { ethAddress } });
     if (found) {
         if (alias === utils.__DEFAULT_ALIAS__) {
             // fetch account by eth address only
-            return { errno: ErrCode.Success, data: found };
+            return succResp(found);
         }
-        return { errno: ErrCode.DuplicatedRecordError };
+        return errResp(ErrCode.DuplicatedRecordError, "Duplicated record");
     }
-    return { errno: ErrCode.RecordNotExist };
+    return errResp(ErrCode.RecordNotExist, "Record not exist");
 }
 
 // get account
@@ -96,10 +96,7 @@ export async function getAccount(req: any, res: any) {
     const alias = ctx.alias;
     const ethAddress = ctx.ethAddress;
     let found = await getAccountInternal(alias, ethAddress);
-    if (found.errno !== ErrCode.Success) {
-        return res.json(errResp(found.errno, "Invalid secret account"));
-    }
-    return res.json(succResp(found?.data));
+    return res.json(found);
 }
 
 export async function updateAccount(req: any, res: any) {
