@@ -38,14 +38,14 @@ export class Prover {
 
     static async init() {
         const witnessCalculatorUpdateStateUrl = `${Prover.serverAddr}/public/main_update_state_js/witness_calculator.js`;
-        const witnessCalculatorWithdrawUrl = `${Prover.serverAddr}/public/main_withdraw_js/witness_calculator.js`;
+        // const witnessCalculatorWithdrawUrl = `${Prover.serverAddr}/public/main_withdraw_js/witness_calculator.js`;
 
         if (!Prover.witnessCalculatorUpdateState) {
             Prover.witnessCalculatorUpdateState = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorUpdateStateUrl);
         }
-        if (!Prover.witnessCalculatorWithdraw) {
-            Prover.witnessCalculatorWithdraw = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorWithdrawUrl);
-        }
+        // if (!Prover.witnessCalculatorWithdraw) {
+        //     Prover.witnessCalculatorWithdraw = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorWithdrawUrl);
+        // }
     }
 
     static async loadAndModifyWitnessCalculator(url: string) {
@@ -124,11 +124,11 @@ export class Prover {
     }
 
     static async withdrawForClient(input: any) {
-        let wasmUrl = `${Prover.serverAddr}/public/main_withdraw_js/main_update_state.wasm`;
+        let wasmUrl = `${Prover.serverAddr}/public/main_update_state_js/main_update_state.wasm`;
         let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.14`;
 
         const wasmBuffer = await Prover.fetchRemoteFile(wasmUrl);
-        const witnessCalculator = await Prover.witnessCalculatorWithdraw(wasmBuffer);
+        const witnessCalculator = await Prover.witnessCalculatorUpdateState(wasmBuffer);
 
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(input, 0);
 
@@ -186,9 +186,9 @@ export class Prover {
     }
 
     static async withdrawForBackend(circuitPath: string, input: any) {
-        let wasm = pathJoin([circuitPath, "main_withdraw_js", "main_withdraw.wasm"]);
+        let wasm = pathJoin([circuitPath, "main_update_state_js", "main_withdraw.wasm"]);
         let zkey = pathJoin([circuitPath, "circuit_final.zkey.14"]);
-        const wc = require(`${circuitPath}/main_withdraw_js/witness_calculator`);
+        const wc = require(`${circuitPath}/main_update_state_js/witness_calculator`);
         const buffer = fs.readFileSync(wasm);
         const witnessCalculator = await wc(buffer);
 
