@@ -33,19 +33,24 @@ export enum ProofState {
 
 export class Prover {
     static serverAddr: string;
-    static witnessCalculatorUpdateState: any;
-    static witnessCalculatorWithdraw: any;
+    static witnessCalculator: any;
+    // static witnessCalculatorUpdateState: any;
+    // static witnessCalculatorWithdraw: any;
 
     static async init() {
-        const witnessCalculatorUpdateStateUrl = `${Prover.serverAddr}/public/main_update_state_js/witness_calculator.js`;
-        const witnessCalculatorWithdrawUrl = `${Prover.serverAddr}/public/main_withdraw_js/witness_calculator.js`;
+        const witnessCalculatorUrl = `${Prover.serverAddr}/public/main_update_state_js/witness_calculator.js`;
+        // const witnessCalculatorUpdateStateUrl = `${Prover.serverAddr}/public/main_update_state_js/witness_calculator.js`;
+        // const witnessCalculatorWithdrawUrl = `${Prover.serverAddr}/public/main_withdraw_js/witness_calculator.js`;
 
-        if (!Prover.witnessCalculatorUpdateState) {
-            Prover.witnessCalculatorUpdateState = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorUpdateStateUrl);
+        if (!Prover.witnessCalculator) {
+            Prover.witnessCalculator = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorUrl);
         }
-        if (!Prover.witnessCalculatorWithdraw) {
-            Prover.witnessCalculatorWithdraw = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorWithdrawUrl);
-        }
+        // if (!Prover.witnessCalculatorUpdateState) {
+        //     Prover.witnessCalculatorUpdateState = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorUpdateStateUrl);
+        // }
+        // if (!Prover.witnessCalculatorWithdraw) {
+        //     Prover.witnessCalculatorWithdraw = await Prover.loadAndModifyWitnessCalculator(witnessCalculatorWithdrawUrl);
+        // }
     }
 
     static async loadAndModifyWitnessCalculator(url: string) {
@@ -188,7 +193,7 @@ export class Prover {
     static async withdrawForBackend(circuitPath: string, input: any) {
         let wasm = pathJoin([circuitPath, "main_withdraw_js", "main_withdraw.wasm"]);
         let zkey = pathJoin([circuitPath, "circuit_final.zkey.14"]);
-        const wc = require(`${circuitPath}/main_withdraw_js/witness_calculator`);
+        const wc = require(`${circuitPath}/main_update_state_js/witness_calculator`);
         const buffer = fs.readFileSync(wasm);
         const witnessCalculator = await wc(buffer);
 
