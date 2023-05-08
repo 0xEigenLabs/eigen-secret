@@ -105,7 +105,7 @@ export class Prover {
         let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.16`;
 
         const wasmBuffer = await Prover.fetchRemoteFile(wasmUrl);
-        const witnessCalculator = await Prover.witnessCalculatorUpdateState(wasmBuffer);
+        const witnessCalculator = await Prover.witnessCalculator(wasmBuffer);
 
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(input, 0);
         const { proof, publicSignals } = await snarkjs.groth16.prove(zkeyUrl, witnessBuffer);
@@ -133,7 +133,7 @@ export class Prover {
         let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.14`;
 
         const wasmBuffer = await Prover.fetchRemoteFile(wasmUrl);
-        const witnessCalculator = await Prover.witnessCalculatorWithdraw(wasmBuffer);
+        const witnessCalculator = await Prover.witnessCalculator(wasmBuffer);
 
         const witnessBuffer = await witnessCalculator.calculateWTNSBin(input, 0);
 
