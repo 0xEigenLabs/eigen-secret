@@ -153,7 +153,7 @@ export class RollupSC {
             nonce,
             { from: userAccount.address }
         )
-        assert(deposit0, "deposit0 failed");
+        // assert(deposit0, "deposit0 failed");
         return deposit0;
     }
 

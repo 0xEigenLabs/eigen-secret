@@ -7,7 +7,7 @@ import { Prover } from "./prover";
 import { Note, NoteState } from "./note";
 import { Transaction } from "./transaction";
 import { Context } from "./context";
-import { AppError, ErrCode, errResp } from "./error";
+import { AppError, ErrCode, errResp, succResp } from "./error";
 import {
     AccountCircuit,
     compress as accountCompress,
@@ -33,6 +33,9 @@ export class SecretSDK {
     rollupSC: RollupSC;
     serverAddr: any;
     eddsa: any;
+
+    private txBuff: Array<any> = new Array(0);
+    private noteBuff: Array<any> = new Array(0);
 
     constructor(
         account: SecretAccount,
@@ -222,23 +225,42 @@ export class SecretSDK {
         return this.curl("notes/get", input);
     }
 
-    async updateNote(ctx: Context, encryptedNotes: any) {
+    async updateNote(encryptedNotes: any) {
         let input = {
-            context: ctx.serialize(),
             notes: encryptedNotes
         };
-        return this.curl("notes/update", input);
+        this.noteBuff.push(input);
     }
 
-    async createTx(ctx: Context, input: any, proofAndPublicSignals: any) {
+    async createTx(input: any, proofAndPublicSignals: any) {
         let inputData = {
-            context: ctx.serialize(),
             noteIndex: input.outputNotes[0].index.toString(),
             note2Index: input.outputNotes[1].index.toString(),
             proof: Prover.serialize(proofAndPublicSignals.proof),
             publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
         };
-        return this.curl("transactions/create", inputData);
+        this.txBuff.push(inputData);
+    }
+
+    async commit(ctx: Context) {
+        if (this.txBuff.length > 0) {
+            return this.curl(
+                "transactions/create",
+                {
+                    context: ctx.serialize(),
+                    inputs: this.txBuff
+                }
+            );
+        }
+        if (this.noteBuff.length > 0) {
+            return this.curl(
+                "notes/update",
+                {
+                    context: ctx.serialize(),
+                    inputs: this.noteBuff
+                }
+            );
+        }
     }
 
     async getTransactions(ctx: Context, option: any) {
@@ -348,7 +370,7 @@ export class SecretSDK {
         });
         // updates notes
         if (wildNoteModels.length > 0) {
-            return await this.updateNote(ctx, wildNoteModels);
+            this.updateNote(wildNoteModels);
         }
         // return empty array
         return new AppError({
@@ -371,7 +393,6 @@ export class SecretSDK {
         let tmpP = this.account.accountKey.pubKey.unpack(this.eddsa.babyJub);
         let tmpPub = [this.eddsa.F.toObject(tmpP[0]), this.eddsa.F.toObject(tmpP[1])];
 
-        await this.rollupSC.deposit(tmpPub, assetId, value, nonce);
         let keysFound = [];
         let valuesFound = [];
         let siblings = [];
@@ -383,10 +404,11 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.accountKey: this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
-        let notes = await this.getAndDecryptNote(ctx, noteState);
-        if (notes.errno != ErrCode.Success) {
-            return notes;
+        let resp = await this.getAndDecryptNote(ctx, noteState);
+        if (resp.errno != ErrCode.Success) {
+            return resp;
         }
+        let notes = resp.data;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -400,10 +422,11 @@ export class SecretSDK {
             this.account.accountKey.pubKey,
             value,
             new EigenAddress(receiver),
-            notes.data,
+            notes,
             accountRequired
         );
         let batchProof: string[] = [];
+        this.txBuff = [];
         for (const input of inputs) {
             const proof = await this.updateStateTree(
                 ctx,
@@ -437,10 +460,8 @@ export class SecretSDK {
 
             let txInput = new Transaction(input.inputNotes, this.account.accountKey);
             let txInputData = await txInput.encrypt(this.eddsa);
-            let resp = await this.createTx(ctx, input, proofAndPublicSignals);
-            if (resp.errno != ErrCode.Success) {
-                return resp;
-            }
+            // batch create tx
+            this.createTx(input, proofAndPublicSignals);
             await this.rollupSC.update(proofAndPublicSignals);
 
             let _notes = [
@@ -476,16 +497,19 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 });
             }
-            resp = await this.updateNote(ctx, _notes);
-            if (resp.errno != ErrCode.Success) {
-                return resp;
-            }
+            this.updateNote(_notes);
         }
-        await this.rollupSC.processDeposits(this.rollupSC.userAccount, keysFound, valuesFound, siblings);
-        return new AppError({
-            errno: 0,
-            data: batchProof
-        });
+        let tx = await this.rollupSC.deposit(tmpPub, assetId, value, nonce);
+        if (!tx) {
+            return errResp(ErrCode.InvalidProof, "Failed to deposit to smart contract");
+        }
+        await tx.wait();
+        tx = await this.rollupSC.processDeposits(this.rollupSC.userAccount, keysFound, valuesFound, siblings);
+        if (!tx) {
+            return errResp(ErrCode.InvalidProof, "Failed to processDeposits");
+        }
+        await tx.wait();
+        return succResp(batchProof);
     }
 
     /**
@@ -557,10 +581,7 @@ export class SecretSDK {
             let txInputData = await txInput.encrypt(this.eddsa);
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            let resp = await this.createTx(ctx, input, proofAndPublicSignals);
-            if (resp.errno != ErrCode.Success) {
-                return resp;
-            }
+            this.createTx(input, proofAndPublicSignals);
             await this.rollupSC.update(proofAndPublicSignals);
 
             let _notes: Array<any> = [
@@ -595,10 +616,7 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 });
             }
-            resp = await this.updateNote(ctx, _notes);
-            if (resp.errno != ErrCode.Success) {
-                return resp;
-            }
+            this.updateNote(_notes);
         }
         return new AppError({
             errno: 0,
@@ -699,10 +717,7 @@ export class SecretSDK {
             let txInputData = await txInput.encrypt(this.eddsa);
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            let resp = await this.createTx(ctx, input, proofAndPublicSignals);
-            if (resp.errno != ErrCode.Success) {
-                return resp;
-            }
+            this.createTx(input, proofAndPublicSignals);
             // call contract and deposit
             await this.rollupSC.update(proofAndPublicSignals);
             // settle down the spent notes
@@ -738,10 +753,7 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 });
             }
-            resp = await this.updateNote(ctx, _notes);
-            if (resp.errno != ErrCode.Success) {
-                return resp;
-            }
+            this.updateNote(_notes);
         }
 
         let tmpP = this.account.signingKey.pubKey.unpack(this.eddsa.babyJub);
