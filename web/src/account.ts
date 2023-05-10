@@ -7,7 +7,7 @@ export const createSecretAccount = async (signer: ethers.Signer, address: string
   const eddsa = await buildEddsa();
   const timestamp = Math.floor(Date.now() / 1000).toString();
 
-  const signature = await signEOASignature(signer, rawMessage, address, alias, timestamp);
+  const signature = await signEOASignature(signer, rawMessage, address, timestamp);
 
   const signingKey = new SigningKey(eddsa);
   const accountKey = new SigningKey(eddsa);

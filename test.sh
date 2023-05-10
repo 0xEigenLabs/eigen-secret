@@ -28,5 +28,10 @@ npx hardhat migrate-account --alias Alice --index 0
 npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network dev
 npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network dev
 
-npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network dev
+npx hardhat deposit --alias Alice --index 0 --value 11 --asset-id 2 --network dev
+
+npx hardhat update-account --alias Alice --index 0
+npx hardhat deposit --alias Alice --index 0 --value 12 --asset-id 2 --network dev
+
 # TODO: test send
+npx hardhat withdraw --alias Alice --index 0 --value 12 --asset-id 2 --network dev

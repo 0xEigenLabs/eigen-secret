@@ -1,3 +1,5 @@
+docs
+circuits/main_withdraw.input.json
 dist/
 dist-node/
 dist-browser/

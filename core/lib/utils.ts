@@ -168,10 +168,9 @@ export function verifyEOASignature(
     rawMessage: string,
     hexSignature: string,
     ethAddress: string,
-    alias: string,
     timestamp: string
 ) {
-    let rawMessageAll = rawMessage + ethAddress + alias + timestamp;
+    let rawMessageAll = rawMessage + ethAddress + timestamp;
     let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
     let message = ethers.utils.toUtf8Bytes(strRawMessage);
     let messageHash = ethers.utils.hashMessage(message);
@@ -183,10 +182,9 @@ export async function signEOASignature(
     EOAAccount: any,
     rawMessage: string,
     ethAddress: string,
-    alias: string,
     timestamp: string
 ) {
-    let rawMessageAll = rawMessage + ethAddress + alias + timestamp;
+    let rawMessageAll = rawMessage + ethAddress + timestamp;
     let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
     return await EOAAccount.signMessage(strRawMessage)
 }
@@ -200,36 +198,10 @@ const requireEnvVariables = (envVars: Array<string>) => {
   consola.success("Environmental variables properly set 👍");
 };
 
-const baseResp = function(errno: ErrCode, message: string, data: string) {
-  return { errno: errno, message: message, data: data };
-}
-
 const prepareJson = function(data: any) {
   return JSON.parse(JSON.stringify(data, (key, value) =>
     typeof value === "bigint"? value.toString() : value
   ));
-}
-
-const succ = function(data: any) {
-  data = prepareJson(data);
-  return baseResp(0, "", data);
-}
-const err = function(errno: ErrCode, message: string) {
-  return baseResp(errno, message, "");
-}
-
-/**
- * Error code for a JSON responce.
- *
- * @enum
- */
-export enum ErrCode {
-  Success = 0,
-  Unknown = 1,
-  InvalidAuth = 2,
-  InvalidInput = 3,
-  CryptoError = 4,
-  DBCreateError = 5
 }
 
 const hasValue = function(variable: any) {
@@ -243,6 +215,7 @@ const hasValue = function(variable: any) {
 };
 
 const pathJoin = (parts: Array<string>, sep="/") => parts.join(sep).replace(new RegExp(sep+"{1,}", "g"), sep);
+const __DEFAULT_ALIAS__ = "EIGEN_BUILTIN_PLACEHOLDER";
+const SESSION_DURATION = 5 * 60; // seconds
 
-export { baseResp, succ, err, hasValue, requireEnvVariables, prepareJson, pathJoin };
-
+export { hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION };

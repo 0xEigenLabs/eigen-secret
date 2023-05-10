@@ -1,66 +1,42 @@
 import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
-import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account";
+import { SigningKey } from "@eigen-secret/core/dist-node/account";
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
+import { Context } from "@eigen-secret/core/dist-node/context";
 import {
     defaultServerEndpoint,
     defaultCircuitPath,
     defaultContractABI,
-    defaultContractFile,
-    accountFile
+    defaultContractFile
 } from "./common";
+import { ErrCode } from "@eigen-secret/core/dist-node/error";
 require("dotenv").config()
-const fs = require("fs");
 const { buildEddsa } = require("circomlibjs");
-const createBlakeHash = require("blake-hash");
 
 task("create-account", "Create secret account")
   .addParam("alias", "user alias")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("index", "user index for test")
   .setAction(async ({ alias, password, index }, { ethers }) => {
-    const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
     console.log("ETH address", user.address);
 
-    const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
-    let signingKey = new SigningKey(eddsa);
-    let accountKey = new SigningKey(eddsa);
-    let newSigningKey1 = new SigningKey(eddsa);
-    let newSigningKey2 = new SigningKey(eddsa);
+    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
     const contractJson = require(defaultContractFile);
-    console.log("accountKey: ", accountKey.pubKey.pubKey);
-    let sa = new SecretAccount(
-        alias, accountKey, signingKey, accountKey, newSigningKey1, newSigningKey2
+    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, true
     );
-    let secretSDK = new SecretSDK(
-        sa,
-        defaultServerEndpoint,
-        defaultCircuitPath,
-        eddsa,
-        user,
-        contractJson.spongePoseidon,
-        contractJson.tokenRegistry,
-        contractJson.poseidon2,
-        contractJson.poseidon3,
-        contractJson.poseidon6,
-        contractJson.rollup,
-        contractJson.smtVerifier
-    );
-    await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
-    let proofAndPublicSignals = await secretSDK.createAccount(ctx, sa.newSigningKey1, sa.newSigningKey2);
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    fs.writeFileSync(accountFile(alias), sa.serialize(key));
-    console.log("create account", proofAndPublicSignals);
+    if (secretSDK.errno != ErrCode.Success) {
+      console.log("initSDKFromAccount failed: ", secretSDK);
+    }
+    let proofAndPublicSignals = await secretSDK.data.createAccount(ctx, password);
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
+      console.log("createAccount failed: ", proofAndPublicSignals);
+    }
+    console.log("create account", proofAndPublicSignals.data);
   })
 
 task("migrate-account", "Migrate account to another ETH address")
@@ -72,43 +48,23 @@ task("migrate-account", "Migrate account to another ETH address")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    let accountData = fs.readFileSync(accountFile(alias));
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
-    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
+    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
+    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     let newAccountKey = new SigningKey(eddsa);
     const contractJson = require(defaultContractFile);
-    let secretSDK = new SecretSDK(
-        sa,
-        defaultServerEndpoint,
-        defaultCircuitPath,
-        eddsa,
-        user,
-        contractJson.spongePoseidon,
-        contractJson.tokenRegistry,
-        contractJson.poseidon2,
-        contractJson.poseidon3,
-        contractJson.poseidon6,
-        contractJson.rollup,
-        contractJson.smtVerifier
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: sa.alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
-    let proofAndPublicSignals = await secretSDK.migrateAccount(
-        ctx, newAccountKey
+    if (secretSDK.errno != ErrCode.Success) {
+      console.log("initSDKFromAccount failed: ", secretSDK);
+    }
+    let proofAndPublicSignals = await secretSDK.data.migrateAccount(
+        ctx, newAccountKey, password
     );
-    sa.accountKey = newAccountKey;
-    sa.newAccountKey = newAccountKey;
-    let key2 = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    console.log("migrated", sa.toString(eddsa));
-    fs.writeFileSync(accountFile(sa.alias), sa.serialize(key2));
-    console.log(proofAndPublicSignals);
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
+      console.log("migrateAccount failed: ", proofAndPublicSignals);
+    }
+    console.log(proofAndPublicSignals.data);
   })
 
 task("update-account", "Update signing key")
@@ -118,53 +74,45 @@ task("update-account", "Update signing key")
   .setAction(async ({ alias, password, index }, { ethers }) => {
     const eddsa = await buildEddsa();
     let timestamp = Math.floor(Date.now()/1000).toString();
-    let account = await ethers.getSigners();
-    let user = account[index];
-    let accountData = fs.readFileSync(accountFile(alias));
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
-    const signature = await signEOASignature(user, rawMessage, user.address, sa.alias, timestamp);
+    let accounts = await ethers.getSigners();
+    let user = accounts[index];
+    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
+    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
-    let secretSDK = new SecretSDK(
-        sa,
-        defaultServerEndpoint,
-        defaultCircuitPath,
-        eddsa,
-        user,
-        contractJson.spongePoseidon,
-        contractJson.tokenRegistry,
-        contractJson.poseidon2,
-        contractJson.poseidon3,
-        contractJson.poseidon6,
-        contractJson.rollup,
-        contractJson.smtVerifier
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    await secretSDK.initialize(defaultContractABI);
-    const ctx = {
-      alias: sa.alias,
-      ethAddress: user.address,
-      rawMessage: rawMessage,
-      timestamp: timestamp,
-      signature: signature
-    };
-    let proofAndPublicSignals = await secretSDK.updateAccount(
-        ctx, sa.newSigningKey1, sa.newSigningKey2
+    if (secretSDK.errno != ErrCode.Success) {
+      console.log("initSDKFromAccount failed: ", secretSDK);
+    }
+    let newSigningKey = new SigningKey(eddsa);
+    let proofAndPublicSignals = await secretSDK.data.updateAccount(
+        ctx, newSigningKey, password
     );
-    sa.signingKey = sa.newSigningKey1;
-    sa.newSigningKey1 = sa.newSigningKey2;
-    let key2 = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    fs.writeFileSync(accountFile(sa.alias), sa.serialize(key2));
-    console.log(proofAndPublicSignals);
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
+      console.log("updateAccount failed: ", proofAndPublicSignals);
+    }
+    console.log(proofAndPublicSignals.data);
   })
 
 task("get-account", "Get account info")
   .addParam("alias", "user alias")
   .addParam("password", "password for key sealing", "<your password>")
-  .setAction(async ({ alias, password }) => {
+  .addParam("index", "user index for test")
+  .setAction(async ({ alias, password, index }, { ethers }) => {
     const eddsa = await buildEddsa();
-    let accountData = fs.readFileSync(accountFile(alias));
-    let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-    let sa = SecretAccount.deserialize(eddsa, key, accountData.toString())
-    // TODO: prety print @LW
-    console.log(sa.toString(eddsa));
+    let timestamp = Math.floor(Date.now()/1000).toString();
+    let account = await ethers.getSigners();
+    let user = account[index];
+    console.log("ETH address", user.address);
+    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
+    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
+    const contractJson = require(defaultContractFile);
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+    );
+    if (secretSDK.errno != ErrCode.Success) {
+      console.log("initSDKFromAccount failed: ", secretSDK);
+    }
+    console.log(secretSDK.data.account.toString(eddsa));
   })
