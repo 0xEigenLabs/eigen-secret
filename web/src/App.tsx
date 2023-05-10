@@ -50,7 +50,7 @@ function App() {
   const getBalance = async () => {
     const timestamp = Math.floor(Date.now()/1000).toString();
 
-    const signature = await signEOASignature(signer, rawMessage, address, Alice, timestamp);
+    const signature = await signEOASignature(signer, rawMessage, address, timestamp);
 
     const ctx = {
       alias: Alice,
@@ -77,7 +77,7 @@ function App() {
   const deposit = async (value: number) => {
     const timestamp = Math.floor(Date.now()/1000).toString();
 
-    const signature = await signEOASignature(signer, rawMessage, address, Alice, timestamp);
+    const signature = await signEOASignature(signer, rawMessage, address, timestamp);
 
     const eddsa = await buildEddsa();
 

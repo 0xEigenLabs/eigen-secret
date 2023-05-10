@@ -1,5 +1,5 @@
 const { DataTypes, Model } = require("sequelize");
-import * as utils from "@eigen-secret/core/dist-node/utils";
+import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import sequelize from "./db";
 import { ProofState } from "@eigen-secret/core/dist-node/prover";
@@ -55,14 +55,14 @@ export async function submitProofs(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
     console.log("submitProof code", code)
-    if (code !== utils.ErrCode.Success) {
-        return res.json(utils.err(code, utils.ErrCode[code]));
+    if (code !== ErrCode.Success) {
+        return res.json(errResp(code, ErrCode[code]));
     }
 
     const proofs = req.body.proofs;
     const inputs = req.body.inputs;
     if (!Array.isArray(proofs)) {
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid Proofs"));
+        return res.json(errResp(ErrCode.InvalidInput, "Invalid Proofs"));
     }
     if (!Array.isArray(inputs)) {
         return res.json(utils.err(utils.ErrCode.InvalidInput, "Invalid Inputs"));
@@ -83,16 +83,16 @@ export async function submitProofs(req: any, res: any) {
         if (transaction) {
             transaction.rollback();
         }
-        return res.json(utils.err(utils.ErrCode.InvalidInput, err.toString()));
+        return res.json(errResp(ErrCode.InvalidInput, err.toString()));
     }
-    return res.json(utils.succ(result));
+    return res.json(succResp(result));
 }
 
 export async function getProofs(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    if (code !== utils.ErrCode.Success) {
-        return res.json(utils.err(code, utils.ErrCode[code]));
+    if (code !== ErrCode.Success) {
+        return res.json(errResp(code, ErrCode[code]));
     }
     const alias = ctx.alias;
     let states = req.body.states;
@@ -104,7 +104,7 @@ export async function getProofs(req: any, res: any) {
         result = await getDBProof(alias, states);
     } catch (err: any) {
         consola.log(err)
-        return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
+        return res.json(errResp(ErrCode.DBCreateError, err.toString()));
     }
-    return res.json(utils.succ(result));
+    return res.json(succResp(result));
 }

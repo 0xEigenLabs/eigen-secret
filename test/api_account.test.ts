@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 const createBlakeHash = require("blake-hash");
 import app from "../server/dist/service";
 import * as utils from "@eigen-secret/core/dist-node/utils";
+import { ErrCode } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { SigningKey, SecretAccount } from "@eigen-secret/core/dist-node/account";
@@ -34,7 +35,6 @@ describe("POST /accounts", function() {
             newEOAAccount,
             utils.rawMessage,
             newEOAAccount.address,
-            alias,
             timestamp
         );
 
@@ -56,7 +56,7 @@ describe("POST /accounts", function() {
     it("responds with json", async () => {
         let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, signature);
         const response = await request(app)
-        .post("/accounts/create")
+        .post("/accounts/get")
         .send({
             context: ctx.serialize()
         })
@@ -77,15 +77,14 @@ describe("POST /accounts", function() {
     });
 
     it("duplicated account error", async () => {
-        let newEOAAccount = await ethers.Wallet.createRandom();
+        let newEOAAccount2 = await ethers.Wallet.createRandom();
         const newSig = await utils.signEOASignature(
-            newEOAAccount,
+            newEOAAccount2,
             utils.rawMessage,
-            newEOAAccount.address,
-            alias,
+            newEOAAccount2.address,
             timestamp
         );
-        let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, newSig);
+        let ctx = new Context(alias, newEOAAccount2.address, utils.rawMessage, timestamp, newSig);
         const response = await request(app)
         .post("/accounts/create")
         .send({
@@ -94,7 +93,35 @@ describe("POST /accounts", function() {
         })
         .set("Accept", "application/json");
         expect(response.status).to.eq(200);
-        expect(response.body.errno).to.eq(utils.ErrCode.DuplicatedRecordError);
+        expect(response.body.errno).to.eq(ErrCode.DuplicatedRecordError);
+    });
+
+    it("get account by eth address only", async () => {
+        const newSig = await utils.signEOASignature(
+            newEOAAccount,
+            utils.rawMessage,
+            newEOAAccount.address,
+            timestamp
+        );
+        let ctx = new Context(utils.__DEFAULT_ALIAS__, newEOAAccount.address, utils.rawMessage, timestamp, newSig);
+        const response = await request(app)
+        .post("/accounts/get")
+        .send({
+            context: ctx.serialize(),
+            secretAccount: secretAccount.serialize(key)
+        })
+        .set("Accept", "application/json");
+        expect(response.status).to.eq(200);
+        expect(response.body.errno).to.eq(0);
+        let sa = SecretAccount.deserialize(eddsa, key, response.body.data.secretAccount);
+        assert(
+            sa.accountKey.pubKey.pubKey,
+            secretAccount.accountKey.pubKey.pubKey
+        );
+        assert(
+            sa.signingKey.pubKey.pubKey,
+            secretAccount.signingKey.pubKey.pubKey
+        );
     });
 
     it("update account", async () => {

@@ -1,13 +1,12 @@
 const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
-import * as note from "@eigen-secret/core/dist-node/note";
 import * as utils from "@eigen-secret/core/dist-node/utils";
+import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
 import { NoteModel, updateDBNotes, getDBNotes } from "./note";
 
-const { NoteState } = note;
 const tisdk = require("api")("@tokeninsight-api/v1.2.2#457nalf1vname");
 const INSIGHT_KEY = process.env.INSIGHT_KEY as string
 
@@ -54,32 +53,22 @@ export enum TransactionModelStatus {
 export async function createTx(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    const receiver_alias = req.body.receiver_alias;
-    const pubKey = req.body.pubKey;
-    const pubKey2 = req.body.pubKey2;
     const proof = req.body.proof;
     const publicInput = req.body.publicInput;
     const noteIndex = req.body.noteIndex;
     const note2Index = req.body.note2Index;
-    const content = req.body.content;
-    const content2 = req.body.content2;
 
-    if (!utils.hasValue(receiver_alias) ||
-        !utils.hasValue(pubKey) ||
-        !utils.hasValue(pubKey2) ||
-        !utils.hasValue(noteIndex) ||
+    if (!utils.hasValue(noteIndex) ||
         !utils.hasValue(note2Index) ||
         !utils.hasValue(proof) ||
-        !utils.hasValue(content) ||
-        !utils.hasValue(content2) ||
         !utils.hasValue(publicInput)
     ) {
         consola.error("missing one or more arguments");
-        return res.json(utils.err(utils.ErrCode.InvalidInput, "missing input"));
+        return res.json(errResp(ErrCode.InvalidInput, "missing input"));
     }
 
-    if (code !== utils.ErrCode.Success) {
-        return res.json(utils.err(code, utils.ErrCode[code]));
+    if (code !== ErrCode.Success) {
+        return res.json(errResp(code, ErrCode[code]));
     }
 
     const alias = ctx.alias;
@@ -92,28 +81,22 @@ export async function createTx(req: any, res: any) {
 
         if (isAliasAvailable === null) {
             let result = await createTxInternal(
-                alias, receiver_alias, pubKey, pubKey2, content, content2,
-                noteIndex, note2Index, proof, publicInput, transaction
+                alias, noteIndex, note2Index, proof, publicInput, transaction
             );
             await transaction.commit();
-            return res.json(utils.succ(result))
+            return res.json(succResp(result))
         }
-        return res.json(utils.err(utils.ErrCode.DBCreateError, "Duplicated transaction found"));
+        return res.json(errResp(ErrCode.DBCreateError, "Duplicated transaction found"));
     } catch (err: any) {
         if (transaction) {
             transaction.rollback();
         }
-        return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
+        return res.json(errResp(ErrCode.DBCreateError, err.toString()));
     }
 }
 
 export async function createTxInternal(
     alias: string,
-    receiver_alias: string,
-    pubKey: string,
-    pubKey2: string,
-    content: string,
-    content2: string,
     noteIndex: string,
     note2Index: string,
     proof: any,
@@ -129,30 +112,9 @@ export async function createTxInternal(
         status: TransactionModelStatus.CREATED
     }, { transaction });
 
-    // update Notes
-    let result2 = await updateDBNotes(
-        [
-            {
-                alias: receiver_alias,
-                index: noteIndex,
-                pubKey: pubKey,
-                content: content,
-                state: NoteState.CREATING
-            },
-            {
-                alias: alias,
-                index: note2Index,
-                pubKey: pubKey2,
-                content: content2,
-                state: NoteState.CREATING
-            }
-        ],
-        transaction
-    );
-    if (!result || !result2) {
+    if (!result) {
         consola.log(
-            result,
-            result2
+            result
         );
         throw new Error("Update database error");
     }
@@ -164,8 +126,8 @@ export async function getTxByAlias(req: any, res: any) {
     let code = ctx.check();
     const page = req.body.page;
     const pageSize = req.body.pageSize;
-    if (code !== utils.ErrCode.Success) {
-        return res.json(utils.err(code, utils.ErrCode[code]));
+    if (code !== ErrCode.Success) {
+        return res.json(errResp(code, ErrCode[code]));
     }
 
     const alias = ctx.alias;
@@ -174,17 +136,17 @@ export async function getTxByAlias(req: any, res: any) {
         result = await search({ alias: alias }, page, pageSize);
     } catch (err: any) {
         consola.log(err)
-        return res.json(utils.err(utils.ErrCode.DBCreateError, err.toString()));
+        return res.json(errResp(ErrCode.DBCreateError, err.toString()));
     }
-    return res.json(utils.succ(result));
+    return res.json(succResp(result));
 }
 
 export async function updateStateTree(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
     const padding: boolean = req.body.padding;
-    if (code !== utils.ErrCode.Success) {
-        return res.json(utils.err(code, utils.ErrCode[code]));
+    if (code !== ErrCode.Success) {
+        return res.json(errResp(code, ErrCode[code]));
     }
 
     // TODO: once updated, must be synchonized with circuits on chain
@@ -198,34 +160,33 @@ export async function updateStateTree(req: any, res: any) {
         padding
     );
     // TODO handle exception
-    return res.json(utils.succ(proof));
+    return res.json(succResp(proof));
 }
 
 export async function getNotes(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
     const noteState = req.body.noteState;
-    if (code !== utils.ErrCode.Success) {
-        return res.json(utils.err(code, utils.ErrCode[code]));
+    if (code !== ErrCode.Success) {
+        return res.json(errResp(code, ErrCode[code]));
     }
 
     // get the confirmed note list, TODO: handle exception
     let notes = await getDBNotes(ctx.alias, noteState);
-    return res.json(utils.succ(notes));
+    return res.json(succResp(notes));
 }
 
 export async function updateNotes(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    if (code !== utils.ErrCode.Success) {
-        return res.json(utils.err(code, utils.ErrCode[code]));
+    if (code !== ErrCode.Success) {
+        return res.json(errResp(code, ErrCode[code]));
     }
 
     const notes = req.body.notes;
     // get the confirmed note list
     let insertings: Array<NoteModel> = [];
     notes.forEach((item: any) => {
-        console.log("item", item);
         insertings.push({
             alias: item.alias,
             index: item.index,
@@ -246,9 +207,9 @@ export async function updateNotes(req: any, res: any) {
         if (transaction) {
             transaction.rollback();
         }
-        return res.json(utils.err(utils.ErrCode.InvalidInput, err.toString()));
+        return res.json(errResp(ErrCode.InvalidInput, err.toString()));
     }
-    return res.json(utils.succ(result));
+    return res.json(succResp(result));
 }
 
 async function search(filterDict: any, page: any, pageSize: any) {
@@ -297,12 +258,12 @@ export async function getTokenPrices(req: any, res: any) {
         result = await tisdk.getSimplePrice({ ids: idsStr })
     } catch (err: any) {
         console.error(err)
-        return res.json(utils.err(utils.ErrCode.Unknown, err));
+        return res.json(errResp(ErrCode.Unknown, err));
     }
     let tokenPrices = []
     for (const token of result.data.data) {
         tokenPrices.push({ "coinId": token.id, "tokenPrice:": token.price[0].price_latest })
     }
 
-    return res.json(utils.succ(tokenPrices));
+    return res.json(succResp(tokenPrices));
 }

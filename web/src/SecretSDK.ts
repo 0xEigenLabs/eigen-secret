@@ -55,13 +55,11 @@ export async function signEOASignature(
   signer: ethers.Signer,
   rawMessage: string,
   userAddress: string,
-  alias: string,
   timestamp: string
 ) {
   const message = {
     raw: rawMessage,
     userAddress: userAddress,
-    alias: alias,
     timestamp: timestamp,
   };
 

@@ -7,6 +7,7 @@ import {
     defaultServerEndpoint,
     defaultCircuitPath, defaultContractABI, defaultContractFile
 } from "./common";
+import { ErrCode } from "@eigen-secret/core/dist-node/error";
 require("dotenv").config()
 const { buildEddsa } = require("circomlibjs");
 
@@ -18,7 +19,7 @@ task("ci", "Run all task in one command")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[0];
-    const signature = await signEOASignature(user, rawMessage, user.address, alias, timestamp);
+    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
     let signingKey = new SigningKey(eddsa);
     let accountKey = new SigningKey(eddsa);
     let newSigningKey1 = new SigningKey(eddsa);
@@ -45,7 +46,10 @@ task("ci", "Run all task in one command")
     await secretSDK.initialize(defaultContractABI);
     const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     let proofAndPublicSignals = await secretSDK.createAccount(ctx, password);
-    console.log("create account", proofAndPublicSignals);
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
+      console.log("createAccount failed: ", proofAndPublicSignals);
+    }
+    console.log("create account", proofAndPublicSignals.data);
 
     // set rollup nc
     await secretSDK.setRollupNC();
@@ -67,16 +71,31 @@ task("ci", "Run all task in one command")
     value = 10n;
 
     let proof = await secretSDK.deposit(ctx, receiver, value, assetId, nonce);
+    if (proof.errno != ErrCode.Success) {
+      console.log("deposit failed: ", proof);
+    }
     let balance1 = await secretSDK.getAllBalance(ctx);
+    if (balance1.errno != ErrCode.Success) {
+      console.log("getAllBalance failed: ", balance1);
+    }
     console.log("test1-after deposit")
-    console.log(balance1)
-    console.log("CreateAccount done, proof: ", proofAndPublicSignals, proof);
+    console.log(balance1.data)
+    console.log("CreateAccount done, proof: ", proofAndPublicSignals.data, proof.data);
 
     let proof1 = await secretSDK.send(ctx, receiver, alias, 2n, assetId);
-    console.log("send proof", proof1);
+    console.log("send proof", proof1.data);
+    if (proof1.errno != ErrCode.Success) {
+      console.log("send failed: ", proof1);
+    }
     let balance2 = await secretSDK.getAllBalance(ctx);
-    console.log(balance2)
+    if (balance2.errno != ErrCode.Success) {
+      console.log("getAllBalance failed: ", balance2);
+    }
+    console.log(balance2.data)
 
     let proof2 = await secretSDK.withdraw(ctx, receiver, 5n, assetId);
-    console.log("withdraw done, proof: ", proof2);
+    if (proof2.errno != ErrCode.Success) {
+      console.log("withdraw failed: ", proof2);
+    }
+    console.log("withdraw done, proof: ", proof2.data);
   })

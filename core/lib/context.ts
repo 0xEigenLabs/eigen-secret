@@ -1,4 +1,5 @@
-import { ErrCode, verifyEOASignature, hasValue } from "./utils";
+import { verifyEOASignature, hasValue, SESSION_DURATION } from "./utils";
+import { ErrCode } from "./error";
 export class Context {
     alias: string;
     ethAddress: string;
@@ -49,15 +50,13 @@ export class Context {
             this.rawMessage,
             this.signature,
             this.ethAddress,
-            this.alias,
             this.timestamp
         );
         if (!validAdddr) {
             return ErrCode.InvalidInput;
         }
-        const DURATION: number = 60; // seconds
         let expireAt = Math.floor(Date.now() / 1000);
-        if (Number(this.timestamp) + DURATION <= expireAt) {
+        if (Number(this.timestamp) + SESSION_DURATION <= expireAt) {
             return ErrCode.InvalidAuth;
         }
         return ErrCode.Success;

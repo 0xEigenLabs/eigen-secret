@@ -37,17 +37,19 @@ export class Transaction {
     }
 
     async encrypt(eddsa: any): Promise<Array<TxData>> {
-        let tmpKey = new SigningKey(eddsa);
         let tes = [];
         for (let note of this.notes) {
+            let tmpKey = new SigningKey(eddsa);
             let sharedKey = tmpKey.makeSharedKey(note._owner);
             tes.push(
                 new TxData(tmpKey.pubKey, note.encrypt(sharedKey))
             )
+            // TODO delete(tmpKey);
         }
         return Promise.resolve(tes);
     }
 
+    // dead code
     async decrypt(content: Array<TxData>): Promise<Array<Note>> {
         let result = [];
         for (let data of content) {

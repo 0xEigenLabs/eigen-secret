@@ -1,6 +1,8 @@
 const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import { NoteState } from "@eigen-secret/core/dist-node/note";
+import { __DEFAULT_ALIAS__ } from "@eigen-secret/core/dist-node/utils";
+
 
 type NoteStateArray = Array<NoteState>;
 // const consola = require("consola");
@@ -45,11 +47,11 @@ export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
         notes,
         {
             transaction: transaction,
-            updateOnDuplicate: ["state"]
+            updateOnDuplicate: ["state", "alias"]
         }
     );
 }
 
 export async function getDBNotes(alias: string, state: NoteStateArray) {
-    return await NoteModel.findAll({ where: { alias: alias, state: state } })
+    return await NoteModel.findAll({ where: { alias: [alias, __DEFAULT_ALIAS__], state: state } })
 }
