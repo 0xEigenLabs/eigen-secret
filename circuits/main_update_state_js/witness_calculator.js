@@ -75,7 +75,7 @@ module.exports = async function builder(code, options) {
 //        );
 
 
-    wc = new witnessCalculatorUpdateState(instance, sanityCheck);
+    wc = new witnessCalculator(instance, sanityCheck);
     return wc;
 
     function getMessage() {
@@ -105,7 +105,7 @@ module.exports = async function builder(code, options) {
 
 };
 
-class witnessCalculatorUpdateState {
+class witnessCalculator {
     constructor(instance, sanityCheck) {
         this.instance = instance;
 
