@@ -51,8 +51,9 @@ export async function createAccount(req: any, res: any) {
     }
     let newItem = { alias, ethAddress, secretAccount };
 
-    let transaction = await sequelize.transaction();
+    let transaction: any;
     try {
+        transaction = await sequelize.transaction();
         const item = await AccountModel.create(newItem, transaction);
         transaction.commit();
         return res.json(succResp(item));

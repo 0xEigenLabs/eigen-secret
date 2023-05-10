@@ -19,7 +19,7 @@ import {
 import { RollupSC } from "./rollup.sc";
 import { pad } from "./state_tree";
 import { poseidonSponge } from "./sponge_poseidon";
-import { expect, assert } from "chai";
+import { assert } from "chai";
 
 const axios = require("axios").default;
 
@@ -187,10 +187,7 @@ export class SecretSDK {
             contractJson.smtVerifier
         );
         await secretSDK.initialize(contractABI);
-        return new AppError({
-            errno: 0,
-            data: secretSDK
-        });
+        return succResp(secretSDK)
     }
 
     async updateStateTree(
@@ -225,14 +222,11 @@ export class SecretSDK {
         return this.curl("notes/get", input);
     }
 
-    async updateNote(encryptedNotes: any) {
-        let input = {
-            notes: encryptedNotes
-        };
-        this.noteBuff.push(input);
+    private async addNotes(encryptedNotes: any) {
+        this.noteBuff = this.noteBuff.concat(encryptedNotes);
     }
 
-    async createTx(input: any, proofAndPublicSignals: any) {
+    private async createTx(input: any, proofAndPublicSignals: any) {
         let inputData = {
             noteIndex: input.outputNotes[0].index.toString(),
             note2Index: input.outputNotes[1].index.toString(),
@@ -242,25 +236,25 @@ export class SecretSDK {
         this.txBuff.push(inputData);
     }
 
-    async commit(ctx: Context) {
-        if (this.txBuff.length > 0) {
-            return this.curl(
+    private async commit(ctx: Context) {
+        let response: any;
+        if (this.txBuff.length > 0 || this.noteBuff.length > 0) {
+            response = await this.curl(
                 "transactions/create",
                 {
                     context: ctx.serialize(),
+                    notes: this.noteBuff,
                     inputs: this.txBuff
                 }
             );
         }
-        if (this.noteBuff.length > 0) {
-            return this.curl(
-                "notes/update",
-                {
-                    context: ctx.serialize(),
-                    inputs: this.noteBuff
-                }
-            );
-        }
+        console.log("commit: ", response);
+        return response;
+    }
+
+    // rollback db
+    async fallback(_ctx: Context) {
+
     }
 
     async getTransactions(ctx: Context, option: any) {
@@ -284,7 +278,7 @@ export class SecretSDK {
         let data = {
             context: ctx.serialize()
         };
-        return this.curl("proof/create", data);
+        return this.curl("proof/get", data);
     }
 
     /**
@@ -322,10 +316,8 @@ export class SecretSDK {
                 notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
             }
         }
-        return new AppError({
-            errno: 0,
-            data: notesByAssetId
-        });
+        this.commit(ctx);
+        return succResp(notesByAssetId);
     }
 
     /**
@@ -334,7 +326,7 @@ export class SecretSDK {
      * @param {Array<NoteState>} noteState: Get current user's adopted notes and wild notes. A wild note's alias is ‘__DEFAULT_ALIAS__’.
      * @return {Promise<AppError>} An `AppError` object with `data` property of type `Array<Note>` if notes are successfully retrieved.
      */
-    async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>) {
+    private async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>) {
         let encryptedNotes = await this.getNotes(ctx, noteState);
         if (encryptedNotes.errno != ErrCode.Success) {
             return encryptedNotes;
@@ -344,10 +336,7 @@ export class SecretSDK {
         if (resp.errno != ErrCode.Success) {
             return resp;
         }
-        return new AppError({
-            errno: 0,
-            data: allNotes
-        });
+        return succResp(allNotes);
     }
 
     private async adoptNotes(ctx: Context, notes: Array<Note>, encryptedNotes: Array<any>) {
@@ -370,13 +359,9 @@ export class SecretSDK {
         });
         // updates notes
         if (wildNoteModels.length > 0) {
-            this.updateNote(wildNoteModels);
+            this.addNotes(wildNoteModels);
         }
-        // return empty array
-        return new AppError({
-            errno: 0,
-            data: wildNoteModels
-        });
+        return succResp(wildNoteModels);
     }
 
     /**
@@ -408,7 +393,6 @@ export class SecretSDK {
         if (resp.errno != ErrCode.Success) {
             return resp;
         }
-        let notes = resp.data;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -422,11 +406,12 @@ export class SecretSDK {
             this.account.accountKey.pubKey,
             value,
             new EigenAddress(receiver),
-            notes,
+            resp.data,
             accountRequired
         );
         let batchProof: string[] = [];
         this.txBuff = [];
+        this.noteBuff = [];
         for (const input of inputs) {
             const proof = await this.updateStateTree(
                 ctx,
@@ -497,7 +482,7 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 });
             }
-            this.updateNote(_notes);
+            this.addNotes(_notes);
         }
         let tx = await this.rollupSC.deposit(tmpPub, assetId, value, nonce);
         if (!tx) {
@@ -509,6 +494,7 @@ export class SecretSDK {
             return errResp(ErrCode.InvalidProof, "Failed to processDeposits");
         }
         await tx.wait();
+        this.commit(ctx);
         return succResp(batchProof);
     }
 
@@ -559,6 +545,8 @@ export class SecretSDK {
         );
 
         let batchProof: string[] = [];
+        this.noteBuff = [];
+        this.txBuff = [];
         for (const input of inputs) {
             const proof = await this.updateStateTree(
                 ctx,
@@ -616,12 +604,10 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 });
             }
-            this.updateNote(_notes);
+            this.addNotes(_notes);
         }
-        return new AppError({
-            errno: 0,
-            data: batchProof
-        });
+        this.commit(ctx)
+        return succResp(batchProof);
     }
 
     /**
@@ -669,7 +655,8 @@ export class SecretSDK {
         let dataTreeRootsFound: Array<bigint> = [];
         let lastDataTreeRoot: bigint = 0n;
         let siblings = [];
-
+        this.noteBuff = [];
+        this.txBuff = [];
         for (const input of inputs) {
             const proof = await this.updateStateTree(
                 ctx,
@@ -753,7 +740,7 @@ export class SecretSDK {
                     state: NoteState.PROVED
                 });
             }
-            this.updateNote(_notes);
+            this.addNotes(_notes);
         }
 
         let tmpP = this.account.signingKey.pubKey.unpack(this.eddsa.babyJub);
@@ -789,6 +776,7 @@ export class SecretSDK {
         );
 
         // DEBUG: check by smt verifier
+        /*
         let tmpRoot = await this.rollupSC.SMT.smtVerifier(
             txInfo.siblings[0], txInfo.keys[0],
             txInfo.values[0], 0, 0, false, false, 20
@@ -800,6 +788,7 @@ export class SecretSDK {
             txInfo.values[1], 0, 0, false, false, 20
         )
         expect(tmpRoot.toString()).to.eq(txInfo.roots[0].toString());
+        */
 
         let sig = await this.account.signingKey.sign(this.eddsa.F.e(msg));
         let input = {
@@ -817,10 +806,8 @@ export class SecretSDK {
             txInfo,
             proofAndPublicSignals
         );
-        return new AppError({
-            errno: 0,
-            data: batchProof
-        });
+        this.commit(ctx);
+        return succResp(batchProof);
     }
 
     /**
@@ -910,10 +897,7 @@ export class SecretSDK {
         if (resp.errno != ErrCode.Success) {
             return resp;
         }
-        return new AppError({
-            errno: 0,
-            data: proofAndPublicSignals
-        });
+        return succResp(proofAndPublicSignals);
     }
 
     /**
@@ -994,10 +978,7 @@ export class SecretSDK {
         if (resp.errno != ErrCode.Success) {
             return resp;
         }
-        return new AppError({
-            errno: 0,
-            data: proofs
-        });
+        return succResp(proofs);
     }
 
     /**
@@ -1076,9 +1057,6 @@ export class SecretSDK {
         if (resp.errno != ErrCode.Success) {
             return resp;
         }
-        return new AppError({
-            errno: 0,
-            data: proofs
-        });
+        return succResp(proofs);
     }
 }

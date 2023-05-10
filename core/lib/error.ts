@@ -1,7 +1,8 @@
 import { prepareJson } from "./utils";
-
-export const succResp = function(data: any) {
-  data = prepareJson(data);
+export const succResp = function(data: any, hasBigInt: boolean = false) {
+  if (hasBigInt) {
+      data = prepareJson(data);
+  }
   return new AppError({ errno: 0, data: data });
 }
 
@@ -53,7 +54,9 @@ export class AppError extends Error {
       this.isOperational = args.isOperational;
     }
 
-    Error.captureStackTrace(this);
+      if (this.errno != ErrCode.Success) {
+          Error.captureStackTrace(this);
+      }
   }
 }
 

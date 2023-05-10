@@ -14,26 +14,36 @@ describe("POST /transactions", function() {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
-
         let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
-        const response = await request(app)
+        // try get
+        let response = await request(app)
+        .post("/transactions/get")
+        .send({
+            context: ctx.serialize()
+        })
+        .set("Accept", "application/json");
+        expect(response.status).to.eq(200);
+        expect(response.body.errno).to.eq(0);
+
+        response = await request(app)
         .post("/transactions/create")
         .send({
             context: ctx.serialize(),
-            noteIndex: index().toString(),
-            note2Index: index().toString(),
-            proof: "0x12",
-            publicInput: "{\"root\": \"11\"}"
+            inputs: [{
+                noteIndex: index().toString(),
+                note2Index: index().toString(),
+                proof: "0x12",
+                publicInput: "{\"root\": \"11\"}"
+            }]
         })
         .set("Accept", "application/json");
 
         consola.log(response.body)
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
-        expect(response.body.data["id"]).to.gt(0);
     });
 
-    it("txdata test", () => {
+    it("Test TxData", () => {
         let tx = new TxData(
             new EigenAddress("eig:8f7b33b85594ec857744ac10374122203ec0cb327a2423586cd5f666a0022e1b"),
             "abc,cdf,123"
@@ -47,7 +57,7 @@ describe("POST /transactions", function() {
         expect(tx2.content.toString()).eq(tx.content.toString());
     })
 
-    it("get tx", async () => {
+    it("Get tx", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
@@ -59,14 +69,12 @@ describe("POST /transactions", function() {
         })
         .set("Accept", "application/json");
 
-        console.log(response.body);
-        console.log(response.body.data);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
         assert(response.body.data.transactions[0].alias, alias)
     });
 
-    it("get paging txs", async () => {
+    it("Get paging txs", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const page = 1;
@@ -89,7 +97,7 @@ describe("POST /transactions", function() {
         expect(response.body.data.transactions.length).to.eq(pageSize);
     });
 
-    it("update smt", async () => {
+    it("Update smt", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
@@ -114,7 +122,7 @@ describe("POST /transactions", function() {
             "11789410253405726493196100626786015322476180488220624361762052237583743243512")
     })
 
-    it("get token price", async () => {
+    it("Get token price", async () => {
         const response = await request(app)
         .post("/token/price")
         .send({})

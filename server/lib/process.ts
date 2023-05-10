@@ -1,5 +1,4 @@
 import { httpTerminator, server } from "./app";
-
 import { Response } from "express";
 import { AppError } from "@eigen-secret/core/dist-node/error";
 
