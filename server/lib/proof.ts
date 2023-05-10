@@ -7,6 +7,7 @@ import { ProofState } from "@eigen-secret/core/dist-node/prover";
 type ProofStateArray = Array<ProofState>;
 
 const consola = require("consola");
+const AggregationNumber = 16;
 
 export class ProofModel extends Model {}
 
@@ -85,6 +86,42 @@ export async function submitProofs(req: any, res: any) {
         }
         return res.json(errResp(ErrCode.InvalidInput, err.toString()));
     }
+    return res.json(succResp(result));
+}
+
+export async function getOneBatchProofData(req:any, res:any) {
+    let result: any;
+    try {
+        result = await ProofModel.findAll({ 
+            where: { state: ProofState.NEW },
+            limit: AggregationNumber,
+        })
+    } catch (err: any) {
+        consola.log(err)
+        return res.json(errResp(ErrCode.DBCreateError, err.toString()));
+    }
+    return res.json(succResp(result));
+}
+
+export async function updateProof(req:any, res:any) {
+    const ids = req.body.ids;
+    if (!Array.isArray(ids)) {
+        return res.json(errResp(ErrCode.InvalidInput, "Invalid ids"));
+    }
+    
+    let result: any;
+    for (const id of ids) {
+        try {
+            result = await ProofModel.Update(
+                { state: ProofState.Proved},
+                { where: { id: id }}
+            );
+        } catch (err: any) {
+            consola.log(err);
+            return res.json(errResp(ErrCode.DBCreateError, err.toString()));
+        }
+    }
+
     return res.json(succResp(result));
 }
 
