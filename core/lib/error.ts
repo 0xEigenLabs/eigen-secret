@@ -34,29 +34,15 @@ interface AppErrorArgs {
   isOperational?: boolean;
 }
 
-export class AppError extends Error {
+export class AppError {
   public readonly message: string;
   public readonly data: any;
   public readonly errno: ErrCode;
-  // set isOperational to false when throwing a critical error.
-  public readonly isOperational: boolean = true;
 
   constructor(args: AppErrorArgs) {
-    super(args.message);
-
-    Object.setPrototypeOf(this, new.target.prototype);
-
     this.message = args.message || ErrCode[args.errno];
     this.errno = args.errno;
     this.data = args.data || "";
-
-    if (args.isOperational !== undefined) {
-      this.isOperational = args.isOperational;
-    }
-
-    if (this.errno != ErrCode.Success) {
-        Error.captureStackTrace(this);
-    }
   }
 }
 
