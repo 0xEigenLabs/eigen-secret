@@ -64,7 +64,6 @@ export async function createAccount(req: any, res: any) {
         }
         return res.json(errResp(ErrCode.DBCreateError, err.toString()));
     }
-    return res.json(errResp(ErrCode.DBCreateError, "Unknown error"));
 }
 
 async function getAccountInternal(alias: string, ethAddress: string) {
