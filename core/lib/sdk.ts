@@ -237,7 +237,7 @@ export class SecretSDK {
     }
 
     private async commit(ctx: Context) {
-        let response: any;
+        let response = succResp("");
         if (this.txBuff.length > 0 || this.noteBuff.length > 0) {
             response = await this.curl(
                 "transactions/create",
@@ -360,7 +360,10 @@ export class SecretSDK {
             this.txBuff = [];
             this.noteBuff = [];
             this.addNotes(wildNoteModels);
-            await this.commit(ctx);
+            let res = await this.commit(ctx);
+            if (res.errno != ErrCode.Success) {
+                return res;
+            }
         }
         return succResp(wildNoteModels);
     }
@@ -495,7 +498,10 @@ export class SecretSDK {
             return errResp(ErrCode.InvalidProof, "Failed to processDeposits");
         }
         await tx.wait();
-        await this.commit(ctx);
+        let res = await this.commit(ctx);
+        if (res.errno != ErrCode.Success) {
+            return res;
+        }
         return succResp(batchProof);
     }
 
@@ -607,7 +613,10 @@ export class SecretSDK {
             }
             this.addNotes(_notes);
         }
-        await this.commit(ctx)
+        let res = await this.commit(ctx)
+        if (res.errno != ErrCode.Success) {
+            return res;
+        }
         return succResp(batchProof);
     }
 
@@ -807,7 +816,10 @@ export class SecretSDK {
             txInfo,
             proofAndPublicSignals
         );
-        await this.commit(ctx);
+        let res = await this.commit(ctx);
+        if (res.errno != ErrCode.Success) {
+            return res;
+        }
         return succResp(batchProof);
     }
 
@@ -1027,7 +1039,11 @@ export class SecretSDK {
         if (notes.errno != ErrCode.Success) {
             return notes;
         }
-        await this.commit(ctx);
+        let res = await this.commit(ctx);
+        if (res.errno != ErrCode.Success) {
+            return res;
+        }
+
         let notesByAssetId: Map<number, bigint> = new Map();
         for (const note of notes.data) {
             if (!notesByAssetId.has(note.assetId)) {
