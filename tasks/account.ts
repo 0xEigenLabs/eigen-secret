@@ -29,11 +29,11 @@ task("create-account", "Create secret account")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, true
     );
-    if (secretSDK.errno != "Success") {
+    if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let proofAndPublicSignals = await secretSDK.data.createAccount(ctx, password);
-    if (proofAndPublicSignals.errno != "Success") {
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("createAccount failed: ", proofAndPublicSignals);
     }
     console.log("create account", proofAndPublicSignals.data);
@@ -55,13 +55,13 @@ task("migrate-account", "Migrate account to another ETH address")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != "Success") {
+    if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let proofAndPublicSignals = await secretSDK.data.migrateAccount(
         ctx, newAccountKey, password
     );
-    if (proofAndPublicSignals.errno != "Success") {
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("migrateAccount failed: ", proofAndPublicSignals);
     }
     console.log(proofAndPublicSignals.data);
@@ -82,14 +82,14 @@ task("update-account", "Update signing key")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != "Success") {
+    if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let newSigningKey = new SigningKey(eddsa);
     let proofAndPublicSignals = await secretSDK.data.updateAccount(
         ctx, newSigningKey, password
     );
-    if (proofAndPublicSignals.errno != "Success") {
+    if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("updateAccount failed: ", proofAndPublicSignals);
     }
     console.log(proofAndPublicSignals.data);
@@ -111,7 +111,7 @@ task("get-account", "Get account info")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != "Success") {
+    if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     console.log(secretSDK.data.account.toString(eddsa));

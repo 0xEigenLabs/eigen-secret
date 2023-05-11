@@ -36,21 +36,9 @@ interface AppErrorArgs {
 export class AppError extends Error {
   public readonly message: string;
   public readonly data: any;
-  public readonly errno: string;
+  public readonly errno: ErrCode;
   // set isOperational to false when throwing a critical error.
   public readonly isOperational: boolean = true;
-
-  static errCodeToString: Record<ErrCode, string> = {
-    [ErrCode.Success]: "Success",
-    [ErrCode.Unknown]: "Unknown",
-    [ErrCode.InvalidAuth]: "InvalidAuth",
-    [ErrCode.InvalidInput]: "InvalidInput",
-    [ErrCode.CryptoError]: "CryptoError",
-    [ErrCode.DBCreateError]: "DBCreateError",
-    [ErrCode.DuplicatedRecordError]: "DuplicatedRecordError",
-    [ErrCode.RecordNotExist]: "RecordNotExist",
-    [ErrCode.InvalidProof]: "InvalidProof"
-  };
 
   constructor(args: AppErrorArgs) {
     super(args.message);
@@ -58,7 +46,7 @@ export class AppError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
 
     this.message = args.message || "";
-    this.errno = AppError.errCodeToString[args.errno];
+    this.errno = args.errno;
     this.data = args.data || "";
 
     if (args.isOperational !== undefined) {

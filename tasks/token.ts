@@ -20,7 +20,7 @@ task("setup-rollup", "Setup rollup coordinator")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != "Success") {
+    if (secretSDK.errno != ErrCode.Success) {
         console.log("initSDKFromAccount failed: ", secretSDK);
       }
     // set rollup nc
@@ -41,7 +41,7 @@ task("register-token", "Register token to Rollup")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != "Success") {
+    if (secretSDK.errno != ErrCode.Success) {
         console.log("initSDKFromAccount failed: ", secretSDK);
     }
     await secretSDK.data.registerToken(token);
@@ -64,7 +64,7 @@ task("send-l1", "Send asset from L1 to L1")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != "Success") {
+    if (secretSDK.errno != ErrCode.Success) {
         console.log("initSDKFromAccount failed: ", secretSDK);
       }
     // get token address
