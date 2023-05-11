@@ -62,6 +62,8 @@ class ExitHandler {
   }
 }
 
+const _ = errorHandler;
+/* TODO: uncomment and remove the above line
 process.on("unhandledRejection", (reason: Error | any) => {
   console.log(`Unhandled Rejection: ${reason.message || reason}`);
 
@@ -73,6 +75,7 @@ process.on("uncaughtException", (error: Error) => {
 
   errorHandler.handleError(error);
 });
+*/
 
 const exitHandler = new ExitHandler();
 process.on("SIGTERM", () => {

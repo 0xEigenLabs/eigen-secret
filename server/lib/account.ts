@@ -55,12 +55,12 @@ export async function createAccount(req: any, res: any) {
     try {
         transaction = await sequelize.transaction();
         const item = await AccountModel.create(newItem, transaction);
-        transaction.commit();
+        await transaction.commit();
         return res.json(succResp(item));
     } catch (err: any) {
         consola.log(err)
         if (transaction) {
-            transaction.rollback();
+            await transaction.rollback();
         }
     }
     return res.json(errResp(ErrCode.DBCreateError, "Unknown error"));
@@ -120,17 +120,17 @@ export async function updateAccount(req: any, res: any) {
     try {
         await AccountModel.update(
             { secretAccount },
-            { where: condition, returning: true, plain: true },
+            { where: condition, plain: true },
             transaction
         );
-        transaction.commit();
+        found = await AccountModel.findOne({ where: condition }, { transaction });
+        await transaction.commit();
     } catch (err: any) {
         consola.log(err)
         if (transaction) {
-            transaction.rollback();
+            await transaction.rollback();
         }
     }
-    found = await AccountModel.findOne({ where: condition });
     return res.json(succResp(found));
 }
 

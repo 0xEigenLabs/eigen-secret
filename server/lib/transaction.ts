@@ -53,14 +53,8 @@ export async function createTx(req: any, res: any) {
         return res.json(errResp(code, ErrCode[code]));
     }
 
-    const inputs = req.body.inputs;
-    const notes = req.body.notes;
-    if (
-        ((!inputs) || (!Array.isArray(inputs))) &&
-        ((!notes) || (!Array.isArray(notes)))
-    ) {
-        return res.json(errResp(ErrCode.InvalidInput, ErrCode[code]));
-    }
+    const inputs = req.body.inputs || [];
+    const notes = req.body.notes || [];
 
     const alias = ctx.alias;
     let insertTxs : Array<any> = [];
@@ -94,7 +88,7 @@ export async function createTx(req: any, res: any) {
                 result = await TransactionModel.bulkCreate(insertTxs, { transaction: t });
             }
             if (insertNotes.length > 0) {
-                result2 = await NoteModel.bulkCreate(insertNotes, { transaction: t });
+                result2 = await NoteModel.bulkCreate(insertNotes, { transaction: t, updateOnDuplicate: ["state", "alias"] });
             }
         });
     } catch (err: any) {

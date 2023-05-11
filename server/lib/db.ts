@@ -13,6 +13,10 @@ const dbHost = process.env.DB_HOST
 const dbDriver = process.env.DB_DRIVER as string
 const dbPassword = process.env.DB_PASSWORD
 
+// const cls = require('cls-hooked');
+// const namespace = cls.createNamespace('db-user-ns');
+// Sequelize.useCLS(namespace);
+
 let sequelize: any;
 if (dbDriver == "sqlite") {
     // only for test

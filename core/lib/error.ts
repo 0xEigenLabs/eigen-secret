@@ -46,7 +46,7 @@ export class AppError extends Error {
 
     Object.setPrototypeOf(this, new.target.prototype);
 
-    this.message = args.message || "";
+    this.message = args.message || ErrCode[args.errno];
     this.errno = args.errno;
     this.data = args.data || "";
 
@@ -54,9 +54,9 @@ export class AppError extends Error {
       this.isOperational = args.isOperational;
     }
 
-      if (this.errno != ErrCode.Success) {
-          Error.captureStackTrace(this);
-      }
+    if (this.errno != ErrCode.Success) {
+        Error.captureStackTrace(this);
+    }
   }
 }
 

@@ -248,7 +248,6 @@ export class SecretSDK {
                 }
             );
         }
-        console.log("commit: ", response);
         return response;
     }
 
@@ -316,7 +315,6 @@ export class SecretSDK {
                 notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
             }
         }
-        this.commit(ctx);
         return succResp(notesByAssetId);
     }
 
@@ -359,7 +357,10 @@ export class SecretSDK {
         });
         // updates notes
         if (wildNoteModels.length > 0) {
+            this.txBuff = [];
+            this.noteBuff = [];
             this.addNotes(wildNoteModels);
+            await this.commit(ctx);
         }
         return succResp(wildNoteModels);
     }
@@ -494,7 +495,7 @@ export class SecretSDK {
             return errResp(ErrCode.InvalidProof, "Failed to processDeposits");
         }
         await tx.wait();
-        this.commit(ctx);
+        await this.commit(ctx);
         return succResp(batchProof);
     }
 
@@ -606,7 +607,7 @@ export class SecretSDK {
             }
             this.addNotes(_notes);
         }
-        this.commit(ctx)
+        await this.commit(ctx)
         return succResp(batchProof);
     }
 
@@ -806,7 +807,7 @@ export class SecretSDK {
             txInfo,
             proofAndPublicSignals
         );
-        this.commit(ctx);
+        await this.commit(ctx);
         return succResp(batchProof);
     }
 
@@ -1016,7 +1017,7 @@ export class SecretSDK {
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, inputJson);
 
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
-            throw new Error("Invalid proof")
+            return errResp(ErrCode.InvalidProof, ErrCode[ErrCode.InvalidProof])
         }
         let proofs = new Array<string>(0);
         proofs.push(Prover.serialize(proofAndPublicSignals));
@@ -1026,6 +1027,7 @@ export class SecretSDK {
         if (notes.errno != ErrCode.Success) {
             return notes;
         }
+        await this.commit(ctx);
         let notesByAssetId: Map<number, bigint> = new Map();
         for (const note of notes.data) {
             if (!notesByAssetId.has(note.assetId)) {
