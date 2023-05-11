@@ -8,8 +8,8 @@ const consola = require("consola");
 export function siblingsPad(siblings: any, F: any, padding: boolean = true) {
   for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
   if (padding) {
-return pad(siblings)
-}
+      return pad(siblings)
+  }
   return siblings;
 }
 

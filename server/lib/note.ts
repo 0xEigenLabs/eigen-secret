@@ -39,19 +39,6 @@ NoteModel.init({
     modelName: "NoteModel" // We need to choose the model name
 });
 
-export async function updateDBNotes(notes: Array<NoteModel>, transaction: any) {
-    // consola.log("updateDBNotes", notes);
-    // let tmpResult = await getDBNotes(notes[0].alias, [NoteState.CREATING, NoteState.PROVED, NoteState.SPENT])
-    // consola.log(tmpResult)
-    return await NoteModel.bulkCreate(
-        notes,
-        {
-            transaction: transaction,
-            updateOnDuplicate: ["state", "alias"]
-        }
-    );
-}
-
 export async function getDBNotes(alias: string, state: NoteStateArray) {
     return await NoteModel.findAll({ where: { alias: [alias, __DEFAULT_ALIAS__], state: state } })
 }
