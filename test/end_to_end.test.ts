@@ -384,9 +384,10 @@ describe("POST /transactions", function() {
             // settle down the spent notes
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseSt = await request(app)
-            .post("/notes/update")
+            .post("/transactions/create")
             .send(prepareJson({
                 context: ctx.serialize(),
+                inputs: [],
                 notes: [
                     {
                         alias: alias,
@@ -565,7 +566,7 @@ describe("POST /transactions", function() {
             // settle down the spent notes
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseSt = await request(app)
-            .post("/notes/update")
+            .post("/transactions/create")
             .send(prepareJson({
                 context: ctx.serialize(),
                 notes: [
