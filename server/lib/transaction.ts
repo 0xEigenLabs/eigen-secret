@@ -86,20 +86,19 @@ export async function createTx(req: any, res: any) {
         })
     });
 
-    let t = await sequelize.transaction();
     let result: Array<any> = [];
     let result2: Array<any> = [];
     try {
-        if (insertTxs.length > 0) {
-            result = await TransactionModel.bulkCreate(insertTxs, { transaction: t });
-        }
-        if (insertNotes.length > 0) {
-            result2 = await NoteModel.bulkCreate(insertNotes, { transaction: t });
-        }
-        await t.commit();
+        await sequelize.transaction(async (t: any) => {
+            if (insertTxs.length > 0) {
+                result = await TransactionModel.bulkCreate(insertTxs, { transaction: t });
+            }
+            if (insertNotes.length > 0) {
+                result2 = await NoteModel.bulkCreate(insertNotes, { transaction: t });
+            }
+        });
     } catch (err: any) {
         console.log(err)
-        await t.rollback();
         return res.json(errResp(ErrCode.DBCreateError, err.toString()));
     }
     return res.json(succResp([result, result2], true))
