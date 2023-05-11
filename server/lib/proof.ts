@@ -65,11 +65,11 @@ export async function submitProofs(req: any, res: any) {
     try {
         transaction = await sequelize.transaction();
         result = await submitDBProof(alias, proofs, transaction);
-        transaction.commit();
+        await transaction.commit();
     } catch (err: any) {
         consola.log(err)
         if (transaction) {
-            transaction.rollback();
+            await transaction.rollback();
         }
         return res.json(errResp(ErrCode.InvalidInput, err.toString()));
     }

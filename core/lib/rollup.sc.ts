@@ -139,7 +139,6 @@ export class RollupSC {
             this.rollup.address, value,
             { from: userAccount.address }
         )
-        assert(approveToken, "approveToken failed")
         return approveToken;
     }
 
@@ -153,15 +152,15 @@ export class RollupSC {
             nonce,
             { from: userAccount.address }
         )
-        assert(deposit0, "deposit0 failed");
+        // assert(deposit0, "deposit0 failed");
         return deposit0;
     }
 
     async processDeposits(userAccount: any, keysFound: any, valuesFound: any, siblings: any) {
         assert(this.rollup);
-        let processDeposit1: any;
+        let processDeposit: any;
         try {
-            processDeposit1 = await this.rollup.connect(userAccount).processDeposits(
+            processDeposit = await this.rollup.connect(userAccount).processDeposits(
                 keysFound,
                 valuesFound,
                 siblings,
@@ -170,7 +169,7 @@ export class RollupSC {
         } catch (error) {
             console.log("processDeposits revert reason", error)
         }
-        assert(processDeposit1, "processDeposit1 failed")
+        return processDeposit;
     }
 
     async update(proofAndPublicSignal: any) {
@@ -188,15 +187,15 @@ export class RollupSC {
         } catch (error) {
             console.log("processDeposits revert reason", error)
         }
-        assert(update, "update failed")
+        return update;
     }
 
     async withdraw(receiverAccount: any, txInfo: any, proofAndPublicSignal: any) {
         assert(this.rollup);
-        let processDeposit1: any;
+        let processDeposit: any;
         let proof = parseProof(proofAndPublicSignal.proof);
         try {
-            processDeposit1 = await this.rollup.connect(this.userAccount).withdraw(
+            processDeposit = await this.rollup.connect(this.userAccount).withdraw(
                 txInfo,
                 receiverAccount.address,
                 proof.a,
@@ -207,6 +206,6 @@ export class RollupSC {
         } catch (error) {
             console.log("processDeposits revert reason", error)
         }
-        assert(processDeposit1, "processDeposit1 failed")
+        return processDeposit;
     }
 }

@@ -217,14 +217,16 @@ describe("POST /transactions", function() {
             // create tx. FIXME: should peg input?
             const responseTx = await request(app)
             .post("/transactions/create")
-            .send({
-                context: ctx.serialize(),
-                noteIndex: input.outputNotes[0].index.toString(),
-                note2Index: input.outputNotes[1].index.toString(),
-                proof: Prover.serialize(proofAndPublicSignals.proof),
-                publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
-            })
-            .set("Accept", "application/json");
+                .send({
+                    context: ctx.serialize(),
+                    inputs: [{
+                        noteIndex: input.outputNotes[0].index.toString(),
+                        note2Index: input.outputNotes[1].index.toString(),
+                        proof: Prover.serialize(proofAndPublicSignals.proof),
+                        publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
+                    }]
+                })
+                .set("Accept", "application/json");
             // console.log(responseTx.body);
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
@@ -235,9 +237,10 @@ describe("POST /transactions", function() {
             // settle down the spent notes
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseSt = await request(app)
-            .post("/notes/update")
+            .post("/transactions/create")
             .send(prepareJson({
                 context: ctx.serialize(),
+                inputs: [],
                 notes: [
                     {
                         alias: alias,
@@ -364,12 +367,14 @@ describe("POST /transactions", function() {
             .post("/transactions/create")
             .send({
                 context: ctx.serialize(),
-                noteIndex: input.outputNotes[0].index.toString(),
-                note2Index: input.outputNotes[1].index.toString(),
-                proof: Prover.serialize(proofAndPublicSignals.proof),
-                publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
+                inputs: [{
+                    noteIndex: input.outputNotes[0].index.toString(),
+                    note2Index: input.outputNotes[1].index.toString(),
+                    proof: Prover.serialize(proofAndPublicSignals.proof),
+                    publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
+                }]
             })
-            .set("Accept", "application/json");
+                .set("Accept", "application/json");
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
 
@@ -379,9 +384,10 @@ describe("POST /transactions", function() {
             // settle down the spent notes
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseSt = await request(app)
-            .post("/notes/update")
+            .post("/transactions/create")
             .send(prepareJson({
                 context: ctx.serialize(),
+                inputs: [],
                 notes: [
                     {
                         alias: alias,
@@ -543,12 +549,14 @@ describe("POST /transactions", function() {
             .post("/transactions/create")
             .send({
                 context: ctx.serialize(),
-                noteIndex: input.outputNotes[0].index.toString(),
-                note2Index: input.outputNotes[1].index.toString(),
-                proof: Prover.serialize(proofAndPublicSignals.proof),
-                publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
+                inputs: [{
+                    noteIndex: input.outputNotes[0].index.toString(),
+                    note2Index: input.outputNotes[1].index.toString(),
+                    proof: Prover.serialize(proofAndPublicSignals.proof),
+                    publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
+                }]
             })
-            .set("Accept", "application/json");
+                .set("Accept", "application/json");
             expect(responseTx.status).to.eq(200);
             expect(responseTx.body.errno).to.eq(0);
 
@@ -558,7 +566,7 @@ describe("POST /transactions", function() {
             // settle down the spent notes
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const responseSt = await request(app)
-            .post("/notes/update")
+            .post("/transactions/create")
             .send(prepareJson({
                 context: ctx.serialize(),
                 notes: [
