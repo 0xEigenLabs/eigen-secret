@@ -62,6 +62,7 @@ export async function createAccount(req: any, res: any) {
         if (transaction) {
             await transaction.rollback();
         }
+        return res.json(errResp(ErrCode.DBCreateError, err.toString()));
     }
     return res.json(errResp(ErrCode.DBCreateError, "Unknown error"));
 }
@@ -130,6 +131,7 @@ export async function updateAccount(req: any, res: any) {
         if (transaction) {
             await transaction.rollback();
         }
+        return res.json(errResp(ErrCode.DBCreateError, err.toString()));
     }
     return res.json(succResp(found));
 }
