@@ -40,12 +40,24 @@ export class AppError extends Error {
   // set isOperational to false when throwing a critical error.
   public readonly isOperational: boolean = true;
 
+  static errCodeToString: Record<ErrCode, string> = {
+    [ErrCode.Success]: "Success",
+    [ErrCode.Unknown]: "Unknown",
+    [ErrCode.InvalidAuth]: "InvalidAuth",
+    [ErrCode.InvalidInput]: "InvalidInput",
+    [ErrCode.CryptoError]: "CryptoError",
+    [ErrCode.DBCreateError]: "DBCreateError",
+    [ErrCode.DuplicatedRecordError]: "DuplicatedRecordError",
+    [ErrCode.RecordNotExist]: "RecordNotExist",
+    [ErrCode.InvalidProof]: "InvalidProof"
+  };
+
   constructor(args: AppErrorArgs) {
     super(args.message);
 
     Object.setPrototypeOf(this, new.target.prototype);
 
-    this.message = args.message || "";
+    this.message = args.message || AppError.errCodeToString[args.errno];
     this.errno = args.errno;
     this.data = args.data || "";
 
