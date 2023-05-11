@@ -41,7 +41,7 @@ export async function createAccount(req: any, res: any) {
     }
     const ethAddress = ctx.ethAddress;
     let found: AppError = await getAccountInternal(alias, ethAddress);
-    if (found.errno !== ErrCode.RecordNotExist) {
+    if (found.errno !== "RecordNotExist") {
         return res.json(found);
     }
     // account is AccountModel or found is RecordNotExist

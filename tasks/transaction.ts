@@ -31,7 +31,7 @@ task("deposit", "Deposit asset from L1 to L2")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != ErrCode.Success) {
+    if (secretSDK.errno != "Success") {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let nonce = 0; // TODO: get nonce from Metamask
@@ -45,7 +45,7 @@ task("deposit", "Deposit asset from L1 to L2")
     await approveTx.wait();
 
     let proofAndPublicSignals = await secretSDK.data.deposit(ctx, receiver, BigInt(value), Number(assetId), nonce);
-    if (proofAndPublicSignals.errno != ErrCode.Success) {
+    if (proofAndPublicSignals.errno != "Success") {
       console.log("deposit failed: ", proofAndPublicSignals);
     }
     console.log(proofAndPublicSignals.data);
@@ -77,11 +77,11 @@ task("send", "Send asset to receiver in L2")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != ErrCode.Success) {
+    if (secretSDK.errno != "Success") {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let proofAndPublicSignals = await secretSDK.data.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
-    if (proofAndPublicSignals.errno != ErrCode.Success) {
+    if (proofAndPublicSignals.errno != "Success") {
       console.log("send failed: ", proofAndPublicSignals);
     }
     console.log(proofAndPublicSignals.data);
@@ -110,12 +110,12 @@ task("withdraw", "Withdraw asset from L2 to L1")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != ErrCode.Success) {
+    if (secretSDK.errno != "Success") {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let receiver = secretSDK.data.account.accountKey.pubKey.pubKey;
     let proofAndPublicSignals = await secretSDK.data.withdraw(ctx, receiver, BigInt(value), Number(assetId));
-    if (proofAndPublicSignals.errno != ErrCode.Success) {
+    if (proofAndPublicSignals.errno != "Success") {
       console.log("withdraw failed: ", proofAndPublicSignals);
     }
     console.log(proofAndPublicSignals.data);
@@ -143,11 +143,11 @@ task("get-balance", "Get user's both L1 and L2 balance")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != ErrCode.Success) {
+    if (secretSDK.errno != "Success") {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let balance = await secretSDK.data.getAllBalance(ctx);
-    if (balance.errno != ErrCode.Success) {
+    if (balance.errno != "Success") {
       console.log("getAllBalance failed: ", balance);
     }
     let _balance = Object.fromEntries(
@@ -188,11 +188,11 @@ task("get-balance", "Get user's both L1 and L2 balance")
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != ErrCode.Success) {
+    if (secretSDK.errno != "Success") {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     const transactions = await secretSDK.data.getTransactions(ctx, { page, pageSize });
-    if (transactions.errno != ErrCode.Success) {
+    if (transactions.errno != "Success") {
       console.log("getAllBalance failed: ", transactions);
     }
     console.log("transactions", transactions.data);
