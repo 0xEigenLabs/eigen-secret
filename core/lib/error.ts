@@ -24,7 +24,8 @@ export enum ErrCode {
   DBCreateError = 5,
   DuplicatedRecordError = 6,
   RecordNotExist = 7,
-  InvalidProof = 8
+  InvalidProof = 8,
+  CallContractError = 9
 }
 
 interface AppErrorArgs {
