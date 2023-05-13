@@ -14,8 +14,6 @@ npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network de
 npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network dev
 npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network dev
 
-exit
-
 npx hardhat create-account --alias Bob --index 1 --network dev
 
 npx hardhat send-l1 --alias Alice --asset-id 2 --receiver 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --value 100 --network dev
