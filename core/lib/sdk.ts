@@ -303,9 +303,24 @@ export class SecretSDK {
     }
 
     /**
+     * Fetch registered token list from server
+     * @param {Context} ctx
+     * @param {Object} assetInfo
+     * @return {Map<string, Map>} token symbol to token asset id and it's contract address
+     */
+    async getAssetInfo(ctx: Context, assetInfo: any) {
+        let data = {
+            context: ctx.serialize(),
+            assetInfo: assetInfo
+        };
+        return this.curl("assets/price", data);
+    }
+
+    /**
      * Obtain user balance.
      * @param {Context} ctx
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'Map' which contains user balance.
+     * e.g. {"assetInfo":[{"assetId":2,"balance":"30","balanceUSD":30,"profit24Hour":0,"return":0}],"totalBalanceUSD":30}
      */
     async getAllBalance(ctx: Context) {
         let noteState = [NoteState.PROVED]
@@ -321,23 +336,40 @@ export class SecretSDK {
                 notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
             }
         }
-        let assetInfo: any = [];
+        // console.log("notesByAssetId", notesByAssetId);
         let totalBalanceUSD = 0;
-        // TODO get by api
+        let assetInfo = await this.getAssetInfo(ctx, notesByAssetId);
+        if (assetInfo.errno != ErrCode.Success) {
+            return assetInfo;
+        }
+        let priceInfo = assetInfo.data;
         let prices: Map<number, number> = new Map();
-        prices.set(0, 1800);
-        prices.set(1, 1800);
-        prices.set(2, 0.999);
+        let last_24h_prices: Map<number, number> = new Map();
+
+        priceInfo.forEach((row: any) => {
+            if (row.assetId) {
+                prices.set(Number(row.assetId), row.latest_price);
+                last_24h_prices.set(Number(row.assetId), row.last_24h_prices);
+            }
+        });
+
         // get token price
+        let resp = [];
         for (let [aid, val] of notesByAssetId) {
-            assetInfo.push({
+            let curPrice = prices.get(aid) || 1;
+            let p24hPrice = last_24h_prices.get(aid) || 1;
+            let profit = Number(val) * (curPrice - p24hPrice);
+
+            resp.push({
                 assetId: aid,
                 balance: val,
-                balanceUSD: Number(val) * (prices.get(aid) || 0)
+                balanceUSD: Number(val) * curPrice,
+                profit24Hour: profit,
+                return: profit / (Number(val) * p24hPrice)
             });
-            totalBalanceUSD += Number(val) * (prices.get(aid) || 0);
+            totalBalanceUSD += Number(val) * (prices.get(aid) || 1);
         }
-        return succResp({ assetInfo, totalBalanceUSD }, true);
+        return succResp({ assetInfo: resp, totalBalanceUSD }, true);
     }
 
     /**
@@ -403,7 +435,6 @@ export class SecretSDK {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let tmpP = this.account.accountKey.pubKey.unpack(this.eddsa.babyJub);
         let tmpPub = [this.eddsa.F.toObject(tmpP[0]), this.eddsa.F.toObject(tmpP[1])];
-        console.log(`accountKey: ${this.account.accountKey.pubKey.pubKey}`)
         let keysFound = [];
         let valuesFound = [];
         let siblings = [];
@@ -845,7 +876,6 @@ export class SecretSDK {
             txInfo,
             proofAndPublicSignals
         );
-        console.log(`withdraw receipt: ${JSON.stringify(receipt)}`)
         if (receipt.errno != ErrCode.Success) {
             return receipt
         }
@@ -879,12 +909,13 @@ export class SecretSDK {
         return await this.rollupSC.approveToken(token);
     }
 
-    async createToken(token: string, assetId: any){
+    async createAsset(ctx: Context, token: string, assetId: any) {
         let data = {
+            context: ctx.serialize(),
             assetId: assetId,
             tokenAddress: token
         };
-        return this.curl("token/create", data);
+        return this.curl("assets/create", data);
     }
 
     async approve(token: string, value: bigint) {
