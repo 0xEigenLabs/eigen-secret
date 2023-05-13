@@ -38,15 +38,16 @@ task("register-token", "Register token to Rollup")
     const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);
     const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
-    let secretSDK = await SecretSDK.initSDKFromAccount(
+    let secretSDKResult = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
     );
-    if (secretSDK.errno != ErrCode.Success) {
-        console.log("initSDKFromAccount failed: ", secretSDK);
+    if (secretSDKResult.errno != ErrCode.Success) {
+        console.log("initSDKFromAccount failed: ", secretSDKResult);
     }
-    await secretSDK.data.registerToken(token);
-    let assetId = await secretSDK.data.approveToken(token);
-    await secretSDK.data.createToken(token, assetId.toString());
+    let secretSDK = secretSDKResult.data;
+    await secretSDK.registerToken(token);
+    let assetId = await secretSDK.approveToken(token);
+    await secretSDK.createAsset(ctx, token, assetId.toString());
     console.log("approve token done, assetId is", assetId.toString())
 })
 

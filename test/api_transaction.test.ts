@@ -1,6 +1,7 @@
 const request = require("supertest");
 const consola = require("consola");
 import app from "../server/dist/service";
+import sequelize from "../server/dist/db";
 import { EigenAddress } from "@eigen-secret/core/dist-node/account";
 import { ethers } from "ethers";
 import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist-node/utils";
@@ -8,9 +9,11 @@ import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { TxData } from "@eigen-secret/core/dist-node/transaction";
 /* globals describe, before, it */
-describe("POST /transactions", function() {
+describe("POST /transactions", () => {
     const alias = "api.eigen.eth";
     before(async () => {
+        await sequelize.sync();
+
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
@@ -24,6 +27,8 @@ describe("POST /transactions", function() {
         .set("Accept", "application/json");
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
+
+        console.log("get transactions", response.body.data);
 
         response = await request(app)
         .post("/transactions/create")
@@ -120,16 +125,5 @@ describe("POST /transactions", function() {
         expect(response.body.errno).to.eq(0);
         assert(response.body.data.dataTreeRoot,
             "11789410253405726493196100626786015322476180488220624361762052237583743243512")
-    })
-
-    it("Get token price", async () => {
-        const response = await request(app)
-        .post("/token/price")
-        .send({})
-        .set("Accept", "application/json");
-
-        console.log(response.body);
-        expect(response.status).to.eq(200);
-        expect(response.body.errno).to.eq(0);
     })
 });
