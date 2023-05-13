@@ -879,6 +879,14 @@ export class SecretSDK {
         return await this.rollupSC.approveToken(token);
     }
 
+    async createToken(token: string, assetId: any){
+        let data = {
+            assetId: assetId,
+            tokenAddress: token
+        };
+        return this.curl("token/create", data);
+    }
+
     async approve(token: string, value: bigint) {
         return await this.rollupSC.approve(token, value);
     }
