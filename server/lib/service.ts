@@ -14,7 +14,7 @@ import "dotenv/config";
 import bodyParser from "body-parser";
 import { updateAccount, createAccount, getAccount } from "./account";
 import { createTx, getTxByAlias, updateStateTree, getNotes } from "./transaction";
-import { getTokenPrices } from "./token";
+import { createToken, getToken, getTokenPrices } from "./token";
 import { submitProofs, getProofs } from "./proof";
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);
@@ -45,5 +45,7 @@ app.post("/proof/create", submitProofs);
 app.post("/proof/get", getProofs);
 
 app.post("/token/price", getTokenPrices);
+app.post("/token/create", createToken);
+app.post("/token/get", getToken)
 
 export default app;

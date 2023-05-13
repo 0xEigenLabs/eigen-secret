@@ -46,6 +46,7 @@ task("register-token", "Register token to Rollup")
     }
     await secretSDK.data.registerToken(token);
     let assetId = await secretSDK.data.approveToken(token);
+    await secretSDK.data.createToken(token, assetId.toString());
     console.log("approve token done, assetId is", assetId.toString())
 })
 
