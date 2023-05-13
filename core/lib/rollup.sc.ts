@@ -146,7 +146,7 @@ export class RollupSC {
         let userAccount = this.userAccount;
         assert(this.rollup);
         let receipt: any;
-        try{
+        try {
             let deposit0 = await this.rollup.connect(userAccount).deposit(
                 pubkeyEigenAccountKey,
                 assetId,
@@ -155,14 +155,14 @@ export class RollupSC {
                 { from: userAccount.address }
             )
             receipt = await deposit0.wait()
-            if (receipt.status !== 1){
+            if (receipt.status !== 1) {
                 throw new Error(`receipt: ${JSON.stringify(receipt)}`)
             }
         } catch (error: any) {
             console.log("deposit revert reason", error)
             return errResp(ErrCode.CallContractError, error.toString())
         }
-        
+
         // assert(deposit0, "deposit0 failed");
         return succResp(receipt);
     }
@@ -179,7 +179,7 @@ export class RollupSC {
                 { from: userAccount.address }
             )
             receipt = await processDeposit.wait()
-            if (receipt.status !== 1){
+            if (receipt.status !== 1) {
                 throw new Error(`receipt: ${JSON.stringify(receipt)}`)
             }
         } catch (error: any) {
@@ -203,7 +203,7 @@ export class RollupSC {
                 { from: this.userAccount.address }
             )
             receipt = await update.wait()
-            if (receipt.status !== 1){
+            if (receipt.status !== 1) {
                 throw new Error(`receipt: ${JSON.stringify(receipt)}`)
             }
         } catch (error: any) {
@@ -228,7 +228,7 @@ export class RollupSC {
                 { from: this.userAccount.address }
             )
             receipt = await processDeposit.wait()
-            if (receipt.status !== 1){
+            if (receipt.status !== 1) {
                 throw new Error(`receipt: ${JSON.stringify(receipt)}`)
             }
         } catch (error: any) {

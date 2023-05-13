@@ -162,6 +162,9 @@ export class SecretSDK {
             };
             let resp = await SecretSDK.curlEx(serverAddr, "accounts/get", input);
             if (resp.errno != ErrCode.Success) {
+                if (resp.errno == ErrCode.RecordNotExist) {
+                    return errResp(resp.errno, "Please register your Eigen Address")
+                }
                 return resp;
             }
             let accountData = resp.data;
@@ -318,7 +321,23 @@ export class SecretSDK {
                 notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
             }
         }
-        return succResp(notesByAssetId);
+        let assetInfo: any = [];
+        let totalBalanceUSD = 0;
+        // TODO get by api
+        let prices: Map<number, number> = new Map();
+        prices.set(0, 1800);
+        prices.set(1, 1800);
+        prices.set(2, 0.999);
+        // get token price
+        for (let [aid, val] of notesByAssetId) {
+            assetInfo.push({
+                assetId: aid,
+                balance: val,
+                balanceUSD: Number(val) * (prices.get(aid) || 0)
+            });
+            totalBalanceUSD += Number(val) * (prices.get(aid) || 0);
+        }
+        return succResp({ assetInfo, totalBalanceUSD }, true);
     }
 
     /**
@@ -455,7 +474,7 @@ export class SecretSDK {
             // batch create tx
             this.createTx(input, proofAndPublicSignals);
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
-            if (receipt.errno != ErrCode.Success){
+            if (receipt.errno != ErrCode.Success) {
                 return receipt
             }
             let _notes = [
@@ -494,11 +513,11 @@ export class SecretSDK {
             this.addNotes(_notes);
         }
         let receipt = await this.rollupSC.deposit(tmpPub, assetId, value, nonce);
-        if (receipt.errno != ErrCode.Success){
+        if (receipt.errno != ErrCode.Success) {
             return receipt
         }
         receipt = await this.rollupSC.processDeposits(this.rollupSC.userAccount, keysFound, valuesFound, siblings);
-        if (receipt.errno != ErrCode.Success){
+        if (receipt.errno != ErrCode.Success) {
             return receipt
         }
         let res = await this.commit(ctx);
@@ -581,7 +600,7 @@ export class SecretSDK {
 
             this.createTx(input, proofAndPublicSignals);
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
-            if (receipt.errno != ErrCode.Success){
+            if (receipt.errno != ErrCode.Success) {
                 return receipt
             }
 
@@ -724,7 +743,7 @@ export class SecretSDK {
             // call contract and deposit
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             // console.log(`receipt: ${JSON.stringify(receipt)}`)
-            if (receipt.errno != ErrCode.Success){
+            if (receipt.errno != ErrCode.Success) {
                 return receipt
             }
             // settle down the spent notes
@@ -827,7 +846,7 @@ export class SecretSDK {
             proofAndPublicSignals
         );
         console.log(`withdraw receipt: ${JSON.stringify(receipt)}`)
-        if (receipt.errno != ErrCode.Success){
+        if (receipt.errno != ErrCode.Success) {
             return receipt
         }
         let res = await this.commit(ctx);
@@ -920,7 +939,7 @@ export class SecretSDK {
         }
         siblings.push(tmpSiblings);
         let receipt = await this.rollupSC.update(proofAndPublicSignals);
-        if (receipt.errno != ErrCode.Success){
+        if (receipt.errno != ErrCode.Success) {
             return receipt
         }
         let resp = await this.createServerAccount(ctx, password);
