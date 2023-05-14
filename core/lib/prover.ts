@@ -129,7 +129,7 @@ export class Prover {
     }
 
     static async withdrawForClient(input: any) {
-        let wasmUrl = `${Prover.serverAddr}/public/main_withdraw_js/main_update_state.wasm`;
+        let wasmUrl = `${Prover.serverAddr}/public/main_withdraw_js/main_withdraw.wasm`;
         let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.14`;
 
         const wasmBuffer = await Prover.fetchRemoteFile(wasmUrl);

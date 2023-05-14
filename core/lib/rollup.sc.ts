@@ -1,7 +1,7 @@
 import { ethers } from "ethers"
 import { assert } from "chai";
 import { parseProof, uint8Array2Bigint } from "./utils";
-
+import { errResp, succResp, ErrCode } from "./error";
 const createBlakeHash = require("blake-hash");
 
 
@@ -145,20 +145,32 @@ export class RollupSC {
     async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: bigint, nonce: number) {
         let userAccount = this.userAccount;
         assert(this.rollup);
-        let deposit0 = await this.rollup.connect(userAccount).deposit(
-            pubkeyEigenAccountKey,
-            assetId,
-            value,
-            nonce,
-            { from: userAccount.address }
-        )
+        let receipt: any;
+        try {
+            let deposit0 = await this.rollup.connect(userAccount).deposit(
+                pubkeyEigenAccountKey,
+                assetId,
+                value,
+                nonce,
+                { from: userAccount.address }
+            )
+            receipt = await deposit0.wait()
+            if (receipt.status !== 1) {
+                throw new Error(`receipt: ${JSON.stringify(receipt)}`)
+            }
+        } catch (error: any) {
+            console.log("deposit revert reason", error)
+            return errResp(ErrCode.CallContractError, JSON.stringify(error))
+        }
+
         // assert(deposit0, "deposit0 failed");
-        return deposit0;
+        return succResp(receipt, true);
     }
 
     async processDeposits(userAccount: any, keysFound: any, valuesFound: any, siblings: any) {
         assert(this.rollup);
         let processDeposit: any;
+        let receipt: any;
         try {
             processDeposit = await this.rollup.connect(userAccount).processDeposits(
                 keysFound,
@@ -166,15 +178,21 @@ export class RollupSC {
                 siblings,
                 { from: userAccount.address }
             )
-        } catch (error) {
+            receipt = await processDeposit.wait()
+            if (receipt.status !== 1) {
+                throw new Error(`receipt: ${JSON.stringify(receipt)}`)
+            }
+        } catch (error: any) {
             console.log("processDeposits revert reason", error)
+            return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
-        return processDeposit;
+        return succResp(receipt, true);
     }
 
     async update(proofAndPublicSignal: any) {
         assert(this.rollup);
         let update: any;
+        let receipt: any;
         let proof = parseProof(proofAndPublicSignal.proof);
         try {
             update = await this.rollup.connect(this.userAccount).update(
@@ -184,16 +202,22 @@ export class RollupSC {
                 proofAndPublicSignal.publicSignals,
                 { from: this.userAccount.address }
             )
-        } catch (error) {
+            receipt = await update.wait()
+            if (receipt.status !== 1) {
+                throw new Error(`receipt: ${JSON.stringify(receipt)}`)
+            }
+        } catch (error: any) {
             console.log("processDeposits revert reason", error)
+            return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
-        return update;
+        return succResp(receipt, true);
     }
 
     async withdraw(receiverAccount: any, txInfo: any, proofAndPublicSignal: any) {
         assert(this.rollup);
         let processDeposit: any;
         let proof = parseProof(proofAndPublicSignal.proof);
+        let receipt: any;
         try {
             processDeposit = await this.rollup.connect(this.userAccount).withdraw(
                 txInfo,
@@ -203,9 +227,14 @@ export class RollupSC {
                 proof.c,
                 { from: this.userAccount.address }
             )
-        } catch (error) {
+            receipt = await processDeposit.wait()
+            if (receipt.status !== 1) {
+                throw new Error(`receipt: ${JSON.stringify(receipt)}`)
+            }
+        } catch (error: any) {
             console.log("processDeposits revert reason", error)
+            return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
-        return processDeposit;
+        return succResp(receipt, true);
     }
 }

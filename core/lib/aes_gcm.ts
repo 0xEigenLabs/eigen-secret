@@ -8,12 +8,12 @@ const TAG_POSITION = SALT_LENGTH + IV_LENGTH;
 const ENCRYPTED_POSITION = TAG_POSITION + TAG_LENGTH;
 const ALGO = "aes-256-gcm";
 export class Aes256gcm {
-    secret: any;
+    private secret: any;
     constructor(secret: any) {
         this.secret = secret; // new Buffer(crypto.randomBytes(32), "utf8");
     }
 
-    getKey(salt: Buffer) {
+    private getKey(salt: Buffer) {
         return crypto.pbkdf2Sync(this.secret, salt, 100000, 32, "sha512");
     }
 

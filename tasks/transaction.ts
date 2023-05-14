@@ -150,10 +150,7 @@ task("get-balance", "Get user's both L1 and L2 balance")
     if (balance.errno != ErrCode.Success) {
       console.log("getAllBalance failed: ", balance);
     }
-    let _balance = Object.fromEntries(
-      [...balance.data].map(([k, v]) => [k, v.toString()+"n"])
-    );
-    console.log("L2 balance", JSON.stringify(_balance));
+    console.log("L2 balance", JSON.stringify(balance.data));
 
     let address = await secretSDK.data.getRegisteredToken(BigInt(assetId));
     let tokenIns = new ethers.Contract(

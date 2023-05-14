@@ -52,9 +52,12 @@ module.exports = {
   },
   defaultNetwork: "hardhat",
   networks: {
-    hardhat: {},
+    hardhat: {
+        chainId: 1337, // https://github.com/NomicFoundation/hardhat/issues/1731
+    },
     dev: {
-      url: "http://127.0.0.1:8545/"
+      url: "http://127.0.0.1:8545/",
+      chainId: 1337
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.API_KEY}`,

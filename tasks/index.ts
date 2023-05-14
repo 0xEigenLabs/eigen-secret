@@ -1,5 +1,5 @@
 import "./account";
 import "./deploy";
 import "./transaction";
-import "./token";
+import "./asset";
 import "./ci";
