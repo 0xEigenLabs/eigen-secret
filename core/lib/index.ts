@@ -9,3 +9,4 @@ export * as transaction from "./transaction";
 export * as updatestate from "./update_state";
 export * as statetree from "./state_tree";
 export * as sdk from "./sdk";
+export * as error from "./error";

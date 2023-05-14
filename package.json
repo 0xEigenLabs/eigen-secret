@@ -8,7 +8,7 @@
     "build:server": "cd server && npm i && npm run build",
     "build": "npm run build:core && npm run build:server",
     "lint_sol": "./node_modules/.bin/solhint 'contracts/**/*.sol'",
-    "docs": "./node_modules/.bin/typedoc --out docs core/lib/sdk.ts",
+    "docs": "./node_modules/.bin/typedoc --out docs core/lib/",
     "lint": "npm run lint_ts & npm run lint_sol",
     "compile": "hardhat compile",
     "test": "npm run build && npm run compile && npx hardhat test",

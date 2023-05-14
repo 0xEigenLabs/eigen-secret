@@ -306,12 +306,24 @@ export class SecretSDK {
      * Fetch registered token list from server
      * @param {Context} ctx
      * @param {Object} assetInfo
-     * @return {Map<string, Map>} token symbol to token asset id and it's contract address
+     * @return {Map<string, Map>} token symbol to token asset id and it's contract address, e.g.
+     * {
+     *   message: 'Success',
+     *   errno: 0,
+     *   data: [
+     *     {
+     *       assetId: '2',
+     *       token_symbol: 'TT',
+     *       token_address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+     *       latest_price: 1,
+     *       latest_24h_price: 1
+     *     }
+     *   ]
+     * }
      */
-    async getAssetInfo(ctx: Context, assetInfo: any) {
+    async getAssetInfo(ctx: Context) {
         let data = {
-            context: ctx.serialize(),
-            assetInfo: assetInfo
+            context: ctx.serialize()
         };
         return this.curl("assets/price", data);
     }
@@ -338,10 +350,11 @@ export class SecretSDK {
         }
         // console.log("notesByAssetId", notesByAssetId);
         let totalBalanceUSD = 0;
-        let assetInfo = await this.getAssetInfo(ctx, notesByAssetId);
+        let assetInfo = await this.getAssetInfo(ctx);
         if (assetInfo.errno != ErrCode.Success) {
             return assetInfo;
         }
+        console.log("assetInfo", assetInfo);
         let priceInfo = assetInfo.data;
         let prices: Map<number, number> = new Map();
         let last_24h_prices: Map<number, number> = new Map();
@@ -913,7 +926,7 @@ export class SecretSDK {
         let data = {
             context: ctx.serialize(),
             assetId: assetId,
-            tokenAddress: token
+            contractAddress: token
         };
         return this.curl("assets/create", data);
     }

@@ -82,6 +82,7 @@ export async function getAssetInfo(req: any, res: any) {
         return res.json(errResp(code, ErrCode[code]));
     }
     let assetList = await AssetModel.findAll();
+    console.log("assetList", assetList);
 
     // get price info from dune
     // https://dune.com/queries/2468396
@@ -102,17 +103,30 @@ export async function getAssetInfo(req: any, res: any) {
     if (body.state != "QUERY_STATE_COMPLETED") {
         return res.json(errResp(ErrCode.Unknown, "Fetch price from Dune error"));
     }
-    const result: Array<any> = body.result?.rows;
+    const rows: Array<any> = body.result?.rows;
+    let results: Array<any> = [];
 
-    for (let priceInfo of result) {
-        for (let ai of assetList) {
+    for (let ai of assetList) {
+        let filled = false;
+        for (let priceInfo of rows) {
             if (ai.contractAddress == priceInfo.token_address) {
                 priceInfo.assetId = ai.assetId;
+                filled = true;
+                results.push(priceInfo);
             }
+        }
+        if (!filled) {
+            results.push({
+                assetId: ai.assetId,
+                token_symbol: "TT",
+                token_address: ai.contractAddress,
+                latest_price: 1,
+                latest_24h_price: 1
+            })
         }
     }
 
-    return res.json(succResp(result));
+    return res.json(succResp(results));
 }
 
 export async function executeQuery(req: any, res: any) {

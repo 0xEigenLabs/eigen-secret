@@ -13,7 +13,7 @@ export class Aes256gcm {
         this.secret = secret; // new Buffer(crypto.randomBytes(32), "utf8");
     }
 
-    getKey(salt: Buffer) {
+    private getKey(salt: Buffer) {
         return crypto.pbkdf2Sync(this.secret, salt, 100000, 32, "sha512");
     }
 
