@@ -113,8 +113,8 @@ export async function createTx(req: any, res: any) {
 export async function getTxByAlias(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    const page = req.body.page;
-    const pageSize = req.body.pageSize;
+    const page = Number(req.body.page || 0);
+    const pageSize = Number(req.body.pageSize || 10);
     if (code !== ErrCode.Success) {
         return res.json(errResp(code, ErrCode[code]));
     }
@@ -160,34 +160,22 @@ export async function getNotes(req: any, res: any) {
     }
     const noteState = req.body.noteState || [];
     const indices = req.body.indices || [];
-    // get the confirmed note list, TODO: handle exception
     let notes = await getDBNotes(ctx.alias, noteState, indices);
     return res.json(succResp(notes));
 }
 
 async function search(filterDict: any, page: any, pageSize: any) {
-    if (page) {
-      const { count, rows } = await TransactionModel.findAndCountAll({
+    let offset = page > 0? page - 1 : 0;
+    const { count, rows } = await TransactionModel.findAndCountAll({
         where: filterDict,
         order: [["createdAt", "DESC"]],
         limit: pageSize,
-        offset: (page - 1) * pageSize,
+        offset: offset * pageSize,
         raw: true
-      });
-      const totalPage = Math.ceil(count / pageSize);
-      return {
+    });
+    const totalPage = Math.ceil(count / pageSize);
+    return {
         transactions: rows,
         totalPage
-      };
-    } else {
-      const list = await TransactionModel.findAll({
-        where: filterDict,
-        order: [["createdAt", "DESC"]],
-        raw: true
-      });
-      return {
-        transactions: list,
-        totalPage: list.length
-      };
-    }
+    };
 }

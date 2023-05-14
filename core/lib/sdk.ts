@@ -295,15 +295,16 @@ export class SecretSDK {
 
         // reconstruct transaction
         let resp = []
-        // console.log(notes, txList);
+        console.log(notes, txList);
         for (let tx of txList) {
             let note = notes.filter((row: any) => row.index.toString() == tx.noteIntex)
             let note2 = notes.filter((row: any) => row.index.toString() == tx.note2Intex)
-            // console.log(note, note2);
+            console.log(note, note2);
 
             resp.push({
                 operation: tx.operation,
                 balance: note.val + note2.val,
+                assetId: note.assetId,
                 to: "", // TODO
                 txhash: tx.proof+tx.publicInput,
                 timestamp: tx.updatedAt
