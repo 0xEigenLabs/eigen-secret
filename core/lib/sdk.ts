@@ -314,7 +314,6 @@ export class SecretSDK {
         for (let tx of txList) {
             let note = notes.filter((row: any) => row.index.toString() === tx.noteIndex)
             let note2 = notes.filter((row: any) => row.index.toString() === tx.note2Index)
-            console.log(note, note2);
 
             resp.push({
                 operation: tx.operation,
