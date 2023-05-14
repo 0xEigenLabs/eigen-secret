@@ -350,6 +350,8 @@ export class SecretSDK {
         }
         // console.log("notesByAssetId", notesByAssetId);
         let totalBalanceUSD = 0;
+        let totalReturn = 0;
+        let totalProfit24Hour = 0;
         let assetInfo = await this.getAssetInfo(ctx);
         if (assetInfo.errno != ErrCode.Success) {
             return assetInfo;
@@ -381,8 +383,11 @@ export class SecretSDK {
                 return: profit / (Number(val) * p24hPrice)
             });
             totalBalanceUSD += Number(val) * (prices.get(aid) || 1);
+            totalProfit24Hour += profit;
+            totalReturn += profit / (Number(val) * p24hPrice);
         }
-        return succResp({ assetInfo: resp, totalBalanceUSD }, true);
+        totalReturn /= notesByAssetId.size;
+        return succResp({ assetInfo: resp, totalBalanceUSD, totalProfit24Hour, totalReturn }, true);
     }
 
     /**

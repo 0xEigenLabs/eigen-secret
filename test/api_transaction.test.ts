@@ -12,8 +12,6 @@ import { TxData } from "@eigen-secret/core/dist-node/transaction";
 describe("POST /transactions", () => {
     const alias = "api.eigen.eth";
     before(async () => {
-        await sequelize.sync();
-
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);

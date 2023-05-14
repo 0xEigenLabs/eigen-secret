@@ -160,11 +160,11 @@ export class RollupSC {
             }
         } catch (error: any) {
             console.log("deposit revert reason", error)
-            return errResp(ErrCode.CallContractError, error.toString())
+            return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
 
         // assert(deposit0, "deposit0 failed");
-        return succResp(receipt);
+        return succResp(receipt, true);
     }
 
     async processDeposits(userAccount: any, keysFound: any, valuesFound: any, siblings: any) {
@@ -184,9 +184,9 @@ export class RollupSC {
             }
         } catch (error: any) {
             console.log("processDeposits revert reason", error)
-            return errResp(ErrCode.CallContractError, error.toString())
+            return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
-        return succResp(receipt);
+        return succResp(receipt, true);
     }
 
     async update(proofAndPublicSignal: any) {
@@ -208,9 +208,9 @@ export class RollupSC {
             }
         } catch (error: any) {
             console.log("processDeposits revert reason", error)
-            return errResp(ErrCode.CallContractError, error.toString())
+            return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
-        return succResp(receipt);
+        return succResp(receipt, true);
     }
 
     async withdraw(receiverAccount: any, txInfo: any, proofAndPublicSignal: any) {
@@ -233,8 +233,8 @@ export class RollupSC {
             }
         } catch (error: any) {
             console.log("processDeposits revert reason", error)
-            return errResp(ErrCode.CallContractError, error.toString())
+            return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
-        return succResp(receipt);
+        return succResp(receipt, true);
     }
 }

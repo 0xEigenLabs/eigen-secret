@@ -1,6 +1,5 @@
 const request = require("supertest");
 import app from "../server/dist/service";
-import sequelize from "../server/dist/db";
 import { ethers } from "ethers";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
@@ -9,7 +8,6 @@ import { expect } from "chai";
 describe("POST /assets", () => {
     const alias = "api.eigen.eth";
     before(async () => {
-        await sequelize.sync();
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
@@ -30,7 +28,6 @@ describe("POST /assets", () => {
     })
 
     it("Get token price", async () => {
-        await sequelize.sync();
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
