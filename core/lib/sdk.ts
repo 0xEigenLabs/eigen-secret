@@ -279,7 +279,7 @@ export class SecretSDK {
             return txListResult;
         }
         let txList = txListResult.data.transactions || [];
-        console.log("txList :", txList);
+        // console.log("txList :", txList);
         let inputNotesIndices: Array<string> = [];
         txList.forEach((row: any) => {
             inputNotesIndices.push(row.noteIndex);
@@ -295,11 +295,11 @@ export class SecretSDK {
 
         // reconstruct transaction
         let resp = []
-        console.log(notes, txList);
+        // console.log(notes, txList);
         for (let tx of txList) {
             let note = notes.filter((row: any) => row.index.toString() == tx.noteIntex)
             let note2 = notes.filter((row: any) => row.index.toString() == tx.note2Intex)
-            console.log(note, note2);
+            // console.log(note, note2);
 
             resp.push({
                 operation: tx.operation,
@@ -397,7 +397,7 @@ export class SecretSDK {
         if (!assetInfo.ok) {
             return assetInfo;
         }
-        console.log("assetInfo", assetInfo);
+        // console.log("assetInfo", assetInfo);
         let priceInfo = assetInfo.data;
         let prices: Map<number, number> = new Map();
         let last_24h_prices: Map<number, number> = new Map();
