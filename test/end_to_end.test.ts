@@ -222,6 +222,7 @@ describe("POST /transactions", function() {
                     inputs: [{
                         noteIndex: input.outputNotes[0].index.toString(),
                         note2Index: input.outputNotes[1].index.toString(),
+                        operation: "deposit",
                         proof: Prover.serialize(proofAndPublicSignals.proof),
                         publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
                     }]
@@ -370,6 +371,7 @@ describe("POST /transactions", function() {
                 inputs: [{
                     noteIndex: input.outputNotes[0].index.toString(),
                     note2Index: input.outputNotes[1].index.toString(),
+                    operation: "send",
                     proof: Prover.serialize(proofAndPublicSignals.proof),
                     publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
                 }]
@@ -552,6 +554,7 @@ describe("POST /transactions", function() {
                 inputs: [{
                     noteIndex: input.outputNotes[0].index.toString(),
                     note2Index: input.outputNotes[1].index.toString(),
+                    operation: "withdraw",
                     proof: Prover.serialize(proofAndPublicSignals.proof),
                     publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
                 }]
