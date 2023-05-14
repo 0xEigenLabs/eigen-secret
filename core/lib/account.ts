@@ -414,7 +414,7 @@ export class AccountCircuit {
     }
 }
 
-export function decryptNotes(accountKey: SigningKey, encryptedNotes: any) {
+export function decryptNotes(accountKey: SigningKey, encryptedNotes: any, skipZeroNote: boolean = true) {
     let notes: Array<Note> = [];
     if (encryptedNotes) {
         encryptedNotes.forEach((item: any) => {
@@ -427,6 +427,8 @@ export function decryptNotes(accountKey: SigningKey, encryptedNotes: any) {
                     tmpNote.adopted = false;
                 }
                 if (tmpNote.val > 0) {
+                    notes.push(tmpNote);
+                } else if (!skipZeroNote) {
                     notes.push(tmpNote);
                 }
             } catch (err: any) {

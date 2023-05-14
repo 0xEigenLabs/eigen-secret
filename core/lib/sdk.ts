@@ -268,11 +268,27 @@ export class SecretSDK {
 
     }
 
-    async getTransactions(ctx: Context, option: any) {
+
+    /**
+     *
+     * @param {Context} ctx
+     * @param {Object} options, dictionary
+     * @return {Object} transactions, e.g. [
+     *  {
+     *    operation: 'deposit',
+     *    balance: '0',
+     *    assetId: 2,
+     *    to: '',
+     *    txhash: '',
+     *    timestamp: '2023-05-14 13:52:12.546 +00:00'
+     *  }
+     *]
+     */
+    async getTransactions(ctx: Context, options: any) {
         let data = {
             context: ctx.serialize(),
-            page: option.page,
-            pageSize: option.pageSize
+            page: options.page,
+            pageSize: options.pageSize
         };
         let txListResult = await this.curl("transactions/get", data);
         if (!txListResult.ok) {
@@ -287,7 +303,7 @@ export class SecretSDK {
         });
 
         let noteState = [NoteState.PROVED, NoteState.SPENT]
-        let notesResult = await this.getAndDecryptNote(ctx, noteState, inputNotesIndices);
+        let notesResult = await this.getAndDecryptNote(ctx, noteState, inputNotesIndices, false);
         if (!notesResult.ok) {
             return notesResult;
         }
@@ -295,22 +311,21 @@ export class SecretSDK {
 
         // reconstruct transaction
         let resp = []
-        console.log(notes, txList);
         for (let tx of txList) {
-            let note = notes.filter((row: any) => row.index.toString() == tx.noteIntex)
-            let note2 = notes.filter((row: any) => row.index.toString() == tx.note2Intex)
+            let note = notes.filter((row: any) => row.index.toString() === tx.noteIndex)
+            let note2 = notes.filter((row: any) => row.index.toString() === tx.note2Index)
             console.log(note, note2);
 
             resp.push({
                 operation: tx.operation,
-                balance: note.val + note2.val,
-                assetId: note.assetId,
+                balance: note[0].val + note2[0].val,
+                assetId: note[0].assetId,
                 to: "", // TODO
-                txhash: tx.proof+tx.publicInput,
+                txhash: createBlakeHash("blake256").update(tx.proof).update(tx.publicInput).digest().toString("hex").slice(12),
                 timestamp: tx.updatedAt
             });
         }
-        return succResp(resp);
+        return succResp(resp, true);
     }
 
     async submitProofs(ctx: Context, proofs: any) {
@@ -437,14 +452,15 @@ export class SecretSDK {
      * @param {Context} ctx
      * @param {Array<NoteState>} noteState: Get current user's adopted notes and wild notes. A wild note's alias is ‘__DEFAULT_ALIAS__’.
      * @param {Array<string>} indices
+     * @param {boolean} skipZeroNote is false if all notes(with val 0) are required to return
      * @return {Promise<AppError>} An `AppError` object with `data` property of type `Array<Note>` if notes are successfully retrieved.
      */
-    private async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>, indices: Array<string> = []) {
+    private async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>, indices: Array<string> = [], skipZeroNote: boolean = true) {
         let encryptedNotes = await this.getNotes(ctx, noteState, indices);
         if (!encryptedNotes.ok) {
             return encryptedNotes;
         }
-        let allNotes = decryptNotes(this.account.accountKey, encryptedNotes.data);
+        let allNotes = decryptNotes(this.account.accountKey, encryptedNotes.data, skipZeroNote);
         let resp = await this.adoptNotes(ctx, allNotes, encryptedNotes.data);
         if (!resp.ok) {
             return resp;
