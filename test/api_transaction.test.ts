@@ -1,7 +1,6 @@
 const request = require("supertest");
 const consola = require("consola");
 import app from "../server/dist/service";
-import sequelize from "../server/dist/db";
 import { EigenAddress } from "@eigen-secret/core/dist-node/account";
 import { ethers } from "ethers";
 import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist-node/utils";
@@ -36,6 +35,7 @@ describe("POST /transactions", () => {
                 noteIndex: index().toString(),
                 note2Index: index().toString(),
                 proof: "0x12",
+                operation: "send",
                 publicInput: "{\"root\": \"11\"}"
             }]
         })

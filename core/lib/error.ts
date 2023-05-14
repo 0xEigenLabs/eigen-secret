@@ -45,5 +45,9 @@ export class AppError {
     this.errno = args.errno;
     this.data = args.data || "";
   }
+
+  public get ok() {
+      return this.errno === ErrCode.Success;
+  }
 }
 

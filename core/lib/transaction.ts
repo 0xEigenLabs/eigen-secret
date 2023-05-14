@@ -36,11 +36,18 @@ export class Transaction {
         this.sender = sender;
     }
 
-    async encrypt(eddsa: any): Promise<Array<TxData>> {
+    async encrypt(eddsa: any, encryptByReceiver: boolean = true): Promise<Array<TxData>> {
         let tes = [];
         for (let note of this.notes) {
             let tmpKey = new SigningKey(eddsa);
-            let sharedKey = tmpKey.makeSharedKey(note._owner);
+            let sharedKey: any;
+            if (encryptByReceiver) {
+                // make proof
+                sharedKey = tmpKey.makeSharedKey(note._owner);
+            } else {
+                // make transaction history
+                sharedKey = tmpKey.makeSharedKey(this.sender.pubKey);
+            }
             tes.push(
                 new TxData(tmpKey.pubKey, note.encrypt(sharedKey))
             )
@@ -49,11 +56,10 @@ export class Transaction {
         return Promise.resolve(tes);
     }
 
-    // dead code
-    async decrypt(content: Array<TxData>): Promise<Array<Note>> {
+    static async decrypt(content: Array<TxData>, sender: SigningKey): Promise<Array<Note>> {
         let result = [];
         for (let data of content) {
-            let sharedKey = this.sender.makeSharedKey(data.pubKey);
+            let sharedKey = sender.makeSharedKey(data.pubKey);
             result.push(
                 Note.decrypt(data.content, sharedKey)
             )

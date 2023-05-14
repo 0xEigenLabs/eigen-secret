@@ -25,6 +25,16 @@ TransactionModel.init({
         type: DataTypes.TEXT,
         allowNull: false
     },
+    operation: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    /*
+    txData: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    */
     publicInput: {
         type: DataTypes.TEXT,
         allowNull: false
@@ -41,9 +51,9 @@ TransactionModel.init({
 
 export enum TransactionModelStatus {
     UNKNOWN = 1,
-    CREATED = 2,
-    AGGREGATING = 3,
-    SETTLED = 4,
+    CONFIRMED = 2, // tx confirmed on L2
+    AGGREGATING = 3, // tx is being aggregated to BatchProof
+    SETTLED = 4, // tx confirmed on L1
 }
 
 export async function createTx(req: any, res: any) {
@@ -61,11 +71,13 @@ export async function createTx(req: any, res: any) {
     inputs.forEach( (inp: any) => {
         insertTxs.push({
             alias: alias,
-            noteIndex: inp.noteIndex,
-            note2Index: inp.note2Index,
+            noteIndex: inp.noteIndex, // input 0 index
+            note2Index: inp.note2Index, // input 1 index
+            operation: inp.operation,
+            // txData: inp.txData,
             proof: inp.proof,
             publicInput: inp.publicInput,
-            status: TransactionModelStatus.CREATED
+            status: TransactionModelStatus.CONFIRMED
         });
     } );
 
@@ -101,8 +113,8 @@ export async function createTx(req: any, res: any) {
 export async function getTxByAlias(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    const page = req.body.page;
-    const pageSize = req.body.pageSize;
+    const page = Number(req.body.page || 0);
+    const pageSize = Number(req.body.pageSize || 10);
     if (code !== ErrCode.Success) {
         return res.json(errResp(code, ErrCode[code]));
     }
@@ -143,39 +155,27 @@ export async function updateStateTree(req: any, res: any) {
 export async function getNotes(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    const noteState = req.body.noteState;
     if (code !== ErrCode.Success) {
         return res.json(errResp(code, ErrCode[code]));
     }
-
-    // get the confirmed note list, TODO: handle exception
-    let notes = await getDBNotes(ctx.alias, noteState);
+    const noteState = req.body.noteState || [];
+    const indices = req.body.indices || [];
+    let notes = await getDBNotes(ctx.alias, noteState, indices);
     return res.json(succResp(notes));
 }
 
 async function search(filterDict: any, page: any, pageSize: any) {
-    if (page) {
-      const { count, rows } = await TransactionModel.findAndCountAll({
+    let offset = page > 0? page - 1 : 0;
+    const { count, rows } = await TransactionModel.findAndCountAll({
         where: filterDict,
         order: [["createdAt", "DESC"]],
         limit: pageSize,
-        offset: (page - 1) * pageSize,
+        offset: offset * pageSize,
         raw: true
-      });
-      const totalPage = Math.ceil(count / pageSize);
-      return {
+    });
+    const totalPage = Math.ceil(count / pageSize);
+    return {
         transactions: rows,
         totalPage
-      };
-    } else {
-      const list = await TransactionModel.findAll({
-        where: filterDict,
-        order: [["createdAt", "DESC"]],
-        raw: true
-      });
-      return {
-        transactions: list,
-        totalPage: list.length
-      };
-    }
+    };
 }

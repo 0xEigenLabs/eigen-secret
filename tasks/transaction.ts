@@ -161,14 +161,14 @@ task("get-balance", "Get user's both L1 and L2 balance")
 
     balance = await tokenIns.balanceOf(user.address);
     console.log("L1 balance", balance.toString());
-  });
+});
 
-  task("get-transactions", "Get user's transactions")
+task("get-transactions", "Get user's transactions")
   .addParam("alias", "user name", "Alice")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("index", "user index for test")
-  .addParam("page", "page")
-  .addParam("pageSize", "page size")
+  .addParam("page", "page", "0")
+  .addParam("pageSize", "page size", "10")
   .setAction(async ({ alias, password, index, page, pageSize }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
@@ -193,4 +193,4 @@ task("get-balance", "Get user's both L1 and L2 balance")
       console.log("getAllBalance failed: ", transactions);
     }
     console.log("transactions", transactions.data);
-  });
+});
