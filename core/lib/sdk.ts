@@ -390,6 +390,40 @@ export class SecretSDK {
         return this.curl("assets/price", data);
     }
 
+    async getTokenList(ctx: Context, contractAddress: any) {
+        let data = {
+            context: ctx.serialize(),
+            contractAddress: contractAddress
+        };
+        let resp = await this.curl("assets/getTokenList", data);
+        
+        let noteState = [NoteState.PROVED]
+        let notes = await this.getAndDecryptNote(ctx, noteState);
+        if (!notes.ok) {
+            return errResp(ErrCode.RecordNotExist, "");
+        }
+        let notesByAssetId: Map<number, bigint> = new Map();
+        for (const note of notes.data) {
+            if (!notesByAssetId.has(note.assetId)) {
+                notesByAssetId.set(note.assetId, note.val);
+            } else {
+                notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
+            }
+        }
+
+        let res = []
+        let tokenList = resp.data
+        for(let token of tokenList){
+            let val = notesByAssetId.get(Number(token.assetId)) || 0
+            res.push({
+                "assetId": token.assetId,
+                "tokenInfo": token.tokenInfo,
+                "amount": val
+            })
+        }
+        return succResp(res)
+    }
+
     /**
      * Obtain user balance.
      * @param {Context} ctx

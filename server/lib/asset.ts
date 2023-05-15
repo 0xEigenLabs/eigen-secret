@@ -5,6 +5,8 @@ import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { Headers } from "node-fetch";
 import fetch from "node-fetch";
+import fs from "fs";
+import path from "path";
 
 class AssetModel extends Model {}
 
@@ -24,6 +26,66 @@ AssetModel.init({
     sequelize, // We need to pass the connection instance
     modelName: "AssetModel" // We need to choose the model name
 });
+
+export const MAINNET_TOKENS = JSON.parse(
+    fs.readFileSync(path.resolve(__dirname, "../lib/mainnet_erc20.json"), "utf-8")
+  );
+
+export const MAINNET_TOKEN_ADDRESS_TO_TOKEN_MAP = generateTokenList()
+
+function generateTokenList() {
+    let tokenMap: Map<string, any> = new Map();
+    for(const token of MAINNET_TOKENS.tokens){
+        tokenMap.set(token.address, {
+            "chainId": token.chainId, 
+            "address": token.address,
+            "name": token.name,
+            "symbol": token.name,
+            "decimals": token.decimals,
+            "logoURI": token.logoURI,
+            "extensions": token.extensions
+        })
+    }
+    return tokenMap
+}
+
+function getTokenListByAddress(contractAddress: any){
+    if(MAINNET_TOKEN_ADDRESS_TO_TOKEN_MAP.has(contractAddress)){
+        return MAINNET_TOKEN_ADDRESS_TO_TOKEN_MAP.get(contractAddress)
+    }
+    return {
+        "chainId": "", 
+        "address": contractAddress,
+        "name": "Unknown Token",
+        "symbol": "",
+        "decimals": 0,
+        "logoURI": "",
+        "extensions": ""
+    }
+}
+
+export async function getTokenList(req: any, res: any) {
+    let ctx = Context.deserialize(req.body.context);
+    const code = ctx.check();
+    if (code !== ErrCode.Success) {
+        return res.json(errResp(code, ErrCode[code]));
+    }
+
+    let contractAddress = req.body.contractAddress
+    if (contractAddress !== undefined){
+        return res.json(succResp(getTokenListByAddress(contractAddress)))
+    }
+    let assets = await AssetModel.findAll({ raw: true })
+
+    let tokenList = []
+    for (const asset of assets){
+        tokenList.push({
+            "assetId": asset.assetId,
+            "tokenInfo": getTokenListByAddress(asset.contractAddress)
+        })
+    }
+    return res.json(succResp(tokenList))
+}
 
 // create registered asset
 export async function createAsset(req: any, res: any) {
