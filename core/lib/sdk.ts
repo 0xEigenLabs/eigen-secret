@@ -325,7 +325,7 @@ export class SecretSDK {
                 timestamp: tx.updatedAt
             });
         }
-        
+
         let resp = {
             "transactions": transactions,
             "totalPage": txListResult.data.totalPage
@@ -375,10 +375,17 @@ export class SecretSDK {
      *   data: [
      *     {
      *       assetId: '2',
-     *       token_symbol: 'TT',
-     *       token_address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
      *       latest_price: 1,
-     *       latest_24h_price: 1
+     *       latest_24h_price: 1,
+     *       tokenInfo: {
+     *         chainId: '',
+     *         address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+     *         name: 'Unknown Token',
+     *         symbol: '',
+     *         decimals: 0,
+     *         logoURI: '',
+     *         extensions: ''
+     *       }
      *     }
      *   ]
      * }
@@ -388,40 +395,6 @@ export class SecretSDK {
             context: ctx.serialize()
         };
         return this.curl("assets/price", data);
-    }
-
-    async getTokenList(ctx: Context, contractAddress: any) {
-        let data = {
-            context: ctx.serialize(),
-            contractAddress: contractAddress
-        };
-        let resp = await this.curl("assets/getTokenList", data);
-        
-        let noteState = [NoteState.PROVED]
-        let notes = await this.getAndDecryptNote(ctx, noteState);
-        if (!notes.ok) {
-            return errResp(ErrCode.RecordNotExist, "");
-        }
-        let notesByAssetId: Map<number, bigint> = new Map();
-        for (const note of notes.data) {
-            if (!notesByAssetId.has(note.assetId)) {
-                notesByAssetId.set(note.assetId, note.val);
-            } else {
-                notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
-            }
-        }
-
-        let res = []
-        let tokenList = resp.data
-        for(let token of tokenList){
-            let val = notesByAssetId.get(Number(token.assetId)) || 0
-            res.push({
-                "assetId": token.assetId,
-                "tokenInfo": token.tokenInfo,
-                "amount": val
-            })
-        }
-        return succResp(res)
     }
 
     /**
@@ -452,7 +425,7 @@ export class SecretSDK {
         if (!assetInfo.ok) {
             return assetInfo;
         }
-        // console.log("assetInfo", assetInfo);
+        //console.log("assetInfo", assetInfo, assetInfo.data[0].tokenInfo);
         let priceInfo = assetInfo.data;
         let prices: Map<number, number> = new Map();
         let last_24h_prices: Map<number, number> = new Map();

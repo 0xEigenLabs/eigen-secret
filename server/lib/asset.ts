@@ -35,9 +35,9 @@ export const MAINNET_TOKEN_ADDRESS_TO_TOKEN_MAP = generateTokenList()
 
 function generateTokenList() {
     let tokenMap: Map<string, any> = new Map();
-    for(const token of MAINNET_TOKENS.tokens){
+    for (const token of MAINNET_TOKENS.tokens) {
         tokenMap.set(token.address, {
-            "chainId": token.chainId, 
+            "chainId": token.chainId,
             "address": token.address,
             "name": token.name,
             "symbol": token.name,
@@ -49,12 +49,12 @@ function generateTokenList() {
     return tokenMap
 }
 
-function getTokenListByAddress(contractAddress: any){
-    if(MAINNET_TOKEN_ADDRESS_TO_TOKEN_MAP.has(contractAddress)){
+function getTokenInfoByAddress(contractAddress: any) {
+    if (MAINNET_TOKEN_ADDRESS_TO_TOKEN_MAP.has(contractAddress)) {
         return MAINNET_TOKEN_ADDRESS_TO_TOKEN_MAP.get(contractAddress)
     }
     return {
-        "chainId": "", 
+        "chainId": "",
         "address": contractAddress,
         "name": "Unknown Token",
         "symbol": "",
@@ -62,29 +62,6 @@ function getTokenListByAddress(contractAddress: any){
         "logoURI": "",
         "extensions": ""
     }
-}
-
-export async function getTokenList(req: any, res: any) {
-    let ctx = Context.deserialize(req.body.context);
-    const code = ctx.check();
-    if (code !== ErrCode.Success) {
-        return res.json(errResp(code, ErrCode[code]));
-    }
-
-    let contractAddress = req.body.contractAddress
-    if (contractAddress !== undefined){
-        return res.json(succResp(getTokenListByAddress(contractAddress)))
-    }
-    let assets = await AssetModel.findAll({ raw: true })
-
-    let tokenList = []
-    for (const asset of assets){
-        tokenList.push({
-            "assetId": asset.assetId,
-            "tokenInfo": getTokenListByAddress(asset.contractAddress)
-        })
-    }
-    return res.json(succResp(tokenList))
 }
 
 // create registered asset
@@ -134,6 +111,14 @@ export async function getAsset(req: any, res: any) {
     } else {
         asset = []
     }
+    asset.map((x: any) => {
+        x.tokenInfo = getTokenInfoByAddress(x.contractAddress)
+        if (x.tokenInfo.symbol == "") {
+            x.tokenInfo.symbol = x.token_symbol;
+        }
+        x.token_symbol = undefined;
+        x.token_address = undefined;
+    })
     return res.json(succResp(asset))
 }
 
@@ -187,7 +172,14 @@ export async function getAssetInfo(req: any, res: any) {
             })
         }
     }
-
+    results.map((x: any) => {
+        x.tokenInfo = getTokenInfoByAddress(x.token_address)
+        if (x.tokenInfo.symbol == "") {
+            x.tokenInfo.symbol = x.token_symbol;
+        }
+        x.token_symbol = undefined;
+        x.token_address = undefined;
+    })
     return res.json(succResp(results));
 }
 
