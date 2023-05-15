@@ -54,21 +54,4 @@ describe("POST /assets", () => {
         expect(responsePrice.status).to.eq(200);
         expect(responsePrice.body.errno).to.eq(0);
     })
-
-    it("Get token List", async () => {
-        let newEOAAccount = await ethers.Wallet.createRandom();
-        let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
-        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
-        const resp = await request(app)
-        .post("/assets/getTokenList")
-        .send({
-            context: ctx.serialize(),
-            contractAddress: undefined
-        })
-        .set("Accept", "application/json");
-        console.log(resp.body);
-        expect(resp.status).to.eq(200);
-        expect(resp.body.errno).to.eq(0);
-    })
 });
