@@ -5,7 +5,7 @@ import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
 import { Prover } from "./prover";
 import { Note, NoteState } from "./note";
-import { Transaction } from "./transaction";
+import { Transaction, TransactionModelStatus } from "./transaction";
 import { Context } from "./context";
 import { AppError, ErrCode, errResp, succResp } from "./error";
 import {
