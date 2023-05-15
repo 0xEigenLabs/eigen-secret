@@ -4,6 +4,7 @@ import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
 import { NoteModel, getDBNotes } from "./note";
+import { TransactionModelStatus } from "@eigen-secret/core/dist-node/transaction"
 
 class TransactionModel extends Model {}
 
@@ -48,13 +49,6 @@ TransactionModel.init({
     sequelize, // We need to pass the connection instance
     modelName: "TransactionModel" // We need to choose the model name
 });
-
-export enum TransactionModelStatus {
-    UNKNOWN = 1,
-    CONFIRMED = 2, // tx confirmed on L2
-    AGGREGATING = 3, // tx is being aggregated to BatchProof
-    SETTLED = 4, // tx confirmed on L1
-}
 
 export async function createTx(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);

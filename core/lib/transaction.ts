@@ -27,6 +27,13 @@ export class TxData {
     }
 }
 
+export enum TransactionModelStatus {
+    UNKNOWN = 1,
+    CONFIRMED = 2, // tx confirmed on L2
+    AGGREGATING = 3, // tx is being aggregated to BatchProof
+    SETTLED = 4, // tx confirmed on L1
+}
+
 export class Transaction {
     notes: Array<Note>;
     sender: SigningKey;
