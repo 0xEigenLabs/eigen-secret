@@ -6,8 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-plonky = { git = "github.com/0xEigenLabs/eigen-zkvm", package = "plonky", version = "0.0.1" }
-tokio = { version = "1", features = ["full"] }
+plonky = { git = "https://github.com/0xEigenLabs/eigen-zkvm", package = "plonky", version = "0.0.1" }
+bytes = "0.4"
+log = "0.4"
+mio = "0.6.12"
+scoped-tls = "0.1.0"
+iovec = "0.1"
+tokio-io = "0.1"
+tokio = "0.1.5"
+tokio-executor = "0.1.2"
+tokio-reactor = "0.1.1"
+tokio-timer = "0.2.1"
+tokio-core = "0.1.18"
+futures = "0.1.21"
 anyhow = "1.0.34"
 serde = { version = "1.0", features = [ "derive" ] }
-clap = { package = "clap-v3", version = "3.0.0-beta.1" } # todo: replace with official v3 when it's released to crates.io
+num_cpus = "1.0"
