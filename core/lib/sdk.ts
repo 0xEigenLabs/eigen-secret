@@ -310,12 +310,12 @@ export class SecretSDK {
         let notes = notesResult.data;
 
         // reconstruct transaction
-        let resp = []
+        let transactions = []
         for (let tx of txList) {
             let note = notes.filter((row: any) => row.index.toString() === tx.noteIndex)
             let note2 = notes.filter((row: any) => row.index.toString() === tx.note2Index)
 
-            resp.push({
+            transactions.push({
                 operation: tx.operation,
                 balance: note[0].val + note2[0].val,
                 assetId: note[0].assetId,
@@ -324,6 +324,11 @@ export class SecretSDK {
                 txhash: createBlakeHash("blake256").update(tx.proof).update(tx.publicInput).digest().toString("hex").slice(12),
                 timestamp: tx.updatedAt
             });
+        }
+        
+        let resp = {
+            "transactions": transactions,
+            "totalPage": txListResult.data.totalPage
         }
         return succResp(resp, true);
     }
