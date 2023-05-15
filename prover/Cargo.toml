@@ -1,0 +1,13 @@
+[package]
+name = "prover"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+plonky = { git = "github.com/0xEigenLabs/eigen-zkvm", package = "plonky", version = "0.0.1" }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.34"
+serde = { version = "1.0", features = [ "derive" ] }
+clap = { package = "clap-v3", version = "3.0.0-beta.1" } # todo: replace with official v3 when it's released to crates.io

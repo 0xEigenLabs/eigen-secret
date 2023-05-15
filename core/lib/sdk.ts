@@ -240,6 +240,7 @@ export class SecretSDK {
         let inputData = {
             operation: operation,
             // txData: txData,
+            inputs: input,
             noteIndex: input.inputNotes[0].index.toString(),
             note2Index: input.inputNotes[1].index.toString(),
             proof: Prover.serialize(proofAndPublicSignals.proof),
@@ -325,27 +326,12 @@ export class SecretSDK {
                 timestamp: tx.updatedAt
             });
         }
-        
+
         let resp = {
             "transactions": transactions,
             "totalPage": txListResult.data.totalPage
         }
         return succResp(resp, true);
-    }
-
-    async submitProofs(ctx: Context, proofs: any) {
-        let data = {
-            context: ctx.serialize(),
-            proofs: proofs
-        };
-        return this.curl("proof/create", data);
-    }
-
-    async getProofs(ctx: Context) {
-        let data = {
-            context: ctx.serialize()
-        };
-        return this.curl("proof/get", data);
     }
 
     /**

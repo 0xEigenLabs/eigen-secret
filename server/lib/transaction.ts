@@ -4,6 +4,7 @@ import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
 import { NoteModel, getDBNotes } from "./note";
+import { pathJoin } from "@eigen-secret/core/dist-node/utils";
 import { TransactionModelStatus } from "@eigen-secret/core/dist-node/transaction"
 
 class TransactionModel extends Model {}
@@ -63,6 +64,7 @@ export async function createTx(req: any, res: any) {
     const alias = ctx.alias;
     let insertTxs : Array<any> = [];
     inputs.forEach( (inp: any) => {
+        // TODO generate proof and remove witness from memory
         insertTxs.push({
             alias: alias,
             noteIndex: inp.noteIndex, // input 0 index
