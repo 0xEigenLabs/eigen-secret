@@ -320,6 +320,7 @@ export class SecretSDK {
                 balance: note[0].val + note2[0].val,
                 assetId: note[0].assetId,
                 to: "", // TODO
+                status: TransactionModelStatus[tx.status],
                 txhash: createBlakeHash("blake256").update(tx.proof).update(tx.publicInput).digest().toString("hex").slice(12),
                 timestamp: tx.updatedAt
             });
