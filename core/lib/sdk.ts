@@ -325,7 +325,7 @@ export class SecretSDK {
                 timestamp: tx.updatedAt
             });
         }
-        
+
         let resp = {
             "transactions": transactions,
             "totalPage": txListResult.data.totalPage
@@ -375,10 +375,17 @@ export class SecretSDK {
      *   data: [
      *     {
      *       assetId: '2',
-     *       token_symbol: 'TT',
-     *       token_address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
      *       latest_price: 1,
-     *       latest_24h_price: 1
+     *       latest_24h_price: 1,
+     *       tokenInfo: {
+     *         chainId: '',
+     *         address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+     *         name: 'Unknown Token',
+     *         symbol: '',
+     *         decimals: 0,
+     *         logoURI: '',
+     *         extensions: ''
+     *       }
      *     }
      *   ]
      * }
@@ -418,7 +425,7 @@ export class SecretSDK {
         if (!assetInfo.ok) {
             return assetInfo;
         }
-        // console.log("assetInfo", assetInfo);
+        //console.log("assetInfo", assetInfo, assetInfo.data[0].tokenInfo);
         let priceInfo = assetInfo.data;
         let prices: Map<number, number> = new Map();
         let last_24h_prices: Map<number, number> = new Map();
