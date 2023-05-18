@@ -10,8 +10,10 @@ plonky = { git = "https://github.com/0xEigenLabs/eigen-zkvm", package = "plonky"
 bytes = "1.4"
 log = "0.4"
 iovec = "0.1"
-tokio = { version = "1.28.0", features = ["net", "sync"] }
+tokio = { version = "1.28.0", features = ["full"] }
+tokio-util = { version = "0.7.8", features = ["full"] }
 futures = "0.3.28"
 anyhow = "1.0.34"
 serde = { version = "1.0", features = [ "derive" ] }
 num_cpus = "1.0"
+serde_json = "1.0"

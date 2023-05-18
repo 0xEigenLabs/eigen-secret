@@ -3,7 +3,22 @@ var net = require('net');
 var client = new net.Socket();
 client.connect(3100, '127.0.0.1', function() {
 	console.log('Connected');
-	client.write('Hello, server! Love, Client. 1111111111111111111111111111111'.repeat(29));
+
+  let req = {
+    method: "prove",
+    body:  {
+      circuit_file: "../circuits/main_update_state_js/main_update_state.r1cs",
+      witness: "../circuits/main_update_state_js/witness.wtns",
+      srs_monomial_form: "/tmp/final.zkay.18",
+      srs_lagrange_form: "",
+      transcript: "keccak",
+      proof_bin: "/tmp/proof.bin",
+      proof_json: "/tmp/proof.json",
+      public_json: "/tmp/public.json",
+    }
+  }
+
+  client.write(`${JSON.stringify(req)}\r\n`);
 });
 
 client.on('data', function(data) {
