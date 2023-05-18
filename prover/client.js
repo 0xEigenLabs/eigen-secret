@@ -8,8 +8,9 @@ client.connect(3100, '127.0.0.1', function() {
     method: "prove",
     body:  {
       circuit_file: "../circuits/main_update_state_js/main_update_state.r1cs",
-      witness: "../circuits/main_update_state_js/witness.wtns",
-      srs_monomial_form: "/tmp/final.zkay.18",
+      wasm_file: "../circuits/main_update_state_js/main_update_state.wasm",
+      input_json: "../circuits/main_update_state.input.json",
+      srs_monomial_form: "/tmp/setup_2^18.key",
       srs_lagrange_form: "",
       transcript: "keccak",
       proof_bin: "/tmp/proof.bin",
@@ -22,7 +23,7 @@ client.connect(3100, '127.0.0.1', function() {
 });
 
 client.on('data', function(data) {
-	console.log('Received: ' + data);
+	console.log('Received proof and public input: ' + data);
 	client.destroy(); // kill client after server's response
 });
 

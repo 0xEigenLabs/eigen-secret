@@ -4,9 +4,9 @@ set -e
 circuit_name=$1
 
 # withdraw
-POWER=14
+#POWER=14
 # update state
-#POWER=16
+POWER=16
 
 CUR_DIR=$(cd $(dirname $0);pwd)
 base_dir=${CUR_DIR}/${circuit_name}_js
