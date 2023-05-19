@@ -9,11 +9,9 @@ use plonky::api::{
 use futures::SinkExt;
 use futures::StreamExt;
 use serde_json::Value;
-use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::net::SocketAddr;
-use tokio::io::AsyncWriteExt;
 use tokio::net::{TcpListener, TcpStream};
 use uuid::Uuid;
 
@@ -52,16 +50,70 @@ struct Request {
 /// Prove by Plonk, https://github.com/0xEigenLabs/eigen-zkvm/blob/main/zkit/src/main.rs#L60
 #[derive(Debug, Deserialize)]
 struct ProveOpt {
+    #[serde(default)]
     circuit_file: String,
+    #[serde(default)]
     wasm_file: String,
     input_json: String,
     /// SRS monomial form
+    #[serde(default)]
     srs_monomial_form: String,
     srs_lagrange_form: Option<String>,
+    #[serde(default)]
     transcript: String,
+    #[serde(default)]
     proof_bin: String,
+    #[serde(default)]
     proof_json: String,
+    #[serde(default)]
     public_json: String,
+    #[serde(default)]
+    witness: String,
+    #[serde(default)]
+    input_json_file: String,
+}
+
+fn make_prove_opt_for_update(value: Value) -> ProveOpt {
+    let workspace = "/tmp";
+    let mut opt: ProveOpt = serde_json::from_value(value).unwrap();
+    opt.circuit_file = format!("../circuits/main_update_state_js/main_update_state.r1cs");
+    opt.wasm_file = format!("../circuits/main_update_state_js/main_update_state.wasm");
+    opt.srs_monomial_form = format!("../circuits/setup_2^18.key");
+    opt.srs_lagrange_form = None;
+    opt.transcript = "keccak".to_string();
+    let uuid = Uuid::new_v4();
+    opt.proof_bin = format!("{}/{}.proof.bin", workspace, uuid);
+    opt.proof_json = format!("{}/{}.proof.json", workspace, uuid);
+    opt.public_json = format!("{}/{}.public.json", workspace, uuid);
+    opt.input_json_file = format!("{}/{}.input.json", workspace, uuid);
+    opt.witness = format!("{}/{}.wtns", workspace, uuid);
+    opt
+}
+
+fn make_prove_opt_for_withdraw(value: Value) -> ProveOpt {
+    let workspace = "/tmp";
+    let mut opt: ProveOpt = serde_json::from_value(value).unwrap();
+    opt.circuit_file = format!("../circuits/main_withdraw_js/main_withdraw.r1cs");
+    opt.wasm_file = format!("../circuits/main_withdraw_js/main_withdraw.wasm");
+    opt.srs_monomial_form = format!("../circuits/setup_2^18.key");
+    opt.srs_lagrange_form = None;
+    opt.transcript = "keccak".to_string();
+    let uuid = Uuid::new_v4();
+    opt.proof_bin = format!("{}/{}.proof.bin", workspace, uuid);
+    opt.proof_json = format!("{}/{}.proof.json", workspace, uuid);
+    opt.public_json = format!("{}/{}.public.json", workspace, uuid);
+    opt.input_json_file = format!("{}/{}.input.json", workspace, uuid);
+    opt.witness = format!("{}/{}.wtns", workspace, uuid);
+    opt
+}
+
+fn make_prove_opt(value: Value) -> ProveOpt {
+    let task_name = value.get("task_name").unwrap();
+    match task_name.as_str() {
+        Some("update") => make_prove_opt_for_update(value),
+        Some("withdraw") => make_prove_opt_for_withdraw(value),
+        _ => panic!("Invalid task: {}", task_name)
+    }
 }
 
 /// Verify the Plonk proof
@@ -91,12 +143,13 @@ async fn process(stream: TcpStream, addr: SocketAddr) -> Result<(), Box<dyn Erro
     let req: Request = serde_json::from_slice(&msg).unwrap();
     match req.method.as_str() {
         "prove" => {
-            let opt: ProveOpt = serde_json::from_value(req.body).unwrap();
-            let mut wtns_temp_file = format!("/tmp/{}.txt", Uuid::new_v4());
-            calculate_witness(&opt.wasm_file, &opt.input_json, &wtns_temp_file)?;
+            let opt: ProveOpt = make_prove_opt(req.body);
+            println!("opt: {:?}", opt);
+            std::fs::write(std::path::Path::new(&opt.input_json_file), opt.input_json)?;
+            calculate_witness(&opt.wasm_file, &opt.input_json_file, &opt.witness)?;
             prove(
                 &opt.circuit_file,
-                &wtns_temp_file,
+                &opt.witness,
                 &opt.srs_monomial_form,
                 None,
                 &opt.transcript,

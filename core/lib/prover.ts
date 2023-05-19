@@ -189,22 +189,18 @@ export class Prover {
             let req = {
                 method: "prove",
                 body: {
-                    circuit_file: "../circuits/main_update_state_js/main_update_state.r1cs",
-                    witness: "../circuits/main_update_state_js/witness.wtns",
-                    srs_monomial_form: "/tmp/final.zkay.18",
-                    srs_lagrange_form: "",
-                    transcript: "keccak",
-                    proof_bin: "/tmp/proof.bin",
-                    proof_json: "/tmp/proof.json",
-                    public_json: "/tmp/public.json",
+                    task_name: "update",
+                    input_json: input,
                 }
             }
 
             client.write(`${JSON.stringify(req)}\r\n`);
         });
 
-        client.on('data', function (data) {
+        let proofAndPublicSignals: any;
+        client.on('data', function (data: any) {
             console.log('Received: ' + data);
+            proofAndPublicSignals = data;
             client.destroy(); // kill client after server's response
         });
 
@@ -213,10 +209,6 @@ export class Prover {
         });
 
         // console.log("proof", proof, publicSignals)
-        const proofAndPublicSignals = {
-            proof: "",
-            publicSignals: ""
-        };
         return proofAndPublicSignals;
     }
 

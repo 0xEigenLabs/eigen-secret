@@ -16,7 +16,8 @@
     "clean": "rm -rf build dist typechain cache node_modules",
     "deploy:goerli": "hardhat deploy --network goerli",
     "deploy:hermez": "hardhat deploy --network hermez",
-    "deploy:dev": "hardhat deploy --network dev"
+    "deploy:dev": "hardhat deploy --network dev",
+    "prover": "cd prover && cargo run -r 127.0.0.1:3100"
   },
   "dependencies": {
     "@eigen-secret/core": "file:./core",
