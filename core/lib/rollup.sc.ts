@@ -207,7 +207,7 @@ export class RollupSC {
                 throw new Error(`receipt: ${JSON.stringify(receipt)}`)
             }
         } catch (error: any) {
-            console.log("processDeposits revert reason", error)
+            console.log("update revert reason", error)
             return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
         return succResp(receipt, true);
@@ -215,11 +215,11 @@ export class RollupSC {
 
     async withdraw(receiverAccount: any, txInfo: any, proofAndPublicSignal: any) {
         assert(this.rollup);
-        let processDeposit: any;
+        let withdraw: any;
         let proof = parseProof(proofAndPublicSignal.proof);
         let receipt: any;
         try {
-            processDeposit = await this.rollup.connect(this.userAccount).withdraw(
+            withdraw = await this.rollup.connect(this.userAccount).withdraw(
                 txInfo,
                 receiverAccount.address,
                 proof.a,
@@ -227,12 +227,12 @@ export class RollupSC {
                 proof.c,
                 { from: this.userAccount.address }
             )
-            receipt = await processDeposit.wait()
+            receipt = await withdraw.wait()
             if (receipt.status !== 1) {
                 throw new Error(`receipt: ${JSON.stringify(receipt)}`)
             }
         } catch (error: any) {
-            console.log("processDeposits revert reason", error)
+            console.log("withdraw revert reason", error)
             return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
         return succResp(receipt, true);
