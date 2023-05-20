@@ -45,7 +45,7 @@ export class Transaction {
         this.eddsa = eddsa;
     }
 
-    async encrypt(): Promise<Array<TxData>> {
+    async encryptNote(): Promise<Array<TxData>> {
         let tes = [];
         let notes = this.input.inputNotes.concat(this.input.outputNotes);
         for (let note of notes) {
@@ -59,7 +59,7 @@ export class Transaction {
         return Promise.resolve(tes);
     }
 
-    data(sender: SigningKey) {
+    encryptTx(sender: SigningKey) {
         let output1 = this.input.outputNotes[0];
         let tmpKey = new SigningKey(this.eddsa);
         let data = {

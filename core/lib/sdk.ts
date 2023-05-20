@@ -239,7 +239,7 @@ export class SecretSDK {
         // let txData = txDataList.map((x: any) => x.toString()).join("|");
         let inputData = {
             operation: operation,
-            txData: tx.data(this.account.accountKey),
+            txData: tx.encryptTx(this.account.accountKey),
             proof: Prover.serialize(proofAndPublicSignals.proof),
             publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
         };
@@ -570,7 +570,7 @@ export class SecretSDK {
             }
 
             let transaction = new Transaction(input, this.eddsa);
-            let txData = await transaction.encrypt();
+            let txNotes = await transaction.encryptNote();
 
             // batch create tx
             this.createTx(transaction, proofAndPublicSignals, "deposit");
@@ -583,22 +583,22 @@ export class SecretSDK {
                     alias: this.alias,
                     index: input.inputNotes[0].index,
                     // it's the first depositing, so the init public key is a random
-                    pubKey: txData[0].pubKey.pubKey,
-                    content: txData[0].content,
+                    pubKey: txNotes[0].pubKey.pubKey,
+                    content: txNotes[0].content,
                     state: NoteState.SPENT
                 },
                 {
                     alias: this.alias,
                     index: input.inputNotes[1].index,
-                    pubKey: txData[1].pubKey.pubKey,
-                    content: txData[1].content,
+                    pubKey: txNotes[1].pubKey.pubKey,
+                    content: txNotes[1].content,
                     state: NoteState.SPENT
                 },
                 {
                     alias: this.alias,
                     index: input.outputNotes[0].index,
-                    pubKey: txData[2].pubKey.pubKey,
-                    content: txData[2].content,
+                    pubKey: txNotes[2].pubKey.pubKey,
+                    content: txNotes[2].content,
                     state: NoteState.PROVED
                 }
             ];
@@ -606,8 +606,8 @@ export class SecretSDK {
             _notes.push({
                     alias: this.alias,
                     index: input.outputNotes[1].index,
-                    pubKey: txData[3].pubKey.pubKey,
-                    content: txData[3].content,
+                    pubKey: txNotes[3].pubKey.pubKey,
+                    content: txNotes[3].content,
                     state: NoteState.PROVED
                 });
             }
@@ -694,7 +694,7 @@ export class SecretSDK {
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
             let transaction = new Transaction(input, this.eddsa);
-            let txData = await transaction.encrypt();
+            let txNotes = await transaction.encryptNote();
 
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
@@ -708,22 +708,22 @@ export class SecretSDK {
                 {
                     alias: this.alias,
                     index: input.inputNotes[0].index,
-                    pubKey: txData[0].pubKey.pubKey,
-                    content: txData[0].content,
+                    pubKey: txNotes[0].pubKey.pubKey,
+                    content: txNotes[0].content,
                     state: NoteState.SPENT
                 },
                 {
                     alias: this.alias,
                     index: input.inputNotes[1].index,
-                    pubKey: txData[1].pubKey.pubKey,
-                    content: txData[1].content,
+                    pubKey: txNotes[1].pubKey.pubKey,
+                    content: txNotes[1].content,
                     state: NoteState.SPENT
                 },
                 {
                     alias: receiverAlias,
                     index: input.outputNotes[0].index,
-                    pubKey: txData[2].pubKey.pubKey,
-                    content: txData[2].content,
+                    pubKey: txNotes[2].pubKey.pubKey,
+                    content: txNotes[2].content,
                     state: NoteState.PROVED
                 }
             ];
@@ -731,8 +731,8 @@ export class SecretSDK {
                 _notes.push({
                     alias: this.alias,
                     index: input.outputNotes[1].index,
-                    pubKey: txData[3].pubKey.pubKey,
-                    content: txData[3].content,
+                    pubKey: txNotes[3].pubKey.pubKey,
+                    content: txNotes[3].content,
                     state: NoteState.PROVED
                 });
             }
@@ -833,7 +833,7 @@ export class SecretSDK {
             }
 
             let transaction = new Transaction(input, this.eddsa);
-            let txData = await transaction.encrypt();
+            let txNotes = await transaction.encryptNote();
 
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
@@ -849,22 +849,22 @@ export class SecretSDK {
                 {
                     alias: this.alias,
                     index: input.inputNotes[0].index,
-                    pubKey: txData[0].pubKey.pubKey,
-                    content: txData[0].content,
+                    pubKey: txNotes[0].pubKey.pubKey,
+                    content: txNotes[0].content,
                     state: NoteState.SPENT
                 },
                 {
                     alias: this.alias,
                     index: input.inputNotes[1].index,
-                    pubKey: txData[1].pubKey.pubKey,
-                    content: txData[1].content,
+                    pubKey: txNotes[1].pubKey.pubKey,
+                    content: txNotes[1].content,
                     state: NoteState.SPENT
                 },
                 {
                     alias: this.alias,
                     index: input.outputNotes[0].index,
-                    pubKey: txData[2].pubKey.pubKey,
-                    content: txData[2].content,
+                    pubKey: txNotes[2].pubKey.pubKey,
+                    content: txNotes[2].content,
                     state: NoteState.SPENT
                 }
             ];
@@ -872,8 +872,8 @@ export class SecretSDK {
                 _notes.push({
                     alias: this.alias,
                     index: input.outputNotes[1].index,
-                    pubKey: txData[3].pubKey.pubKey,
-                    content: txData[3].content,
+                    pubKey: txNotes[3].pubKey.pubKey,
+                    content: txNotes[3].content,
                     state: NoteState.PROVED
                 });
             }

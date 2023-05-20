@@ -208,7 +208,7 @@ describe("POST /transactions", function() {
 
             // output transaction
             let transaction = new Transaction(input, eddsa);
-            let txData = await transaction.encrypt();
+            let txData = await transaction.encryptNote();
 
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             // create tx. FIXME: should peg input?
@@ -217,7 +217,7 @@ describe("POST /transactions", function() {
                 .send({
                     context: ctx.serialize(),
                     inputs: [{
-                        txData: txData.data(),
+                        txData: transaction.encryptTx(),
                         operation: "deposit",
                         proof: Prover.serialize(proofAndPublicSignals.proof),
                         publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
