@@ -68,14 +68,14 @@ export class Transaction {
             amount: output1.val,
             assetId: output1.assetId
         }
-        let sharedKey = sender.makeSharedKey(tmpKey.pubKey);
+        let sharedKey = tmpKey.makeSharedKey(sender.pubKey);
         let aes = new Aes256gcm(sharedKey);
         let cipher = aes.encrypt(JSON.stringify(prepareJson(data)));
         let txData = new TxData(tmpKey.pubKey, cipher);
         return txData.toString;
     }
 
-    static dataDecrypt(content: String, sender: SigningKey) {
+    static decryptTx(content: String, sender: SigningKey) {
         let txData = TxData.toObj(content)
         let sharedKey = sender.makeSharedKey(txData.pubKey);
         let aes = new Aes256gcm(sharedKey);

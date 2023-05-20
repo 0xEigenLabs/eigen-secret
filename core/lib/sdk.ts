@@ -296,7 +296,7 @@ export class SecretSDK {
         // reconstruct transaction
         let transactions = []
         for (let tx of txList) {
-            let txData = Transaction.dataDecrypt(tx.txData, this.account.accountKey);
+            let txData = Transaction.decryptTx(tx.txData, this.account.accountKey);
             transactions.push({
                 operation: tx.operation,
                 balance: txData.amount, // should renamed to value, deprecated
