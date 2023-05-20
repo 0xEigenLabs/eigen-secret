@@ -15,7 +15,6 @@ import bodyParser from "body-parser";
 import { updateAccount, createAccount, getAccount } from "./account";
 import { createTx, getTxByAlias, updateStateTree, getNotes } from "./transaction";
 import { createAsset, getAsset, getAssetInfo } from "./asset";
-import { submitProofs, getProofs } from "./proof";
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);
 

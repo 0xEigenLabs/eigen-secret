@@ -1,4 +1,5 @@
-import { pathJoin } from "./utils";
+import { prepareJson, pathJoin } from "./utils";
+import { succResp, errResp, ErrCode } from "./error";
 const fs = require("fs");
 const snarkjs = require("snarkjs");
 import axios from "axios";
@@ -69,6 +70,9 @@ export class Prover {
     }
 
     static async updateState(circuitPath: string, input: any) {
+        if (Prover.updateStateRemote !== undefined) {
+            return Prover.updateStateRemote(input)
+        }
         if (typeof window !== "undefined") {
             return Prover.updateStateForClient(input);
         } else {
@@ -85,6 +89,9 @@ export class Prover {
     }
 
     static async withdraw(circuitPath: string, input: any) {
+        if (Prover.withdrawRemote !== undefined) {
+            return Prover.withdrawRemote(input)
+        }
         if (typeof window !== "undefined") {
             return Prover.withdrawForClient(input);
         } else {
@@ -180,36 +187,53 @@ export class Prover {
         return proofAndPublicSignals;
     }
 
-    static async updateStateRemote(circuitPath: string, input: any) {
-        var net = require('net');
-        var client = new net.Socket();
-        client.connect(3100, '127.0.0.1', function () {
-            console.log('Connected');
+    static async updateStateRemote(input: any) {
+        let options = {
+            method: "POST",
+            url: "http://127.0.0.1:3200/prove",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: prepareJson({
+                input_json: input
+            })
+        };
+        let response = await axios.request(options);
+        if (response.status != 200) {
+            throw new Error(response.statusText);
+        }
+        let data = JSON.parse(response.data);
+        console.log("data: ", data);
+        return {
+            proof: data[0],
+            publicSignals: data[1]
+        };
+    }
 
-            let req = {
-                method: "prove",
-                body: {
-                    task_name: "update",
-                    input_json: input,
-                }
-            }
+    static async withdrawRemote(input: any) {
+        let options = {
+            method: "POST",
+            url: "http://127.0.0.1:3200/withdraw",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data: prepareJson({
+                input_json: input
+            })
+        };
 
-            client.write(`${JSON.stringify(req)}\r\n`);
-        });
-
-        let proofAndPublicSignals: any;
-        client.on('data', function (data: any) {
-            console.log('Received: ' + data);
-            proofAndPublicSignals = data;
-            client.destroy(); // kill client after server's response
-        });
-
-        client.on('close', function () {
-            console.log('Connection closed');
-        });
-
-        // console.log("proof", proof, publicSignals)
-        return proofAndPublicSignals;
+        let response = await axios.request(options);
+        if (response.status != 200) {
+            throw new Error(response.statusText);
+        }
+        let data = JSON.parse(response.data);
+        console.log("data: ", data);
+        return {
+            proof: data[0],
+            publicSignals: data[1]
+        };
     }
 
     static async verifyStateForBackend(circuitPath: string, proofAndPublicSignals: any) {

@@ -3,7 +3,7 @@ const { buildEddsa } = require("circomlibjs");
 import { prepareJson, uint8Array2Bigint } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
-import { Prover } from "./prover";
+//import { Prover } from "./prover";
 import { Note, NoteState } from "./note";
 import { Transaction, TransactionModelStatus } from "./transaction";
 import { Context } from "./context";
@@ -1033,10 +1033,12 @@ export class SecretSDK {
         }
         let circuitInput = input.toCircuitInput(this.eddsa.babyJub, smtProof.data);
         // create final proof
+        /*
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
+        */
 
         keysFound.push(acStateKey);
         valuesFound.push(1n);
@@ -1045,15 +1047,17 @@ export class SecretSDK {
             tmpSiblings.push(BigInt(sib));
         }
         siblings.push(tmpSiblings);
+        /*
         let receipt = await this.rollupSC.update(proofAndPublicSignals);
         if (!receipt.ok) {
             return receipt
         }
+        */
         let resp = await this.createServerAccount(ctx, password);
         if (!resp.ok) {
             return resp;
         }
-        return succResp(proofAndPublicSignals);
+        return resp;
     }
 
     /**
@@ -1088,14 +1092,15 @@ export class SecretSDK {
         let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof.data);
 
         // create final proof
+        /*
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, inputJson);
-
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
             throw new Error("Invalid proof")
         }
 
         let proofs = new Array<string>(0);
         proofs.push(Prover.serialize(proofAndPublicSignals));
+        */
         let noteState = [NoteState.PROVED]
         let notes = await this.getAndDecryptNote(ctx, noteState);
         if (!notes.ok) {
@@ -1127,14 +1132,14 @@ export class SecretSDK {
                 if (!prf.ok) {
                     return prf;
                 }
-                proofs.concat(prf.data);
+                //proofs.concat(prf.data);
             }
         }
         let resp = await this.updateServerAccount(ctx, password);
         if (!resp.ok) {
             return resp;
         }
-        return succResp(proofs);
+        return resp;
     }
 
     /**
@@ -1169,13 +1174,14 @@ export class SecretSDK {
         let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof.data);
 
         // create final proof
+        /*
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, inputJson);
-
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
             return errResp(ErrCode.InvalidProof, ErrCode[ErrCode.InvalidProof])
         }
         let proofs = new Array<string>(0);
         proofs.push(Prover.serialize(proofAndPublicSignals));
+        */
 
         let noteState = [NoteState.PROVED, NoteState.PROVED]
         let notes = await this.getAndDecryptNote(ctx, noteState);
@@ -1209,7 +1215,7 @@ export class SecretSDK {
                 if (!prf.ok) {
                     return prf;
                 }
-                proofs.concat(prf.data);
+                //proofs.concat(prf.data);
             }
         }
         this.account.accountKey = newAccountKey;
@@ -1218,6 +1224,6 @@ export class SecretSDK {
         if (!resp.ok) {
             return resp;
         }
-        return succResp(proofs);
+        return resp;
     }
 }
