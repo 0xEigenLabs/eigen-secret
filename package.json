@@ -16,6 +16,7 @@
     "clean": "rm -rf build dist typechain cache node_modules",
     "deploy:goerli": "hardhat deploy --network goerli",
     "deploy:hermez": "hardhat deploy --network hermez",
+    "deploy:mumbai": "hardhat deploy --network mumbai",
     "deploy:dev": "hardhat deploy --network dev"
   },
   "dependencies": {

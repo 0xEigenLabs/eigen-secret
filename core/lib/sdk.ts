@@ -428,12 +428,12 @@ export class SecretSDK {
         //console.log("assetInfo", assetInfo, assetInfo.data[0].tokenInfo);
         let priceInfo = assetInfo.data;
         let prices: Map<number, number> = new Map();
-        let last_24h_prices: Map<number, number> = new Map();
+        let last24hPrices: Map<number, number> = new Map();
 
         priceInfo.forEach((row: any) => {
             if (row.assetId) {
                 prices.set(Number(row.assetId), row.latest_price);
-                last_24h_prices.set(Number(row.assetId), row.last_24h_prices);
+                last24hPrices.set(Number(row.assetId), row.last24hPrices);
             }
         });
 
@@ -441,7 +441,7 @@ export class SecretSDK {
         let resp = [];
         for (let [aid, val] of notesByAssetId) {
             let curPrice = prices.get(aid) || 1;
-            let p24hPrice = last_24h_prices.get(aid) || 1;
+            let p24hPrice = last24hPrices.get(aid) || 1;
             let profit = Number(val) * (curPrice - p24hPrice);
 
             resp.push({
