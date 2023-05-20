@@ -218,7 +218,7 @@ const __DEFAULT_ALIAS__ = "EIGEN_BUILTIN_PLACEHOLDER";
 const SESSION_DURATION = 5 * 60; // seconds
 
 const normalizeAlias = (alias: string) => {
-    return /^[A-Za-z][A-Za-z0-9_.]{2,14}$/.test(alias)
+    return /^[A-Za-z][A-Za-z0-9_.]{2,32}$/.test(alias)
 }
 
 export { hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION, normalizeAlias };
