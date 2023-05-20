@@ -2,8 +2,10 @@
  * transaction.ts
  * create tx encryption
  */
-import { Note } from "./note";
+import { UpdateStatusInput } from "./update_state";
 import { SigningKey, EigenAddress } from "./account";
+import { prepareJson } from "./utils";
+import { Aes256gcm } from "./aes_gcm";
 
 export class TxData {
     pubKey: EigenAddress;
@@ -35,26 +37,20 @@ export enum TransactionModelStatus {
 }
 
 export class Transaction {
-    notes: Array<Note>;
-    sender: SigningKey;
+    input: UpdateStatusInput;
+    eddsa: any;
 
-    constructor(notes: Array<Note>, sender: SigningKey) {
-        this.notes = notes;
-        this.sender = sender;
+    constructor(input: any, eddsa: any) {
+        this.input = input;
+        this.eddsa = eddsa;
     }
 
-    async encrypt(eddsa: any, encryptByReceiver: boolean = true): Promise<Array<TxData>> {
+    async encrypt(): Promise<Array<TxData>> {
         let tes = [];
-        for (let note of this.notes) {
-            let tmpKey = new SigningKey(eddsa);
-            let sharedKey: any;
-            if (encryptByReceiver) {
-                // make proof
-                sharedKey = tmpKey.makeSharedKey(note._owner);
-            } else {
-                // make transaction history
-                sharedKey = tmpKey.makeSharedKey(this.sender.pubKey);
-            }
+        let notes = this.input.inputNotes.concat(this.input.outputNotes);
+        for (let note of notes) {
+            let tmpKey = new SigningKey(this.eddsa);
+            let sharedKey = tmpKey.makeSharedKey(note._owner);
             tes.push(
                 new TxData(tmpKey.pubKey, note.encrypt(sharedKey))
             )
@@ -63,14 +59,26 @@ export class Transaction {
         return Promise.resolve(tes);
     }
 
-    static async decrypt(content: Array<TxData>, sender: SigningKey): Promise<Array<Note>> {
-        let result = [];
-        for (let data of content) {
-            let sharedKey = sender.makeSharedKey(data.pubKey);
-            result.push(
-                Note.decrypt(data.content, sharedKey)
-            )
+    data(sender: SigningKey) {
+        let output1 = this.input.outputNotes[0];
+        let tmpKey = new SigningKey(this.eddsa);
+        let data = {
+            from: sender.pubKey.pubKey,
+            to: output1._owner.pubKey,
+            amount: output1.val,
+            assetId: output1.assetId
         }
-        return result;
+        let sharedKey = sender.makeSharedKey(tmpKey.pubKey);
+        let aes = new Aes256gcm(sharedKey);
+        let cipher = aes.encrypt(JSON.stringify(prepareJson(data)));
+        let txData = new TxData(tmpKey.pubKey, cipher);
+        return txData.toString;
+    }
+
+    static dataDecrypt(content: String, sender: SigningKey) {
+        let txData = TxData.toObj(content)
+        let sharedKey = sender.makeSharedKey(txData.pubKey);
+        let aes = new Aes256gcm(sharedKey);
+        return aes.decrypt(txData.content);
     }
 }
