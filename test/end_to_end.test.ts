@@ -217,7 +217,7 @@ describe("POST /transactions", function() {
                 .send({
                     context: ctx.serialize(),
                     inputs: [{
-                        txData: transaction.encryptTx(),
+                        txData: transaction.encryptTx(signingKey),
                         operation: "deposit",
                         proof: Prover.serialize(proofAndPublicSignals.proof),
                         publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
@@ -352,7 +352,7 @@ describe("POST /transactions", function() {
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
             let transaction = new Transaction(input, eddsa);
-            let txData = await transaction.encrypt();
+            let txData = await transaction.encryptNote();
 
             assert(txData[0].content, encryptedNotes[0].content);
 
@@ -363,7 +363,7 @@ describe("POST /transactions", function() {
             .send({
                 context: ctx.serialize(),
                 inputs: [{
-                    txData: txData.data(),
+                    txData: transaction.encryptTx(signingKey),
                     operation: "send",
                     proof: Prover.serialize(proofAndPublicSignals.proof),
                     publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
@@ -532,7 +532,7 @@ describe("POST /transactions", function() {
             }
 
             let transaction = new Transaction(input, eddsa);
-            let txData = await transaction.encrypt();
+            let txData = await transaction.encryptNote();
 
             assert(txData[0].content, encryptedNotes[0].content);
 
@@ -543,7 +543,7 @@ describe("POST /transactions", function() {
             .send({
                 context: ctx.serialize(),
                 inputs: [{
-                    txData: txData.data(),
+                    txData: transaction.encryptTx(signingKey),
                     operation: "withdraw",
                     proof: Prover.serialize(proofAndPublicSignals.proof),
                     publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)

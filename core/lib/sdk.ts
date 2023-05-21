@@ -239,7 +239,7 @@ export class SecretSDK {
         // let txData = txDataList.map((x: any) => x.toString()).join("|");
         let inputData = {
             operation: operation,
-            txData: tx.encryptTx(this.account.accountKey),
+            txData: tx.encryptTx(this.account.signingKey),
             proof: Prover.serialize(proofAndPublicSignals.proof),
             publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
         };
@@ -296,7 +296,7 @@ export class SecretSDK {
         // reconstruct transaction
         let transactions = []
         for (let tx of txList) {
-            let txData = Transaction.decryptTx(tx.txData, this.account.accountKey);
+            let txData = Transaction.decryptTx(tx.txData, this.account.signingKey);
             transactions.push({
                 operation: tx.operation,
                 balance: txData.amount, // should renamed to value, deprecated
