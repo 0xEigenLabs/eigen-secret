@@ -2,7 +2,7 @@
  * transaction.ts
  * create tx encryption
  */
-import { UpdateStatusInput } from "./update_state";
+import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
 import { prepareJson } from "./utils";
 import { Aes256gcm } from "./aes_gcm";
@@ -37,10 +37,10 @@ export enum TransactionModelStatus {
 }
 
 export class Transaction {
-    input: UpdateStatusInput;
+    notes: Array<Note>;
     eddsa: any;
 
-    static InnerTxData = class {
+    static PlainTxData = class {
         from: string;
         to: string;
         assetId: number;
@@ -54,14 +54,13 @@ export class Transaction {
     }
 
     constructor(input: any, eddsa: any) {
-        this.input = input;
+        this.notes = input.inputNotes.concat(input.outputNotes);
         this.eddsa = eddsa;
     }
 
     async encryptNote(): Promise<Array<TxData>> {
         let tes = [];
-        let notes = this.input.inputNotes.concat(this.input.outputNotes);
-        for (let note of notes) {
+        for (let note of this.notes) {
             let tmpKey = new SigningKey(this.eddsa);
             let sharedKey = tmpKey.makeSharedKey(note._owner);
             tes.push(
@@ -74,7 +73,7 @@ export class Transaction {
 
     encryptTx(sender: SigningKey) {
         let tmpKey = new SigningKey(this.eddsa);
-        let output1 = this.input.outputNotes[0];
+        let output1 = this.notes[2]; // output notes 0
         let data = {
             from: sender.pubKey.pubKey,
             to: output1._owner.pubKey,
@@ -94,6 +93,24 @@ export class Transaction {
         let aes = new Aes256gcm(sharedKey);
         let data = aes.decrypt(txData.content);
         data = JSON.parse(data);
-        return new Transaction.InnerTxData(data.from, data.to, data.assetId, data.amount);
+        return new Transaction.PlainTxData(data.from, data.to, data.assetId, data.amount);
+    }
+
+    static reEncryptTx(sender: SigningKey, oldSigningKey: SigningKey, oldTxList: Array<string>, eddsa: any) {
+        let result = [];
+        for (const otx of oldTxList) {
+            try {
+                let data = Transaction.decryptTx(otx, oldSigningKey);
+                let tmpKey = new SigningKey(eddsa);
+                let sharedKey = tmpKey.makeSharedKey(sender.pubKey);
+
+                let aes = new Aes256gcm(sharedKey);
+                let cipher = aes.encrypt(JSON.stringify(prepareJson(data)));
+                result.push((new TxData(tmpKey.pubKey, cipher)).toString);
+            } catch (e: any) {
+                console.log(`re-encrypt ${otx} error`);
+            }
+        }
+        return result;
     }
 }

@@ -233,13 +233,13 @@ export class SecretSDK {
         this.noteBuff = this.noteBuff.concat(encryptedNotes);
     }
 
-    private async createTx(tx: Transaction, proofAndPublicSignals: any, operation: string) {
+    private async createTx(txData: string, proofAndPublicSignals: any, operation: string) {
         // let transaction = new Transaction(input.outputNotes, this.account.accountKey);
         // let txDataList = await transaction.encrypt(this.eddsa, false);
         // let txData = txDataList.map((x: any) => x.toString()).join("|");
         let inputData = {
             operation: operation,
-            txData: tx.encryptTx(this.account.signingKey),
+            txData: txData,
             proof: Prover.serialize(proofAndPublicSignals.proof),
             publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
         };
@@ -266,6 +266,15 @@ export class SecretSDK {
 
     }
 
+    private async fetchTransaction(ctx: Context, options: any) {
+        let data = {
+            context: ctx.serialize(),
+            page: options.page,
+            pageSize: options.pageSize
+        };
+        return await this.curl("transactions/get", data);
+    }
+
 
     /**
      *
@@ -274,7 +283,7 @@ export class SecretSDK {
      * @return {Object} transactions, e.g. [
      *  {
      *    operation: 'deposit',
-     *    balance: '0',
+     *    amount: '0',
      *    assetId: 2,
      *    to: '',
      *    txhash: '',
@@ -283,17 +292,12 @@ export class SecretSDK {
      *]
      */
     async getTransactions(ctx: Context, options: any) {
-        let data = {
-            context: ctx.serialize(),
-            page: options.page,
-            pageSize: options.pageSize
-        };
-        let txListResult = await this.curl("transactions/get", data);
+        // reconstruct transaction
+        let txListResult = await this.fetchTransaction(ctx, options);
         if (!txListResult.ok) {
             return txListResult;
         }
         let txList = txListResult.data.transactions || [];
-        // reconstruct transaction
         let transactions = []
         for (let tx of txList) {
             let txData = Transaction.decryptTx(tx.txData, this.account.signingKey);
@@ -303,7 +307,7 @@ export class SecretSDK {
             }
             transactions.push({
                 operation: tx.operation,
-                balance: txData.amount, // should renamed to value, deprecated
+                balance: txData.amount, // deprecated
                 amount: txData.amount,
                 assetId: txData.assetId,
                 to: txData.to,
@@ -311,7 +315,6 @@ export class SecretSDK {
                 txhash: createBlakeHash("blake256").update(tx.proof).update(tx.publicInput).digest().toString("hex").slice(12),
                 timestamp: tx.updatedAt
             });
-            console.log(transactions);
         }
 
         let resp = {
@@ -578,7 +581,9 @@ export class SecretSDK {
             let txNotes = await transaction.encryptNote();
 
             // batch create tx
-            this.createTx(transaction, proofAndPublicSignals, "deposit");
+            this.createTx(
+                transaction.encryptTx(this.account.signingKey), proofAndPublicSignals, "deposit"
+            );
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             if (!receipt.ok) {
                 return receipt
@@ -703,7 +708,10 @@ export class SecretSDK {
 
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            this.createTx(transaction, proofAndPublicSignals, "send");
+            this.createTx(
+                transaction.encryptTx(this.account.signingKey),
+                proofAndPublicSignals, "send"
+            );
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             if (!receipt.ok) {
                 return receipt
@@ -842,7 +850,9 @@ export class SecretSDK {
 
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
-            this.createTx(transaction, proofAndPublicSignals, "withdraw");
+            this.createTx(
+                transaction.encryptTx(this.account.signingKey),
+                proofAndPublicSignals, "withdraw");
             // call contract and deposit
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             // console.log(`receipt: ${JSON.stringify(receipt)}`)
@@ -1113,6 +1123,7 @@ export class SecretSDK {
                 notesByAssetId.set(note.assetId, (notesByAssetId.get(note.assetId) || 0n) + note.val);
             }
         }
+        let oldSigningKey = this.account.signingKey;
         // To re-encrypt the output notes with new signingKey, update signingKey immediately.
         this.account.signingKey = this.account.newSigningKey1;
         this.account.newSigningKey1 = this.account.newSigningKey2;
@@ -1138,6 +1149,27 @@ export class SecretSDK {
         if (!resp.ok) {
             return resp;
         }
+
+        // TODO: add transaction
+        this.txBuff = [];
+        this.noteBuff = [];
+        let txListResult = await this.fetchTransaction(ctx, { offset: 0, limit: 1000 });
+        if (!txListResult.ok) {
+            return txListResult;
+        }
+        let txList = txListResult.data.transactions || [];
+        let oldTxDataList = txList.map((x : any) => x.txData);
+
+        let newTxDataList = Transaction.reEncryptTx(this.account.signingKey, oldSigningKey, oldTxDataList, this.eddsa);
+        txList.forEach(
+            (e: any, i: number) => this.txBuff.push({
+                operation: e.operation,
+                txData: newTxDataList[i],
+                proof: e.proof,
+                publicInput: e.publicInput
+            })
+        )
+        await this.commit(ctx);
         return succResp(proofs);
     }
 
