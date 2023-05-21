@@ -14,12 +14,8 @@ TransactionModel.init({
         type: DataTypes.STRING,
         allowNull: false
     },
-    noteIndex: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    note2Index: {
-        type: DataTypes.STRING,
+    txData: {
+        type: DataTypes.TEXT,
         allowNull: false
     },
     proof: {
@@ -30,12 +26,6 @@ TransactionModel.init({
         type: DataTypes.STRING,
         allowNull: false
     },
-    /*
-    txData: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-    */
     publicInput: {
         type: DataTypes.TEXT,
         allowNull: false
@@ -65,10 +55,8 @@ export async function createTx(req: any, res: any) {
     inputs.forEach( (inp: any) => {
         insertTxs.push({
             alias: alias,
-            noteIndex: inp.noteIndex, // input 0 index
-            note2Index: inp.note2Index, // input 1 index
             operation: inp.operation,
-            // txData: inp.txData,
+            txData: inp.txData,
             proof: inp.proof,
             publicInput: inp.publicInput,
             status: TransactionModelStatus.CONFIRMED
@@ -91,7 +79,7 @@ export async function createTx(req: any, res: any) {
     try {
         await sequelize.transaction(async (t: any) => {
             if (insertTxs.length > 0) {
-                result = await TransactionModel.bulkCreate(insertTxs, { transaction: t });
+                result = await TransactionModel.bulkCreate(insertTxs, { transaction: t, updateOnDuplicate: ["txData"] });
             }
             if (insertNotes.length > 0) {
                 result2 = await NoteModel.bulkCreate(insertNotes, { transaction: t, updateOnDuplicate: ["state", "alias"] });

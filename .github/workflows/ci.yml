@@ -36,7 +36,7 @@ jobs:
         run: npm run build
       - name: Start hardhat node
         run: nohup npx hardhat node &
-      - name: Start server started and Start test
+      - name: Start server and Run tests
         run: |
             cp .env server/
             npm run server &

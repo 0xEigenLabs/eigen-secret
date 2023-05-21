@@ -62,20 +62,22 @@ module.exports = {
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.API_KEY}`,
       accounts: [process.env.PRIVATE_KEY],
-      gas: 21000000,
-      gasPrice: 8000000000
+      gas: 49000,
+      gasPrice: 1000000000
     },
     sepolia: {
       url: `https://sepolia.infura.io/v3/${process.env.API_KEY}`,
       accounts: [process.env.PRIVATE_KEY]
     },
-    tpolygon: {
+    mumbai: {
       url: "https://rpc-mumbai.maticvigil.com/",
       accounts: [process.env.PRIVATE_KEY]
     },
     hermez: {
       url: "https://rpc.public.zkevm-test.net/",
-      accounts: [process.env.PRIVATE_KEY]
+      accounts: [process.env.PRIVATE_KEY],
+      gas: 49000,
+      gasPrice: 1000000000
     }
   },
   gasReporter: {
