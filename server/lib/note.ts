@@ -3,12 +3,9 @@ import sequelize from "./db";
 import { NoteState } from "@eigen-secret/core/dist-node/note";
 import { __DEFAULT_ALIAS__ } from "@eigen-secret/core/dist-node/utils";
 
-
 type NoteStateArray = Array<NoteState>;
-// const consola = require("consola");
 
 export class NoteModel extends Model {}
-
 NoteModel.init({
     // Model attributes are defined here
     alias: {
@@ -39,6 +36,14 @@ NoteModel.init({
     modelName: "NoteModel" // We need to choose the model name
 });
 
-export async function getDBNotes(alias: string, state: NoteStateArray) {
-    return await NoteModel.findAll({ where: { alias: [alias, __DEFAULT_ALIAS__], state: state } })
+export async function getDBNotes(alias: string, state: NoteStateArray, indices: Array<string> = []) {
+    let conds: any = {
+        alias: [alias, __DEFAULT_ALIAS__],
+        state: state
+    }
+
+    if (indices.length > 0) {
+        conds.index = indices;
+    }
+    return await NoteModel.findAll({ where: conds })
 }

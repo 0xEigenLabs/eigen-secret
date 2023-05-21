@@ -4,9 +4,8 @@ import { ethers } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
 
-export const rawMessage = "Sign this message to generate your EigenSecret Key. " +
-"This key lets the application decrypt your balance on EigenSecret. " +
-"IMPORTANT: Only sign this message if you trust the application.";
+export const rawMessage = "Sign this message as a credential to interact with Eigen Secret L2 nodes. " +
+"IMPORTANT: Sign this message if you trust the application.";
 
 export function index() {
     return BigInt("0x" + _randomBytes(31).toString("hex"))
@@ -215,7 +214,11 @@ const hasValue = function(variable: any) {
 };
 
 const pathJoin = (parts: Array<string>, sep="/") => parts.join(sep).replace(new RegExp(sep+"{1,}", "g"), sep);
-const __DEFAULT_ALIAS__ = "EIGEN_BUILTIN_PLACEHOLDER";
-const SESSION_DURATION = 5 * 60; // seconds
+const __DEFAULT_ALIAS__ = "EIGEN_BUILTIN_ALIAS";
+const SESSION_DURATION = 30 * 60; // seconds
 
-export { hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION };
+const normalizeAlias = (alias: string) => {
+    return /^[A-Za-z][A-Za-z0-9_.]{2,32}$/.test(alias)
+}
+
+export { hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION, normalizeAlias };

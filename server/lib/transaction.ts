@@ -4,6 +4,7 @@ import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
 import { NoteModel, getDBNotes } from "./note";
+import { TransactionModelStatus } from "@eigen-secret/core/dist-node/transaction"
 
 class TransactionModel extends Model {}
 
@@ -13,16 +14,16 @@ TransactionModel.init({
         type: DataTypes.STRING,
         allowNull: false
     },
-    noteIndex: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    note2Index: {
-        type: DataTypes.STRING,
+    txData: {
+        type: DataTypes.TEXT,
         allowNull: false
     },
     proof: {
         type: DataTypes.TEXT,
+        allowNull: false
+    },
+    operation: {
+        type: DataTypes.STRING,
         allowNull: false
     },
     publicInput: {
@@ -39,13 +40,6 @@ TransactionModel.init({
     modelName: "TransactionModel" // We need to choose the model name
 });
 
-export enum TransactionModelStatus {
-    UNKNOWN = 1,
-    CREATED = 2,
-    AGGREGATING = 3,
-    SETTLED = 4,
-}
-
 export async function createTx(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
@@ -61,11 +55,11 @@ export async function createTx(req: any, res: any) {
     inputs.forEach( (inp: any) => {
         insertTxs.push({
             alias: alias,
-            noteIndex: inp.noteIndex,
-            note2Index: inp.note2Index,
+            operation: inp.operation,
+            txData: inp.txData,
             proof: inp.proof,
             publicInput: inp.publicInput,
-            status: TransactionModelStatus.CREATED
+            status: TransactionModelStatus.CONFIRMED
         });
     } );
 
@@ -85,7 +79,7 @@ export async function createTx(req: any, res: any) {
     try {
         await sequelize.transaction(async (t: any) => {
             if (insertTxs.length > 0) {
-                result = await TransactionModel.bulkCreate(insertTxs, { transaction: t });
+                result = await TransactionModel.bulkCreate(insertTxs, { transaction: t, updateOnDuplicate: ["txData"] });
             }
             if (insertNotes.length > 0) {
                 result2 = await NoteModel.bulkCreate(insertNotes, { transaction: t, updateOnDuplicate: ["state", "alias"] });
@@ -101,8 +95,8 @@ export async function createTx(req: any, res: any) {
 export async function getTxByAlias(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    const page = req.body.page;
-    const pageSize = req.body.pageSize;
+    const page = Number(req.body.page || 0);
+    const pageSize = Number(req.body.pageSize || 10);
     if (code !== ErrCode.Success) {
         return res.json(errResp(code, ErrCode[code]));
     }
@@ -143,39 +137,27 @@ export async function updateStateTree(req: any, res: any) {
 export async function getNotes(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
-    const noteState = req.body.noteState;
     if (code !== ErrCode.Success) {
         return res.json(errResp(code, ErrCode[code]));
     }
-
-    // get the confirmed note list, TODO: handle exception
-    let notes = await getDBNotes(ctx.alias, noteState);
+    const noteState = req.body.noteState || [];
+    const indices = req.body.indices || [];
+    let notes = await getDBNotes(ctx.alias, noteState, indices);
     return res.json(succResp(notes));
 }
 
 async function search(filterDict: any, page: any, pageSize: any) {
-    if (page) {
-      const { count, rows } = await TransactionModel.findAndCountAll({
+    let offset = page > 0? page - 1 : 0;
+    const { count, rows } = await TransactionModel.findAndCountAll({
         where: filterDict,
         order: [["createdAt", "DESC"]],
         limit: pageSize,
-        offset: (page - 1) * pageSize,
+        offset: offset * pageSize,
         raw: true
-      });
-      const totalPage = Math.ceil(count / pageSize);
-      return {
+    });
+    const totalPage = Math.ceil(count / pageSize);
+    return {
         transactions: rows,
         totalPage
-      };
-    } else {
-      const list = await TransactionModel.findAll({
-        where: filterDict,
-        order: [["createdAt", "DESC"]],
-        raw: true
-      });
-      return {
-        transactions: list,
-        totalPage: list.length
-      };
-    }
+    };
 }

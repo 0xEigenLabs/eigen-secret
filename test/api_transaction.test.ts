@@ -1,10 +1,9 @@
 const request = require("supertest");
 const consola = require("consola");
 import app from "../server/dist/service";
-import sequelize from "../server/dist/db";
 import { EigenAddress } from "@eigen-secret/core/dist-node/account";
 import { ethers } from "ethers";
-import { signEOASignature, index, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { TxData } from "@eigen-secret/core/dist-node/transaction";
@@ -33,9 +32,9 @@ describe("POST /transactions", () => {
         .send({
             context: ctx.serialize(),
             inputs: [{
-                noteIndex: index().toString(),
-                note2Index: index().toString(),
+                txData: "{\"aaa\": \"aaaa\"}",
                 proof: "0x12",
+                operation: "send",
                 publicInput: "{\"root\": \"11\"}"
             }]
         })

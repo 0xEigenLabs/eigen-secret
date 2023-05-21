@@ -207,11 +207,8 @@ describe("POST /transactions", function() {
             }
 
             // output transaction
-            let transaction = new Transaction(input.outputNotes, accountKey);
-            let txOutputData = await transaction.encrypt(eddsa);
-
-            let txInput = new Transaction(input.inputNotes, accountKey);
-            let txInputData = await txInput.encrypt(eddsa);
+            let transaction = new Transaction(input, eddsa);
+            let txData = await transaction.encryptNote();
 
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             // create tx. FIXME: should peg input?
@@ -220,8 +217,8 @@ describe("POST /transactions", function() {
                 .send({
                     context: ctx.serialize(),
                     inputs: [{
-                        noteIndex: input.outputNotes[0].index.toString(),
-                        note2Index: input.outputNotes[1].index.toString(),
+                        txData: transaction.encryptTx(signingKey),
+                        operation: "deposit",
                         proof: Prover.serialize(proofAndPublicSignals.proof),
                         publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
                     }]
@@ -245,30 +242,30 @@ describe("POST /transactions", function() {
                     {
                         alias: alias,
                         index: input.inputNotes[0].index,
-                        pubKey: txInputData[0].pubKey.pubKey,
+                        pubKey: txData[0].pubKey.pubKey,
                         // pubKey: it's the first depositing, so the init public key is a random
-                        content: txInputData[0].content,
+                        content: txData[0].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.inputNotes[1].index,
-                        pubKey: txInputData[1].pubKey.pubKey, // same as above
-                        content: txInputData[1].content,
+                        pubKey: txData[1].pubKey.pubKey, // same as above
+                        content: txData[1].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[0].index,
-                        pubKey: txOutputData[0].pubKey.pubKey,
-                        content: txOutputData[0].content,
+                        pubKey: txData[2].pubKey.pubKey,
+                        content: txData[2].content,
                         state: NoteState.PROVED
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[1].index,
-                        pubKey: txOutputData[1].pubKey.pubKey,
-                        content: txOutputData[1].content,
+                        pubKey: txData[3].pubKey.pubKey,
+                        content: txData[3].content,
                         state: NoteState.PROVED
                     }
                 ]
@@ -354,12 +351,10 @@ describe("POST /transactions", function() {
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
-            let transaction = new Transaction(input.outputNotes, accountKey);
-            let txOutputData = await transaction.encrypt(eddsa);
+            let transaction = new Transaction(input, eddsa);
+            let txData = await transaction.encryptNote();
 
-            let txInput = new Transaction(input.inputNotes, accountKey);
-            let txInputData = await txInput.encrypt(eddsa);
-            assert(txInputData[0].content, encryptedNotes[0].content);
+            assert(txData[0].content, encryptedNotes[0].content);
 
             // create tx
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
@@ -368,8 +363,8 @@ describe("POST /transactions", function() {
             .send({
                 context: ctx.serialize(),
                 inputs: [{
-                    noteIndex: input.outputNotes[0].index.toString(),
-                    note2Index: input.outputNotes[1].index.toString(),
+                    txData: transaction.encryptTx(signingKey),
+                    operation: "send",
                     proof: Prover.serialize(proofAndPublicSignals.proof),
                     publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
                 }]
@@ -392,29 +387,29 @@ describe("POST /transactions", function() {
                     {
                         alias: alias,
                         index: input.inputNotes[0].index,
-                        pubKey: txInputData[0].pubKey.pubKey,
-                        content: txInputData[0].content,
+                        pubKey: txData[0].pubKey.pubKey,
+                        content: txData[0].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.inputNotes[1].index,
-                        pubKey: txInputData[1].pubKey.pubKey,
-                        content: txInputData[1].content,
+                        pubKey: txData[1].pubKey.pubKey,
+                        content: txData[1].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[0].index,
-                        pubKey: txOutputData[0].pubKey.pubKey,
-                        content: txOutputData[0].content,
+                        pubKey: txData[2].pubKey.pubKey,
+                        content: txData[2].content,
                         state: NoteState.PROVED
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[1].index,
-                        pubKey: txOutputData[1].pubKey.pubKey,
-                        content: txOutputData[1].content,
+                        pubKey: txData[3].pubKey.pubKey,
+                        content: txData[3].content,
                         state: NoteState.PROVED
                     }
                 ]
@@ -536,12 +531,10 @@ describe("POST /transactions", function() {
                 siblings.push(tmpSiblings);
             }
 
-            let transaction = new Transaction(input.outputNotes, accountKey);
-            let txOutputData = await transaction.encrypt(eddsa);
+            let transaction = new Transaction(input, eddsa);
+            let txData = await transaction.encryptNote();
 
-            let txInput = new Transaction(input.inputNotes, accountKey);
-            let txInputData = await txInput.encrypt(eddsa);
-            assert(txInputData[0].content, encryptedNotes[0].content);
+            assert(txData[0].content, encryptedNotes[0].content);
 
             // create tx
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
@@ -550,8 +543,8 @@ describe("POST /transactions", function() {
             .send({
                 context: ctx.serialize(),
                 inputs: [{
-                    noteIndex: input.outputNotes[0].index.toString(),
-                    note2Index: input.outputNotes[1].index.toString(),
+                    txData: transaction.encryptTx(signingKey),
+                    operation: "withdraw",
                     proof: Prover.serialize(proofAndPublicSignals.proof),
                     publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
                 }]
@@ -573,29 +566,29 @@ describe("POST /transactions", function() {
                     {
                         alias: alias,
                         index: input.inputNotes[0].index,
-                        pubKey: txInputData[0].pubKey.pubKey,
-                        content: txInputData[0].content,
+                        pubKey: txData[0].pubKey.pubKey,
+                        content: txData[0].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.inputNotes[1].index,
-                        pubKey: txInputData[0].pubKey.pubKey,
-                        content: txInputData[1].content,
+                        pubKey: txData[0].pubKey.pubKey,
+                        content: txData[1].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[0].index,
-                        pubKey: txOutputData[0].pubKey.pubKey,
-                        content: txOutputData[0].content,
+                        pubKey: txData[2].pubKey.pubKey,
+                        content: txData[2].content,
                         state: NoteState.SPENT
                     },
                     {
                         alias: alias,
                         index: input.outputNotes[1].index,
-                        pubKey: txOutputData[1].pubKey.pubKey,
-                        content: txOutputData[1].content,
+                        pubKey: txData[3].pubKey.pubKey,
+                        content: txData[3].content,
                         state: NoteState.SPENT
                     }
                 ]

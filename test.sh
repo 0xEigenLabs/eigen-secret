@@ -1,39 +1,48 @@
 #!/bin/bash
 set -ex
 
-npm run deploy:dev
+NETWORK=${1-dev}
+
+npm run deploy:$NETWORK
 export TOKEN=0x0165878A594ca255338adfa4d48449f69242Eb8F
-npx hardhat create-account --alias Alice --index 0 --network dev
+npx hardhat create-account --alias Alice --index 0 --network $NETWORK
 
-npx hardhat setup-rollup --network dev
+npx hardhat setup-rollup --network $NETWORK
 
-npx hardhat register-token --token $TOKEN --network dev
+npx hardhat register-token --token $TOKEN --network $NETWORK
 
-npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network dev
-npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network dev
-npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network dev
-npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network dev
+npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network $NETWORK
+npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network $NETWORK
 
-npx hardhat create-account --alias Bob --index 1 --network dev
+npx hardhat get-transactions --alias Alice --index 0
+npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network $NETWORK
 
-npx hardhat send-l1 --alias Alice --asset-id 2 --receiver 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --value 100 --network dev
+npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network $NETWORK
 
-npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id 2 --network dev
-npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id 2 --network dev
-npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network dev
 
-npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network dev
-npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network dev
+npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network $NETWORK
+
+npx hardhat create-account --alias Bob --index 1 --network $NETWORK
+
+npx hardhat send-l1 --alias Alice --asset-id 2 --receiver 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --value 100 --network $NETWORK
+
+npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id 2 --network $NETWORK
+npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id 2 --network $NETWORK
+npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network $NETWORK
+
+npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network $NETWORK
+npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network $NETWORK
 
 npx hardhat migrate-account --alias Alice --index 0
 
-npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network dev
-npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network dev
+npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network $NETWORK
+npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network $NETWORK
 
-npx hardhat deposit --alias Alice --index 0 --value 11 --asset-id 2 --network dev
+npx hardhat deposit --alias Alice --index 0 --value 11 --asset-id 2 --network $NETWORK
 
 npx hardhat update-account --alias Alice --index 0
-npx hardhat deposit --alias Alice --index 0 --value 12 --asset-id 2 --network dev
+npx hardhat deposit --alias Alice --index 0 --value 12 --asset-id 2 --network $NETWORK
 
 # TODO: test send
-npx hardhat withdraw --alias Alice --index 0 --value 12 --asset-id 2 --network dev
+npx hardhat withdraw --alias Alice --index 0 --value 12 --asset-id 2 --network $NETWORK
+npx hardhat get-transactions --alias Alice --index 0

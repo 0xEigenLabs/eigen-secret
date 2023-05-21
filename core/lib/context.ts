@@ -1,4 +1,4 @@
-import { verifyEOASignature, hasValue, SESSION_DURATION } from "./utils";
+import { normalizeAlias, verifyEOASignature, hasValue, SESSION_DURATION } from "./utils";
 import { ErrCode } from "./error";
 export class Context {
     alias: string;
@@ -39,6 +39,7 @@ export class Context {
     check() {
         if (
             !hasValue(this.alias) ||
+            !normalizeAlias(this.alias) ||
             !hasValue(this.signature) ||
             !hasValue(this.rawMessage) ||
             !hasValue(this.timestamp) ||
