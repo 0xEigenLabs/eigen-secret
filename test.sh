@@ -4,7 +4,7 @@ set -ex
 NETWORK=${1-dev}
 
 npm run deploy:$NETWORK
-export TOKEN=0x0165878A594ca255338adfa4d48449f69242Eb8F
+export TOKEN=$(cat .contract.json | jq -r .testToken)
 npx hardhat create-account --alias Alice --index 0 --network $NETWORK
 
 npx hardhat setup-rollup --network $NETWORK
