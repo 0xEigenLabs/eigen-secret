@@ -1,6 +1,7 @@
 const buildPoseidon = require("circomlibjs").buildPoseidon;
 import { Aes256gcm } from "./aes_gcm";
 import { EigenAddress } from "./account";
+import { prepareJson } from "./utils";
 
 export enum NoteState {
     _CREATING = 1,
@@ -71,7 +72,7 @@ export class Note {
 
     encrypt(key: any): any {
         let aes = new Aes256gcm(key);
-        let data = JSON.stringify({
+        let data = JSON.stringify(prepareJson({
             val: this.val,
             secret: this.secret,
             assetId: this.assetId,
@@ -79,7 +80,7 @@ export class Note {
             inputNullifier: this.inputNullifier,
             accountRequired: this.accountRequired,
             index: this.index
-        }, (_, v) => typeof v === "bigint" ? v.toString() : v);
+        }));
         let cipher = aes.encrypt(data)
         return cipher;
     }
