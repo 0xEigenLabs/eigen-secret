@@ -45,4 +45,4 @@ npx hardhat deposit --alias Alice --index 0 --value 12 --asset-id 2 --network $N
 
 # TODO: test send
 npx hardhat withdraw --alias Alice --index 0 --value 12 --asset-id 2 --network $NETWORK
-px hardhat get-transactions --alias Alice --index 0
+npx hardhat get-transactions --alias Alice --index 0
