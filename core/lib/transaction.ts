@@ -108,7 +108,8 @@ export class Transaction {
                 let cipher = aes.encrypt(JSON.stringify(prepareJson(data)));
                 result.push((new TxData(tmpKey.pubKey, cipher)).toString);
             } catch (e: any) {
-                console.log(`re-encrypt ${otx} error`);
+                result.push("");
+                console.log(`re-encrypt ${otx} error`, e);
             }
         }
         return result;

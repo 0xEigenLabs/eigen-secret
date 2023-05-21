@@ -79,7 +79,7 @@ export async function createTx(req: any, res: any) {
     try {
         await sequelize.transaction(async (t: any) => {
             if (insertTxs.length > 0) {
-                result = await TransactionModel.bulkCreate(insertTxs, { transaction: t });
+                result = await TransactionModel.bulkCreate(insertTxs, { transaction: t, updateOnDuplicate: ["txData"] });
             }
             if (insertNotes.length > 0) {
                 result2 = await NoteModel.bulkCreate(insertNotes, { transaction: t, updateOnDuplicate: ["state", "alias"] });
