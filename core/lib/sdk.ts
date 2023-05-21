@@ -297,6 +297,10 @@ export class SecretSDK {
         let transactions = []
         for (let tx of txList) {
             let txData = Transaction.decryptTx(tx.txData, this.account.signingKey);
+            console.log(txData)
+            if (txData.from != this.account.signingKey.pubKey.pubKey) {
+                return errResp(ErrCode.CryptoError, "Inconsistent key for encrypting and decrypting TX")
+            }
             transactions.push({
                 operation: tx.operation,
                 balance: txData.amount, // should renamed to value, deprecated
@@ -307,6 +311,7 @@ export class SecretSDK {
                 txhash: createBlakeHash("blake256").update(tx.proof).update(tx.publicInput).digest().toString("hex").slice(12),
                 timestamp: tx.updatedAt
             });
+            console.log(transactions);
         }
 
         let resp = {

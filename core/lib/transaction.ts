@@ -40,6 +40,19 @@ export class Transaction {
     input: UpdateStatusInput;
     eddsa: any;
 
+    static InnerTxData = class {
+        from: string;
+        to: string;
+        assetId: number;
+        amount: bigint;
+        constructor(from: string, to: string, assetId: number, amount: bigint) {
+            this.from = from;
+            this.to = to;
+            this.assetId = assetId;
+            this.amount = amount;
+        }
+    }
+
     constructor(input: any, eddsa: any) {
         this.input = input;
         this.eddsa = eddsa;
@@ -60,8 +73,8 @@ export class Transaction {
     }
 
     encryptTx(sender: SigningKey) {
-        let output1 = this.input.outputNotes[0];
         let tmpKey = new SigningKey(this.eddsa);
+        let output1 = this.input.outputNotes[0];
         let data = {
             from: sender.pubKey.pubKey,
             to: output1._owner.pubKey,
@@ -79,6 +92,8 @@ export class Transaction {
         let txData = TxData.toObj(content)
         let sharedKey = sender.makeSharedKey(txData.pubKey);
         let aes = new Aes256gcm(sharedKey);
-        return aes.decrypt(txData.content);
+        let data = aes.decrypt(txData.content);
+        data = JSON.parse(data);
+        return new Transaction.InnerTxData(data.from, data.to, data.assetId, data.amount);
     }
 }
