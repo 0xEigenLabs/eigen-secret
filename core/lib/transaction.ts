@@ -71,13 +71,13 @@ export class Transaction {
         return Promise.resolve(tes);
     }
 
-    encryptTx(sender: SigningKey) {
+    encryptTx(sender: SigningKey, amount: bigint) {
         let tmpKey = new SigningKey(this.eddsa);
         let output1 = this.notes[2]; // output notes 0
         let data = {
             from: sender.pubKey.pubKey,
             to: output1._owner.pubKey,
-            amount: output1.val,
+            amount: amount,
             assetId: output1.assetId
         }
         let sharedKey = tmpKey.makeSharedKey(sender.pubKey);
