@@ -217,7 +217,7 @@ describe("POST /transactions", function() {
                 .send({
                     context: ctx.serialize(),
                     inputs: [{
-                        txData: transaction.encryptTx(signingKey),
+                        txData: transaction.encryptTx(signingKey, value),
                         operation: "deposit",
                         proof: Prover.serialize(proofAndPublicSignals.proof),
                         publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
@@ -363,7 +363,7 @@ describe("POST /transactions", function() {
             .send({
                 context: ctx.serialize(),
                 inputs: [{
-                    txData: transaction.encryptTx(signingKey),
+                    txData: transaction.encryptTx(signingKey, value),
                     operation: "send",
                     proof: Prover.serialize(proofAndPublicSignals.proof),
                     publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
@@ -431,7 +431,7 @@ describe("POST /transactions", function() {
         let accountRequired = false;
         signer = accountRequired? accountKey: signingKey;
         let acStateKey = await accountCompress(accountKey, signer, aliasHash);
-        const value = 5;
+        const value = 5n;
 
         // 1. first transaction
         let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
@@ -543,7 +543,7 @@ describe("POST /transactions", function() {
             .send({
                 context: ctx.serialize(),
                 inputs: [{
-                    txData: transaction.encryptTx(signingKey),
+                    txData: transaction.encryptTx(signingKey, value),
                     operation: "withdraw",
                     proof: Prover.serialize(proofAndPublicSignals.proof),
                     publicInput: Prover.serialize(proofAndPublicSignals.publicSignals)
