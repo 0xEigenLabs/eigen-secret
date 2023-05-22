@@ -584,7 +584,7 @@ export class SecretSDK {
 
             // batch create tx
             this.createTx(
-                transaction.encryptTx(this.account.signingKey), proofAndPublicSignals, "deposit"
+                transaction.encryptTx(this.account.signingKey, value), proofAndPublicSignals, "deposit"
             );
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             if (!receipt.ok) {
@@ -711,7 +711,7 @@ export class SecretSDK {
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
             this.createTx(
-                transaction.encryptTx(this.account.signingKey), proofAndPublicSignals, "send"
+                transaction.encryptTx(this.account.signingKey, value), proofAndPublicSignals, "send"
             );
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             if (!receipt.ok) {
@@ -852,7 +852,7 @@ export class SecretSDK {
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
             this.createTx(
-                transaction.encryptTx(this.account.signingKey), proofAndPublicSignals, "withdraw");
+                transaction.encryptTx(this.account.signingKey, value), proofAndPublicSignals, "withdraw");
             // call contract and deposit
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             // console.log(`receipt: ${JSON.stringify(receipt)}`)
