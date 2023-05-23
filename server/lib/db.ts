@@ -23,7 +23,7 @@ if (dbDriver == "sqlite") {
     sequelize = new Sequelize(dbName, dbUser, dbPassword, {
         host: dbHost,
         storage: ":memory:",
-        //storage: "/tmp/db.sqlite",
+        // storage: "/tmp/db.sqlite",
         dialect: dbDriver,
         dialectOptions: {
             supportBigNumbers: true

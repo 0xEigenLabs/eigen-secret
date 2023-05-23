@@ -47,7 +47,14 @@ task("deposit", "Deposit asset from L1 to L2")
       await approveTx.wait();
     }
 
-    let proofAndPublicSignals = await secretSDK.data.deposit(ctx, receiver, BigInt(value), Number(assetId), nonce);
+    let asset = await secretSDK.data.getAssetByAssetId(BigInt(assetId))
+    let tokenInfo = {
+      "symbol": asset.data.tokenInfo.symbol,
+      "decimals": asset.data.tokenInfo.decimals,
+      "address": asset.data.tokenInfo.address
+    }
+
+    let proofAndPublicSignals = await secretSDK.data.deposit(ctx, receiver, BigInt(value), Number(assetId), nonce, tokenInfo);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("deposit failed: ", proofAndPublicSignals);
     }
@@ -83,7 +90,15 @@ task("send", "Send asset to receiver in L2")
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
-    let proofAndPublicSignals = await secretSDK.data.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
+
+    let asset = await secretSDK.data.getAssetByAssetId(BigInt(assetId))
+    let tokenInfo = {
+      "symbol": asset.data.tokenInfo.symbol,
+      "decimals": asset.data.tokenInfo.decimals,
+      "address": asset.data.tokenInfo.address
+    }
+
+    let proofAndPublicSignals = await secretSDK.data.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId), tokenInfo);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("send failed: ", proofAndPublicSignals);
     }
@@ -117,7 +132,14 @@ task("withdraw", "Withdraw asset from L2 to L1")
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let receiver = secretSDK.data.account.accountKey.pubKey.pubKey;
-    let proofAndPublicSignals = await secretSDK.data.withdraw(ctx, receiver, BigInt(value), Number(assetId));
+    let asset = await secretSDK.data.getAssetByAssetId(BigInt(assetId))
+    let tokenInfo = {
+      "symbol": asset.data.tokenInfo.symbol,
+      "decimals": asset.data.tokenInfo.decimals,
+      "address": asset.data.tokenInfo.address
+    }
+
+    let proofAndPublicSignals = await secretSDK.data.withdraw(ctx, receiver, BigInt(value), Number(assetId), tokenInfo);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("withdraw failed: ", proofAndPublicSignals);
     }

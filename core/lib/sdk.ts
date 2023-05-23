@@ -390,6 +390,14 @@ export class SecretSDK {
         return this.curl("assets/price", data);
     }
 
+    async getAssetByAssetId(ctx: Context, assetId: any) {
+        let data = {
+            context: ctx.serialize(),
+            assetId: assetId
+        };
+        return this.curl("assets/get", data);
+    }
+
     /**
      * Obtain user balance.
      * @param {Context} ctx
@@ -511,6 +519,7 @@ export class SecretSDK {
      * @param {bigint} value The amount of asset to be deposited.
      * @param {number} assetId The token to be deposited.
      * @param {number} nonce The nonce of the current transaction, usually obtained from a wallet like Metamask.
+     * @param {any} tokenInfo {symbol: xxx, decimals: xxxx, address: xxxx}
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the deposit.
      */
     async deposit(ctx: Context, receiver: string, value: bigint, assetId: number, nonce: number, tokenInfo: any) {
@@ -648,6 +657,7 @@ export class SecretSDK {
      * @param {string} receiverAlias The receiver's alias or ‘__DEFAULT_ALIAS__’.
      * @param {bigint} value The amount of asset to be sent.
      * @param {number} assetId The token to be sent.
+     * @param {any} tokenInfo {symbol: xxx, decimals: xxxx, address: xxxx}
      * @param {boolean} accountRequired Enables signing with account key only.
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the send.
      */
@@ -768,6 +778,7 @@ export class SecretSDK {
      * @param {string} receiver
      * @param {bigint} value The amount to be withdrawn.
      * @param {number} assetId The token to be withdrawn.
+     * @param {any} tokenInfo {symbol: xxx, decimals: xxxx, address: xxxx}
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
      */
     async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number, tokenInfo: any) {
@@ -1143,13 +1154,20 @@ export class SecretSDK {
 
         for (let aid of notesByAssetId.keys()) {
             let val = notesByAssetId.get(aid);
+            let asset = await this.getAssetByAssetId(ctx, aid)
+            let tokenInfo = {
+                "symbol": asset.data.tokenInfo.symbol,
+                "decimals": asset.data.tokenInfo.decimals,
+                "address": asset.data.tokenInfo.address
+            }
             if (val !== undefined && BigInt(val) > 0n) {
                 let prf = await this.send(
                     ctx,
                     this.account.accountKey.pubKey.pubKey,
                     this.alias,
                     val,
-                    Number(aid)
+                    Number(aid),
+                    tokenInfo
                 );
                 if (!prf.ok) {
                     return prf;
@@ -1266,13 +1284,20 @@ export class SecretSDK {
         // send to user itself
         for (let aid of notesByAssetId.keys()) {
             let val = notesByAssetId.get(aid);
+            let asset = await this.getAssetByAssetId(ctx, aid)
+            let tokenInfo = {
+                "symbol": asset.data.tokenInfo.symbol,
+                "decimals": asset.data.tokenInfo.decimals,
+                "address": asset.data.tokenInfo.address
+            }
             if (val !== undefined && BigInt(val) > 0n) {
                 let prf = await this.send(
                     ctx,
                     newAccountKey.pubKey.pubKey,
                     this.alias,
                     val,
-                    Number(aid)
+                    Number(aid),
+                    tokenInfo
                 );
                 if (!prf.ok) {
                     return prf;
