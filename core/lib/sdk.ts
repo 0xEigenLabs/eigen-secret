@@ -1004,6 +1004,10 @@ export class SecretSDK {
         return await this.rollupSC.approve(token, value);
     }
 
+    async allowance(token: string) {
+        return await this.rollupSC.allowance(token)
+    }
+
     async getRegisteredToken(id: bigint) {
         return await this.rollupSC.getRegisteredToken(id);
     }
