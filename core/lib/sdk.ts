@@ -375,7 +375,7 @@ export class SecretSDK {
      *         address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
      *         name: 'Unknown Token',
      *         symbol: '',
-     *         decimals: 0,
+     *         decimals: 18,
      *         logoURI: '',
      *         extensions: ''
      *       }
@@ -513,13 +513,14 @@ export class SecretSDK {
      * @param {number} nonce The nonce of the current transaction, usually obtained from a wallet like Metamask.
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the deposit.
      */
-    async deposit(ctx: Context, receiver: string, value: bigint, assetId: number, nonce: number) {
+    async deposit(ctx: Context, receiver: string, value: bigint, assetId: number, nonce: number, tokenInfo: any) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let tmpP = this.account.accountKey.pubKey.unpack(this.eddsa.babyJub);
         let tmpPub = [this.eddsa.F.toObject(tmpP[0]), this.eddsa.F.toObject(tmpP[1])];
         let keysFound = [];
         let valuesFound = [];
         let siblings = [];
+        value = await this.formatValue(value, tokenInfo)
 
         let accountRequired = false;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -655,7 +656,8 @@ export class SecretSDK {
         receiver: string,
         receiverAlias: string,
         value: bigint,
-        assetId: number
+        assetId: number,
+        tokenInfo: any
     ) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -668,6 +670,7 @@ export class SecretSDK {
         if (!notes.ok) {
             return notes;
         }
+        value = await this.formatValue(value, tokenInfo)
         let _receiver = new EigenAddress(receiver);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
@@ -767,7 +770,7 @@ export class SecretSDK {
      * @param {number} assetId The token to be withdrawn.
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
      */
-    async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number) {
+    async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number, tokenInfo: any) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -780,6 +783,7 @@ export class SecretSDK {
             return notes;
         }
         assert(notes.data.length > 0, "Invalid notes");
+        value = await this.formatValue(value, tokenInfo)
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -998,6 +1002,10 @@ export class SecretSDK {
             contractAddress: token
         };
         return this.curl("assets/create", data);
+    }
+
+    async formatValue(value: bigint, tokenInfo: any) {
+        return value * BigInt(10 ^ tokenInfo.decimals)
     }
 
     async approve(token: string, value: bigint) {

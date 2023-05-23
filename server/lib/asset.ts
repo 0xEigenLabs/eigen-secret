@@ -58,7 +58,7 @@ function getTokenInfoByAddress(contractAddress: any) {
         "address": contractAddress,
         "name": "Unknown Token",
         "symbol": "",
-        "decimals": 0,
+        "decimals": 18,
         "logoURI": "",
         "extensions": ""
     }
