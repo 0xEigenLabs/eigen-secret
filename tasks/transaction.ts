@@ -41,12 +41,10 @@ task("deposit", "Deposit asset from L1 to L2")
     let tokenAddress = await secretSDK.data.getRegisteredToken(BigInt(assetId))
     console.log("token", tokenAddress.toString());
 
-    let valueResp = await secretSDK.data.formatValue(ctx, value, assetId)
-    value = valueResp.data
     // approve
     let allowance = await secretSDK.data.allowance(tokenAddress.toString())
     if (allowance.data < value) {
-      let approveTx = await secretSDK.data.approve(tokenAddress.toString(), value);
+      let approveTx = await secretSDK.data.approve(ctx, tokenAddress.toString(), value, assetId);
       await approveTx.wait();
     }
 
@@ -86,8 +84,6 @@ task("send", "Send asset to receiver in L2")
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
-    let valueResp = await secretSDK.data.formatValue(ctx, value, assetId)
-    value = valueResp.data
 
     let proofAndPublicSignals = await secretSDK.data.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
     if (proofAndPublicSignals.errno != ErrCode.Success) {
@@ -123,8 +119,6 @@ task("withdraw", "Withdraw asset from L2 to L1")
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let receiver = secretSDK.data.account.accountKey.pubKey.pubKey;
-    let valueResp = await secretSDK.data.formatValue(ctx, value, assetId)
-    value = valueResp.data
     let proofAndPublicSignals = await secretSDK.data.withdraw(ctx, receiver, BigInt(value), Number(assetId));
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("withdraw failed: ", proofAndPublicSignals);
