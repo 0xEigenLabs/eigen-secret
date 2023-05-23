@@ -63,7 +63,7 @@ task("ci", "Run all task in one command")
     console.log("approve token done", assetId)
 
     let value = 1000n;
-    let approveTx = await secretSDK.approve(ctx, contractJson.testToken, value, assetId);
+    let approveTx = await secretSDK.approve(contractJson.testToken, value);
     await approveTx.wait();
 
     let receiver = accountKey.pubKey.pubKey;

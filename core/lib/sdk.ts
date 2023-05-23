@@ -540,10 +540,6 @@ export class SecretSDK {
         if (!resp.ok) {
             return resp;
         }
-
-        let valueResp = await this.formatValue(ctx, value, assetId)
-        value = valueResp.data
-
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -681,8 +677,6 @@ export class SecretSDK {
             return notes;
         }
 
-        let valueResp = await this.formatValue(ctx, value, assetId)
-        value = valueResp.data
         let _receiver = new EigenAddress(receiver);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
@@ -796,8 +790,6 @@ export class SecretSDK {
         }
         assert(notes.data.length > 0, "Invalid notes");
 
-        let valueResp = await this.formatValue(ctx, value, assetId)
-        value = valueResp.data
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -1028,9 +1020,7 @@ export class SecretSDK {
         return succResp(BigInt(value) * BigInt(10 ** decimals))
     }
 
-    async approve(ctx: Context, token: string, value: bigint, assetId: any) {
-        let valueResp = await this.formatValue(ctx, value, assetId)
-        value = valueResp.data
+    async approve(token: string, value: bigint) {
         return await this.rollupSC.approve(token, value);
     }
 
