@@ -57,8 +57,8 @@ function getTokenInfoByAddress(contractAddress: any) {
         "chainId": "",
         "address": contractAddress,
         "name": "Unknown Token",
-        "symbol": "",
-        "decimals": 0,
+        "symbol": "Unknown",
+        "decimals": 18,
         "logoURI": "",
         "extensions": ""
     }
@@ -105,9 +105,9 @@ export async function getAsset(req: any, res: any) {
 
     let asset;
     if (assetId) {
-        asset = await AssetModel.findAll({ where: { assetId: assetId } });
+        asset = await AssetModel.findAll({ where: { assetId: assetId }, raw: true });
     } else if (contractAddress) {
-        asset = await AssetModel.findAll({ where: { contractAddress: contractAddress } });
+        asset = await AssetModel.findAll({ where: { contractAddress: contractAddress }, raw: true });
     } else {
         asset = []
     }

@@ -375,7 +375,7 @@ export class SecretSDK {
      *         address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
      *         name: 'Unknown Token',
      *         symbol: '',
-     *         decimals: 0,
+     *         decimals: 18,
      *         logoURI: '',
      *         extensions: ''
      *       }
@@ -388,6 +388,14 @@ export class SecretSDK {
             context: ctx.serialize()
         };
         return this.curl("assets/price", data);
+    }
+
+    async getAssetByAssetId(ctx: Context, assetId: any) {
+        let data = {
+            context: ctx.serialize(),
+            assetId: assetId
+        };
+        return this.curl("assets/get", data);
     }
 
     /**
@@ -668,6 +676,7 @@ export class SecretSDK {
         if (!notes.ok) {
             return notes;
         }
+
         let _receiver = new EigenAddress(receiver);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
@@ -780,6 +789,7 @@ export class SecretSDK {
             return notes;
         }
         assert(notes.data.length > 0, "Invalid notes");
+
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -1000,8 +1010,22 @@ export class SecretSDK {
         return this.curl("assets/create", data);
     }
 
+    async formatValue(ctx: Context, value: bigint, assetId: any) {
+        let asset = await this.getAssetByAssetId(ctx, BigInt(assetId))
+        if (!asset.ok) {
+            console.log("getAssetByAssetId fail, error:", asset)
+            return asset
+        }
+        let decimals = asset.data[0].tokenInfo.decimals
+        return succResp(BigInt(value) * BigInt(10 ** decimals))
+    }
+
     async approve(token: string, value: bigint) {
         return await this.rollupSC.approve(token, value);
+    }
+
+    async allowance(token: string) {
+        return await this.rollupSC.allowance(token)
     }
 
     async getRegisteredToken(id: bigint) {
