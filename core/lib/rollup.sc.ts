@@ -151,7 +151,6 @@ export class RollupSC {
             this.rollup.address,
             { from: userAccount.address }
         )
-        console.log("allowance:", allowance.toString())
         return succResp(allowance.toString(), true);
     }
 

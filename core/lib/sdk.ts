@@ -519,17 +519,15 @@ export class SecretSDK {
      * @param {bigint} value The amount of asset to be deposited.
      * @param {number} assetId The token to be deposited.
      * @param {number} nonce The nonce of the current transaction, usually obtained from a wallet like Metamask.
-     * @param {any} tokenInfo {symbol: xxx, decimals: xxxx, address: xxxx}
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the deposit.
      */
-    async deposit(ctx: Context, receiver: string, value: bigint, assetId: number, nonce: number, tokenInfo: any) {
+    async deposit(ctx: Context, receiver: string, value: bigint, assetId: number, nonce: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let tmpP = this.account.accountKey.pubKey.unpack(this.eddsa.babyJub);
         let tmpPub = [this.eddsa.F.toObject(tmpP[0]), this.eddsa.F.toObject(tmpP[1])];
         let keysFound = [];
         let valuesFound = [];
         let siblings = [];
-        value = await this.formatValue(value, tokenInfo)
 
         let accountRequired = false;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -657,7 +655,6 @@ export class SecretSDK {
      * @param {string} receiverAlias The receiver's alias or ‘__DEFAULT_ALIAS__’.
      * @param {bigint} value The amount of asset to be sent.
      * @param {number} assetId The token to be sent.
-     * @param {any} tokenInfo {symbol: xxx, decimals: xxxx, address: xxxx}
      * @param {boolean} accountRequired Enables signing with account key only.
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the send.
      */
@@ -666,8 +663,7 @@ export class SecretSDK {
         receiver: string,
         receiverAlias: string,
         value: bigint,
-        assetId: number,
-        tokenInfo: any
+        assetId: number
     ) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -680,7 +676,7 @@ export class SecretSDK {
         if (!notes.ok) {
             return notes;
         }
-        value = await this.formatValue(value, tokenInfo)
+
         let _receiver = new EigenAddress(receiver);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
@@ -778,10 +774,9 @@ export class SecretSDK {
      * @param {string} receiver
      * @param {bigint} value The amount to be withdrawn.
      * @param {number} assetId The token to be withdrawn.
-     * @param {any} tokenInfo {symbol: xxx, decimals: xxxx, address: xxxx}
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
      */
-    async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number, tokenInfo: any) {
+    async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -794,7 +789,7 @@ export class SecretSDK {
             return notes;
         }
         assert(notes.data.length > 0, "Invalid notes");
-        value = await this.formatValue(value, tokenInfo)
+
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -1015,8 +1010,14 @@ export class SecretSDK {
         return this.curl("assets/create", data);
     }
 
-    async formatValue(value: bigint, tokenInfo: any) {
-        return value * BigInt(10 ^ tokenInfo.decimals)
+    async formatValue(ctx: Context, value: bigint, assetId: any) {
+        let asset = await this.getAssetByAssetId(ctx, BigInt(assetId))
+        if (!asset.ok) {
+            console.log("getAssetByAssetId fail, error:", asset)
+            return asset
+        }
+        let decimals = asset.data[0].tokenInfo.decimals
+        return succResp(BigInt(value) * BigInt(10 ** decimals))
     }
 
     async approve(token: string, value: bigint) {
@@ -1154,20 +1155,13 @@ export class SecretSDK {
 
         for (let aid of notesByAssetId.keys()) {
             let val = notesByAssetId.get(aid);
-            let asset = await this.getAssetByAssetId(ctx, aid)
-            let tokenInfo = {
-                "symbol": asset.data.tokenInfo.symbol,
-                "decimals": asset.data.tokenInfo.decimals,
-                "address": asset.data.tokenInfo.address
-            }
             if (val !== undefined && BigInt(val) > 0n) {
                 let prf = await this.send(
                     ctx,
                     this.account.accountKey.pubKey.pubKey,
                     this.alias,
                     val,
-                    Number(aid),
-                    tokenInfo
+                    Number(aid)
                 );
                 if (!prf.ok) {
                     return prf;
@@ -1284,20 +1278,13 @@ export class SecretSDK {
         // send to user itself
         for (let aid of notesByAssetId.keys()) {
             let val = notesByAssetId.get(aid);
-            let asset = await this.getAssetByAssetId(ctx, aid)
-            let tokenInfo = {
-                "symbol": asset.data.tokenInfo.symbol,
-                "decimals": asset.data.tokenInfo.decimals,
-                "address": asset.data.tokenInfo.address
-            }
             if (val !== undefined && BigInt(val) > 0n) {
                 let prf = await this.send(
                     ctx,
                     newAccountKey.pubKey.pubKey,
                     this.alias,
                     val,
-                    Number(aid),
-                    tokenInfo
+                    Number(aid)
                 );
                 if (!prf.ok) {
                     return prf;
