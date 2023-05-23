@@ -8,7 +8,6 @@ import {
     defaultCircuitPath, defaultContractABI, defaultContractFile
 } from "./common";
 import { ErrCode } from "@eigen-secret/core/dist-node/error";
-import { token } from "typechain/@openzeppelin/contracts";
 require("dotenv").config()
 const { buildEddsa } = require("circomlibjs");
 
