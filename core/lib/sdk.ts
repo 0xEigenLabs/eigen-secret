@@ -1028,16 +1028,6 @@ export class SecretSDK {
         return succResp(BigInt(value) * BigInt(10 ** decimals))
     }
 
-    async convertValue(ctx: Context, value: any, assetId: any) {
-        let asset = await this.getAssetByAssetId(ctx, BigInt(assetId))
-        if (!asset.ok) {
-            console.log("getAssetByAssetId fail, error:", asset)
-            return asset
-        }
-        let decimals = asset.data[0].tokenInfo.decimals
-        return succResp(BigInt(value) / BigInt(10 ** decimals))
-    }
-
     async approve(ctx: Context, token: string, value: bigint, assetId: any) {
         let valueResp = await this.formatValue(ctx, value, assetId)
         value = valueResp.data
@@ -1175,7 +1165,6 @@ export class SecretSDK {
 
         for (let aid of notesByAssetId.keys()) {
             let val = notesByAssetId.get(aid);
-            val = (await this.convertValue(ctx, val, aid)).data
             if (val !== undefined && BigInt(val) > 0n) {
                 let prf = await this.send(
                     ctx,
@@ -1299,7 +1288,6 @@ export class SecretSDK {
         // send to user itself
         for (let aid of notesByAssetId.keys()) {
             let val = notesByAssetId.get(aid);
-            val = (await this.convertValue(ctx, val, aid)).data
             if (val !== undefined && BigInt(val) > 0n) {
                 let prf = await this.send(
                     ctx,
