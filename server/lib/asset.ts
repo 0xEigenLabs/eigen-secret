@@ -2,6 +2,7 @@ const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
 import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
+import { ETH } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { Headers } from "node-fetch";
 import fetch from "node-fetch";
@@ -93,7 +94,6 @@ export async function createAsset(req: any, res: any) {
 }
 
 export async function getAsset(req: any, res: any) {
-    console.log("get asset");
     let ctx = Context.deserialize(req.body.context);
     const code = ctx.check();
     if (code !== ErrCode.Success) {

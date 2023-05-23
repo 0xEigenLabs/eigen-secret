@@ -1,6 +1,6 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
-import { prepareJson, uint8Array2Bigint } from "./utils";
+import { prepareJson, uint8Array2Bigint, ETH } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
 import { Prover } from "./prover";
@@ -998,7 +998,10 @@ export class SecretSDK {
      * @param {string} token
      */
     async approveToken(token: string) {
-        return await this.rollupSC.approveToken(token);
+        if (token !== ETH) {
+            return await this.rollupSC.approveToken(token);
+        }
+        return true;
     }
 
     async createAsset(ctx: Context, token: string, assetId: any) {
@@ -1021,14 +1024,22 @@ export class SecretSDK {
     }
 
     async approve(token: string, value: bigint) {
-        return await this.rollupSC.approve(token, value);
+        if (token !== ETH) {
+            return await this.rollupSC.approve(token, value);
+        }
+        return true;
     }
 
     async allowance(token: string) {
-        return await this.rollupSC.allowance(token)
+        if (token !== ETH)
+            return await this.rollupSC.allowance(token)
+        return 0n;
     }
 
     async getRegisteredToken(id: bigint) {
+        if (id <= 1) {
+            return ETH;
+        }
         return await this.rollupSC.getRegisteredToken(id);
     }
 
