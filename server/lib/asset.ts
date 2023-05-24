@@ -2,6 +2,7 @@ const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
 import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
+import { ETH } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { Headers } from "node-fetch";
 import fetch from "node-fetch";
@@ -19,7 +20,8 @@ AssetModel.init({
     },
     contractAddress: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        unique: true
     }
 }, {
     // Other model options go here
@@ -54,12 +56,12 @@ function getTokenInfoByAddress(contractAddress: any) {
         return MAINNET_TOKEN_ADDRESS_TO_TOKEN_MAP.get(contractAddress)
     }
     return {
-        "chainId": "",
+        "chainId": "1",
         "address": contractAddress,
         "name": "Unknown Token",
         "symbol": "Unknown",
         "decimals": 18,
-        "logoURI": "",
+        "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
         "extensions": ""
     }
 }
@@ -72,8 +74,8 @@ export async function createAsset(req: any, res: any) {
         return res.json(errResp(code, ErrCode[code]));
     }
     // FIXME: eth address must be coordinator
-    let assetId = req.body.assetId
-    let contractAddress = req.body.contractAddress
+    let assetId = req.body.assetId;
+    let contractAddress = req.body.contractAddress;
 
     let newItem = { assetId, contractAddress };
 
@@ -93,7 +95,6 @@ export async function createAsset(req: any, res: any) {
 }
 
 export async function getAsset(req: any, res: any) {
-    console.log("get asset");
     let ctx = Context.deserialize(req.body.context);
     const code = ctx.check();
     if (code !== ErrCode.Success) {
@@ -141,7 +142,7 @@ export async function getAssetInfo(req: any, res: any) {
         "x-dune-api-key": DUNE_API_KEY
     };
     const header = new Headers(meta);
-    let response = await fetch( `https://api.dune.com/api/v1/query/${queryID}/results?api_key=${DUNE_API_KEY}`, {
+    let response = await fetch(`https://api.dune.com/api/v1/query/${queryID}/results?api_key=${DUNE_API_KEY}`, {
         method: "GET",
         headers: header
     });
@@ -156,10 +157,21 @@ export async function getAssetInfo(req: any, res: any) {
     for (let ai of assetList) {
         let filled = false;
         for (let priceInfo of rows) {
+            /*
+            // rename ETH address
+            if (priceInfo.token_address === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") {
+                filled = true;
+                priceInfo.assetId = 1;
+                priceInfo.token_address = ETH;
+                results.push(priceInfo);
+                break;
+            }
+            */
             if (ai.contractAddress == priceInfo.token_address) {
                 priceInfo.assetId = ai.assetId;
                 filled = true;
                 results.push(priceInfo);
+                break;
             }
         }
         if (!filled) {
@@ -176,6 +188,9 @@ export async function getAssetInfo(req: any, res: any) {
         x.tokenInfo = getTokenInfoByAddress(x.token_address)
         if (x.tokenInfo.symbol == "") {
             x.tokenInfo.symbol = x.token_symbol;
+        }
+        if (x.tokenInfo.name == "") {
+            x.tokenInfo.name = x.token_symbol;
         }
         x.token_symbol = undefined;
         x.token_address = undefined;

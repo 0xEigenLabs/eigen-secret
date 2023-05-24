@@ -59,6 +59,7 @@ task("send-l1", "Send asset from L1 to L1")
 .addParam("password", "password for key sealing", "<your password>")
 .setAction(async ({ alias, value, receiver, assetId, password }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
+    assetId = Number(assetId);
     let [admin] = await ethers.getSigners();
     const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);
     const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
@@ -70,18 +71,32 @@ task("send-l1", "Send asset from L1 to L1")
         console.log("initSDKFromAccount failed: ", secretSDK);
       }
     // get token address
-    let address = await secretSDK.data.getRegisteredToken(BigInt(assetId));
+    let address = await secretSDK.data.getRegisteredToken(assetId);
     let tokenIns = new ethers.Contract(
         address,
         defaultContractABI.testTokenContractABI,
         admin
     );
 
+    value = BigInt(value);
     let valueResp = await secretSDK.data.formatValue(ctx, value, assetId)
     value = valueResp.data
-    let tx = await tokenIns.transfer(receiver, BigInt(value));
-    await tx.wait();
+    let tx: any;
+    let balance: any;
+    if (assetId > 1) {
+        tx = await tokenIns.transfer(receiver, BigInt(value));
+        await tx.wait();
+        balance = await tokenIns.balanceOf(receiver);
+    } else if (assetId == 1) {
+        console.log(admin.address, receiver, value);
+        tx = await admin.sendTransaction({
+            from: admin.address,
+            to: receiver,
+            value: value
+        })
+        await tx.wait();
+        balance = await admin.getBalance();
+    }
 
-    let balance = await tokenIns.balanceOf(receiver);
     console.log("balance", balance.toString());
 });
