@@ -44,8 +44,7 @@ task("deposit", "Deposit asset from L1 to L2")
     // approve
     let allowance = await secretSDK.data.allowance(tokenAddress.toString())
     if (allowance.data < value) {
-      let approveTx = await secretSDK.data.approve(tokenAddress.toString(), value);
-      await approveTx.wait();
+      await secretSDK.data.approve(tokenAddress.toString(), value);
     }
 
     let proofAndPublicSignals = await secretSDK.data.deposit(ctx, receiver, BigInt(value), Number(assetId), nonce);
