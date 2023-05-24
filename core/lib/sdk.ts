@@ -1005,7 +1005,7 @@ export class SecretSDK {
         if (token !== ETH) {
             return await this.rollupSC.approveToken(token);
         }
-        return true;
+        return Promise.resolve(1n);
     }
 
     async createAsset(ctx: Context, token: string, assetId: any) {
@@ -1027,9 +1027,10 @@ export class SecretSDK {
 
     async approve(token: string, value: bigint) {
         if (token !== ETH) {
-            return await this.rollupSC.approve(token, value);
+            let tx = await this.rollupSC.approve(token, value);
+            return tx.wait();
         }
-        return true;
+        return Promise.resolve(true);
     }
 
     async allowance(token: string) {
