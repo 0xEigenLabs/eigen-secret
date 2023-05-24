@@ -56,7 +56,7 @@ task("send-l1", "Send asset from L1 to L1")
 .addParam("value", "transaction amount")
 .addParam("receiver", "receiver ETH address")
 .addParam("assetId", "asset id")
-.addParam("decimal", "18")
+.addParam("decimal", "token decimal", "18")
 .addParam("password", "password for key sealing", "<your password>")
 .setAction(async ({ alias, value, receiver, assetId, decimal, password }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
@@ -80,7 +80,7 @@ task("send-l1", "Send asset from L1 to L1")
     );
 
     value = BigInt(value);
-    let valueResp = await secretSDK.data.formatValue(ctx, value, assetId, number(decimal))
+    let valueResp = await secretSDK.data.formatValue(ctx, value, assetId, Number(decimal))
     value = valueResp.data
     let tx: any;
     let balance: any;
