@@ -1013,17 +1013,11 @@ export class SecretSDK {
         return this.curl("assets/create", data);
     }
 
-    async formatValue(ctx: Context, value: bigint, assetId: any) {
+    async formatValue(ctx: Context, value: bigint, assetId: any, decimals: number = 18) {
         if (assetId === 1) {
             value = value * (BigInt(10) ** BigInt(18));
             return succResp(value);
         }
-        let asset = await this.getAssetByAssetId(ctx, assetId)
-        if (!asset.ok) {
-            console.log("getAssetByAssetId fail, error:", asset)
-            return asset
-        }
-        let decimals = asset.data[0].tokenInfo.decimals
         return succResp(BigInt(value) * BigInt(10 ** decimals))
     }
 
