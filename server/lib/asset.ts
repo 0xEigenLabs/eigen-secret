@@ -2,7 +2,6 @@ const { DataTypes, Model } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
 import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
-import { ETH } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { Headers } from "node-fetch";
 import fetch from "node-fetch";
