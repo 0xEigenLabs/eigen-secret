@@ -1041,11 +1041,11 @@ return await this.rollupSC.allowance(token)
         return 0n;
     }
 
-    async getRegisteredToken(id: bigint) {
+    async getRegisteredToken(id: number) {
         if (id <= 1) {
             return ETH;
         }
-        return await this.rollupSC.getRegisteredToken(id);
+        return await this.rollupSC.getRegisteredToken(BigInt(id));
     }
 
     /**
