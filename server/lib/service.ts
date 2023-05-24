@@ -45,7 +45,7 @@ app.post("/proof/create", submitProofs);
 app.post("/proof/get", getProofs);
 
 app.post("/assets/create", createAsset);
-app.post("/assets/get", getAsset)
+//app.post("/assets/get", getAsset)
 app.post("/assets/price", getAssetInfo)
 
 export default app;
