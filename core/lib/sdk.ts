@@ -1036,8 +1036,8 @@ export class SecretSDK {
 
     async allowance(token: string) {
         if (token !== ETH) {
-return await this.rollupSC.allowance(token)
-}
+            return await this.rollupSC.allowance(token)
+        }
         return 0n;
     }
 
