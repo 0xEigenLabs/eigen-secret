@@ -1014,7 +1014,11 @@ export class SecretSDK {
     }
 
     async formatValue(ctx: Context, value: bigint, assetId: any) {
-        let asset = await this.getAssetByAssetId(ctx, BigInt(assetId))
+        if (assetId === 1) {
+            value = value * (BigInt(10) ** BigInt(18));
+            return succResp(value);
+        }
+        let asset = await this.getAssetByAssetId(ctx, assetId)
         if (!asset.ok) {
             console.log("getAssetByAssetId fail, error:", asset)
             return asset
@@ -1031,8 +1035,9 @@ export class SecretSDK {
     }
 
     async allowance(token: string) {
-        if (token !== ETH)
-            return await this.rollupSC.allowance(token)
+        if (token !== ETH) {
+return await this.rollupSC.allowance(token)
+}
         return 0n;
     }
 
