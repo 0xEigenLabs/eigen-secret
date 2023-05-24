@@ -157,6 +157,7 @@ export async function getAssetInfo(req: any, res: any) {
     for (let ai of assetList) {
         let filled = false;
         for (let priceInfo of rows) {
+            /*
             // rename ETH address
             if (priceInfo.token_address === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") {
                 filled = true;
@@ -165,6 +166,7 @@ export async function getAssetInfo(req: any, res: any) {
                 results.push(priceInfo);
                 break;
             }
+            */
             if (ai.contractAddress == priceInfo.token_address) {
                 priceInfo.assetId = ai.assetId;
                 filled = true;
