@@ -188,6 +188,8 @@ export async function getAssetInfo(req: any, res: any) {
         x.tokenInfo = getTokenInfoByAddress(x.token_address)
         if (x.tokenInfo.symbol == "") {
             x.tokenInfo.symbol = x.token_symbol;
+        }
+        if (x.tokenInfo.name == "") {
             x.tokenInfo.name = x.token_symbol;
         }
         x.token_symbol = undefined;
