@@ -14,12 +14,13 @@ export class Aes256gcm {
     }
 
     private getKey(salt: Buffer) {
-        return crypto.pbkdf2Sync(this.secret, salt, 100000, 32, "sha512");
+        return crypto.pbkdf2Sync(this.secret, salt, 1, 32, "sha512");
     }
 
     // encrypt returns base64-encoded ciphertext
     encrypt(text: any): string {
         // See: e.g. https://csrc.nist.gov/publications/detail/sp/800-38d/final
+        let startTime = new Date().getTime();
         const iv = crypto.randomBytes(IV_LENGTH);
         const salt = crypto.randomBytes(SALT_LENGTH);
         const key = this.getKey(salt);
@@ -29,11 +30,14 @@ export class Aes256gcm {
             cipher.update(String(text), "utf8"), cipher.final()
         ]);
         const tag = cipher.getAuthTag();
+        let endTime = new Date().getTime();
+        console.log("encrypt", (endTime - startTime)/1000);
         return Buffer.concat([salt, iv, tag, encrypted]).toString("base64");
     }
 
     // decrypt decodes base64-encoded ciphertext into a utf8-encoded string
     decrypt(cipherData_: string): any {
+        let startTime = new Date().getTime();
         const cipherData = Buffer.from(String(cipherData_), "base64");
         const salt = cipherData.slice(0, SALT_LENGTH);
         const iv = cipherData.slice(SALT_LENGTH, TAG_POSITION);
@@ -42,6 +46,9 @@ export class Aes256gcm {
         const key = this.getKey(salt);
         const decipher = crypto.createDecipheriv(ALGO, key, iv);
         decipher.setAuthTag(tag);
-        return decipher.update(encrypted) + decipher.final("utf8");
+        let t = decipher.update(encrypted) + decipher.final("utf8");
+        let endTime = new Date().getTime();
+        console.log("decrypt", (endTime - startTime)/1000);
+        return t;
     }
 }
