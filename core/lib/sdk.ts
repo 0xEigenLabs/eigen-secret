@@ -1055,6 +1055,7 @@ export class SecretSDK {
      */
     async createAccount(ctx: Context, password: string) {
         const F = this.eddsa.F;
+        // TODO: check if duplicated record
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
         let newAccountPubKey = this.account.accountKey.pubKey.unpack(this.eddsa.babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
