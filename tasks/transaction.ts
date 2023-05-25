@@ -40,9 +40,12 @@ task("deposit", "Deposit asset from L1 to L2")
     // get tokenAddress by asset id
     let tokenAddress = await secretSDK.data.getRegisteredToken(BigInt(assetId))
     console.log("token", tokenAddress.toString());
+
     // approve
-    let approveTx = await secretSDK.data.approve(tokenAddress.toString(), value);
-    await approveTx.wait();
+    let allowance = await secretSDK.data.allowance(tokenAddress.toString())
+    if (allowance.data < value) {
+      await secretSDK.data.approve(tokenAddress.toString(), value);
+    }
 
     let proofAndPublicSignals = await secretSDK.data.deposit(ctx, receiver, BigInt(value), Number(assetId), nonce);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
@@ -80,6 +83,7 @@ task("send", "Send asset to receiver in L2")
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
+
     let proofAndPublicSignals = await secretSDK.data.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("send failed: ", proofAndPublicSignals);
@@ -188,6 +192,7 @@ task("get-transactions", "Get user's transactions")
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
+      console.log(secretSDK);
     const transactions = await secretSDK.data.getTransactions(ctx, { page, pageSize });
     if (transactions.errno != ErrCode.Success) {
       console.log("getAllBalance failed: ", transactions);

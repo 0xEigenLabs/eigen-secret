@@ -22,7 +22,7 @@ if (dbDriver == "sqlite") {
     // only for test
     sequelize = new Sequelize(dbName, dbUser, dbPassword, {
         host: dbHost,
-        //storage: ":memory:",
+        // storage: ":memory:",
         storage: "/tmp/db.sqlite",
         dialect: dbDriver,
         dialectOptions: {
@@ -52,7 +52,7 @@ if (dbDriver == "sqlite") {
 }
 
 sequelize
-.sync({ force: true })
+.sync({ force: false }) // don't drop table when launching
 .catch(function(err: any) {
     consola.log("Unable to connect to the database:", err);
 });

@@ -142,6 +142,18 @@ export class RollupSC {
         return approveToken;
     }
 
+    async allowance(tokenAddress: string) {
+        let userAccount = this.userAccount;
+        assert(this.rollup);
+        let testToken = new ethers.Contract(tokenAddress, this.tokenERC20ABI, this.userAccount);
+        let allowance = await testToken.connect(userAccount).allowance(
+            userAccount.address,
+            this.rollup.address,
+            { from: userAccount.address }
+        )
+        return succResp(allowance.toString(), true);
+    }
+
     async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: bigint, nonce: number) {
         let userAccount = this.userAccount;
         assert(this.rollup);

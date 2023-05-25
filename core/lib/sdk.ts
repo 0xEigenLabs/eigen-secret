@@ -1,6 +1,6 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
-import { prepareJson, uint8Array2Bigint } from "./utils";
+import { prepareJson, uint8Array2Bigint, ETH } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
 import { Prover } from "./prover";
@@ -375,7 +375,7 @@ export class SecretSDK {
      *         address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
      *         name: 'Unknown Token',
      *         symbol: '',
-     *         decimals: 0,
+     *         decimals: 18,
      *         logoURI: '',
      *         extensions: ''
      *       }
@@ -388,6 +388,14 @@ export class SecretSDK {
             context: ctx.serialize()
         };
         return this.curl("assets/price", data);
+    }
+
+    async getAssetByAssetId(ctx: Context, assetId: any) {
+        let data = {
+            context: ctx.serialize(),
+            assetId: assetId
+        };
+        return this.curl("assets/get", data);
     }
 
     /**
@@ -422,11 +430,13 @@ export class SecretSDK {
         let priceInfo = assetInfo.data;
         let prices: Map<number, number> = new Map();
         let last24hPrices: Map<number, number> = new Map();
+        let tokenInfo: Map<number, string> = new Map();
 
         priceInfo.forEach((row: any) => {
             if (row.assetId) {
                 prices.set(Number(row.assetId), row.latest_price);
                 last24hPrices.set(Number(row.assetId), row.last24hPrices);
+                tokenInfo.set(Number(row.assetId), row.tokenInfo);
             }
         });
 
@@ -434,12 +444,14 @@ export class SecretSDK {
         let resp = [];
         for (let [aid, val] of notesByAssetId) {
             let curPrice = prices.get(aid) || 1;
+            let ti = tokenInfo.get(aid) || {};
             let p24hPrice = last24hPrices.get(aid) || 1;
             let profit = Number(val) * (curPrice - p24hPrice);
 
             resp.push({
                 assetId: aid,
                 balance: val,
+                tokenInfo: ti,
                 balanceUSD: Number(val) * curPrice,
                 profit24Hour: profit,
                 return: profit / (Number(val) * p24hPrice)
@@ -584,7 +596,7 @@ export class SecretSDK {
 
             // batch create tx
             this.createTx(
-                transaction.encryptTx(this.account.signingKey), proofAndPublicSignals, "deposit"
+                transaction.encryptTx(this.account.signingKey, value), proofAndPublicSignals, "deposit"
             );
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             if (!receipt.ok) {
@@ -668,6 +680,7 @@ export class SecretSDK {
         if (!notes.ok) {
             return notes;
         }
+
         let _receiver = new EigenAddress(receiver);
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
@@ -711,7 +724,7 @@ export class SecretSDK {
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
             this.createTx(
-                transaction.encryptTx(this.account.signingKey), proofAndPublicSignals, "send"
+                transaction.encryptTx(this.account.signingKey, value), proofAndPublicSignals, "send"
             );
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             if (!receipt.ok) {
@@ -780,6 +793,7 @@ export class SecretSDK {
             return notes;
         }
         assert(notes.data.length > 0, "Invalid notes");
+
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
             this.account.accountKey,
@@ -852,7 +866,7 @@ export class SecretSDK {
             // assert(txInputData[0].content, encryptedNotes[0].content);
 
             this.createTx(
-                transaction.encryptTx(this.account.signingKey), proofAndPublicSignals, "withdraw");
+                transaction.encryptTx(this.account.signingKey, value), proofAndPublicSignals, "withdraw");
             // call contract and deposit
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             // console.log(`receipt: ${JSON.stringify(receipt)}`)
@@ -988,7 +1002,10 @@ export class SecretSDK {
      * @param {string} token
      */
     async approveToken(token: string) {
-        return await this.rollupSC.approveToken(token);
+        if (token !== ETH) {
+            return await this.rollupSC.approveToken(token);
+        }
+        return Promise.resolve(1n);
     }
 
     async createAsset(ctx: Context, token: string, assetId: any) {
@@ -1000,12 +1017,34 @@ export class SecretSDK {
         return this.curl("assets/create", data);
     }
 
-    async approve(token: string, value: bigint) {
-        return await this.rollupSC.approve(token, value);
+    async formatValue(ctx: Context, value: bigint, assetId: any, decimals: number = 18) {
+        if (assetId === 1) {
+            value = value * (BigInt(10) ** BigInt(18));
+            return succResp(value);
+        }
+        return succResp(BigInt(value) * BigInt(10 ** decimals))
     }
 
-    async getRegisteredToken(id: bigint) {
-        return await this.rollupSC.getRegisteredToken(id);
+    async approve(token: string, value: bigint) {
+        if (token !== ETH) {
+            let tx = await this.rollupSC.approve(token, value);
+            return tx.wait();
+        }
+        return Promise.resolve(true);
+    }
+
+    async allowance(token: string) {
+        if (token !== ETH) {
+            return await this.rollupSC.allowance(token)
+        }
+        return 0n;
+    }
+
+    async getRegisteredToken(id: number) {
+        if (id <= 1) {
+            return ETH;
+        }
+        return await this.rollupSC.getRegisteredToken(BigInt(id));
     }
 
     /**
@@ -1016,6 +1055,7 @@ export class SecretSDK {
      */
     async createAccount(ctx: Context, password: string) {
         const F = this.eddsa.F;
+        // TODO: check if duplicated record
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
         let newAccountPubKey = this.account.accountKey.pubKey.unpack(this.eddsa.babyJub);
         newAccountPubKey = [F.toObject(newAccountPubKey[0]), F.toObject(newAccountPubKey[1])];
