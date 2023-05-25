@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "server": "npm run build:server && cd server && npm start",
+    "server:proxy": "npm run build:server && cd server && npm start:proxy",
     "build:core": "cd core && npm i && npm run build",
     "build:server": "cd server && npm i && npm run build",
     "build": "npm run build:core && npm run build:server",

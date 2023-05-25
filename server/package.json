@@ -6,6 +6,7 @@
   "scripts": {
     "build": "npx tsc",
     "start": "npm run build && node ./dist/app.js",
+    "start:proxy": "npm run build && export NODE_PATH=$(npm root -g) && export SET_PROXY_PORT=7890 && node -r global-proxy-setter ./dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
