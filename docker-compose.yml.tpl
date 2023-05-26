@@ -16,7 +16,7 @@ services:
     networks:
       - default
     external_links:
-      - {{EIGEN_SERVICE_ADDR}}_1:server
+      - {{EIGEN_SERVICE_ADDR}}:server
   server:
     build: .
     ports:
@@ -24,7 +24,7 @@ services:
     networks:
       - default
     volumes:
-      - "./data:/app/data"
+      - "./data:/eigen-secret/server/data"
 networks:
   default:
     driver: bridge

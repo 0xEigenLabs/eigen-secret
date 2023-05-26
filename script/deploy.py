@@ -5,7 +5,7 @@ import os
 import re
 
 parser = argparse.ArgumentParser(description='Eigen Deploy')
-parser.add_argument('--NODE_ENV', type=str, default="preview",
+parser.add_argument('--NODE_ENV', type=str, default="development",
                     help='secret branch')
 parser.add_argument('--PORT_OFFSET', type=str, default=0,
                     help='port')
@@ -16,7 +16,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_name = os.path.basename(os.getcwd())
 
 #proxy, secret, eigen_service, fns
-init_ports = [8443, 8090, 3000, 8082]
+init_ports = [8443, 8080, 3000, 8082]
 init_tpls = [
 #    os.path.join(dir_path, "../proxy/etc/nginx.conf"),
     os.path.join(dir_path, "../docker-compose.yml")
@@ -39,9 +39,9 @@ def render_tpl(port_offset):
         r"{{EIGEN_SECRET_PORT}}": str(init_ports[1] + port_offset),
         r"{{EIGEN_SERVICE_PORT}}": str(init_ports[2] + port_offset),
         r"{{EIGEN_FNS_PORT}}": str(init_ports[3] + port_offset),
-        r"{{EIGEN_SERVICE_ADDR}}": "{}_eigen_secret".format(dir_name),
+        r"{{EIGEN_SERVICE_ADDR}}": "{}_server_{}".format(dir_name, str(port_offset + 1)),
         r"{{IAS_SPID}}": "",
-        r"{{IAS_KEY}}" : "",
+        r"{{IAS_KEY}}": "",
         r"{{RUST_LOG}}": "debug",
         r"{{KMS_KEY_ID}}": "",
         r"{{KMS_CLIENT_ID}}": "",
