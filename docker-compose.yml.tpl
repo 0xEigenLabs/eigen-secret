@@ -2,7 +2,7 @@ version: "3"
 
 services:
   ui:
-    build: ../ui
+    build: ../eigen-secret-ui
     environment:
       - NODE_ENV={{NODE_ENV}}
     ports:
@@ -16,7 +16,7 @@ services:
     networks:
       - default
     external_links:
-      - {{EIGEN_SERVICE_ADDR}}_1:eigen_service
+      - {{EIGEN_SERVICE_ADDR}}_1:server
   server:
     build: .
     ports:
@@ -25,8 +25,6 @@ services:
       - default
     volumes:
       - "./data:/app/data"
-    external_links:
-      - eigen_service_3-tss-sm-server_1:tss-sm-server
 networks:
   default:
     driver: bridge
