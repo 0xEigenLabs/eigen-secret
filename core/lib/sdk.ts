@@ -1022,7 +1022,7 @@ export class SecretSDK {
         if (assetId === 1) {
             decimals = 18;
         }
-        return utils.parseUnits(value, decimals);
+        return utils.parseUnits(value, decimals).toBigInt();
     }
 
     formatValue(ctx: Context, value: string, assetId: number, decimals: number = 18) {

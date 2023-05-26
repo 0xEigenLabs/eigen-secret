@@ -79,8 +79,8 @@ task("send-l1", "Send asset from L1 to L1")
         admin
     );
 
-    let valueResp = await secretSDK.data.parseValue(ctx, value, assetId, Number(decimal))
-    value = valueResp.data
+    value = await secretSDK.data.parseValue(ctx, value, assetId, Number(decimal))
+    console.log(value);
     let tx: any;
     let balance: any;
     if (assetId > 1) {
