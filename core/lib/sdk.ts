@@ -1018,11 +1018,18 @@ export class SecretSDK {
         return this.curl("assets/create", data);
     }
 
-    formatValue(ctx: Context, value: string, assetId: number, decimals: number = 18) {
+    parseValue(ctx: Context, value: string, assetId: number, decimals: number = 18) {
         if (assetId === 1) {
             decimals = 18;
         }
         return utils.parseUnits(value, decimals);
+    }
+
+    formatValue(ctx: Context, value: string, assetId: number, decimals: number = 18) {
+        if (assetId === 1) {
+            decimals = 18;
+        }
+        return utils.formatUnits(value, decimals);
     }
 
     async approve(token: string, value: bigint) {
