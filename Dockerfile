@@ -1,11 +1,11 @@
 FROM node:18-alpine
 
-MAINTAINER Eigen
+MAINTAINER EigenLabs
 
 EXPOSE 3000
 
-WORKDIR /app
-COPY . /app
-RUN npm install forever -g && npm install && npm run build
+WORKDIR /eigen-secret
+COPY . /eigen-secret
+RUN npm install forever -g && npm install && npm run build && cd server
 
-CMD ["forever", "cd server && ./dist/app.js"]
+CMD ["forever", "./dist/app.js"]
