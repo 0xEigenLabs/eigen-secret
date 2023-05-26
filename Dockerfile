@@ -8,4 +8,4 @@ WORKDIR /app
 COPY . /app
 RUN npm install forever -g && npm install && npm run build
 
-CMD ["forever", "build/src/app.js"]
+CMD ["forever", "cd server && ./dist/app.js"]
