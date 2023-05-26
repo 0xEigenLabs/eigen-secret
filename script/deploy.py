@@ -16,7 +16,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_name = os.path.basename(os.getcwd())
 
 #proxy, secret, eigen_service, fns
-init_ports = [8443, 8090, 3000, 8082]
+init_ports = [8443, 8080, 3000, 8082]
 init_tpls = [
 #    os.path.join(dir_path, "../proxy/etc/nginx.conf"),
     os.path.join(dir_path, "../docker-compose.yml")
