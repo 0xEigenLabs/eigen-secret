@@ -39,7 +39,7 @@ def render_tpl(port_offset):
         r"{{EIGEN_SECRET_PORT}}": str(init_ports[1] + port_offset),
         r"{{EIGEN_SERVICE_PORT}}": str(init_ports[2] + port_offset),
         r"{{EIGEN_FNS_PORT}}": str(init_ports[3] + port_offset),
-        r"{{EIGEN_SERVICE_ADDR}}": "{}_eigen_secret".format(dir_name),
+        r"{{EIGEN_SERVICE_ADDR}}": "{}_server_{}".format(dir_name, str(port_offset)),
         r"{{IAS_SPID}}": "",
         r"{{IAS_KEY}}" : "",
         r"{{RUST_LOG}}": "debug",

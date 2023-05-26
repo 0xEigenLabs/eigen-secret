@@ -16,7 +16,7 @@ services:
     networks:
       - default
     external_links:
-      - {{EIGEN_SERVICE_ADDR}}_1:server
+      - {{EIGEN_SERVICE_ADDR}}:server
   server:
     build: .
     ports:
