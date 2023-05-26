@@ -79,7 +79,6 @@ task("send-l1", "Send asset from L1 to L1")
         admin
     );
 
-    value = BigInt(value);
     let valueResp = await secretSDK.data.formatValue(ctx, value, assetId, Number(decimal))
     value = valueResp.data
     let tx: any;

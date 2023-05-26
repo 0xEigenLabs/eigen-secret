@@ -13,7 +13,7 @@ npx hardhat register-token --token $TOKEN --network $NETWORK
 
 npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network $NETWORK
 npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network $NETWORK
-npx hardhat get-transactions --alias Alice --index 0
+npx hardhat get-transactions --alias Alice --index 0 --network $NETWORK
 npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network $NETWORK
 
 npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id 2 --network $NETWORK
@@ -32,16 +32,16 @@ npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network $NETWORK
 npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network $NETWORK
 npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network $NETWORK
 
-npx hardhat migrate-account --alias Alice --index 0
+npx hardhat migrate-account --alias Alice --index 0 --network $NETWORK
 
 npx hardhat get-balance --alias Alice --index 0 --asset-id 2 --network $NETWORK
 npx hardhat get-balance --alias Bob --index 1 --asset-id 2 --network $NETWORK
 
 npx hardhat deposit --alias Alice --index 0 --value 11 --asset-id 2 --network $NETWORK
 
-npx hardhat update-account --alias Alice --index 0
+npx hardhat update-account --alias Alice --index 0 --network $NETWORK
 npx hardhat deposit --alias Alice --index 0 --value 12 --asset-id 2 --network $NETWORK
 
 # TODO: test send
 npx hardhat withdraw --alias Alice --index 0 --value 12 --asset-id 2 --network $NETWORK
-npx hardhat get-transactions --alias Alice --index 0
+npx hardhat get-transactions --alias Alice --index 0 --network $NETWORK

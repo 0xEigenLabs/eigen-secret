@@ -1,5 +1,6 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
+import { utils } from "ethers";
 import { prepareJson, uint8Array2Bigint, ETH } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
@@ -1017,12 +1018,11 @@ export class SecretSDK {
         return this.curl("assets/create", data);
     }
 
-    async formatValue(ctx: Context, value: bigint, assetId: any, decimals: number = 18) {
+    async formatValue(ctx: Context, value: string, assetId: any, decimals: number = 18) {
         if (assetId === 1) {
-            value = value * (BigInt(10) ** BigInt(18));
-            return succResp(value);
+            decimals = 18;
         }
-        return succResp(BigInt(value) * BigInt(10 ** decimals))
+        return utils.formatUnits(value, decimals);
     }
 
     async approve(token: string, value: bigint) {
