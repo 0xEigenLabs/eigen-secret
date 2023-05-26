@@ -1,6 +1,6 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
-import { utils } from "ethers";
+import { utils, BigNumber } from "ethers";
 import { prepareJson, uint8Array2Bigint, ETH } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
@@ -307,8 +307,8 @@ export class SecretSDK {
             */
             transactions.push({
                 operation: tx.operation,
-                balance: txData.amount, // deprecated
-                amount: txData.amount,
+                balance: this.formatValue(ctx, txData.amount.toString(), txData.assetId), // deprecated
+                amount: this.formatValue(ctx, txData.amount.toString(), txData.assetId),
                 assetId: txData.assetId,
                 to: txData.to,
                 status: TransactionModelStatus[tx.status],
@@ -420,9 +420,9 @@ export class SecretSDK {
             }
         }
         // console.log("notesByAssetId", notesByAssetId);
-        let totalBalanceUSD = 0;
-        let totalReturn = 0;
-        let totalProfit24Hour = 0;
+        let totalBalanceUSD = "";
+        let totalReturn = "";
+        let totalProfit24Hour = "";
         let assetInfo = await this.getAssetInfo(ctx);
         if (!assetInfo.ok) {
             return assetInfo;
@@ -447,21 +447,65 @@ export class SecretSDK {
             let curPrice = prices.get(aid) || 1;
             let ti = tokenInfo.get(aid) || {};
             let p24hPrice = last24hPrices.get(aid) || 1;
-            let profit = Number(val) * (curPrice - p24hPrice);
+            // curPrice = Number(26841.896275681855)
+            // p24hPrice = Number(26374.24)
+            let _curPrice = utils.parseUnits(curPrice.toString(), 18);
+            let _p24hPrice = utils.parseUnits(p24hPrice.toString(), 18);
 
+            let _val = BigNumber.from(val.toString());
+            let profit = _val.mul(_curPrice.sub(_p24hPrice));
+
+            let _balanceUSD = _val.mul(_curPrice);
+            let _return;
+            if (_val.mul(_p24hPrice).toString()=="0") {
+                _return = 0n;
+            } else {
+                _return = profit.div(_val.mul(_p24hPrice));
+            }
             resp.push({
                 assetId: aid,
-                balance: val,
+                balance: this.formatValue(ctx, val.toString(), aid),
                 tokenInfo: ti,
-                balanceUSD: Number(val) * curPrice,
-                profit24Hour: profit,
-                return: profit / (Number(val) * p24hPrice)
+                balanceUSD: this.formatValue(ctx, utils.formatUnits(_balanceUSD).replace(/\..*/, ""), aid),
+                profit24Hour: this.formatValue(ctx, utils.formatUnits(profit).replace(/\..*/, ""), aid),
+                return: _return.toString()
             });
-            totalBalanceUSD += Number(val) * (prices.get(aid) || 1);
-            totalProfit24Hour += profit;
-            totalReturn += profit / (Number(val) * p24hPrice);
+
+            if (totalBalanceUSD.length === 0) {
+                let _totalBalanceUSD = _val.mul(_curPrice);
+                totalBalanceUSD = this.formatValue(ctx, utils.formatUnits(_totalBalanceUSD).replace(/\..*/, ""), aid);
+            } else {
+                let _totalBalanceUSD = utils.parseUnits(totalBalanceUSD, 18);
+                _totalBalanceUSD = utils.parseUnits(_totalBalanceUSD.toString(), 18);
+                _totalBalanceUSD = _totalBalanceUSD.add(_val.mul(_curPrice));
+                totalBalanceUSD = this.formatValue(ctx, utils.formatUnits(_totalBalanceUSD).replace(/\..*/, ""), aid);
+            }
+            // totalBalanceUSD += Number(val) * (prices.get(aid) || 1);
+            if (totalProfit24Hour.length === 0) {
+                totalProfit24Hour = this.formatValue(ctx, utils.formatUnits(profit).replace(/\..*/, ""), aid);
+            } else {
+                let _totalProfit24Hour = utils.parseUnits(totalProfit24Hour, 18);
+                _totalProfit24Hour = utils.parseUnits(_totalProfit24Hour.toString(), 18);
+                _totalProfit24Hour = _totalProfit24Hour.add(utils.formatUnits(profit));
+                totalProfit24Hour = this.formatValue(ctx, utils.formatUnits(_totalProfit24Hour).replace(/\..*/, ""), aid);
+            }
+            // totalProfit24Hour += profit;
+            if (totalReturn.length === 0) {
+                totalReturn = _return.toString();
+            } else {
+                let _totalReturn = utils.parseUnits(totalReturn, 18);
+                let tmp = utils.parseUnits(_return.toString(), 18);
+                _totalReturn = _totalReturn.add(tmp);
+                totalReturn = utils.formatUnits(totalReturn);
+            }
+            // totalReturn += profit / (Number(val) * p24hPrice);
         }
-        totalReturn /= notesByAssetId.size;
+        if (notesByAssetId.size!=0) {
+            let _totalReturn = utils.parseUnits(totalReturn, 18);
+            let tmp = utils.parseUnits((notesByAssetId.size).toString(), 18);
+            totalReturn = _totalReturn.div(tmp).toString();
+        }
+        // totalReturn /= notesByAssetId.size;
         return succResp({ assetInfo: resp, totalBalanceUSD, totalProfit24Hour, totalReturn }, true);
     }
 

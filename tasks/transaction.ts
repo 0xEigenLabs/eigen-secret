@@ -40,14 +40,16 @@ task("deposit", "Deposit asset from L1 to L2")
     // get tokenAddress by asset id
     let tokenAddress = await secretSDK.data.getRegisteredToken(BigInt(assetId))
     console.log("token", tokenAddress.toString());
-
+// (ctx: Context, value: string, assetId: number, decimals: number = 18)
+let _value = await secretSDK.data.parseValue(ctx, value, 2)
+console.log(_value.toString());
     // approve
     let allowance = await secretSDK.data.allowance(tokenAddress.toString())
-    if (allowance.data < value) {
-      await secretSDK.data.approve(tokenAddress.toString(), value);
+    if (allowance.data < _value) {
+      await secretSDK.data.approve(tokenAddress.toString(), _value);
     }
 
-    let proofAndPublicSignals = await secretSDK.data.deposit(ctx, receiver, BigInt(value), Number(assetId), nonce);
+    let proofAndPublicSignals = await secretSDK.data.deposit(ctx, receiver, BigInt(_value), Number(assetId), nonce);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("deposit failed: ", proofAndPublicSignals);
     }
