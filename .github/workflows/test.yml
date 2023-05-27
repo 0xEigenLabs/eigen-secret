@@ -42,5 +42,3 @@ jobs:
         run: npm run build
       - name: Start test
         run: npm run test
-      - name: delete db
-        run: rm -r ./tmp
