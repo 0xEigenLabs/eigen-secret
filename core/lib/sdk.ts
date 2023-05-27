@@ -131,7 +131,7 @@ export class SecretSDK {
      * @param {any} contractJson The JSON object for the contract.
      * @param {string} circuitPath The path to the circuit file.
      * @param {any} contractABI The ABI of the contract.
-     * @param {boolean} [isCreate=false] Flag indicating whether to create a new account. Optional.
+     * @param {boolean} [isCreate=false] the flag indicating whether to create a new account. Optional.
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'class' that contains the initialized `SecretSDK` instance.
     */
     static async initSDKFromAccount(
@@ -391,19 +391,33 @@ export class SecretSDK {
         return this.curl("assets/price", data);
     }
 
-    async getAssetByAssetId(ctx: Context, assetId: any) {
-        let data = {
-            context: ctx.serialize(),
-            assetId: assetId
-        };
-        return this.curl("assets/get", data);
-    }
-
     /**
      * Obtain user balance.
      * @param {Context} ctx
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'Map' which contains user balance.
-     * e.g. {"assetInfo":[{"assetId":2,"balance":"30","balanceUSD":30,"profit24Hour":0,"return":0}],"totalBalanceUSD":30}
+     * {
+     *   "assetInfo": [
+     *     {
+     *       "assetId": 2,
+     *       "balance": "20",
+     *       "tokenInfo": {
+     *         "chainId": "1",
+     *         "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+     *         "name": "TT",
+     *         "symbol": "TT",
+     *         "decimals": 18,
+     *         "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+     *         "extensions": ""
+     *       },
+     *       "balanceUSD": 20,
+     *       "profit24Hour": 0,
+     *       "return": 0
+     *     }
+     *   ],
+     *   "totalBalanceUSD": 20,
+     *   "totalProfit24Hour": 0,
+     *   "totalReturn": 0
+     * }
      */
     async getAllBalance(ctx: Context) {
         let noteState = [NoteState.PROVED]
@@ -431,7 +445,7 @@ export class SecretSDK {
         let priceInfo = assetInfo.data;
         let prices: Map<number, number> = new Map();
         let last24hPrices: Map<number, number> = new Map();
-        let tokenInfo: Map<number, string> = new Map();
+        let tokenInfo: Map<number, any> = new Map();
 
         priceInfo.forEach((row: any) => {
             if (row.assetId) {
@@ -443,10 +457,11 @@ export class SecretSDK {
 
         // get token price
         let resp = [];
-        for (let [aid, val] of notesByAssetId) {
+        for (let [aid, oval] of notesByAssetId) {
             let curPrice = prices.get(aid) || 1;
-            let ti = tokenInfo.get(aid) || {};
+            let ti = tokenInfo.get(aid);
             let p24hPrice = last24hPrices.get(aid) || 1;
+            let val = this.formatValue(ctx, oval, aid, ti?.decimals || 18);
             let profit = Number(val) * (curPrice - p24hPrice);
 
             resp.push({
@@ -1018,14 +1033,14 @@ export class SecretSDK {
         return this.curl("assets/create", data);
     }
 
-    parseValue(ctx: Context, value: string, assetId: number, decimals: number = 18) {
+    parseValue(_ctx: Context, value: string, assetId: number, decimals: number = 18) {
         if (assetId === 1) {
             decimals = 18;
         }
         return utils.parseUnits(value, decimals).toBigInt();
     }
 
-    formatValue(ctx: Context, value: string, assetId: number, decimals: number = 18) {
+    formatValue(_ctx: Context, value: string | bigint, assetId: number, decimals: number = 18) {
         if (assetId === 1) {
             decimals = 18;
         }

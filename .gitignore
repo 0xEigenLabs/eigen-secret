@@ -1,4 +1,5 @@
 docker-compose.yml
+server/data
 docs
 circuits/main_withdraw.input.json
 dist/
