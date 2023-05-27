@@ -322,7 +322,7 @@ export class SecretSDK {
                 let ti = tokenInfo.get(txData.assetId);
                 transactions.push({
                     operation: tx.operation,
-                    //balance: txData.amount, // deprecated
+                    // balance: txData.amount, // deprecated
                     amount: this.formatValue(ctx, txData.amount, txData.assetId, ti?.decimals || 18),
                     assetId: txData.assetId,
                     to: txData.to,
