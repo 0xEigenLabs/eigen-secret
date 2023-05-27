@@ -10,11 +10,11 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       key: {
-          type: DataTypes.STRING,
+          type: Sequelize.STRING,
           allowNull: false
       },
       value: {
-          type: DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false
       },
       createdAt: {

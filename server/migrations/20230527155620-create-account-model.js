@@ -10,16 +10,16 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       alias: {
-          type: DataTypes.STRING,
+          type: Sequelize.STRING,
           allowNull: false,
           unique: true
       },
       ethAddress: {
-          type: DataTypes.STRING,
+          type: Sequelize.STRING,
           allowNull: false
       },
       secretAccount: {
-          type: DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false
       },
       createdAt: {

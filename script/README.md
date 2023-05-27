@@ -8,11 +8,10 @@ python script/deploy.py --NODE_ENV "development" --PORT_OFFSET 1
 ```
 The default env is `development`.
 
-3. Register ETH in asset table
+3. Initialize DB
 
 ```
-cd server
-npx sequelize-cli db:seed:all
+npm run init:db
 ```
 
 4. Build and launch service

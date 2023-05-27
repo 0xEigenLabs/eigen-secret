@@ -167,13 +167,18 @@ task("get-balance", "Get user's both L1 and L2 balance")
     console.log("L2 balance", JSON.stringify(balance.data));
 
     let address = await sdk.getRegisteredToken(assetId);
-    let tokenIns = new ethers.Contract(
-        address,
-        defaultContractABI.testTokenContractABI,
-        user
-    );
+    console.log("Token Address", address);
+    if (assetId !== "1") {
+        let tokenIns = new ethers.Contract(
+            address,
+            defaultContractABI.testTokenContractABI,
+            user
+        );
 
-    balance = await tokenIns.balanceOf(user.address);
+        balance = await tokenIns.balanceOf(user.address);
+    } else {
+        balance = await user.getBalance();
+    }
     console.log("L1 balance", balance.toString());
 });
 

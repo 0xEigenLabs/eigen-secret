@@ -10,27 +10,27 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       alias: {
-          type: DataTypes.STRING,
+          type: Sequelize.STRING,
           allowNull: false
       },
       txData: {
-          type: DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false
       },
       proof: {
-          type: DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false
       },
       operation: {
-          type: DataTypes.STRING,
+          type: Sequelize.STRING,
           allowNull: false
       },
       publicInput: {
-          type: DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false
       },
       status: {
-          type: DataTypes.INTEGER, // 1: UNKNOWN; 2. CREATED, 3: AGGREGATING, 4. SETTLED
+          type: Sequelize.INTEGER, // 1: UNKNOWN; 2. CREATED, 3: AGGREGATING, 4. SETTLED
           allowNull: false
       },
       createdAt: {

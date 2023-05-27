@@ -10,16 +10,16 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       alias: {
-          type: DataTypes.STRING,
+          type: Sequelize.STRING,
           allowNull: false
       },
       proof: {
-          type: DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false,
           unique: true
       },
       state: {
-          type: DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false
       },
       createdAt: {
