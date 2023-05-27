@@ -40,6 +40,7 @@ task("deposit", "Deposit asset from L1 to L2")
     let receiver = sdk.account.accountKey.pubKey.pubKey;
 
     // get tokenAddress by asset id
+    assetId = Number(assetId);
     let tokenAddress = await sdk.getRegisteredToken(assetId)
     console.log("token", tokenAddress.toString());
 
@@ -50,7 +51,7 @@ task("deposit", "Deposit asset from L1 to L2")
       await sdk.approve(tokenAddress.toString(), value);
     }
 
-    let proofAndPublicSignals = await sdk.deposit(ctx, receiver, BigInt(value), Number(assetId), nonce);
+    let proofAndPublicSignals = await sdk.deposit(ctx, receiver, BigInt(value), assetId, nonce);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("deposit failed: ", proofAndPublicSignals);
     }
@@ -124,10 +125,11 @@ task("withdraw", "Withdraw asset from L2 to L1")
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
+    assetId = Number(assetId);
     let sdk: SecretSDK = secretSDK.data;
     let receiver = sdk.account.accountKey.pubKey.pubKey;
     value = sdk.parseValue(ctx, value, assetId, decimals);
-    let proofAndPublicSignals = await sdk.withdraw(ctx, receiver, BigInt(value), Number(assetId));
+    let proofAndPublicSignals = await sdk.withdraw(ctx, receiver, BigInt(value), assetId);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("withdraw failed: ", proofAndPublicSignals);
     }
@@ -166,10 +168,11 @@ task("get-balance", "Get user's both L1 and L2 balance")
     }
     console.log("L2 balance", JSON.stringify(balance.data));
 
+    assetId = Number(assetId);
     let address = await sdk.getRegisteredToken(assetId);
     console.log("Token Address", address);
     let balanceL1: any;
-    if (assetId !== "1") {
+    if (assetId !== 1) {
         let tokenIns = new ethers.Contract(
             address,
             defaultContractABI.testTokenContractABI,
@@ -180,7 +183,7 @@ task("get-balance", "Get user's both L1 and L2 balance")
     } else {
         balanceL1 = await user.getBalance();
     }
-    console.log("L1 balance", balance.toString());
+    console.log("L1 balance", balanceL1.toString());
 });
 
 task("get-transactions", "Get user's transactions")
