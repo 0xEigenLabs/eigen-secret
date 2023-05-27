@@ -78,7 +78,7 @@ export class SecretSDK {
         }
         let options = {
             method: "POST",
-            url: serverAddr + resource,
+            url: serverAddr + resource + "/api/v1",
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
