@@ -29,7 +29,7 @@ task("deposit", "Deposit asset from L1 to L2")
     );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
@@ -78,7 +78,7 @@ task("send", "Send asset to receiver in L2")
     );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
@@ -112,7 +112,7 @@ task("withdraw", "Withdraw asset from L2 to L1")
     );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
@@ -145,7 +145,7 @@ task("get-balance", "Get user's both L1 and L2 balance")
     );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
@@ -187,7 +187,7 @@ task("get-transactions", "Get user's transactions")
     );
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);

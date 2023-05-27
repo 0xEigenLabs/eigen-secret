@@ -27,7 +27,7 @@ task("create-account", "Create secret account")
     const contractJson = require(defaultContractFile);
     const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, true
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, true, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
@@ -53,7 +53,7 @@ task("migrate-account", "Migrate account to another ETH address")
     let newAccountKey = new SigningKey(eddsa);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
@@ -80,7 +80,7 @@ task("update-account", "Update signing key")
     const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
@@ -109,7 +109,7 @@ task("get-account", "Get account info")
     const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);

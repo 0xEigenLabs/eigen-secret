@@ -134,7 +134,8 @@ export class SecretSDK {
      * @param {any} contractJson The JSON object for the contract.
      * @param {string} circuitPath The path to the circuit file.
      * @param {any} contractABI The ABI of the contract.
-     * @param {boolean} [isCreate=false] Flag indicating whether to create a new account. Optional.
+     * @param {boolean} [isCreate=false] the flag indicating whether to create a new account. Optional.
+     * @param {apiVersion} [apiVersion="/api/v1"] api version. For debug or local test, it may be set to "".
      * @return {Promise<AppError>} An `AppError` object with `data` property of type 'class' that contains the initialized `SecretSDK` instance.
     */
     static async initSDKFromAccount(

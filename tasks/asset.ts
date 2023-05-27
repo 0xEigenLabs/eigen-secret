@@ -18,7 +18,7 @@ task("setup-rollup", "Setup rollup coordinator")
     const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
         console.log("initSDKFromAccount failed: ", secretSDK);
@@ -39,7 +39,7 @@ task("register-token", "Register token to Rollup")
     const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDKResult = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDKResult.errno != ErrCode.Success) {
         console.log("initSDKFromAccount failed: ", secretSDKResult);
@@ -66,7 +66,7 @@ task("send-l1", "Send asset from L1 to L1")
     const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
+        ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI, false, ""
     );
     if (secretSDK.errno != ErrCode.Success) {
         console.log("initSDKFromAccount failed: ", secretSDK);
