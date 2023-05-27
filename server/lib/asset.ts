@@ -1,4 +1,4 @@
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
 import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
@@ -8,25 +8,8 @@ import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 
-class AssetModel extends Model {}
-
-AssetModel.init({
-    // Model attributes are defined here
-    assetId: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-    },
-    contractAddress: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-    }
-}, {
-    // Other model options go here
-    sequelize, // We need to pass the connection instance
-    modelName: "AssetModel" // We need to choose the model name
-});
+const assetmodel = require("../models/assetmodel");
+const Asset = assetmodel(sequelize, DataTypes);
 
 export const MAINNET_TOKENS = JSON.parse(
     fs.readFileSync(path.resolve(__dirname, "../lib/mainnet_erc20.json"), "utf-8")
@@ -81,7 +64,7 @@ export async function createAsset(req: any, res: any) {
     let transaction: any;
     try {
         transaction = await sequelize.transaction();
-        const item = await AssetModel.create(newItem, transaction);
+        const item = await Asset.create(newItem, transaction);
         await transaction.commit();
         return res.json(succResp(item));
     } catch (err: any) {
@@ -103,11 +86,11 @@ export async function getAsset(req: any, res: any) {
     let contractAddress = req.body.contractAddress;
     console.log(assetId, contractAddress);
 
-    let asset;
+    let asset: any;
     if (assetId) {
-        asset = await AssetModel.findAll({ where: { assetId: assetId }, raw: true });
+        asset = await Asset.findAll({ where: { assetId: assetId }, raw: true });
     } else if (contractAddress) {
-        asset = await AssetModel.findAll({ where: { contractAddress: contractAddress }, raw: true });
+        asset = await Asset.findAll({ where: { contractAddress: contractAddress }, raw: true });
     } else {
         asset = []
     }
@@ -128,7 +111,7 @@ export async function getAssetInfo(req: any, res: any) {
     if (code !== ErrCode.Success) {
         return res.json(errResp(code, ErrCode[code]));
     }
-    let assetList = await AssetModel.findAll();
+    let assetList: Array<any> = await Asset.findAll({});
     console.log("assetList", assetList);
 
     // get price info from dune
@@ -196,7 +179,7 @@ export async function executeQuery(req: any, res: any) {
     }
     let assetInfo = req.body.assetInfo || {}; // {id: val}
     let assetIdList = Object.keys(assetInfo);
-    let assetList = await AssetModel.findAll({ where: { assetId: assetIdList } });
+    let assetList = await Asset.findAll({ where: { assetId: assetIdList } });
     let contractAddresses = assetList.map((x : any) => x.contractAddress);
 
     // get price info from dune

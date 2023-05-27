@@ -1,44 +1,13 @@
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes } = require("sequelize");
 import sequelize from "./db";
 import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
-import { NoteModel, getDBNotes } from "./note";
+import { Note, getDBNotes } from "./note";
 import { TransactionModelStatus } from "@eigen-secret/core/dist-node/transaction"
 
-class TransactionModel extends Model {}
-
-TransactionModel.init({
-    // Model attributes are defined here
-    alias: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    txData: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-    proof: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-    operation: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    publicInput: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-    status: {
-        type: DataTypes.INTEGER, // 1: UNKNOWN; 2. CREATED, 3: AGGREGATING, 4. SETTLED
-        allowNull: false
-    }
-}, {
-    // Other model options go here
-    sequelize, // We need to pass the connection instance
-    modelName: "TransactionModel" // We need to choose the model name
-});
+const transactionmodel = require("../models/transactionmodel");
+const Transaction = transactionmodel(sequelize, DataTypes);
 
 export async function createTx(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
@@ -63,7 +32,7 @@ export async function createTx(req: any, res: any) {
         });
     } );
 
-    let insertNotes: Array<NoteModel> = [];
+    let insertNotes: Array<any> = [];
     notes.forEach((item: any) => {
         insertNotes.push({
             alias: item.alias,
@@ -79,10 +48,10 @@ export async function createTx(req: any, res: any) {
     try {
         await sequelize.transaction(async (t: any) => {
             if (insertTxs.length > 0) {
-                result = await TransactionModel.bulkCreate(insertTxs, { transaction: t, updateOnDuplicate: ["txData"] });
+                result = await Transaction.bulkCreate(insertTxs, { transaction: t, updateOnDuplicate: ["txData"] });
             }
             if (insertNotes.length > 0) {
-                result2 = await NoteModel.bulkCreate(insertNotes, { transaction: t, updateOnDuplicate: ["state", "alias"] });
+                result2 = await Note.bulkCreate(insertNotes, { transaction: t, updateOnDuplicate: ["state", "alias"] });
             }
         });
     } catch (err: any) {
@@ -148,7 +117,7 @@ export async function getNotes(req: any, res: any) {
 
 async function search(filterDict: any, page: any, pageSize: any) {
     let offset = page > 0? page - 1 : 0;
-    const { count, rows } = await TransactionModel.findAndCountAll({
+    const { count, rows } = await Transaction.findAndCountAll({
         where: filterDict,
         order: [["createdAt", "DESC"]],
         limit: pageSize,

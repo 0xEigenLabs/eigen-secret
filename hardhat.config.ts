@@ -6,7 +6,7 @@ import { config as dotenvConfig } from "dotenv";
 import "hardhat-gas-reporter";
 require("./tasks/index");
 
-dotenvConfig({ path: resolve(__dirname, "./.env") });
+dotenvConfig({ path: resolve(__dirname, "./server/.env") });
 //requireEnvVariables(["API_KEY", "PRIVATE_KEY"]);
 
 // This is a sample Hardhat task. To learn how to create your own go to

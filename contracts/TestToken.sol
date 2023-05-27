@@ -10,6 +10,6 @@ contract TestToken is ERC20, Ownable{
     /**
     * @dev assign totalSupply to account creating this contract */
     constructor() ERC20("TestToken", "TT") {
-        _mint(msg.sender, 1_000_000_000e18);
+        _mint(msg.sender, 1_000_000_000 * 10**uint(decimals()));
     }
 }

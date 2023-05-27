@@ -1,27 +1,11 @@
 const { buildEddsa } = require("circomlibjs");
 const consola = require("consola");
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes } = require("sequelize");
 import sequelize from "./db";
 import { StateTree, N_LEVEL, siblingsPad } from "@eigen-secret/core/dist-node/state_tree";
 
-
-export class SMTModel extends Model {}
-
-SMTModel.init({
-    // Model attributes are defined here
-    key: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    value: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    }
-}, {
-    // Other model options go here
-    sequelize, // We need to pass the connection instance
-    modelName: "SMTModel" // We need to choose the model name
-});
+const _smtmodel = require("../models/smtmodel");
+export const SMTModel = _smtmodel(sequelize, DataTypes);
 
 export class WorldState {
     static instance: StateTree;
@@ -45,7 +29,7 @@ export class WorldState {
         acStateKey: bigint,
         padding: boolean = true
     ) {
-        // consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
+        consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
         const eddsa = await buildEddsa();
         const F = eddsa.F;
         let instance = await WorldState.getInstance();

@@ -297,24 +297,39 @@ export class SecretSDK {
         }
         let txList = txListResult.data.transactions || [];
         let transactions = []
+
+        // TODO: cache asset info
+        let assetInfo = await this.getAssetInfo(ctx);
+        if (!assetInfo.ok) {
+            return assetInfo;
+        }
+        let tokenInfo: Map<number, any> = new Map();
+
+        assetInfo.data.forEach((row: any) => {
+            if (row.assetId) {
+                tokenInfo.set(Number(row.assetId), row.tokenInfo);
+            }
+        });
+
         for (let tx of txList) {
             try {
-            let txData = Transaction.decryptTx(tx.txData, this.account.signingKey);
-            /* if account updated, this check will fail
-            if (txData.from != this.account.signingKey.pubKey.pubKey) {
-                return errResp(ErrCode.CryptoError, "Inconsistent key for encrypting and decrypting TX")
-            }
-            */
-            transactions.push({
-                operation: tx.operation,
-                balance: txData.amount, // deprecated
-                amount: txData.amount,
-                assetId: txData.assetId,
-                to: txData.to,
-                status: TransactionModelStatus[tx.status],
-                txhash: createBlakeHash("blake256").update(tx.proof).update(tx.publicInput).digest().toString("hex").slice(12),
-                timestamp: tx.updatedAt
-            });
+                let txData = Transaction.decryptTx(tx.txData, this.account.signingKey);
+                /* if account updated, this check will fail
+                if (txData.from != this.account.signingKey.pubKey.pubKey) {
+                    return errResp(ErrCode.CryptoError, "Inconsistent key for encrypting and decrypting TX")
+                }
+                */
+                let ti = tokenInfo.get(txData.assetId);
+                transactions.push({
+                    operation: tx.operation,
+                    // balance: txData.amount, // deprecated
+                    amount: this.formatValue(ctx, txData.amount, txData.assetId, ti?.decimals || 18),
+                    assetId: txData.assetId,
+                    to: txData.to,
+                    status: TransactionModelStatus[tx.status],
+                    txhash: createBlakeHash("blake256").update(tx.proof).update(tx.publicInput).digest().toString("hex").slice(12),
+                    timestamp: tx.updatedAt
+                });
             } catch (err: any) {
                 console.log("decrypt error", tx);
             }
@@ -1056,10 +1071,11 @@ export class SecretSDK {
     }
 
     async allowance(token: string) {
+        let al = 0n;
         if (token !== ETH) {
-            return await this.rollupSC.allowance(token)
+            al = await this.rollupSC.allowance(token)
         }
-        return 0n;
+        return succResp(al);
     }
 
     async getRegisteredToken(id: number) {

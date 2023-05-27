@@ -2,54 +2,38 @@ const { Sequelize } = require("sequelize");
 require("dotenv").config();
 import * as utils from "@eigen-secret/core/dist-node/utils";
 import consola from "consola";
+const dbConfig = require("../config/config.json");
 
 const { requireEnvVariables } = utils
+requireEnvVariables(["NODE_ENV"]);
 
-requireEnvVariables(["DB_NAME", "DB_USER", "DB_HOST", "DB_DRIVER", "DB_PASSWORD"]);
-
-const dbName = process.env.DB_NAME as string
-const dbUser = process.env.DB_USER as string
-const dbHost = process.env.DB_HOST
-const dbDriver = process.env.DB_DRIVER as string
-const dbPassword = process.env.DB_PASSWORD
-
-// const cls = require('cls-hooked');
-// const namespace = cls.createNamespace('db-user-ns');
-// Sequelize.useCLS(namespace);
-
-let sequelize: any;
-if (dbDriver == "sqlite") {
-    // only for test
-    sequelize = new Sequelize(dbName, dbUser, dbPassword, {
-        host: dbHost,
-        // storage: ":memory:",
-        storage: "data/db.sqlite",
-        dialect: dbDriver,
-        dialectOptions: {
-            supportBigNumbers: true
-        },
-        pool: {
-            max: 100,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
-        }
-    })
-} else {
-    sequelize = new Sequelize(dbName, dbUser, dbPassword, {
-        host: dbHost,
-        dialect: dbDriver,
-        dialectOptions: {
-            supportBigNumbers: true
-        },
-        pool: {
-            max: 100,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
-        }
-    })
+const parseConfig = () => {
+    switch (process.env.NODE_ENV) {
+        case "development":
+            return dbConfig.development;
+        case "production":
+            return dbConfig.production;
+        default:
+            return dbConfig.test;
+    }
 }
+
+const config = parseConfig();
+
+let sequelize = new Sequelize(config.database, config.user, config.password, {
+    host: config.host,
+    storage: config.storage,
+    dialect: config.dialect,
+    dialectOptions: {
+        supportBigNumbers: true
+    },
+    pool: {
+        max: 100,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+    }
+})
 
 sequelize
 .sync({ force: false }) // don't drop table when launching

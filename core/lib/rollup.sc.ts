@@ -151,7 +151,7 @@ export class RollupSC {
             this.rollup.address,
             { from: userAccount.address }
         )
-        return succResp(allowance.toString(), true);
+        return allowance.toBigInt();
     }
 
     async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: bigint, nonce: number) {
@@ -159,12 +159,13 @@ export class RollupSC {
         assert(this.rollup);
         let receipt: any;
         try {
+            let etherValue = assetId == 1? value: 0n;
             let deposit0 = await this.rollup.connect(userAccount).deposit(
                 pubkeyEigenAccountKey,
                 assetId,
                 value,
                 nonce,
-                { from: userAccount.address }
+                { from: userAccount.address, value: etherValue }
             )
             receipt = await deposit0.wait()
             if (receipt.status !== 1) {
