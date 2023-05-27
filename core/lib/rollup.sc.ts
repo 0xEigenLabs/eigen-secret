@@ -151,7 +151,7 @@ export class RollupSC {
             this.rollup.address,
             { from: userAccount.address }
         )
-        return succResp(allowance.toString(), true);
+        return allowance.toBigInt();
     }
 
     async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: bigint, nonce: number) {
