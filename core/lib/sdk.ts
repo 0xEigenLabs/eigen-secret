@@ -34,6 +34,7 @@ export class SecretSDK {
     rollupSC: RollupSC;
     serverAddr: any;
     eddsa: any;
+    apiVersion: string;
 
     private txBuff: Array<any> = new Array(0);
     private noteBuff: Array<any> = new Array(0);
@@ -50,7 +51,8 @@ export class SecretSDK {
         poseidon3Address: string,
         poseidon6Address: string,
         rollupAddress: string,
-        smtVerifierAddress: string = ""
+        smtVerifierAddress: string = "",
+        apiVersion = "/api/v1"
     ) {
         this.alias = account.alias;
         this.account = account;
@@ -63,13 +65,14 @@ export class SecretSDK {
         this.eddsa = eddsa;
         this.rollupSC = new RollupSC(this.eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
             poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
+        this.apiVersion = apiVersion;
     }
 
     private async curl(resource: string, params: any) {
-        return SecretSDK.curlEx(this.serverAddr, resource, params);
+        return SecretSDK.curlEx(this.serverAddr, resource, params, this.apiVersion);
     }
 
-    static async curlEx(serverAddr: string, resource: string, params: any) {
+    static async curlEx(serverAddr: string, resource: string, params: any, apiVersion: string) {
         if (!resource.startsWith("/")) {
             resource = `/${resource}`;
         }
@@ -78,7 +81,7 @@ export class SecretSDK {
         }
         let options = {
             method: "POST",
-            url: serverAddr + resource + "/api/v1",
+            url: serverAddr + apiVersion + resource,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
@@ -142,7 +145,8 @@ export class SecretSDK {
         contractJson: any,
         circuitPath: string,
         contractABI: any,
-        isCreate: boolean = false
+        isCreate: boolean = false,
+        apiVersion: string = "/api/v1"
     ) {
         let eddsa = await buildEddsa();
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
@@ -161,7 +165,7 @@ export class SecretSDK {
             let input = {
                 context: ctx.serialize()
             };
-            let resp = await SecretSDK.curlEx(serverAddr, "accounts/get", input);
+            let resp = await SecretSDK.curlEx(serverAddr, "accounts/get", input, apiVersion);
             if (!resp.ok) {
                 if (resp.errno == ErrCode.RecordNotExist) {
                     return errResp(resp.errno, "Please register your Eigen Address")
@@ -191,7 +195,8 @@ export class SecretSDK {
             contractJson.poseidon3,
             contractJson.poseidon6,
             contractJson.rollup,
-            contractJson.smtVerifier
+            contractJson.smtVerifier,
+            apiVersion
         );
         await secretSDK.initialize(contractABI);
         return succResp(secretSDK)
