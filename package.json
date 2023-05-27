@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "init:db": "cd server && rm data/db.sqlite && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all",
+    "init:db": "cd server && rm -f data/db.sqlite && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all",
     "server": "npm run build:server && cd server && npm start",
     "server:proxy": "npm run build:server && cd server && npm start:proxy",
     "build:core": "cd core && npm i && npm run build",
