@@ -11,9 +11,8 @@ The default env is `development`.
 3. Register ETH in asset table
 
 ```
-sqlite3 server/data/db.sqlite;
-
-insert into AssetModels values (NULL, 1, "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "2023-05-24 11:43:40.403 +00:00", "2023-05-24 11:43:40.403 +00:00");
+cd server
+npx sequelize-cli db:seed:all
 ```
 
 4. Build and launch service

@@ -7,29 +7,8 @@ import { ProofState } from "@eigen-secret/core/dist-node/prover";
 type ProofStateArray = Array<ProofState>;
 
 const consola = require("consola");
-
-export class ProofModel extends Model {}
-
-ProofModel.init({
-    // Model attributes are defined here
-    alias: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    proof: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-        unique: true
-    },
-    state: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    }
-}, {
-    // Other model options go here
-    sequelize, // We need to pass the connection instance
-    modelName: "ProofModel" // We need to choose the model name
-});
+const _proofmodel = require("../models/proofmodel");
+const ProofModel = _proofmodel(sequelize, DataTypes);
 
 export async function submitDBProof(alias: string, proofs: Array<string>, transaction: any) {
     let insData = proofs.map((proof, _) => ({ alias: alias, proof: proof, state: ProofState.NEW }));

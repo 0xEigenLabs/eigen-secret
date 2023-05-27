@@ -1,32 +1,12 @@
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
 import * as utils from "@eigen-secret/core/dist-node/utils";
 import { AppError, ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 
-class AccountModel extends Model {}
-
-AccountModel.init({
-    // Model attributes are defined here
-    alias: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-    },
-    ethAddress: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    secretAccount: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    }
-}, {
-    // Other model options go here
-    sequelize, // We need to pass the connection instance
-    modelName: "AccountModel" // We need to choose the model name
-});
+const accountmodel = require("../models/accountmodel");
+const Account = accountmodel(sequelize, DataTypes);
 
 // create account
 export async function createAccount(req: any, res: any) {
@@ -44,7 +24,7 @@ export async function createAccount(req: any, res: any) {
     if (found.errno !== ErrCode.RecordNotExist) {
         return res.json(found);
     }
-    // account is AccountModel or found is RecordNotExist
+    // account is Account or found is RecordNotExist
     const secretAccount = req.body.secretAccount;
     if (!utils.hasValue(secretAccount)) {
         return res.json(errResp(ErrCode.DBCreateError, "Invalid secret account"));
@@ -54,7 +34,7 @@ export async function createAccount(req: any, res: any) {
     let transaction: any;
     try {
         transaction = await sequelize.transaction();
-        const item = await AccountModel.create(newItem, transaction);
+        const item = await Account.create(newItem, transaction);
         await transaction.commit();
         return res.json(succResp(item));
     } catch (err: any) {
@@ -67,7 +47,7 @@ export async function createAccount(req: any, res: any) {
 }
 
 async function getAccountInternal(alias: string, ethAddress: string) {
-    let found: AccountModel | null = await AccountModel.findOne({ where: { alias } });
+    let found = await Account.findOne({ where: { alias } });
     if (found) {
         if (found.ethAddress !== ethAddress) {
             return errResp(ErrCode.DuplicatedRecordError, "ETH Address not match");
@@ -75,7 +55,7 @@ async function getAccountInternal(alias: string, ethAddress: string) {
             return succResp(found);
         }
     }
-    found = await AccountModel.findOne({ where: { ethAddress } });
+    found = await Account.findOne({ where: { ethAddress } });
     if (found) {
         if (alias === utils.__DEFAULT_ALIAS__) {
             // fetch account by eth address only
@@ -109,7 +89,7 @@ export async function updateAccount(req: any, res: any) {
     }
 
     let condition = { alias: ctx.alias, ethAddress: ctx.ethAddress };
-    let found: AccountModel | null = await AccountModel.findOne({ where: condition });
+    let found = await Account.findOne({ where: condition });
     if (found && found.ethAddress !== ctx.ethAddress) {
         return res.json(errResp(ErrCode.DuplicatedRecordError, "Alias duplicated"));
     }
@@ -118,12 +98,12 @@ export async function updateAccount(req: any, res: any) {
     }
     let transaction = await sequelize.transaction();
     try {
-        await AccountModel.update(
+        await Account.update(
             { secretAccount },
             { where: condition, plain: true },
             transaction
         );
-        found = await AccountModel.findOne({ where: condition }, { transaction });
+        found = await Account.findOne({ where: condition }, { transaction });
         await transaction.commit();
     } catch (err: any) {
         consola.log(err)
