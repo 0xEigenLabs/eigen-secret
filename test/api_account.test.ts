@@ -47,6 +47,7 @@ describe("POST /accounts", function() {
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");
+        console.log(response);
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
         expect(response.body.data["id"]).to.gt(0);
