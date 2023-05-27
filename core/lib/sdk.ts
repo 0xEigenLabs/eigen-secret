@@ -1071,10 +1071,11 @@ export class SecretSDK {
     }
 
     async allowance(token: string) {
+        let al = 0n;
         if (token !== ETH) {
-            return await this.rollupSC.allowance(token)
+            al = await this.rollupSC.allowance(token)
         }
-        return 0n;
+        return succResp(al);
     }
 
     async getRegisteredToken(id: number) {

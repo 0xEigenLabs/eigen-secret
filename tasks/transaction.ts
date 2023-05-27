@@ -44,7 +44,7 @@ task("deposit", "Deposit asset from L1 to L2")
     console.log("token", tokenAddress.toString());
 
     // approve
-    value = sdk.parseValue(ctx, value, assetId, decimals);
+    //value = sdk.parseValue(ctx, value, assetId, decimals);
     let allowance = await sdk.allowance(tokenAddress.toString())
     if (allowance.data < value) {
       await sdk.approve(tokenAddress.toString(), value);
@@ -89,7 +89,7 @@ task("send", "Send asset to receiver in L2")
     }
     let sdk: SecretSDK = secretSDK.data;
 
-    value = sdk.parseValue(ctx, value, assetId, decimals);
+    //value = sdk.parseValue(ctx, value, assetId, decimals);
     let proofAndPublicSignals = await sdk.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("send failed: ", proofAndPublicSignals);
@@ -126,7 +126,7 @@ task("withdraw", "Withdraw asset from L2 to L1")
     }
     let sdk: SecretSDK = secretSDK.data;
     let receiver = sdk.account.accountKey.pubKey.pubKey;
-    value = sdk.parseValue(ctx, value, assetId, decimals);
+    //value = sdk.parseValue(ctx, value, assetId, decimals);
     let proofAndPublicSignals = await sdk.withdraw(ctx, receiver, BigInt(value), Number(assetId));
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("withdraw failed: ", proofAndPublicSignals);
