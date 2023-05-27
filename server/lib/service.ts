@@ -30,24 +30,22 @@ const issueOptions = {
 // TODO: api versioning
 app.use(cors(issueOptions));
 
-const router = express.Router();
-router.post("/accounts/create", createAccount);
-router.post("/accounts/get", getAccount);
-router.post("/accounts/update", updateAccount);
+app.post("/accounts/create", createAccount);
+app.post("/accounts/get", getAccount);
+app.post("/accounts/update", updateAccount);
 
-router.post("/transactions/create", createTx);
-router.post("/transactions/get", getTxByAlias);
+app.post("/transactions/create", createTx);
+app.post("/transactions/get", getTxByAlias);
 
-router.post("/statetree", updateStateTree);
+app.post("/statetree", updateStateTree);
 
-router.post("/notes/get", getNotes);
+app.post("/notes/get", getNotes);
 
-router.post("/proof/create", submitProofs);
-router.post("/proof/get", getProofs);
+app.post("/proof/create", submitProofs);
+app.post("/proof/get", getProofs);
 
-router.post("/assets/create", createAsset);
-router.post("/assets/get", getAsset)
-router.post("/assets/price", getAssetInfo)
-app.use("/api/v1", router);
+app.post("/assets/create", createAsset);
+app.post("/assets/get", getAsset)
+app.post("/assets/price", getAssetInfo)
 
 export default app;
