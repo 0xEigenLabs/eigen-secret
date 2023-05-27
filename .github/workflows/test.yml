@@ -41,6 +41,6 @@ jobs:
       - name: Compile contract
         run: npm run build
       - name: delete db
-        run: echo `pwd` && rm -f ./tmp/db.sqlite
+        run: echo `pwd` && echo `ls data` && rm -f ./data/db.sqlite
       - name: Start test
         run: npm run test
