@@ -38,7 +38,6 @@ jobs:
         run: nohup npx hardhat node &
       - name: Start server and Run tests
         run: |
-            cp .env server/
             npm run server &
             sleep 10
             bash -x test.sh
