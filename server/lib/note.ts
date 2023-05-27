@@ -1,4 +1,4 @@
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes } = require("sequelize");
 import sequelize from "./db";
 import { NoteState } from "@eigen-secret/core/dist-node/note";
 import { __DEFAULT_ALIAS__ } from "@eigen-secret/core/dist-node/utils";

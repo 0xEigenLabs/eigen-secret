@@ -1,11 +1,11 @@
 const { buildEddsa } = require("circomlibjs");
 const consola = require("consola");
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes } = require("sequelize");
 import sequelize from "./db";
 import { StateTree, N_LEVEL, siblingsPad } from "@eigen-secret/core/dist-node/state_tree";
 
 const _smtmodel = require("../models/smtmodel");
-const SMTModel = _smtmodel(sequelize, DataTypes);
+export const SMTModel = _smtmodel(sequelize, DataTypes);
 
 export class WorldState {
     static instance: StateTree;
