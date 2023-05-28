@@ -32,7 +32,8 @@ task("create-account", "Create secret account")
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
-    let proofAndPublicSignals = await secretSDK.data.createAccount(ctx, password);
+    let sdk: SecretSDK = secretSDK.data;
+    let proofAndPublicSignals = await sdk.createAccount(ctx, password);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("createAccount failed: ", proofAndPublicSignals);
     }
@@ -58,7 +59,8 @@ task("migrate-account", "Migrate account to another ETH address")
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
-    let proofAndPublicSignals = await secretSDK.data.migrateAccount(
+    let sdk: SecretSDK = secretSDK.data;
+    let proofAndPublicSignals = await sdk.migrateAccount(
         ctx, newAccountKey, password
     );
     if (proofAndPublicSignals.errno != ErrCode.Success) {
@@ -85,8 +87,9 @@ task("update-account", "Update signing key")
     if (secretSDK.errno != ErrCode.Success) {
       console.log("initSDKFromAccount failed: ", secretSDK);
     }
+    let sdk: SecretSDK = secretSDK.data;
     let newSigningKey = new SigningKey(eddsa);
-    let proofAndPublicSignals = await secretSDK.data.updateAccount(
+    let proofAndPublicSignals = await sdk.updateAccount(
         ctx, newSigningKey, password
     );
     if (proofAndPublicSignals.errno != ErrCode.Success) {
