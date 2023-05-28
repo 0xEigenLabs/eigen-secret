@@ -215,7 +215,7 @@ const hasValue = function(variable: any) {
 
 const pathJoin = (parts: Array<string>, sep="/") => parts.join(sep).replace(new RegExp(sep+"{1,}", "g"), sep);
 const __DEFAULT_ALIAS__ = "EIGEN_BUILTIN_ALIAS";
-const SESSION_DURATION = 5 * 60; // seconds
+const SESSION_DURATION = 10 * 60; // seconds
 const ETH = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
 const normalizeAlias = (alias: string) => {
