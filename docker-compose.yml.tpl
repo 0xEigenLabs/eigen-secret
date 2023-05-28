@@ -19,6 +19,8 @@ services:
       - {{EIGEN_SERVICE_ADDR}}:server
   server:
     build: .
+    environment:
+      - NODE_ENV={{NODE_ENV}}
     ports:
       - "{{EIGEN_SERVICE_PORT}}:3000"
     networks:
