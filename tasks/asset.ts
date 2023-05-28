@@ -44,10 +44,10 @@ task("register-token", "Register token to Rollup")
     if (secretSDKResult.errno != ErrCode.Success) {
         console.log("initSDKFromAccount failed: ", secretSDKResult);
     }
-    let secretSDK = secretSDKResult.data;
-    await secretSDK.registerToken(token);
-    let assetId = await secretSDK.approveToken(token);
-    let result = await secretSDK.createAsset(ctx, token, assetId.toString());
+    let sdk: SecretSDK = secretSDKResult.data;
+    await sdk.registerToken(token);
+    let assetId = await sdk.approveToken(token);
+    let result = await sdk.createAsset(ctx, token, assetId.toString());
     console.log("approve token done, asset is ", result)
 })
 
@@ -70,16 +70,17 @@ task("send-l1", "Send asset from L1 to L1")
     );
     if (secretSDK.errno != ErrCode.Success) {
         console.log("initSDKFromAccount failed: ", secretSDK);
-      }
+    }
+    let sdk: SecretSDK = secretSDK.data;
     // get token address
-    let address = await secretSDK.data.getRegisteredToken(assetId);
+    let address = await sdk.getRegisteredToken(assetId);
     let tokenIns = new ethers.Contract(
         address,
         defaultContractABI.testTokenContractABI,
         admin
     );
 
-    value = await secretSDK.data.parseValue(ctx, value, assetId, Number(decimal))
+    value = await sdk.parseValue(ctx, value, assetId, Number(decimal))
     console.log(value);
     let tx: any;
     let balance: any;
