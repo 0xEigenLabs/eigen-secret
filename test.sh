@@ -8,9 +8,11 @@ export TOKEN=$(cat .contract.json | jq -r .testToken)
 npx hardhat create-account --alias Alice --index 0 --network $NETWORK
 
 npx hardhat setup-rollup --network $NETWORK
+
 npx hardhat register-token --token $TOKEN --network $NETWORK
 
-ASSET_ID=${2-2}
+ASSET_ID=$(cat .asset.json | jq -r .assetId)
+
 npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
 
 npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id ${ASSET_ID} --network $NETWORK

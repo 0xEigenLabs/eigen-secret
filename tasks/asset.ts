@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
 import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
+const fs = require("fs");
 import { Context } from "@eigen-secret/core/dist-node/context";
 import {
     defaultServerEndpoint,
@@ -48,7 +49,8 @@ task("register-token", "Register token to Rollup")
     await sdk.registerToken(token);
     let assetId = await sdk.approveToken(token);
     let result = await sdk.createAsset(ctx, token, assetId.toString());
-    console.log("approve token done, asset is ", result)
+    fs.writeFileSync(".asset.json", JSON.stringify(result.data))
+    console.log(result)
 })
 
 task("send-l1", "Send asset from L1 to L1")
