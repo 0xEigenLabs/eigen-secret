@@ -183,6 +183,7 @@ export async function updateAssetsPrice(req: any, res: any) {
     return res.json(succResp("updateAssetsPrice succeeded"));
 }
 
+// TODO: restrict caller & separate from the SDK
 export async function updateAssets(req: any, res: any) {
     // Execute every 5 min
     setInterval(async () => {
