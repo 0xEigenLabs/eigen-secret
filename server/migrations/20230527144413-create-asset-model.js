@@ -19,6 +19,16 @@ module.exports = {
         allowNull: false,
         unique: true
       },
+      latestPrice: {
+        type: Sequelize.DOUBLE,
+        allowNull: true,
+        unique: false
+      },
+      latest24hPrice: {
+        type: Sequelize.DOUBLE,
+        allowNull: true,
+        unique: false
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
