@@ -29,7 +29,7 @@ const shouldCompress = (req: any, res: any) => {
     return (contentType === "application/octet-stream" || contentType === "application/wasm") || originFilter;
 };
 
-app.use(compression(options: { filter: shouldCompress }));
+app.use(compression({ filter: shouldCompress }));
 
 const issueOptions = {
   origin: true,
