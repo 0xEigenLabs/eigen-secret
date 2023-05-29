@@ -3,11 +3,11 @@ export const succResp = function(data: any, hasBigInt: boolean = false) {
   if (hasBigInt) {
       data = prepareJson(data);
   }
-  return new AppError({ errno: 0, data: data });
+  return new AppResp({ errno: 0, data: data });
 }
 
 export const errResp = function(errno: ErrCode, message: string) {
-  return new AppError({ errno: errno, message: message });
+  return new AppResp({ errno: errno, message: message });
 }
 
 /**
@@ -28,19 +28,19 @@ export enum ErrCode {
   CallContractError = 9
 }
 
-interface AppErrorArgs {
+interface AppRespArgs {
   data?: any;
   errno: ErrCode;
   message?: string;
   isOperational?: boolean;
 }
 
-export class AppError {
+export class AppResp {
   public readonly message: string;
   public readonly data: any;
   public readonly errno: ErrCode;
 
-  constructor(args: AppErrorArgs) {
+  constructor(args: AppRespArgs) {
     this.message = args.message || ErrCode[args.errno];
     this.errno = args.errno;
     this.data = args.data || "";
