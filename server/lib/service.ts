@@ -16,12 +16,14 @@ import { updateAccount, createAccount, getAccount } from "./account";
 import { createTx, getTxByAlias, updateStateTree, getNotes } from "./transaction";
 import { createAsset, getAsset, getAssetInfo } from "./asset";
 import { submitProofs, getProofs } from "./proof";
+const compression = require("compression");
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);
 
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(compression());
 
 const issueOptions = {
   origin: true,

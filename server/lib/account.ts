@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 import sequelize from "./db";
 import consola from "consola";
 import * as utils from "@eigen-secret/core/dist-node/utils";
-import { AppError, ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
+import { AppResp, ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 
 const accountmodel = require("../models/accountmodel");
@@ -20,7 +20,7 @@ export async function createAccount(req: any, res: any) {
         return res.json(errResp(ErrCode.DBCreateError, `${utils.__DEFAULT_ALIAS__} is reserved by Eigen Secret`));
     }
     const ethAddress = ctx.ethAddress;
-    let found: AppError = await getAccountInternal(alias, ethAddress);
+    let found: AppResp = await getAccountInternal(alias, ethAddress);
     if (found.errno !== ErrCode.RecordNotExist) {
         return res.json(found);
     }

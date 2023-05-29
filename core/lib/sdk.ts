@@ -8,7 +8,7 @@ import { Prover } from "./prover";
 import { Note, NoteState } from "./note";
 import { Transaction, TransactionModelStatus } from "./transaction";
 import { Context } from "./context";
-import { AppError, ErrCode, errResp, succResp } from "./error";
+import { AppResp, ErrCode, errResp, succResp } from "./error";
 import {
     AccountCircuit,
     compress as accountCompress,
@@ -89,7 +89,7 @@ export class SecretSDK {
         if (response.status != 200) {
             return errResp(ErrCode.Unknown, "Server Internal Error")
         }
-        return new AppError({
+        return new AppResp({
             errno: response.data.errno,
             message: response.data.message,
             data: response.data.data
@@ -132,7 +132,7 @@ export class SecretSDK {
      * @param {string} circuitPath The path to the circuit file.
      * @param {any} contractABI The ABI of the contract.
      * @param {boolean} [isCreate=false] the flag indicating whether to create a new account. Optional.
-     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'class' that contains the initialized `SecretSDK` instance.
+     * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'class' that contains the initialized `SecretSDK` instance.
     */
     static async initSDKFromAccount(
         ctx: Context,
@@ -409,7 +409,7 @@ export class SecretSDK {
     /**
      * Obtain user balance.
      * @param {Context} ctx
-     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'Map' which contains user balance.
+     * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'Map' which contains user balance.
      * {
      *   "assetInfo": [
      *     {
@@ -501,7 +501,7 @@ export class SecretSDK {
      * @param {Array<NoteState>} noteState: Get current user's adopted notes and wild notes. A wild note's alias is ‘__DEFAULT_ALIAS__’.
      * @param {Array<string>} indices
      * @param {boolean} skipZeroNote is false if all notes(with val 0) are required to return
-     * @return {Promise<AppError>} An `AppError` object with `data` property of type `Array<Note>` if notes are successfully retrieved.
+     * @return {Promise<AppResp>} An `AppResp` object with `data` property of type `Array<Note>` if notes are successfully retrieved.
      */
     private async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>, indices: Array<string> = [], skipZeroNote: boolean = true) {
         let encryptedNotes = await this.getNotes(ctx, noteState, indices);
@@ -554,7 +554,7 @@ export class SecretSDK {
      * @param {bigint} value The amount of asset to be deposited.
      * @param {number} assetId The token to be deposited.
      * @param {number} nonce The nonce of the current transaction, usually obtained from a wallet like Metamask.
-     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the deposit.
+     * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the deposit.
      */
     async deposit(ctx: Context, receiver: string, value: bigint, assetId: number, nonce: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
@@ -691,7 +691,7 @@ export class SecretSDK {
      * @param {bigint} value The amount of asset to be sent.
      * @param {number} assetId The token to be sent.
      * @param {boolean} accountRequired Enables signing with account key only.
-     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the send.
+     * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the send.
      */
     async send(
         ctx: Context,
@@ -809,7 +809,7 @@ export class SecretSDK {
      * @param {string} receiver
      * @param {bigint} value The amount to be withdrawn.
      * @param {number} assetId The token to be withdrawn.
-     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
+     * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
      */
     async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
@@ -1089,7 +1089,7 @@ export class SecretSDK {
      * Create proof for the secret account created.
      * @param {Context} ctx
      * @param {string} password The password used to decrypt the SecretAccount.
-     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the createAccount.
+     * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the createAccount.
      */
     async createAccount(ctx: Context, password: string) {
         const F = this.eddsa.F;
@@ -1153,7 +1153,7 @@ export class SecretSDK {
      * @param {Context} ctx
      * @param {SigningKey} newSigningKey The new signing key to be updated to.
      * @param {string} password The password used to decrypt the SecretAccount.
-     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the updateAccount.
+     * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the updateAccount.
      */
     async updateAccount(ctx: Context, newSigningKey: SigningKey, password: string) {
         let proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
@@ -1276,7 +1276,7 @@ export class SecretSDK {
      * @param {Object} ctx
      * @param {SigningKey} newAccountKey The account key that which user renews.
      * @param {string} password The password used to decrypt the SecretAccount.
-     * @return {Promise<AppError>} An `AppError` object with `data` property of type 'string[]' which contains a batch of proof for the migrateAccount.
+     * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the migrateAccount.
      */
     async migrateAccount(ctx: Context, newAccountKey: SigningKey, password: string) {
         let proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
