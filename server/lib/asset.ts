@@ -155,6 +155,7 @@ export async function updateAssetsPrice(req: any, res: any) {
     console.log(body);
     if (body.state != "QUERY_STATE_COMPLETED") {
         console.log("Fetch price from Dune error")
+        return res.json(errResp(ErrCode.Unknown, "Fetch price from Dune error"));
     }
     const rows: Array<any> = body.result?.rows;
 
@@ -179,6 +180,7 @@ export async function updateAssetsPrice(req: any, res: any) {
             })
         }
     }
+    return res.json(succResp("updateAssetsPrice succeeded"));
 }
 
 export async function updateAssets(req: any, res: any) {
@@ -187,7 +189,7 @@ export async function updateAssets(req: any, res: any) {
         updateAssetsPrice(req, res);
       }, 5 * 60 * 1000
     )
-    return res.json(succResp("updateAsset success"))
+    return res.json(succResp("updateAssetsPrice is running"))
 }
 
 export async function executeQuery(req: any, res: any) {
