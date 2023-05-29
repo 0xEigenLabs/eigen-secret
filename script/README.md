@@ -12,6 +12,32 @@ The default env is `development`.
 
 ```
 npm run init:db
+npm run server
+
+```
+
+Open another console and register the token with commands below.
+
+```
+
+NETWORK=mumbai
+
+npm run deploy:$NETWORK
+export TOKEN=$(cat .contract.json | jq -r .testToken)
+npx hardhat create-account --alias Alice --index 0 --network $NETWORK
+
+npx hardhat setup-rollup --network $NETWORK
+npx hardhat register-token --token $TOKEN --network $NETWORK
+#TODO init token price
+```
+
+
+Update the contract information for UI.
+
+```
+cd ..
+cp eigen-secret/.contract.json eigen-secret-ui/src/artifacts/contract.json
+
 ```
 
 4. Build and launch service
