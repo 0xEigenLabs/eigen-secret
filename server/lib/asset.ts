@@ -114,6 +114,29 @@ export async function getAssetInfo(req: any, res: any) {
     let assetList: Array<any> = await Asset.findAll({});
     console.log("assetList", assetList);
 
+    assetList.map((x: any) => {
+        x.tokenInfo = getTokenInfoByAddress(x.token_address)
+        if (x.tokenInfo.symbol == "") {
+            x.tokenInfo.symbol = x.token_symbol;
+        }
+        if (x.tokenInfo.name == "") {
+            x.tokenInfo.name = x.token_symbol;
+        }
+        x.token_symbol = undefined;
+        x.token_address = undefined;
+    })
+    return res.json(succResp(assetList));
+}
+
+export async function updateAssetsPrice(req: any, res: any) {
+    let ctx = Context.deserialize(req.body.context);
+    const code = ctx.check();
+    if (code !== ErrCode.Success) {
+        return res.json(errResp(code, ErrCode[code]));
+    }
+    let assetList: Array<any> = await Asset.findAll({});
+    console.log("assetList", assetList);
+
     // get price info from dune
     // https://dune.com/queries/2468396
     const DUNE_API_KEY = process.env.DUNE_API_KEY as string
@@ -131,43 +154,40 @@ export async function getAssetInfo(req: any, res: any) {
     const body = JSON.parse(await response.text());
     console.log(body);
     if (body.state != "QUERY_STATE_COMPLETED") {
-        return res.json(errResp(ErrCode.Unknown, "Fetch price from Dune error"));
+        console.log("Fetch price from Dune error")
     }
     const rows: Array<any> = body.result?.rows;
-    let results: Array<any> = [];
 
     for (let ai of assetList) {
-        let filled = false;
+        let filled = false
         for (let priceInfo of rows) {
             if (ai.contractAddress == priceInfo.token_address) {
-                priceInfo.assetId = ai.assetId;
-                filled = true;
-                results.push(priceInfo);
-                break;
+                try {
+                    await Asset.update({ "latestPrice": priceInfo.latest_price, "latest24hPrice": priceInfo.latest_24h_price }, {
+                        where: { "contractAddress": priceInfo.token_address }
+                    })
+                } catch (err: any) {
+                    consola.log("update asset price failed, error: ", err)
+                }
+                filled = true
+                break
             }
         }
         if (!filled) {
-            results.push({
-                assetId: ai.assetId,
-                token_symbol: "TT",
-                token_address: ai.contractAddress,
-                latest_price: 1,
-                latest_24h_price: 1
+            await Asset.update({ "latestPrice": 1, "latest24hPrice": 1 }, {
+                where: { "assetId": ai.assetId }
             })
         }
     }
-    results.map((x: any) => {
-        x.tokenInfo = getTokenInfoByAddress(x.token_address)
-        if (x.tokenInfo.symbol == "") {
-            x.tokenInfo.symbol = x.token_symbol;
-        }
-        if (x.tokenInfo.name == "") {
-            x.tokenInfo.name = x.token_symbol;
-        }
-        x.token_symbol = undefined;
-        x.token_address = undefined;
-    })
-    return res.json(succResp(results));
+}
+
+export async function updateAssets(req: any, res: any) {
+    // Execute every 5 min
+    setInterval(async () => {
+        updateAssetsPrice(req, res);
+      }, 5 * 60 * 1000
+    )
+    return res.json(succResp("updateAsset success"))
 }
 
 export async function executeQuery(req: any, res: any) {

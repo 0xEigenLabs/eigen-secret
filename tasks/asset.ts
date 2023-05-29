@@ -101,3 +101,23 @@ task("send-l1", "Send asset from L1 to L1")
 
     console.log("balance", balance.toString());
 });
+
+task("update-assets", "Update asset price")
+.addParam("alias", "user alias", "Alice")
+.addParam("password", "password for key sealing", "<your password>")
+.setAction(async ({ alias, password }, { ethers }) => {
+    let timestamp = Math.floor(Date.now()/1000).toString();
+    let [admin] = await ethers.getSigners();
+    const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);
+    const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
+    const contractJson = require(defaultContractFile);
+    let secretSDK = await SecretSDK.initSDKFromAccount(
+        ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
+    );
+    if (secretSDK.errno != ErrCode.Success) {
+        console.log("initSDKFromAccount failed: ", secretSDK);
+      }
+
+    await secretSDK.data.updateAssets(ctx);
+    console.log("The task to update the assets price is running")
+})

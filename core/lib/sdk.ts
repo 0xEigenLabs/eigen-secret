@@ -406,6 +406,13 @@ export class SecretSDK {
         return this.curl("assets/price", data);
     }
 
+    async updateAssets(ctx: Context) {
+        let data = {
+            context: ctx.serialize()
+        };
+        return this.curl("assets/update", data);
+    }
+
     /**
      * Obtain user balance.
      * @param {Context} ctx
@@ -464,8 +471,8 @@ export class SecretSDK {
 
         priceInfo.forEach((row: any) => {
             if (row.assetId) {
-                prices.set(Number(row.assetId), row.latest_price);
-                last24hPrices.set(Number(row.assetId), row.last24hPrices);
+                prices.set(Number(row.assetId), row.latestPrice);
+                last24hPrices.set(Number(row.assetId), row.latest24hPrice);
                 tokenInfo.set(Number(row.assetId), row.tokenInfo);
             }
         });
