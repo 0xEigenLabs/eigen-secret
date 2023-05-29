@@ -2,19 +2,15 @@
 set -ex
 
 NETWORK=${1-dev}
-ASSET_ID=${2-2}
 
 npm run deploy:$NETWORK
 export TOKEN=$(cat .contract.json | jq -r .testToken)
 npx hardhat create-account --alias Alice --index 0 --network $NETWORK
 
 npx hardhat setup-rollup --network $NETWORK
+npx hardhat register-token --token $TOKEN --network $NETWORK
 
-if [ ${ASSET_ID} -ne 1 ]
-then
-    npx hardhat register-token --token $TOKEN --network $NETWORK
-fi
-
+ASSET_ID=${2-2}
 npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
 
 npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id ${ASSET_ID} --network $NETWORK
