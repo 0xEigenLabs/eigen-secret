@@ -16,20 +16,12 @@ import { updateAccount, createAccount, getAccount } from "./account";
 import { createTx, getTxByAlias, updateStateTree, getNotes } from "./transaction";
 import { createAsset, getAsset, getAssetInfo } from "./asset";
 import { submitProofs, getProofs } from "./proof";
-import compression, {filter} from "compression";
 // Use basic reporter instead, disable color printing
 consola.setReporters([new BasicReporter()]);
 
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-const shouldCompress = (req: any, res: any) => {
-    const contentType = req.getHeader("Content-Type");
-    const originFilter = filter(req, res);
-    return (contentType === "application/octet-stream" || contentType === "application/wasm") || originFilter;
-};
-
-app.use(compression({ filter: shouldCompress }));
 
 const issueOptions = {
   origin: true,
