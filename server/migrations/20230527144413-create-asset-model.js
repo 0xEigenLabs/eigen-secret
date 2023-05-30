@@ -19,6 +19,9 @@ module.exports = {
         allowNull: false,
         unique: true
       },
+      symbol: {
+        type: Sequelize.STRING
+      },
       latestPrice: {
         type: Sequelize.DOUBLE,
         allowNull: true,

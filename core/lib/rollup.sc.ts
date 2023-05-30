@@ -115,6 +115,19 @@ export class RollupSC {
         await registerToken.wait();
     }
 
+    async getTokenInfo(tokenAddress: string) {
+        let testToken = new ethers.Contract(tokenAddress, this.tokenERC20ABI, this.userAccount);
+        let symbol = await testToken.symbol()
+        let name = await testToken.name()
+        let decimals = await testToken.decimals()
+        let info = {
+            "symbol": symbol,
+            "name": name,
+            "decimals": decimals
+        }
+        return info
+    }
+
     /**
      * customize tokenAddress
      * @param {string} tokenAddress token address

@@ -1,3 +1,4 @@
+.contract.json
 docker-compose.yml
 server/data
 docs
@@ -12,7 +13,7 @@ yarn.lock
 *.key
 *.sol.bak
 node_modules
-.env
+server/.env
 coverage
 coverage.json
 typechain
@@ -20,7 +21,6 @@ typechain-types
 verifier.sol
 .idea
 lerna-debug.log
-
 # Hardhat files
 cache
 artifacts/build-info

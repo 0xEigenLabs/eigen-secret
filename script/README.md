@@ -28,7 +28,7 @@ npx hardhat create-account --alias Alice --index 0 --network $NETWORK
 
 npx hardhat setup-rollup --network $NETWORK
 npx hardhat register-token --token $TOKEN --network $NETWORK
-#TODO init token price
+npx hardhat update-assets --network $NETWORK 
 ```
 
 

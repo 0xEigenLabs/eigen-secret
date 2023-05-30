@@ -33,6 +33,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DOUBLE,
       allowNull: true,
       unique: false
+    },
+    symbol: {
+      type: DataTypes.STRING
     }
   }, {
     sequelize,

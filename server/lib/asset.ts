@@ -58,8 +58,9 @@ export async function createAsset(req: any, res: any) {
     // FIXME: eth address must be coordinator
     let assetId = req.body.assetId;
     let contractAddress = req.body.contractAddress;
+    let symbol = req.body.symbol;
 
-    let newItem = { assetId, contractAddress };
+    let newItem = { assetId, contractAddress, symbol };
 
     let transaction: any;
     try {
@@ -97,10 +98,11 @@ export async function getAsset(req: any, res: any) {
     asset.map((x: any) => {
         x.tokenInfo = getTokenInfoByAddress(x.contractAddress)
         if (x.tokenInfo.symbol == "") {
-            x.tokenInfo.symbol = x.token_symbol;
+            x.tokenInfo.symbol = x.symbol;
         }
-        x.token_symbol = undefined;
-        x.token_address = undefined;
+        if (x.tokenInfo.name == "") {
+            x.tokenInfo.name = x.symbol;
+        }
     })
     return res.json(succResp(asset))
 }
@@ -111,20 +113,19 @@ export async function getAssetInfo(req: any, res: any) {
     if (code !== ErrCode.Success) {
         return res.json(errResp(code, ErrCode[code]));
     }
-    let assetList: Array<any> = await Asset.findAll({});
-    console.log("assetList", assetList);
+    let assetList: Array<any> = await Asset.findAll({ raw: true });
+    console.log("assetList", JSON.stringify(assetList));
 
     assetList.map((x: any) => {
         x.tokenInfo = getTokenInfoByAddress(x.token_address)
         if (x.tokenInfo.symbol == "") {
-            x.tokenInfo.symbol = x.token_symbol;
+            x.tokenInfo.symbol = x.symbol;
         }
         if (x.tokenInfo.name == "") {
-            x.tokenInfo.name = x.token_symbol;
+            x.tokenInfo.name = x.symbol;
         }
-        x.token_symbol = undefined;
-        x.token_address = undefined;
     })
+    console.log("assetList map", JSON.stringify(assetList));
     return res.json(succResp(assetList));
 }
 
@@ -160,14 +161,20 @@ export async function updateAssets(req: any, res: any) {
     }
     const rows: Array<any> = body.result?.rows;
 
+    let results = [];
     for (let ai of assetList) {
         let filled = false
         for (let priceInfo of rows) {
             if (ai.contractAddress == priceInfo.token_address) {
                 try {
-                    await Asset.update({ "latestPrice": priceInfo.latest_price, "latest24hPrice": priceInfo.latest_24h_price }, {
+                    let res = await Asset.update({
+                        "latestPrice": priceInfo.latest_price,
+                        "latest24hPrice": priceInfo.latest_24h_price,
+                        "symbol": priceInfo.token_symbol
+                    }, {
                         where: { "contractAddress": priceInfo.token_address }
                     })
+                    results.push(res);
                 } catch (err: any) {
                     consola.log("update asset price failed, error: ", err)
                 }
@@ -176,12 +183,13 @@ export async function updateAssets(req: any, res: any) {
             }
         }
         if (!filled) {
-            await Asset.update({ "latestPrice": 1, "latest24hPrice": 1 }, {
+            let res = await Asset.update({ "latestPrice": 1, "latest24hPrice": 1 }, {
                 where: { "assetId": ai.assetId }
-            })
+            });
+            results.push(res);
         }
     }
-    return res.json(succResp("updateAssets succeeded"));
+    return res.json(succResp(results));
 }
 
 export async function executeQuery(req: any, res: any) {
@@ -213,8 +221,8 @@ export async function executeQuery(req: any, res: any) {
     const header = new Headers(meta);
     let response = await fetch(`https://api.dune.com/api/v1/query/${queryID}/execute`, {
         method: "POST",
-        headers: header,
-        body: body // This is where we pass the parameters
+    headers: header,
+    body: body // This is where we pass the parameters
     });
     const response_object = await response.text();
 
