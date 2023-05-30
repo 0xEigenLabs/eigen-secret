@@ -160,18 +160,20 @@ export async function updateAssets(req: any, res: any) {
     }
     const rows: Array<any> = body.result?.rows;
 
+    let results = [];
     for (let ai of assetList) {
         let filled = false
         for (let priceInfo of rows) {
             if (ai.contractAddress == priceInfo.token_address) {
                 try {
-                    await Asset.update({
-			    "latestPrice": priceInfo.latest_price,
-			"latest24hPrice": priceInfo.latest_24h_price,
-			"symbol": priceInfo.token_symbol
-		    }, {
-			    where: { "contractAddress": priceInfo.token_address }
+                    let res = await Asset.update({
+                        "latestPrice": priceInfo.latest_price,
+                        "latest24hPrice": priceInfo.latest_24h_price,
+                        "symbol": priceInfo.token_symbol
+                    }, {
+                        where: { "contractAddress": priceInfo.token_address }
                     })
+                    results.push(res);
                 } catch (err: any) {
                     consola.log("update asset price failed, error: ", err)
                 }
@@ -180,12 +182,13 @@ export async function updateAssets(req: any, res: any) {
             }
         }
         if (!filled) {
-            await Asset.update({ "latestPrice": 1, "latest24hPrice": 1 }, {
+            let res = await Asset.update({ "latestPrice": 1, "latest24hPrice": 1 }, {
                 where: { "assetId": ai.assetId }
-            })
+            });
+            results.push(res);
         }
     }
-    return res.json(succResp("updateAssets succeeded"));
+    return res.json(succResp(res));
 }
 
 export async function executeQuery(req: any, res: any) {
@@ -217,8 +220,8 @@ export async function executeQuery(req: any, res: any) {
     const header = new Headers(meta);
     let response = await fetch(`https://api.dune.com/api/v1/query/${queryID}/execute`, {
         method: "POST",
-        headers: header,
-        body: body // This is where we pass the parameters
+    headers: header,
+    body: body // This is where we pass the parameters
     });
     const response_object = await response.text();
 
