@@ -20,8 +20,7 @@ module.exports = {
         unique: true
       },
       symbol: {
-        type: Sequelize.STRING,
-        allowNull: false
+        type: Sequelize.STRING
       },
       latestPrice: {
         type: Sequelize.DOUBLE,
