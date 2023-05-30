@@ -120,7 +120,6 @@ task("update-assets", "Update asset price")
         console.log("initSDKFromAccount failed: ", secretSDK);
     }
     let sdk: SecretSDK = secretSDK.data;
-    console.log(sdk);
     await sdk.updateAssets(ctx);
     console.log("The task to update the assets price is running")
 })
