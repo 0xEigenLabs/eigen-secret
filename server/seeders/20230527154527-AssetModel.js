@@ -16,6 +16,7 @@ module.exports = {
       id: 1,
       assetId: "1",
       contractAddress: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      symbol: "ETH",
       latestPrice: 1890.1234,
       latest24hPrice: 1890.1234,
       createdAt: "2023-05-24 11:43:40.403 +00:00",

@@ -10,6 +10,7 @@ npx hardhat create-account --alias Alice --index 0 --network $NETWORK
 npx hardhat setup-rollup --network $NETWORK
 
 npx hardhat register-token --token $TOKEN --network $NETWORK
+npx hardhat update-assets --network $NETWORK
 
 ASSET_ID=$(cat .asset.json | jq -r .assetId)
 
