@@ -322,7 +322,6 @@ export class SecretSDK {
                 let ti = tokenInfo.get(txData.assetId);
                 transactions.push({
                     operation: tx.operation,
-                    // balance: txData.amount, // deprecated
                     amount: this.formatValue(ctx, txData.amount, txData.assetId, ti?.decimals || 18),
                     assetId: txData.assetId,
                     to: txData.to,
@@ -510,7 +509,7 @@ export class SecretSDK {
      * @param {boolean} skipZeroNote is false if all notes(with val 0) are required to return
      * @return {Promise<AppResp>} An `AppResp` object with `data` property of type `Array<Note>` if notes are successfully retrieved.
      */
-    private async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>, indices: Array<string> = [], skipZeroNote: boolean = true) {
+    private async getAndDecryptNote(ctx: Context, noteState: Array<NoteState>, assetId: number = -1, indices: Array<string> = [], skipZeroNote: boolean = true) {
         let encryptedNotes = await this.getNotes(ctx, noteState, indices);
         if (!encryptedNotes.ok) {
             return encryptedNotes;
@@ -520,7 +519,14 @@ export class SecretSDK {
         if (!resp.ok) {
             return resp;
         }
-        return succResp(allNotes);
+        let resNotes: any;
+
+        if (assetId >= 0) {
+            resNotes = allNotes.filter( (x: any) => x.assetId == assetId );
+        } else {
+            resNotes = allNotes;
+        }
+        return succResp(resNotes);
     }
 
     private async adoptNotes(ctx: Context, notes: Array<Note>, encryptedNotes: Array<any>) {
@@ -578,7 +584,7 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.accountKey: this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
-        let resp = await this.getAndDecryptNote(ctx, noteState);
+        let resp = await this.getAndDecryptNote(ctx, noteState, assetId);
         if (!resp.ok) {
             return resp;
         }
@@ -714,7 +720,7 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
-        let notes = await this.getAndDecryptNote(ctx, noteState);
+        let notes = await this.getAndDecryptNote(ctx, noteState, assetId);
         if (!notes.ok) {
             return notes;
         }
@@ -826,7 +832,7 @@ export class SecretSDK {
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
-        let notes = await this.getAndDecryptNote(ctx, noteState);
+        let notes = await this.getAndDecryptNote(ctx, noteState, assetId);
         if (!notes.ok) {
             return notes;
         }
