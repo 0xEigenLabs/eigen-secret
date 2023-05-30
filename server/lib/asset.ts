@@ -111,8 +111,8 @@ export async function getAssetInfo(req: any, res: any) {
     if (code !== ErrCode.Success) {
         return res.json(errResp(code, ErrCode[code]));
     }
-    let assetList: Array<any> = await Asset.findAll({});
-    console.log("assetList", assetList);
+    let assetList: Array<any> = await Asset.findAll({raw: true});
+    console.log("assetList", JSON.stringify(assetList));
 
     assetList.map((x: any) => {
         x.tokenInfo = getTokenInfoByAddress(x.token_address)
@@ -123,6 +123,7 @@ export async function getAssetInfo(req: any, res: any) {
             x.tokenInfo.name = x.symbol;
         }
     })
+    console.log("assetList map", JSON.stringify(assetList));
     return res.json(succResp(assetList));
 }
 
@@ -163,7 +164,11 @@ export async function updateAssets(req: any, res: any) {
         for (let priceInfo of rows) {
             if (ai.contractAddress == priceInfo.token_address) {
                 try {
-                    await Asset.update({ "latestPrice": priceInfo.latest_price, "latest24hPrice": priceInfo.latest_24h_price }, {
+                    await Asset.update({ 
+			    "latestPrice": priceInfo.latest_price,
+			    "latest24hPrice": priceInfo.latest_24h_price,
+			    symbol: priceInfo.token_symbol
+		    }, {
                         where: { "contractAddress": priceInfo.token_address }
                     })
                 } catch (err: any) {
