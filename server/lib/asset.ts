@@ -58,8 +58,9 @@ export async function createAsset(req: any, res: any) {
     // FIXME: eth address must be coordinator
     let assetId = req.body.assetId;
     let contractAddress = req.body.contractAddress;
+    let symbol = req.body.symbol;
 
-    let newItem = { assetId, contractAddress };
+    let newItem = { assetId, contractAddress, symbol };
 
     let transaction: any;
     try {

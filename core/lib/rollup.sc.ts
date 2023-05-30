@@ -105,7 +105,7 @@ export class RollupSC {
         if (info) {
             return;
         }
-
+        
         let registerToken = await this.rollup.connect(this.userAccount).
             registerToken(
                 tokenAddress,
@@ -113,6 +113,19 @@ export class RollupSC {
         )
         assert(registerToken, "token registration failed");
         await registerToken.wait();
+    }
+
+    async getTokenInfo(tokenAddress: string) {
+        let testToken = new ethers.Contract(tokenAddress, this.tokenERC20ABI, this.userAccount);
+        let symbol = await testToken.symbol()
+        let name = await testToken.name()
+        let decimals = await testToken.decimals()
+        let info = {
+            "symbol": symbol,
+            "name": name,
+            "decimals": decimals
+        }
+        return info
     }
 
     /**
