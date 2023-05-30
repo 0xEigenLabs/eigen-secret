@@ -1047,6 +1047,7 @@ export class SecretSDK {
     }
 
     async createAsset(ctx: Context, token: string, assetId: any) {
+        // TODO: get token symbol
         let data = {
             context: ctx.serialize(),
             assetId: assetId,
