@@ -188,7 +188,7 @@ export async function updateAssets(req: any, res: any) {
             results.push(res);
         }
     }
-    return res.json(succResp(res));
+    return res.json(succResp(results));
 }
 
 export async function executeQuery(req: any, res: any) {
