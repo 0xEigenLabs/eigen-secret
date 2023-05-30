@@ -105,7 +105,7 @@ export class RollupSC {
         if (info) {
             return;
         }
-        
+
         let registerToken = await this.rollup.connect(this.userAccount).
             registerToken(
                 tokenAddress,

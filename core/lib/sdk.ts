@@ -505,6 +505,7 @@ export class SecretSDK {
      * Retrieve all current user's unspent notes.
      * @param {Context} ctx
      * @param {Array<NoteState>} noteState: Get current user's adopted notes and wild notes. A wild note's alias is ‘__DEFAULT_ALIAS__’.
+     * @param {number} assetId assetId indicates the asset to be get and decrypted, default is -1, which mean returning all assets
      * @param {Array<string>} indices
      * @param {boolean} skipZeroNote is false if all notes(with val 0) are required to return
      * @return {Promise<AppResp>} An `AppResp` object with `data` property of type `Array<Note>` if notes are successfully retrieved.
