@@ -128,7 +128,8 @@ export async function getAssetInfo(req: any, res: any) {
     return res.json(succResp(assetList));
 }
 
-export async function updateAssetsPrice(req: any, res: any) {
+// TODO: restrict caller
+export async function updateAssets(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     const code = ctx.check();
     if (code !== ErrCode.Success) {
@@ -180,17 +181,7 @@ export async function updateAssetsPrice(req: any, res: any) {
             })
         }
     }
-    return res.json(succResp("updateAssetsPrice succeeded"));
-}
-
-// TODO: restrict caller
-export async function updateAssets(req: any, res: any) {
-    // Execute every 5 min
-    setInterval(async () => {
-        updateAssetsPrice(req, res);
-      }, 5 * 60 * 1000
-    )
-    return res.json(succResp("updateAssetsPrice is running"))
+    return res.json(succResp("updateAssets succeeded"));
 }
 
 export async function executeQuery(req: any, res: any) {
