@@ -15,8 +15,7 @@ task("deposit", "Deposit asset from L1 to L2")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("value", "amount of transaction")
   .addParam("index", "user index for test")
-  .addParam("decimal", "token decimal", "18")
-  .setAction(async ({ alias, assetId, password, value, index, decimals }, { ethers }) => {
+  .setAction(async ({ alias, assetId, password, value, index }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
@@ -44,8 +43,9 @@ task("deposit", "Deposit asset from L1 to L2")
     let tokenAddress = await sdk.getRegisteredToken(assetId)
     console.log("token", tokenAddress.toString());
 
+    let tokenInfo = await sdk.getTokenInfo(tokenAddress.toString())
     // approve
-    value = sdk.parseValue(ctx, value, assetId, decimals);
+    value = sdk.parseValue(ctx, value, assetId, tokenInfo.decimals);
     let allowance = await sdk.allowance(tokenAddress.toString())
     if (allowance.data < value) {
       await sdk.approve(tokenAddress.toString(), value);
@@ -67,8 +67,7 @@ task("send", "Send asset to receiver in L2")
   .addParam("index", "user index for test")
   .addParam("receiver", "receiver account public key")
   .addParam("receiverAlias", "receiver_alias use for test", __DEFAULT_ALIAS__)
-  .addParam("decimal", "token decimal", "18")
-  .setAction(async ({ alias, assetId, password, value, index, receiver, receiverAlias, decimals }, { ethers }) => {
+  .setAction(async ({ alias, assetId, password, value, index, receiver, receiverAlias }, { ethers }) => {
     console.log("receiver: ", receiver)
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
@@ -90,7 +89,11 @@ task("send", "Send asset to receiver in L2")
     }
     let sdk: SecretSDK = secretSDK.data;
 
-    value = sdk.parseValue(ctx, value, assetId, decimals);
+    // get tokenAddress by asset id
+    let tokenAddress = await sdk.getRegisteredToken(Number(assetId))
+    let tokenInfo = await sdk.getTokenInfo(tokenAddress.toString())
+
+    value = sdk.parseValue(ctx, value, assetId, tokenInfo.decimals);
     let proofAndPublicSignals = await sdk.send(ctx, receiver, receiverAlias, BigInt(value), Number(assetId));
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("send failed: ", proofAndPublicSignals);
@@ -105,8 +108,7 @@ task("withdraw", "Withdraw asset from L2 to L1")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("value", "amount of transaction")
   .addParam("index", "user index for test")
-  .addParam("decimal", "token decimal", "18")
-  .setAction(async ({ alias, assetId, password, value, index, decimals }, { ethers }) => {
+  .setAction(async ({ alias, assetId, password, value, index }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
@@ -128,7 +130,9 @@ task("withdraw", "Withdraw asset from L2 to L1")
     assetId = Number(assetId);
     let sdk: SecretSDK = secretSDK.data;
     let receiver = sdk.account.accountKey.pubKey.pubKey;
-    value = sdk.parseValue(ctx, value, assetId, decimals);
+    let tokenAddress = await sdk.getRegisteredToken(assetId)
+    let tokenInfo = await sdk.getTokenInfo(tokenAddress.toString())
+    value = sdk.parseValue(ctx, value, assetId, tokenInfo.decimals);
     let proofAndPublicSignals = await sdk.withdraw(ctx, receiver, BigInt(value), assetId);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("withdraw failed: ", proofAndPublicSignals);
