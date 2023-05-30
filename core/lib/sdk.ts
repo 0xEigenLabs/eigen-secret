@@ -1052,8 +1052,12 @@ export class SecretSDK {
         return Promise.resolve(1n);
     }
 
+    async getTokenInfo(token: string) {
+        return await this.rollupSC.getTokenInfo(token)
+    }
+
     async createAsset(ctx: Context, token: string, assetId: any) {
-        let info = await this.rollupSC.getTokenInfo(token)
+        let info = await this.getTokenInfo(token)
         let data = {
             context: ctx.serialize(),
             assetId: assetId,

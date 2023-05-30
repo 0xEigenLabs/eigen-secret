@@ -58,9 +58,8 @@ task("send-l1", "Send asset from L1 to L1")
 .addParam("value", "transaction amount")
 .addParam("receiver", "receiver ETH address")
 .addParam("assetId", "asset id")
-.addParam("decimal", "token decimal", "18")
 .addParam("password", "password for key sealing", "<your password>")
-.setAction(async ({ alias, value, receiver, assetId, decimal, password }, { ethers }) => {
+.setAction(async ({ alias, value, receiver, assetId, password }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     assetId = Number(assetId);
     let [admin] = await ethers.getSigners();
@@ -82,7 +81,8 @@ task("send-l1", "Send asset from L1 to L1")
         admin
     );
 
-    value = await sdk.parseValue(ctx, value, assetId, Number(decimal))
+    let tokenInfo = await sdk.getTokenInfo(address)
+    value = await sdk.parseValue(ctx, value, assetId, Number(tokenInfo.decimals))
     console.log(value);
     let tx: any;
     let balance: any;
