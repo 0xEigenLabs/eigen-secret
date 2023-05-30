@@ -97,10 +97,11 @@ export async function getAsset(req: any, res: any) {
     asset.map((x: any) => {
         x.tokenInfo = getTokenInfoByAddress(x.contractAddress)
         if (x.tokenInfo.symbol == "") {
-            x.tokenInfo.symbol = x.token_symbol;
+            x.tokenInfo.symbol = x.symbol;
         }
-        x.token_symbol = undefined;
-        x.token_address = undefined;
+        if (x.tokenInfo.name == "") {
+            x.tokenInfo.name = x.symbol;
+        }
     })
     return res.json(succResp(asset))
 }
