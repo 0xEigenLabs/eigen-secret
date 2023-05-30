@@ -118,8 +118,9 @@ task("update-assets", "Update asset price")
     );
     if (secretSDK.errno != ErrCode.Success) {
         console.log("initSDKFromAccount failed: ", secretSDK);
-      }
-
-    await secretSDK.data.updateAssets(ctx);
+    }
+    let sdk: SecretSDK = secretSDK.data;
+    console.log(sdk);
+    await sdk.updateAssets(ctx);
     console.log("The task to update the assets price is running")
 })
