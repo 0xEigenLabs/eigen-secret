@@ -3,8 +3,6 @@ set -ex
 
 NETWORK=${1-dev}
 
-npm run init:db
-
 npm run deploy:$NETWORK
 export TOKEN=$(cat .contract.json | jq -r .testToken)
 npx hardhat create-account --alias Alice --index 0 --network $NETWORK
