@@ -18,7 +18,11 @@ export class WorldState {
             WorldState.instance = new StateTree();
             let root = await SMTModel.findOne({ where: { id: ROOT_INDEX } });
             consola.log("root", root);
-            await WorldState.instance.init(SMTModel, BigInt(root.value));
+            let rt = "0";
+            if (root) {
+                rt = root.value;
+            }
+            await WorldState.instance.init(SMTModel, BigInt(rt));
         }
         consola.log("resuing");
         return WorldState.instance;
