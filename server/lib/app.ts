@@ -21,19 +21,19 @@ let server = app.listen(port, function() {
   consola.log(`Listening on port ${port}`);
 });
 
-process.on('SIGTERM', () => {
-  consola.info('SIGTERM signal received, closing http server.');
+process.on("SIGTERM", () => {
+  consola.info("SIGTERM signal received, closing http server.");
   server.close((err) => {
-    consola.log('Http server closed.');
+    consola.log("Http server closed.");
     sequlize.close();
     process.exit(err ? 1 : 0);
   });
 });
 
-process.on('SIGINT', () => {
-  consola.info('SIGINT signal received, closing http server.');
+process.on("SIGINT", () => {
+  consola.info("SIGINT signal received, closing http server.");
   server.close((err) => {
-    consola.log('Http server closed.');
+    consola.log("Http server closed.");
     sequlize.close();
     process.exit(err ? 1 : 0);
   });

@@ -6,6 +6,7 @@ import { StateTree, N_LEVEL, siblingsPad } from "@eigen-secret/core/dist-node/st
 
 const _smtmodel = require("../models/smtmodel");
 export const SMTModel = _smtmodel(sequelize, DataTypes);
+const ROOT_INDEX = 1;
 
 export class WorldState {
     static instance: StateTree;
@@ -15,7 +16,9 @@ export class WorldState {
         if (!WorldState.instance) {
             consola.log("creating");
             WorldState.instance = new StateTree();
-            await WorldState.instance.init(SMTModel);
+            let root = await SMTModel.findOne({ where: { id: ROOT_INDEX } });
+            consola.log("root", root);
+            await WorldState.instance.init(SMTModel, BigInt(root.value));
         }
         consola.log("resuing");
         return WorldState.instance;
@@ -29,7 +32,7 @@ export class WorldState {
         acStateKey: bigint,
         padding: boolean = true
     ) {
-        consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
+        // consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
         const eddsa = await buildEddsa();
         const F = eddsa.F;
         let instance = await WorldState.getInstance();
@@ -66,8 +69,13 @@ export class WorldState {
 
         let ac = await instance.find(acStateKey);
 
+        // update root
+        let rt = F.toObject(instance.root());
+        let res = await SMTModel.update({ root: rt }, { where: { id: ROOT_INDEX } });
+        consola.log("update root to ", rt, res);
+
         return {
-            dataTreeRoot: F.toObject(instance.root()),
+            dataTreeRoot: rt,
             siblings: siblings,
             siblingsAC: siblingsPad(ac.siblings, F, padding)
         };
