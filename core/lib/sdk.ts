@@ -498,7 +498,9 @@ export class SecretSDK {
             totalReturn += profit / (Number(val) * p24hPrice);
         }
         totalReturn /= notesByAssetId.size;
-        return succResp({ assetInfo: resp, totalBalanceUSD, totalProfit24Hour, totalReturn }, true);
+        let totalReturnPercent = (totalReturn * 100).toFixed(2) + "%";
+        let totalProfit24h = totalProfit24Hour.toFixed(2)
+        return succResp({ assetInfo: resp, totalBalanceUSD, totalProfit24h, totalReturnPercent }, true);
     }
 
     /**
