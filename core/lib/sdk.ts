@@ -500,7 +500,8 @@ export class SecretSDK {
         }
         totalReturn /= notesByAssetId.size;
         let totalReturnPercent = (totalReturn * 100).toFixed(2) + "%";
-        return succResp({ assetInfo: resp, totalBalanceUSD, totalProfit24Hour, totalReturnPercent }, true);
+        let totalProfit24h = totalProfit24Hour.toFixed(2)
+        return succResp({ assetInfo: resp, totalBalanceUSD, totalProfit24h, totalReturnPercent }, true);
     }
 
     /**
