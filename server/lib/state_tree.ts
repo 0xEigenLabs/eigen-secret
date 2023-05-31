@@ -71,7 +71,7 @@ export class WorldState {
 
         // update root
         let rt = F.toObject(instance.root());
-        let res = await SMTModel.update({ root: rt }, { where: { id: ROOT_INDEX } });
+        let res = await SMTModel.update({ value: rt }, { where: { id: ROOT_INDEX } });
         consola.log("update root to ", rt, res);
 
         return {
