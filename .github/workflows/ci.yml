@@ -1,0 +1,44 @@
+# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+name: Eigen Secret CI
+on:
+  push:
+    branches:
+      - main
+      - zkpay_dev
+  pull_request:
+    branches:
+      - main
+      - zkpay_dev
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install Dependencies
+        run: npm install
+      - name: create server.env file
+        run: touch .env && echo "NODE_ENV=test" >> .env && echo "PRIVATE_KEY=0000000000000000000000000000000000000000000000000000000000000000" >> .env && echo "DUNE_API_KEY=pI9TzC8FT6mbUShRoqg1k9MDlIulvi1p" >> .env && mv .env server
+      - name: Compile contract
+        run: npm run build
+      - name: Start hardhat node
+        run: nohup npx hardhat node &
+      - name: Start server and Run tests
+        run: |
+            npm run init:db
+            npm run server &
+            sleep 10
+            bash -x test.sh
