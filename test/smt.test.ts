@@ -17,7 +17,7 @@ describe("Test SMT Membership Query", function() {
         circuit = await test.genTempMain(stateTree, "Membership", "", [20], {});
         await circuit.loadSymbols();
         tree = new StateTree();
-        await tree.init(SMTModel, 0n);
+        await tree.init(SMTModel);
         Fr = tree.F;
     });
 
@@ -49,7 +49,7 @@ describe("Test SMT Membership Update", function() {
         circuit = await test.genTempMain(stateTree, "NonMembershipUpdate", "", [20], {});
         await circuit.loadSymbols();
         tree = new StateTree();
-        await tree.init(SMTModel, 0n);
+        await tree.init(SMTModel);
         Fr = tree.F;
     });
 
@@ -95,7 +95,7 @@ describe("Test SMT smart contract", () => {
         contract = await F.deploy(poseidons[0].address, poseidons[1].address);
         await contract.deployed()
         tree = new StateTree();
-        await tree.init(SMTModel, 0n);
+        await tree.init(SMTModel);
         Fr = tree.F;
     })
 

@@ -6,7 +6,6 @@ import { StateTree, N_LEVEL, siblingsPad } from "@eigen-secret/core/dist-node/st
 
 const _smtmodel = require("../models/smtmodel");
 export const SMTModel = _smtmodel(sequelize, DataTypes);
-const ROOT_INDEX = 1;
 
 export class WorldState {
     static instance: StateTree;
@@ -66,9 +65,8 @@ export class WorldState {
         }
 
         let ac = await instance.find(acStateKey);
-        let rt = F.toObject(instance.root());
         return {
-            dataTreeRoot: rt,
+            dataTreeRoot: F.toObject(instance.root()),
             siblings: siblings,
             siblingsAC: siblingsPad(ac.siblings, F, padding)
         };
