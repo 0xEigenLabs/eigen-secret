@@ -25,14 +25,10 @@ module.exports = (sequelize, DataTypes) => {
         unique: true
     },
     latestPrice: {
-      type: DataTypes.DOUBLE,
-      allowNull: true,
-      unique: false
+      type: DataTypes.DOUBLE
     },
     latest24hPrice: {
-      type: DataTypes.DOUBLE,
-      allowNull: true,
-      unique: false
+      type: DataTypes.DOUBLE
     },
     symbol: {
       type: DataTypes.STRING

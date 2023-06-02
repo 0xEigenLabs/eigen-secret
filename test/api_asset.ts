@@ -18,10 +18,7 @@ describe("POST /assets", () => {
         .send({
             context: ctx.serialize(),
             assetId: 2,
-            contractAddress: "0xA468870b2a5B9063356818362FbEf73fc8Ae5ECC",
-            lastPrice: 1,
-            last24hPrice: 2,
-            symbol: "TT"
+            contractAddress: "0xA468870b2a5B9063356818362FbEf73fc8Ae5ECC"
         })
         .set("Accept", "application/json");
 
