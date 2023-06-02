@@ -29,7 +29,7 @@ export class WorldState {
         acStateKey: bigint,
         padding: boolean = true
     ) {
-        consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
+        // consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
         const eddsa = await buildEddsa();
         const F = eddsa.F;
         let instance = await WorldState.getInstance();
@@ -65,7 +65,6 @@ export class WorldState {
         }
 
         let ac = await instance.find(acStateKey);
-
         return {
             dataTreeRoot: F.toObject(instance.root()),
             siblings: siblings,

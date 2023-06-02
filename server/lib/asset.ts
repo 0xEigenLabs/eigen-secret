@@ -137,7 +137,6 @@ export async function updateAssets(req: any, res: any) {
         return res.json(errResp(code, ErrCode[code]));
     }
     let assetList: Array<any> = await Asset.findAll({});
-    console.log("assetList", assetList);
 
     // get price info from dune
     // https://dune.com/queries/2468396
