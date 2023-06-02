@@ -17,11 +17,13 @@ export class WorldState {
             consola.log("creating");
             WorldState.instance = new StateTree();
             let root = await SMTModel.findOne({ where: { id: ROOT_INDEX } });
-            consola.log("root", root);
-            let rt = "0";
+            console.log("root in db", root);
+            let rt = "1|0|0";
             if (root) {
                 rt = root.value;
             }
+            rt = rt.split("|")[1]
+            console.log("root --- ", rt);
             await WorldState.instance.init(SMTModel, BigInt(rt));
         }
         consola.log("resuing");
@@ -75,7 +77,7 @@ export class WorldState {
 
         // update root
         let rt = F.toObject(instance.root());
-        let res = await SMTModel.update({ value: rt }, { where: { id: ROOT_INDEX } });
+        let res = await SMTModel.update({ value: [1n, rt, 0n].join("|") }, { where: { id: ROOT_INDEX } });
         consola.log("update root to ", rt, res);
 
         return {

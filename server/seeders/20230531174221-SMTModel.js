@@ -15,7 +15,7 @@ module.exports = {
     await queryInterface.bulkInsert('SMTModels', [{
       id: 1,
       key: "root",
-      value: "0",
+      value: [1n, 0n, 0n].join("|"),
       createdAt: "2023-05-24 11:43:40.403 +00:00",
       updatedAt: "2023-05-24 11:43:40.403 +00:00"
     }]);

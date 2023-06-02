@@ -176,9 +176,9 @@ export class StateTree {
     async init(model: any, root: bigint) {
         const { hash0, hash1, F } = await getHashes();
         const db = new SMTDB(F, model);
-        const rt = F.e(root);
+        const rt = root;
         this.tree = new SMT(db, rt, hash0, hash1, F);
-        this.F = F;
+        this.F = this.tree.F;
         // const rt = await db.getRoot();
         // this.tree = await newMemEmptyTrie();
     }
