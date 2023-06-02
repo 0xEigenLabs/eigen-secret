@@ -31,7 +31,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: create server.env file
-        run: touch .env && echo "NODE_ENV=development" >> .env && echo "API_KEY=c8d8f358d6224ba08c0311716f028878" >> .env && echo "PRIVATE_KEY=0000000000000000000000000000000000000000000000000000000000000000" >> .env && echo "DUNE_API_KEY=pI9TzC8FT6mbUShRoqg1k9MDlIulvi1p" >> .env && mv .env server
+        run: touch .env && echo "NODE_ENV=test" >> .env && echo "API_KEY=c8d8f358d6224ba08c0311716f028878" >> .env && echo "PRIVATE_KEY=0000000000000000000000000000000000000000000000000000000000000000" >> .env && echo "DUNE_API_KEY=pI9TzC8FT6mbUShRoqg1k9MDlIulvi1p" >> .env && mv .env server
       - name: Compile contract
         run: npm run build
       - name: Start hardhat node
