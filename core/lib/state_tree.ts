@@ -173,12 +173,20 @@ export class StateTree {
     F: any;
 
     constructor() { }
-    async init(model: any, root: bigint) {
+    async init(model: any) {
         const { hash0, hash1, F } = await getHashes();
         const db = new SMTDB(F, model);
-        const rt = root;
+        let rt = F.zero;
+        let maxIdRecord = await db.model.findOne({ 
+            order: [ ['id', 'DESC'] ] 
+        });
+        if (maxIdRecord != null) {
+            rt = F.e(maxIdRecord.key);
+        }
+        consola.log("root: ", rt)
         this.tree = new SMT(db, rt, hash0, hash1, F);
-        this.F = this.tree.F;
+        consola.log("success")
+        this.F = F;
         // const rt = await db.getRoot();
         // this.tree = await newMemEmptyTrie();
     }
