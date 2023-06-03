@@ -19,6 +19,7 @@
     "deploy:goerli": "hardhat deploy --network goerli",
     "deploy:hermez": "hardhat deploy --network hermez",
     "deploy:mumbai": "hardhat deploy --network mumbai",
+    "deploy:scroll": "hardhat deploy --network scroll",
     "deploy:dev": "hardhat deploy --network dev"
   },
   "dependencies": {

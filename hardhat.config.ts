@@ -76,8 +76,12 @@ module.exports = {
     hermez: {
       url: "https://rpc.public.zkevm-test.net/",
       accounts: [process.env.PRIVATE_KEY],
-      gas: 49000,
-      gasPrice: 1000000000
+      chainId: 1442
+    },
+    scroll: {
+      url: "https://alpha-rpc.scroll.io/l2",
+      chainId: 534353,
+      accounts: [process.env.PRIVATE_KEY]
     }
   },
   gasReporter: {
