@@ -189,7 +189,6 @@ export class RollupSC {
             return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
 
-        // assert(deposit0, "deposit0 failed");
         return succResp(receipt, true);
     }
 
