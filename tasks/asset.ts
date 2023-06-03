@@ -82,7 +82,7 @@ task("send-l1", "Send asset from L1 to L1")
     );
 
     let tokenInfo = await sdk.getTokenInfo(address)
-    value = await sdk.parseValue(ctx, value, assetId, Number(tokenInfo.decimals))
+    value = await sdk.parseValue(ctx, value, Number(tokenInfo.decimals))
     console.log(value);
     let tx: any;
     if (assetId > 1) {
@@ -98,7 +98,7 @@ task("send-l1", "Send asset from L1 to L1")
         await tx.wait();
     }
 
-    let balance = await sdk.getL1Balance(ctx, address, admin);
+    let balance = await sdk.getL1Balance(ctx, address, admin, Number(tokenInfo.decimals));
     console.log("balance", balance.data.toString());
 });
 
