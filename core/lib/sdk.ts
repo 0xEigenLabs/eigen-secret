@@ -1,6 +1,6 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
-import { utils } from "ethers";
+import { utils, ethers } from "ethers";
 import { prepareJson, uint8Array2Bigint, ETH } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
@@ -37,6 +37,7 @@ export class SecretSDK {
 
     private txBuff: Array<any> = new Array(0);
     private noteBuff: Array<any> = new Array(0);
+    private contractABI: any;
 
     constructor(
         account: SecretAccount,
@@ -63,6 +64,7 @@ export class SecretSDK {
         this.eddsa = eddsa;
         this.rollupSC = new RollupSC(this.eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
             poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
+        this.contractABI = undefined;
     }
 
     private async curl(resource: string, params: any) {
@@ -323,6 +325,7 @@ export class SecretSDK {
                 transactions.push({
                     operation: tx.operation,
                     amount: this.formatValue(ctx, txData.amount, txData.assetId, ti?.decimals || 18),
+                    symbol: ti.symbol,
                     assetId: txData.assetId,
                     to: txData.to,
                     status: TransactionModelStatus[tx.status],
@@ -363,6 +366,7 @@ export class SecretSDK {
     async initialize(
         contractABI: any
     ) {
+        this.contractABI = contractABI;
         await this.rollupSC.initialize(
             contractABI.spongePoseidonContractABI,
             contractABI.tokenRegistryContractABI,
@@ -410,6 +414,21 @@ export class SecretSDK {
             context: ctx.serialize()
         };
         return this.curl("assets/update", data);
+    }
+
+    async getL1Balance(ctx: Context, token: string, user: any) {
+        let balance: any;
+        if (token == ETH) {
+            balance = await user.getBalance();
+        } else {
+            let tokenIns = new ethers.Contract(
+                token,
+                this.contractABI.testTokenContractABI,
+                user
+            );
+            balance = await tokenIns.balanceOf(user.getAddress());
+        }
+        return succResp(balance)
     }
 
     /**
