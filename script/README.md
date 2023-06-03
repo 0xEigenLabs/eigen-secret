@@ -35,9 +35,7 @@ npx hardhat update-assets --network $NETWORK
 Update the contract information for UI.
 
 ```
-cd ..
-cp eigen-secret/.contract.json eigen-secret-ui/src/artifacts/contract.json
-
+vim eigen-secret-ui/src/NET_WORK_CONFIG.json
 ```
 
 4. Build and launch service
