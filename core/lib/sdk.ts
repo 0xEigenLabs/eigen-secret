@@ -103,9 +103,11 @@ export class SecretSDK {
         password: string
     ) {
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+        let accountKeyPubKey = this.account.accountKey.pubKey.pubKey;
         let secretAccount = this.account.serialize(key);
         let input = {
             context: ctx.serialize(),
+            accountKeyPubKey: accountKeyPubKey,
             secretAccount: secretAccount
         };
         return this.curl("accounts/create", input)
@@ -116,9 +118,11 @@ export class SecretSDK {
         password: string
     ) {
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+        let accountKeyPubKey = this.account.accountKey.pubKey.pubKey;
         let secretAccount = this.account.serialize(key);
         let input = {
             context: ctx.serialize(),
+            accountKeyPubKey: accountKeyPubKey,
             secretAccount: secretAccount
         };
         return this.curl("accounts/update", input)
@@ -842,13 +846,12 @@ export class SecretSDK {
     /**
      * Creates a proof for withdrawing an asset from L2 to L1.
      * @param {Context} ctx
-     * @param {string} owner
      * @param {string} receiverAccountAddress
      * @param {bigint} value The amount to be withdrawn.
      * @param {number} assetId The token to be withdrawn.
      * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
      */
-    async withdraw(ctx: Context, owner: string, receiverAccountAddress: string, value: bigint, assetId: number) {
+    async withdraw(ctx: Context, receiverAccountAddress: string, value: bigint, assetId: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -861,6 +864,14 @@ export class SecretSDK {
             return notes;
         }
         assert(notes.data.length > 0, "Invalid notes");
+        let context = {
+            context: ctx.serialize()
+        };
+        let resp = await this.curl("accounts/get", context);
+        if (!resp.ok) {
+            return resp;
+        }
+        let owner = resp.data.accountKeyPubKey;
 
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,

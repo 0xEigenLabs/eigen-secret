@@ -25,11 +25,15 @@ export async function createAccount(req: any, res: any) {
         return res.json(found);
     }
     // account is Account or found is RecordNotExist
+    const accountKeyPubKey = req.body.accountKeyPubKey;
+    if (!utils.hasValue(accountKeyPubKey)) {
+        return res.json(errResp(ErrCode.DBCreateError, "Invalid accountKey PubKey"));
+    }
     const secretAccount = req.body.secretAccount;
     if (!utils.hasValue(secretAccount)) {
         return res.json(errResp(ErrCode.DBCreateError, "Invalid secret account"));
     }
-    let newItem = { alias, ethAddress, secretAccount };
+    let newItem = { alias, ethAddress, accountKeyPubKey, secretAccount };
 
     let transaction: any;
     try {
@@ -82,6 +86,7 @@ export async function getAccount(req: any, res: any) {
 
 export async function updateAccount(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
+    const accountKeyPubKey = req.body.accountKeyPubKey;
     const secretAccount = req.body.secretAccount;
     let code = ctx.check();
     if (code !== ErrCode.Success) {
@@ -93,13 +98,16 @@ export async function updateAccount(req: any, res: any) {
     if (found && found.ethAddress !== ctx.ethAddress) {
         return res.json(errResp(ErrCode.DuplicatedRecordError, "Alias duplicated"));
     }
+    if (!utils.hasValue(accountKeyPubKey)) {
+        return res.json(errResp(ErrCode.DBCreateError, "Invalid accountKey PubKey"));
+    }
     if (!utils.hasValue(secretAccount)) {
         return res.json(errResp(ErrCode.DBCreateError, "Invalid secret account"));
     }
     let transaction = await sequelize.transaction();
     try {
         await Account.update(
-            { secretAccount },
+            { accountKeyPubKey, secretAccount },
             { where: condition, plain: true },
             transaction
         );

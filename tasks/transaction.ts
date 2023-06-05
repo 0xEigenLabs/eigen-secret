@@ -106,7 +106,7 @@ task("withdraw", "Withdraw asset from L2 to L1")
   .addParam("alias", "user alias")
   .addParam("assetId", "asset id/token id")
   .addParam("password", "password for key sealing", "<your password>")
-  .addParam("receiver", "receiver eth address", )
+  .addParam("receiver", "receiver eth address", "")
   .addParam("value", "amount of transaction")
   .addParam("index", "user index for test")
   .setAction(async ({ alias, assetId, password, receiver, value, index }, { ethers }) => {
@@ -130,11 +130,10 @@ task("withdraw", "Withdraw asset from L2 to L1")
     }
     assetId = Number(assetId);
     let sdk: SecretSDK = secretSDK.data;
-    let owner = sdk.account.accountKey.pubKey.pubKey;
     let tokenAddress = await sdk.getRegisteredToken(assetId)
     let tokenInfo = await sdk.getTokenInfo(tokenAddress.toString())
     value = sdk.parseValue(ctx, value, tokenInfo.decimals);
-    let proofAndPublicSignals = await sdk.withdraw(ctx, owner, user.address, BigInt(value), assetId);
+    let proofAndPublicSignals = await sdk.withdraw(ctx, user.address, BigInt(value), assetId);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("withdraw failed: ", proofAndPublicSignals);
     }
