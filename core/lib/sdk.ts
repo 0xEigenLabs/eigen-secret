@@ -842,12 +842,13 @@ export class SecretSDK {
     /**
      * Creates a proof for withdrawing an asset from L2 to L1.
      * @param {Context} ctx
-     * @param {string} receiver
+     * @param {string} owner
+     * @param {string} receiverAccountAddress
      * @param {bigint} value The amount to be withdrawn.
      * @param {number} assetId The token to be withdrawn.
      * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
      */
-    async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number) {
+    async withdraw(ctx: Context, owner: string, receiverAccountAddress: string, value: bigint, assetId: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
         const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
@@ -871,7 +872,7 @@ export class SecretSDK {
             assetId,
             assetId,
             value,
-            new EigenAddress(receiver),
+            new EigenAddress(owner),
             0n,
             this.account.accountKey.pubKey,
             notes.data,
@@ -1035,7 +1036,7 @@ export class SecretSDK {
         }
         let proofAndPublicSignals = await Prover.withdraw(this.circuitPath, input);
         let receipt = await this.rollupSC.withdraw(
-            this.rollupSC.userAccount,
+            receiverAccountAddress,
             txInfo,
             proofAndPublicSignals
         );
