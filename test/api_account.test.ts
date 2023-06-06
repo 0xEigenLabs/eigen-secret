@@ -44,6 +44,7 @@ describe("POST /accounts", function() {
         .post("/accounts/create")
         .send({
             context: ctx.serialize(),
+            accountKeyPubKey: accountKey.pubKey.pubKey,
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");
@@ -66,6 +67,7 @@ describe("POST /accounts", function() {
         expect(response.status).to.eq(200);
         expect(response.body.errno).to.eq(0);
         assert(response.body.data.alias, alias)
+        assert(response.body.data.accountKeyPubKey, secretAccount.accountKey.pubKey.pubKey)
         let sa = SecretAccount.deserialize(eddsa, key, response.body.data.secretAccount);
         assert(
             sa.accountKey.pubKey.pubKey,
@@ -109,6 +111,7 @@ describe("POST /accounts", function() {
         .post("/accounts/get")
         .send({
             context: ctx.serialize(),
+            accountKeyPubKey: secretAccount.accountKey.pubKey.pubKey,
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");
@@ -131,6 +134,7 @@ describe("POST /accounts", function() {
         .post("/accounts/update")
         .send({
             context: ctx.serialize(),
+            accountKeyPubKey: secretAccount.accountKey.pubKey.pubKey,
             secretAccount: secretAccount.serialize(key)
         })
         .set("Accept", "application/json");

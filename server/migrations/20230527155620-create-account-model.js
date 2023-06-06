@@ -18,6 +18,10 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false
       },
+      accountKeyPubKey: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
       secretAccount: {
           type: Sequelize.TEXT,
           allowNull: false
