@@ -77,11 +77,21 @@ export async function getAccount(req: any, res: any) {
     if (code !== ErrCode.Success) {
         return res.json(errResp(code, ErrCode[code]));
     }
-
-    const alias = ctx.alias;
-    const ethAddress = ctx.ethAddress;
-    let found = await getAccountInternal(alias, ethAddress);
-    return res.json(found);
+    let conds = req.body.conds || {};
+    let found: any;
+    if (Object.keys(conds).length == 0) {
+        const alias = ctx.alias;
+        const ethAddress = ctx.ethAddress;
+        found = await getAccountInternal(alias, ethAddress);
+        return res.json(found);
+    } else {
+        found = await Account.findOne({ where: conds });
+        if (found) {
+            found = succResp(found)
+            return res.json(found);
+        }
+    }
+    return res.json(errResp(ErrCode.RecordNotExist, ErrCode[ErrCode.RecordNotExist]))
 }
 
 export async function updateAccount(req: any, res: any) {
