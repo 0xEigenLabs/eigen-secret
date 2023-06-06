@@ -98,6 +98,13 @@ export class SecretSDK {
         });
     }
 
+    private async getAccount(ctx: Context) {
+        let context = {
+            context: ctx.serialize()
+        };
+        return this.curl("accounts/get", context);
+    }
+
     private async createServerAccount(
         ctx: Context,
         password: string
@@ -846,7 +853,7 @@ export class SecretSDK {
     /**
      * Creates a proof for withdrawing an asset from L2 to L1.
      * @param {Context} ctx
-     * @param {string} receiverAccountAddress
+     * @param {string} receiverAccountAddress, which can be EigenSecret address or EOA
      * @param {bigint} value The amount to be withdrawn.
      * @param {number} assetId The token to be withdrawn.
      * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
@@ -864,10 +871,7 @@ export class SecretSDK {
             return notes;
         }
         assert(notes.data.length > 0, "Invalid notes");
-        let context = {
-            context: ctx.serialize()
-        };
-        let resp = await this.curl("accounts/get", context);
+        let resp = await this.getAccount(ctx);
         if (!resp.ok) {
             return resp;
         }

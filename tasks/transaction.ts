@@ -106,10 +106,9 @@ task("withdraw", "Withdraw asset from L2 to L1")
   .addParam("alias", "user alias")
   .addParam("assetId", "asset id/token id")
   .addParam("password", "password for key sealing", "<your password>")
-  .addParam("receiver", "receiver eth address", "")
   .addParam("value", "amount of transaction")
   .addParam("index", "user index for test")
-  .setAction(async ({ alias, assetId, password, receiver, value, index }, { ethers }) => {
+  .setAction(async ({ alias, assetId, password, value, index }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
