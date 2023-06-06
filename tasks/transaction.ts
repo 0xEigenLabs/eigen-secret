@@ -129,11 +129,10 @@ task("withdraw", "Withdraw asset from L2 to L1")
     }
     assetId = Number(assetId);
     let sdk: SecretSDK = secretSDK.data;
-    let receiver = sdk.account.accountKey.pubKey.pubKey;
     let tokenAddress = await sdk.getRegisteredToken(assetId)
     let tokenInfo = await sdk.getTokenInfo(tokenAddress.toString())
     value = sdk.parseValue(ctx, value, tokenInfo.decimals);
-    let proofAndPublicSignals = await sdk.withdraw(ctx, receiver, BigInt(value), assetId);
+    let proofAndPublicSignals = await sdk.withdraw(ctx, user.address, BigInt(value), assetId);
     if (proofAndPublicSignals.errno != ErrCode.Success) {
       console.log("withdraw failed: ", proofAndPublicSignals);
     }

@@ -98,14 +98,32 @@ export class SecretSDK {
         });
     }
 
+    private async getAccount(ctx: Context, receiver: string) {
+        let conds: any;
+        if (receiver.startsWith("eig:")) {
+            conds = { accountKeyPubKey: receiver }
+        } else if (receiver.startsWith("0x")) {
+            conds = { ethAddress: receiver }
+        } else {
+            conds = { alias: receiver }
+        }
+        let context = {
+            context: ctx.serialize(),
+            conds: conds
+        };
+        return this.curl("accounts/get", context);
+    }
+
     private async createServerAccount(
         ctx: Context,
         password: string
     ) {
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+        let accountKeyPubKey = this.account.accountKey.pubKey.pubKey;
         let secretAccount = this.account.serialize(key);
         let input = {
             context: ctx.serialize(),
+            accountKeyPubKey: accountKeyPubKey,
             secretAccount: secretAccount
         };
         return this.curl("accounts/create", input)
@@ -116,9 +134,11 @@ export class SecretSDK {
         password: string
     ) {
         let key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
+        let accountKeyPubKey = this.account.accountKey.pubKey.pubKey;
         let secretAccount = this.account.serialize(key);
         let input = {
             context: ctx.serialize(),
+            accountKeyPubKey: accountKeyPubKey,
             secretAccount: secretAccount
         };
         return this.curl("accounts/update", input)
@@ -842,7 +862,7 @@ export class SecretSDK {
     /**
      * Creates a proof for withdrawing an asset from L2 to L1.
      * @param {Context} ctx
-     * @param {string} receiver
+     * @param {string} receiver, which can be EigenSecret address or EOA
      * @param {bigint} value The amount to be withdrawn.
      * @param {number} assetId The token to be withdrawn.
      * @return {Promise<AppResp>} An `AppResp` object with `data` property of type 'string[]' which contains a batch of proof for the withdraw.
@@ -860,6 +880,11 @@ export class SecretSDK {
             return notes;
         }
         assert(notes.data.length > 0, "Invalid notes");
+        let resp = await this.getAccount(ctx, receiver);
+        if (!resp.ok) {
+            return resp;
+        }
+        let receiverL2Account = resp.data;
 
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
             this.eddsa,
@@ -871,7 +896,7 @@ export class SecretSDK {
             assetId,
             assetId,
             value,
-            new EigenAddress(receiver),
+            new EigenAddress(receiverL2Account.accountKeyPubKey),
             0n,
             this.account.accountKey.pubKey,
             notes.data,
@@ -1035,7 +1060,7 @@ export class SecretSDK {
         }
         let proofAndPublicSignals = await Prover.withdraw(this.circuitPath, input);
         let receipt = await this.rollupSC.withdraw(
-            this.rollupSC.userAccount,
+            receiverL2Account.ethAddress,
             txInfo,
             proofAndPublicSignals
         );

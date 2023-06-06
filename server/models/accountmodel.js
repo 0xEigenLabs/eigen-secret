@@ -23,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
     },
+    accountKeyPubKey: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
     secretAccount: {
         type: DataTypes.TEXT,
         allowNull: false

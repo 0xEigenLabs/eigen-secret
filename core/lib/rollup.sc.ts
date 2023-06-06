@@ -238,7 +238,7 @@ export class RollupSC {
         return succResp(receipt, true);
     }
 
-    async withdraw(receiverAccount: any, txInfo: any, proofAndPublicSignal: any) {
+    async withdraw(receiverAccountAddress: any, txInfo: any, proofAndPublicSignal: any) {
         assert(this.rollup);
         let withdraw: any;
         let proof = parseProof(proofAndPublicSignal.proof);
@@ -246,7 +246,7 @@ export class RollupSC {
         try {
             withdraw = await this.rollup.connect(this.userAccount).withdraw(
                 txInfo,
-                receiverAccount.address,
+                receiverAccountAddress,
                 proof.a,
                 proof.b,
                 proof.c,

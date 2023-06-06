@@ -177,8 +177,8 @@ export class StateTree {
         const { hash0, hash1, F } = await getHashes();
         const db = new SMTDB(F, model);
         let rt = F.zero;
-        let maxIdRecord = await db.model.findOne({ 
-            order: [ ['id', 'DESC'] ] 
+        let maxIdRecord = await db.model.findOne({
+            order: [["id", "DESC"]]
         });
         if (maxIdRecord != null) {
             rt = F.e(maxIdRecord.key);
