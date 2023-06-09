@@ -12,6 +12,7 @@ const createBlakeHash = require("blake-hash");
 export class RollupSC {
     userAccount: any;
     rollup: any;
+    moduleProxy: any;
     tokenRegistry: any;
     spongePoseidon: any;
     SMT: any;
@@ -26,6 +27,7 @@ export class RollupSC {
     poseidon3Address: string;
     poseidon6Address: string;
     rollupAddress: string;
+    moduleProxyAddress: string;
     smtVerifierAddress: string;
 
     tokenERC20ABI: any;
@@ -40,6 +42,7 @@ export class RollupSC {
         poseidon3Address: string,
         poseidon6Address: string,
         rollupAddress: string,
+        moduleProxyAddress: string,
         smtVerifierAddress: string = ""
     ) {
         this.eddsa = eddsa;
@@ -57,6 +60,7 @@ export class RollupSC {
         this.poseidon3Address = poseidon2Address;
         this.poseidon6Address = poseidon2Address;
         this.rollupAddress = rollupAddress;
+        this.moduleProxyAddress = moduleProxyAddress;
         this.smtVerifierAddress = smtVerifierAddress;
         this.tokenERC20ABI = undefined;
     }
@@ -65,6 +69,7 @@ export class RollupSC {
         spongePoseidonContractABI: any,
         tokenRegistryContractABI: any,
         rollupContractABI: any,
+        moduleProxyABI: any,
         tokenContractABI: any,
         smtVerifierContractABI: any
     ) {
@@ -79,14 +84,32 @@ export class RollupSC {
         this.tokenRegistry = new ethers.Contract(
             this.tokenRegistryAddress, tokenRegistryContractABI, this.userAccount
         );
-        this.rollup = new ethers.Contract(this.rollupAddress, rollupContractABI, this.userAccount);
+        this.moduleProxy = new ethers.Contract(
+            this.moduleProxyAddress, 
+            moduleProxyABI,
+            this.userAccount
+        );
 
+        await this.moduleProxy
+        .connect(this.userAccount)
+        .setImplementation(this.rollupAddress);
+        // Parse the JSON to get the object.
+        this.rollup = new ethers.Contract(
+            this.moduleProxyAddress, 
+            rollupContractABI, 
+            this.userAccount
+        );
         if (this.smtVerifierAddress != "") {
             this.SMT = new ethers.Contract(this.smtVerifierAddress, smtVerifierContractABI, this.userAccount);
         }
     }
 
     async setRollupNC() {
+        await this.rollup.connect(this.userAccount).initialize(
+            this.poseidon2Address,
+            this.poseidon3Address,
+            this.tokenRegistryAddress
+        )
         let tx = await this.tokenRegistry.
             connect(this.userAccount).setRollupNC(this.rollup.address);
         await tx.wait();

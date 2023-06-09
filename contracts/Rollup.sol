@@ -83,11 +83,12 @@ contract Rollup is SMT {
     event UpdatedState(uint, uint, uint); //newRoot, txRoot, oldRoot
     event Withdraw(TxInfo, address);
 
-    constructor(
+    function initialize(
         address _poseidon2ContractAddr,
         address _poseidon3ContractAddr,
         address _tokenRegistryAddr
-    ) SMT(_poseidon2ContractAddr, _poseidon3ContractAddr) public {
+    ) public initializer{
+        SMT.initialize(_poseidon2ContractAddr, _poseidon3ContractAddr); 
         insPoseidon2 = IPoseidon2(_poseidon2ContractAddr);
         insPoseidon3 = IPoseidon3(_poseidon3ContractAddr);
         tokenRegistry = ITokenRegistry(_tokenRegistryAddr);

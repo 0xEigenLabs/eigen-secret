@@ -35,15 +35,17 @@ task("deploy", "Deploy all smart contract")
     contractJson.set("poseidon2", poseidonContracts[0].address);
     contractJson.set("poseidon3", poseidonContracts[1].address);
     contractJson.set("poseidon6", poseidonContracts[2].address);
-    let rollup = await factoryR.deploy(
-        poseidonContracts[0].address,
-        poseidonContracts[1].address,
-        tokenRegistry.address
-    );
+    let rollup = await factoryR.deploy();
     await rollup.deployed();
     console.log("rollup deployed to:", rollup.address);
     contractJson.set("rollup", rollup.address);
 
+    let factoryMP = await ethers.getContractFactory("ModuleProxy");
+    let moduleProxy = await factoryMP.deploy(admin.address);
+    await moduleProxy.deployed();
+    console.log("moduleProxy deployed to:", moduleProxy.address);
+    contractJson.set("moduleProxy", moduleProxy.address);
+    
     if (testTokenAddress == "") {
         let factoryTT = await ethers.getContractFactory("TestToken");
         let testToken = await factoryTT.connect(admin).deploy();
@@ -55,10 +57,7 @@ task("deploy", "Deploy all smart contract")
 
     // DEBUG only
     let smtVerifierContractFactory = await ethers.getContractFactory("SMT");
-    let smtVerifierContract = await smtVerifierContractFactory.deploy(
-        poseidonContracts[0].address,
-        poseidonContracts[1].address
-    );
+    let smtVerifierContract = await smtVerifierContractFactory.deploy();
     await smtVerifierContract.deployed();
     contractJson.set("smtVerifier", smtVerifierContract.address);
 

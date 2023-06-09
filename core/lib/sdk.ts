@@ -51,6 +51,7 @@ export class SecretSDK {
         poseidon3Address: string,
         poseidon6Address: string,
         rollupAddress: string,
+        moduleProxyAddress: string,
         smtVerifierAddress: string = ""
     ) {
         this.alias = account.alias;
@@ -63,7 +64,7 @@ export class SecretSDK {
         this.circuitPath = circuitPath;
         this.eddsa = eddsa;
         this.rollupSC = new RollupSC(this.eddsa, account.alias, userAccount, spongePoseidonAddress, tokenRegistryAddress,
-            poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, smtVerifierAddress);
+            poseidon2Address, poseidon3Address, poseidon6Address, rollupAddress, moduleProxyAddress, smtVerifierAddress);
         this.contractABI = undefined;
     }
 
@@ -213,6 +214,7 @@ export class SecretSDK {
             contractJson.poseidon3,
             contractJson.poseidon6,
             contractJson.rollup,
+            contractJson.moduleProxy,
             contractJson.smtVerifier
         );
         await secretSDK.initialize(contractABI);
@@ -391,6 +393,7 @@ export class SecretSDK {
             contractABI.spongePoseidonContractABI,
             contractABI.tokenRegistryContractABI,
             contractABI.rollupContractABI,
+            contractABI.moduleProxyABI,
             contractABI.testTokenContractABI,
             contractABI.smtVerifierContractABI
         );
