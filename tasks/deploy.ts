@@ -1,6 +1,5 @@
 import { task } from "hardhat/config";
 import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
-
 import { defaultContractFile } from "./common";
 const fs = require("fs");
 
@@ -8,7 +7,7 @@ task("deploy", "Deploy all smart contract")
       .addParam("testTokenAddress", "test token address, default none", "")
       .addParam("contractFile", "[output] contract address", defaultContractFile)
       .setAction(async ({ testTokenAddress, contractFile }, { ethers }) => {
-    let [admin] = await ethers.getSigners();
+    let [admin, deploy] = await ethers.getSigners();
     // @ts-ignore
     let poseidonContracts = await deployPoseidons( ethers, admin, [2, 3, 6]
     );
@@ -41,11 +40,21 @@ task("deploy", "Deploy all smart contract")
     contractJson.set("rollup", rollup.address);
 
     let factoryMP = await ethers.getContractFactory("ModuleProxy");
-    let moduleProxy = await factoryMP.deploy(admin.address);
+    const initData = factoryR.interface.encodeFunctionData(
+        'initialize(address,address,address)',
+        [poseidonContracts[0].address,
+        poseidonContracts[1].address,
+        tokenRegistry.address]
+      );
+    let moduleProxy = await factoryMP.deploy(rollup.address, deploy.address, initData);
     await moduleProxy.deployed();
-    console.log("moduleProxy deployed to:", moduleProxy.address);
     contractJson.set("moduleProxy", moduleProxy.address);
-    
+    console.log(
+        'The proxy of rollup is set with ',
+        rollup.address
+    )
+    // console.log('ModuleProxy admin is: ', await moduleProxy.admin());
+
     if (testTokenAddress == "") {
         let factoryTT = await ethers.getContractFactory("TestToken");
         let testToken = await factoryTT.connect(admin).deploy();
