@@ -2,7 +2,7 @@ import { ethers } from "ethers"
 import { assert } from "chai";
 import { parseProof, uint8Array2Bigint } from "./utils";
 import { errResp, succResp, ErrCode } from "./error";
-import { Rollup__factory } from "../../typechain/factories/contracts/Rollup.sol/Rollup__factory"
+// import { Rollup__factory } from "../../typechain/factories/contracts/Rollup.sol/Rollup__factory"
 const createBlakeHash = require("blake-hash");
 
 
@@ -88,7 +88,10 @@ export class RollupSC {
         this.moduleProxy = new ethers.Contract(
             this.moduleProxyAddress, moduleProxyABI, this.userAccount
         )
-        this.rollup =Rollup__factory.connect(this.moduleProxyAddress, this.userAccount);
+        // this.rollup =Rollup__factory.connect(this.moduleProxyAddress, this.userAccount);
+        this.rollup = new ethers.Contract(
+            this.moduleProxyAddress, rollupContractABI, this.userAccount
+        )
         if (this.smtVerifierAddress != "") {
             this.SMT = new ethers.Contract(this.smtVerifierAddress, smtVerifierContractABI, this.userAccount);
         }

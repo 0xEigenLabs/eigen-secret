@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 /**
  * @dev This contract implements a proxy that is upgradeable by an admin.
@@ -33,7 +33,7 @@ contract ModuleProxy is ERC1967Proxy {
     address admin_,
     bytes memory _data
   ) payable ERC1967Proxy(_logic, _data) {
-    assert(_ADMIN_SLOT == bytes32(uint256(keccak256('eip1967.proxy.admin')) - 1));
+    assert(_ADMIN_SLOT == bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1));
     _changeAdmin(admin_);
   }
 
@@ -91,7 +91,7 @@ contract ModuleProxy is ERC1967Proxy {
    * NOTE: Only the admin can call this function. See {ProxyAdmin-upgrade}.
    */
   function upgradeTo(address newImplementation) external ifAdmin {
-    _upgradeToAndCall(newImplementation, bytes(''), false);
+    _upgradeToAndCall(newImplementation, bytes(""), false);
   }
 
   /**
@@ -119,10 +119,7 @@ contract ModuleProxy is ERC1967Proxy {
    * @dev Makes sure the admin cannot access the fallback function. See {Proxy-_beforeFallback}.
    */
   function _beforeFallback() internal virtual override {
-    require(
-      msg.sender != _getAdmin(),
-      'ModuleProxy: admin cannot fallback to proxy target'
-    );
+    require(msg.sender != _getAdmin(), "ModuleProxy: admin cannot fallback to proxy target");
     super._beforeFallback();
   }
 }
