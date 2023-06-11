@@ -2,8 +2,7 @@ const cls = require("circomlibjs");
 const fs = require("fs");
 
 import { SigningKey } from "@eigen-secret/core/dist-node/account";
-import { genTempMain } from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
+import { genTempMain, executeCircuit } from "./test";
 /* globals describe, before, it */
 describe("Test withdraw", async () => {
     let eddsa: any;
@@ -22,15 +21,11 @@ describe("Test withdraw", async () => {
         // mock the account and transaction data
         // generate 8 accounts
         let F = poseidon.F
-
         let signingKey = new SigningKey(eddsa);
         let rawMsg = F.e(11);
-
         let msg = poseidon([rawMsg])
-
         let signature = await signingKey.sign(msg);
         let xy = signingKey.pubKey.unpack(eddsa.babyJub);
-
         let input = {
             enabled: 1,
             R8x: F.toObject(signature.R8[0]),
@@ -42,7 +37,6 @@ describe("Test withdraw", async () => {
         };
 
         fs.writeFileSync("./circuits/main_withdraw.input.json", JSON.stringify(input))
-
-        await utils.executeCircuit(circuit, input);
+        await executeCircuit(circuit, input);
     });
 })

@@ -1,5 +1,4 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
 import { expect } from "chai";
 import { ethers } from "ethers";
 import { EigenAddress, SigningKey, compress as accountCompress } from "@eigen-secret/core/dist-node/account";
@@ -42,7 +41,7 @@ describe("Test Account Compressor", function() {
         let aliasHash = 1n;
         let hashed = await accountCompress(accountKey, signingKey, aliasHash);
 
-        let wtns = await utils.executeCircuit(circuit, {
+        let wtns = await test.executeCircuit(circuit, {
             npk: (accountKey.toCircuitInput())[0],
             spk: (signingKey.toCircuitInput())[0],
             alias_hash: aliasHash

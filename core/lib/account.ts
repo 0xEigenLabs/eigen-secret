@@ -48,7 +48,7 @@ export interface IKey {
 // eddsa
 export class SigningKey implements IKey {
     prvKey: string;
-    pubKey: EigenAddress = new EigenAddress("");
+    pubKey: EigenAddress;
     eddsa: any;
     constructor(eddsa: any, _rawkeyHex: string | undefined = undefined) {
         this.eddsa = eddsa;
