@@ -2,7 +2,6 @@ import { ethers } from "ethers"
 import { assert } from "chai";
 import { parseProof, uint8Array2Bigint } from "./utils";
 import { errResp, succResp, ErrCode } from "./error";
-// import { Rollup__factory } from "../../typechain/factories/contracts/Rollup.sol/Rollup__factory"
 const createBlakeHash = require("blake-hash");
 
 
