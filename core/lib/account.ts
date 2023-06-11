@@ -50,7 +50,7 @@ export class SigningKey implements IKey {
     prvKey: string;
     pubKey: EigenAddress;
     eddsa: any;
-    constructor(eddsa: any, _rawkeyHex: string | undefined = undefined) {
+    constructor(eddsa: any, _rawkeyHex?: string) {
         this.eddsa = eddsa;
         let rawpvk: string = _rawkeyHex === undefined?
             Buffer.from(ethers.utils.randomBytes(31)).toString("hex") : _rawkeyHex;
