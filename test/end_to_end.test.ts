@@ -2,12 +2,12 @@ const request = require("supertest");
 const createBlakeHash = require("blake-hash");
 import app from "../server/dist/service";
 import { ethers } from "ethers";
-import { uint8Array2Bigint, signEOASignature, prepareJson, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { signEOASignature, prepareJson, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { pad } from "@eigen-secret/core/dist-node/state_tree";
 import { Note, NoteState } from "@eigen-secret/core/dist-node/note";
-import { compress as accountCompress } from "@eigen-secret/core/dist-node/account";
+import { calcAliasHash, compress as accountCompress } from "@eigen-secret/core/dist-node/account";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist-node/join_split";
 import { AccountCircuit, decryptNotes } from "@eigen-secret/core/dist-node/account";
 import { UpdateStatusCircuit } from "@eigen-secret/core/dist-node/update_state";
@@ -16,6 +16,7 @@ import { Transaction } from "@eigen-secret/core/dist-node/transaction";
 const { buildEddsa } = require("circomlibjs");
 import { RollupHelper } from "./rollup.helper";
 const path = require("path");
+import { alias2Bigint } from "@eigen-secret/core/dist-node/digest";
 const hre = require("hardhat")
 import { poseidonSponge } from "@eigen-secret/core/dist-node/sponge_poseidon";
 import { deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
@@ -58,22 +59,23 @@ describe("POST /transactions", function() {
             userAccounts[0]
         )
 
-        rollupHelper = new RollupHelper(userAccounts);
-        await rollupHelper.initialize();
-        assetId = (await rollupHelper.deploy()).toNumber();
         newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
         const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
 
+        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         eddsa = await buildEddsa();
+        aliasHash = await calcAliasHash(eddsa, alias, ctx.pubKey);
+        rollupHelper = new RollupHelper(userAccounts);
+        await rollupHelper.initialize(eddsa);
+        assetId = (await rollupHelper.deploy()).toNumber();
+
         babyJub = eddsa.babyJub;
         Fr = eddsa.F;
         const value = 10n;
 
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
         let accountKey = rollupHelper.eigenAccountKey[0];
-        const aliasHashBuffer = eddsa.pruneBuffer(createBlakeHash("blake512").update(alias).digest().slice(0, 32));
-        aliasHash = uint8Array2Bigint(aliasHashBuffer);
 
         // 1. create account
         let proofId = AccountCircuit.PROOF_ID_TYPE_CREATE;
@@ -106,7 +108,6 @@ describe("POST /transactions", function() {
         signer = accountRequired? accountKey: signingKey;
         let acStateKey = await accountCompress(accountKey, signer, aliasHash);
 
-        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
         let tmpInput = prepareJson({
             context: ctx.serialize(),
             padding: true,
@@ -138,7 +139,9 @@ describe("POST /transactions", function() {
         }
         siblings.push(tmpSiblings);
 
-        let circuitInput = input.toCircuitInput(babyJub, singleProof);
+        let bAlias = alias2Bigint(eddsa, alias);
+        let circuitInput = input.toCircuitInput(babyJub, singleProof, bAlias, ctx.toCircuitInput());
+        console.log(circuitInput);
         await Prover.updateState(circuitPath, circuitInput);
 
         // 1. first transaction depositing to itself
@@ -205,7 +208,7 @@ describe("POST /transactions", function() {
 
             // generate proof
             let singleProof = response.body.data;
-            let circuitInput = input.toCircuitInput(babyJub, singleProof);
+            let circuitInput = input.toCircuitInput(babyJub, singleProof, bAlias, ctx.toCircuitInput());
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
             keysFound.push(input.outputNCs[0]);
@@ -340,6 +343,7 @@ describe("POST /transactions", function() {
             notes,
             accountRequired
         );
+        let bAlias = alias2Bigint(eddsa, alias);
         for (const input of inputs) {
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const response = await request(app)
@@ -362,7 +366,7 @@ describe("POST /transactions", function() {
 
             // generate proof
             let singleProof = response.body.data;
-            let circuitInput = input.toCircuitInput(babyJub, singleProof);
+            let circuitInput = input.toCircuitInput(babyJub, singleProof, bAlias, ctx.toCircuitInput());
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
             let transaction = new Transaction(input, eddsa);
@@ -488,6 +492,7 @@ describe("POST /transactions", function() {
         let dataTreeRootsFound: Array<bigint> = [];
         let lastDataTreeRoot: bigint = 0n;
         let siblings: Array<Array<bigint>> = [];
+        let bAlias = alias2Bigint(eddsa, alias);
         for (const input of inputs) {
             ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
             const response = await request(app)
@@ -523,7 +528,7 @@ describe("POST /transactions", function() {
             // pad account siblings
             singleProof.siblingsAC = pad(singleProof.siblingsAC);
 
-            let circuitInput = input.toCircuitInput(babyJub, singleProof);
+            let circuitInput = input.toCircuitInput(babyJub, singleProof, bAlias, ctx.toCircuitInput());
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
             keysFound.push(input.outputNCs[0]);

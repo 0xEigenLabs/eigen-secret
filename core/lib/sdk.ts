@@ -1,7 +1,7 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
 import { utils, ethers } from "ethers";
-import { prepareJson, uint8Array2Bigint, ETH } from "./utils";
+import { prepareJson, ETH } from "./utils";
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
 import { Prover } from "./prover";
@@ -10,6 +10,7 @@ import { Transaction, TransactionModelStatus } from "./transaction";
 import { Context } from "./context";
 import { AppResp, ErrCode, errResp, succResp } from "./error";
 import {
+    calcAliasHash,
     AccountCircuit,
     compress as accountCompress,
     EigenAddress,
@@ -17,6 +18,7 @@ import {
     decryptNotes,
     SigningKey
 } from "./account";
+import { alias2Bigint } from "./digest";
 import { RollupSC } from "./rollup.sc";
 import { pad } from "./state_tree";
 import { poseidonSponge } from "./sponge_poseidon";
@@ -213,7 +215,7 @@ export class SecretSDK {
             contractJson.poseidon6,
             contractJson.moduleProxy
         );
-        await secretSDK.initialize(contractABI);
+        await secretSDK.initialize(contractABI, ctx.pubKey);
         return succResp(secretSDK)
     }
 
@@ -382,10 +384,12 @@ export class SecretSDK {
      * @param {Object} contractABI the contracts ABI directory
      */
     async initialize(
-        contractABI: any
+        contractABI: any,
+        pubKey: bigint[]
     ) {
         this.contractABI = contractABI;
         await this.rollupSC.initialize(
+            pubKey,
             contractABI.spongePoseidonContractABI,
             contractABI.tokenRegistryContractABI,
             contractABI.rollupContractABI,
@@ -619,8 +623,7 @@ export class SecretSDK {
         let siblings = [];
 
         let accountRequired = false;
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
+        let aliasHash = await calcAliasHash(this.eddsa, this.alias, ctx.pubKey);
 
         const signer = accountRequired ? this.account.accountKey: this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
@@ -648,6 +651,7 @@ export class SecretSDK {
         let batchProof: string[] = [];
         this.txBuff = [];
         this.noteBuff = [];
+        let bAlias = alias2Bigint(this.eddsa, this.alias);
         for (const input of inputs) {
             const proof = await this.updateStateTree(
                 ctx,
@@ -660,7 +664,7 @@ export class SecretSDK {
             if (!proof.ok) {
                 return proof;
             }
-            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof.data);
+            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof.data, bAlias, ctx.toCircuitInput());
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
@@ -755,8 +759,7 @@ export class SecretSDK {
         assetId: number
     ) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
+        let aliasHash = await calcAliasHash(this.eddsa, this.alias, ctx.pubKey);
         const accountRequired = false;
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
@@ -787,6 +790,7 @@ export class SecretSDK {
         let batchProof: string[] = [];
         this.noteBuff = [];
         this.txBuff = [];
+        let bAlias = alias2Bigint(this.eddsa, this.alias);
         for (const input of inputs) {
             const proof = await this.updateStateTree(
                 ctx,
@@ -799,7 +803,7 @@ export class SecretSDK {
             if (!proof.ok) {
                 return proof;
             }
-            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof.data);
+            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof.data, bAlias, ctx.toCircuitInput());
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
@@ -868,8 +872,7 @@ export class SecretSDK {
     async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
+        let aliasHash = await calcAliasHash(this.eddsa, this.alias, ctx.pubKey);
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
@@ -910,6 +913,7 @@ export class SecretSDK {
         let siblings = [];
         this.noteBuff = [];
         this.txBuff = [];
+        let bAlias = alias2Bigint(this.eddsa, this.alias);
         for (const input of inputs) {
             const proof = await this.updateStateTree(
                 ctx,
@@ -930,7 +934,7 @@ export class SecretSDK {
             ];
             proof.data.siblings = paddedSiblings;
             proof.data.siblingsAC = pad(proof.data.siblingsAC);
-            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof.data);
+            let circuitInput = input.toCircuitInput(this.eddsa.babyJub, proof.data, bAlias, ctx.toCircuitInput());
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
@@ -1160,8 +1164,7 @@ export class SecretSDK {
         newSigningPubKey1 = [F.toObject(newSigningPubKey1[0]), F.toObject(newSigningPubKey1[1])];
         let newSigningPubKey2 = this.account.newSigningKey2.pubKey.unpack(this.eddsa.babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        let aliasHash = uint8Array2Bigint(aliasHashBuffer);
+        let aliasHash = await calcAliasHash(this.eddsa, this.alias, ctx.pubKey);
         let input = await UpdateStatusCircuit.createAccountInput(
             this.eddsa,
             proofId,
@@ -1182,7 +1185,8 @@ export class SecretSDK {
         if (!smtProof.ok) {
             return smtProof;
         }
-        let circuitInput = input.toCircuitInput(this.eddsa.babyJub, smtProof.data);
+        let bAlias = alias2Bigint(this.eddsa, this.alias);
+        let circuitInput = input.toCircuitInput(this.eddsa.babyJub, smtProof.data, bAlias, ctx.toCircuitInput());
         // create final proof
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
         if (!Prover.verifyState(this.circuitPath, proofAndPublicSignals)) {
@@ -1220,8 +1224,7 @@ export class SecretSDK {
         // let newSigningPubKey1 = this.account.newSigningKey1.toCircuitInput();
         let newSigningPubKey2 = this.account.newSigningKey2.toCircuitInput();
         let newSigningPubKey = newSigningKey.toCircuitInput();
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        let aliasHash = uint8Array2Bigint(aliasHashBuffer);
+        let aliasHash = await calcAliasHash(this.eddsa, this.alias, ctx.pubKey);
         let input = await UpdateStatusCircuit.createAccountInput(
             this.eddsa,
             proofId,
@@ -1236,7 +1239,8 @@ export class SecretSDK {
         if (!smtProof.ok) {
             return smtProof;
         }
-        let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof.data);
+        let bAlias = alias2Bigint(this.eddsa, this.alias);
+        let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof.data, bAlias, ctx.toCircuitInput());
 
         // create final proof
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, inputJson);
@@ -1342,8 +1346,8 @@ export class SecretSDK {
         let newAccountPubKey = newAccountKey.toCircuitInput();
         let newSigningPubKey1 = this.account.newSigningKey1.toCircuitInput();
         let newSigningPubKey2 = this.account.newSigningKey2.toCircuitInput();
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        let aliasHash = uint8Array2Bigint(aliasHashBuffer);
+        // FIXME change ctx.ethAddress to the new address
+        let aliasHash = await calcAliasHash(this.eddsa, this.alias, ctx.pubKey);
         let input = await UpdateStatusCircuit.createAccountInput(
             this.eddsa,
             proofId,
@@ -1359,7 +1363,8 @@ export class SecretSDK {
         if (!smtProof.ok) {
             return smtProof;
         }
-        let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof.data);
+        let bAlias = alias2Bigint(this.eddsa, this.alias);
+        let inputJson = input.toCircuitInput(this.eddsa.babyJub, smtProof.data, bAlias, ctx.toCircuitInput());
 
         // create final proof
         let proofAndPublicSignals = await Prover.updateState(this.circuitPath, inputJson);

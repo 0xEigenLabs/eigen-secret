@@ -1,6 +1,8 @@
 pragma circom 2.0.2;
-include "./join_split.circom";
-include "./account.circom";
+include "join_split.circom";
+include "account.circom";
+include "eff_ecdsa.circom";
+include "digest.circom";
 
 template UpdateState(nLevel) {
     // public input
@@ -26,7 +28,7 @@ template UpdateState(nLevel) {
 
     /// join split
     signal input asset_id;
-    signal input alias_hash;
+    signal input alias;
     signal input input_note_val[2];
     signal input input_note_secret[2];
     signal input input_note_asset_id[2];
@@ -43,13 +45,33 @@ template UpdateState(nLevel) {
     signal input account_note_nk; // (nk = account private key)
     signal input account_required;
 
-    component enabled_account_circuit = GreaterThan(252);
-    enabled_account_circuit.in[0] <== proof_id;
-    enabled_account_circuit.in[1] <== 10;
-    //log("enabled_account_circuit");
+    signal input enabled_account_circuit;
+
+    // ecdsa signature
+    signal input s;
+    signal input pubKey[2];  // ecdsa pub key
+
+    // public signal
+    signal input T[2];
+    signal input U[2];
+
+    component alias_hash = AliasHash();
+    alias_hash.alias <== alias;
+    alias_hash.pubKey <== pubKey;
+
+    // check signature
+    component sig_verifier = EfficientECDSA();
+    sig_verifier.enabled <== 1;
+    sig_verifier.s <== s;
+    sig_verifier.Tx <== T[0];
+    sig_verifier.Ty <== T[1];
+    sig_verifier.Ux <== U[0];
+    sig_verifier.Uy <== U[1];
+    sig_verifier.pubKeyX <== pubKey[0];
+    sig_verifier.pubKeyY <== pubKey[1];
 
     component account_circuit = Account(nLevel);
-    account_circuit.enabled <== enabled_account_circuit.out;
+    account_circuit.enabled <== enabled_account_circuit;
     account_circuit.proof_id  <== proof_id;
     account_circuit.public_value  <== public_value;
     account_circuit.public_owner  <== public_owner;
@@ -58,7 +80,7 @@ template UpdateState(nLevel) {
     account_circuit.output_nc_2  <== output_nc_2;
     account_circuit.data_tree_root  <== data_tree_root;
     account_circuit.public_asset_id  <== public_asset_id;
-    account_circuit.alias_hash <== alias_hash;
+    account_circuit.alias_hash <== alias_hash.out;
     account_circuit.account_note_npk  <== account_note_npk;
     account_circuit.account_note_spk  <== account_note_spk;
     account_circuit.new_account_note_npk  <== new_account_note_npk;
@@ -69,7 +91,7 @@ template UpdateState(nLevel) {
     account_circuit.siblings_ac  <== siblings_ac;
 
     component join_split_circuit = JoinSplit(nLevel);
-    join_split_circuit.enabled <== 1 - enabled_account_circuit.out;
+    join_split_circuit.enabled <== 1 - enabled_account_circuit;
     join_split_circuit.proof_id    <== proof_id;
     join_split_circuit.public_value    <== public_value;
     join_split_circuit.public_owner    <== public_owner;
@@ -79,7 +101,7 @@ template UpdateState(nLevel) {
     join_split_circuit.data_tree_root    <== data_tree_root;
     join_split_circuit.public_asset_id    <== public_asset_id;
     join_split_circuit.asset_id    <== asset_id;
-    join_split_circuit.alias_hash    <== alias_hash;
+    join_split_circuit.alias_hash    <== alias_hash.out;
     join_split_circuit.input_note_val    <== input_note_val;
     join_split_circuit.input_note_secret    <== input_note_secret;
     join_split_circuit.input_note_asset_id    <== input_note_asset_id;

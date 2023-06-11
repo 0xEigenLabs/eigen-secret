@@ -1,9 +1,9 @@
-const buildPoseidon = require("circomlibjs").buildPoseidon;
+import { getPoseidon } from "./digest";
 
 export async function poseidonSponge(
     values: bigint[]
 ) {
-    let poseidon = await buildPoseidon();
+    let poseidon = await getPoseidon();
     const BATCH_SIZE = 6;
 
     let frame = new Array(6).fill(0n);

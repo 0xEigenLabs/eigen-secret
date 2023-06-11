@@ -1,4 +1,4 @@
-const buildPoseidon = require("circomlibjs").buildPoseidon;
+import { getPoseidon } from "./digest";
 import { Aes256gcm } from "./aes_gcm";
 import { EigenAddress } from "./account";
 import { prepareJson } from "./utils";
@@ -54,7 +54,7 @@ export class Note {
     }
 
     async compress(babyJub: any): Promise<bigint> {
-        let poseidon = await buildPoseidon();
+        let poseidon = await getPoseidon();
         let owner = this.owner(babyJub);
 
         let res = poseidon([

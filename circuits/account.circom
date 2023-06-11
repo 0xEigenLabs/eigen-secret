@@ -110,10 +110,6 @@ template Account(nLevel) {
     output_note_commitment2.alias_hash <== alias_hash;
     enabled * (output_note_commitment2.out - output_nc_2) === 0;
 
-    component alias_hash_c = Poseidon(1);
-    alias_hash_c.inputs[0] <== alias_hash;
-    var nullifier1 = is_create * alias_hash_c.out;
-
     component new_account_c = Poseidon(2);
     new_account_c.inputs[0] <== new_account_note_npk[0];
     new_account_c.inputs[1] <== new_account_note_npk[1];
@@ -149,7 +145,7 @@ template Account(nLevel) {
     msghash.new_account_note_npk_x <== new_account_note_npk[0];
     msghash.new_account_note_spk1_x <== new_account_note_spk1[0];
     msghash.new_account_note_spk2_x <== new_account_note_spk2[0];
-    msghash.nullifier1 <== nullifier1;
+    msghash.nullifier1 <== alias_hash;
     msghash.nullifier2 <== nullifier2;
 
     component sig_verifier = EdDSAPoseidonVerifier();
