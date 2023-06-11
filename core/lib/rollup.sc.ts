@@ -63,8 +63,7 @@ export class RollupSC {
         tokenRegistryContractABI: any,
         rollupContractABI: any,
         moduleProxyABI: any,
-        tokenContractABI: any,
-        smtVerifierContractABI: any
+        tokenContractABI: any
     ) {
         this.tokenERC20ABI = tokenContractABI;
         const aliasHashBuffer = this.eddsa.pruneBuffer(

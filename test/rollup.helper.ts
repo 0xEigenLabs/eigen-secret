@@ -94,7 +94,7 @@ export class RollupHelper {
             moduleProxy.address,
             rollup.interface,
             this.userAccounts[0])
-        
+
         let factoryTT = await ethers.getContractFactory("TestToken");
         this.testToken = await factoryTT.connect(this.userAccounts[3]).deploy();
         await this.testToken.deployed();

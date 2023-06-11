@@ -108,7 +108,7 @@ describe("Test SMT smart contract", () => {
             moduleProxy.address,
             smtMock.interface,
             signer)
-        
+
         tree = new StateTree();
         await tree.init(SMTModel);
         Fr = tree.F;

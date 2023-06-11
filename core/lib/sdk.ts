@@ -390,8 +390,7 @@ export class SecretSDK {
             contractABI.tokenRegistryContractABI,
             contractABI.rollupContractABI,
             contractABI.moduleProxyABI,
-            contractABI.testTokenContractABI,
-            contractABI.smtVerifierContractABI
+            contractABI.testTokenContractABI
         );
     }
 

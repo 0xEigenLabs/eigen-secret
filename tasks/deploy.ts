@@ -7,7 +7,7 @@ task("deploy", "Deploy all smart contract")
       .addParam("testTokenAddress", "test token address, default none", "")
       .addParam("contractFile", "[output] contract address", defaultContractFile)
       .setAction(async ({ testTokenAddress, contractFile }, { ethers }) => {
-    let [admin, user_bob, deploy] = await ethers.getSigners();
+    let [admin, _bob, deploy] = await ethers.getSigners();
     // @ts-ignore
     let poseidonContracts = await deployPoseidons( ethers, admin, [2, 3, 6]);
     let contractJson = new Map<string, string>();
@@ -20,7 +20,7 @@ task("deploy", "Deploy all smart contract")
     contractJson.set("poseidon2", poseidonContracts[0].address);
     contractJson.set("poseidon3", poseidonContracts[1].address);
     contractJson.set("poseidon6", poseidonContracts[2].address);
-    
+
     let factoryTR = await ethers.getContractFactory("TokenRegistry");
     let tokenRegistry = await factoryTR.deploy(admin.address)
     await tokenRegistry.deployed()
