@@ -41,8 +41,21 @@ describe("POST /transactions", function() {
 
         let poseidons = await deployPoseidons(hre.ethers, userAccounts[0], [2, 3]);
         let factorySMT = await hre.ethers.getContractFactory("SMTTest");
-        smtVerifierContract = await factorySMT.deploy(poseidons[0].address, poseidons[1].address);
-        await smtVerifierContract.deployed()
+        let smtTest = await factorySMT.deploy();
+        await smtTest.deployed()
+        let factoryMP = await hre.ethers.getContractFactory("ModuleProxy");
+        const initData = factorySMT.interface.encodeFunctionData(
+            "initializeSMT",
+            [poseidons[0].address, poseidons[1].address]
+          );
+        let moduleProxy = await factoryMP.deploy(smtTest.address, userAccounts[1].address, initData);
+        await moduleProxy.deployed();
+        console.log("moduleProxy address:", moduleProxy.address);
+
+        smtVerifierContract = new ethers.Contract(
+            moduleProxy.address,
+            smtTest.interface,
+            userAccounts[0])
 
         rollupHelper = new RollupHelper(userAccounts);
         await rollupHelper.initialize();

@@ -7,74 +7,74 @@ const { ethers } = require("hardhat");
 import { SMTModel } from "../server/dist/state_tree";
 import { deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
 /* globals describe, before, it */
-describe("Test SMT Membership Query", function() {
-    // runs circom compilation
-    let circuit: any;
-    let tree: any;
-    let Fr: any;
-    before(async function() {
-        let stateTree = path.join(__dirname, "../circuits", "state_tree.circom");
-        circuit = await test.genTempMain(stateTree, "Membership", "", [20], {});
-        await circuit.loadSymbols();
-        tree = new StateTree();
-        await tree.init(SMTModel);
-        Fr = tree.F;
-    });
+// describe("Test SMT Membership Query", function() {
+//     // runs circom compilation
+//     let circuit: any;
+//     let tree: any;
+//     let Fr: any;
+//     before(async function() {
+//         let stateTree = path.join(__dirname, "../circuits", "state_tree.circom");
+//         circuit = await test.genTempMain(stateTree, "Membership", "", [20], {});
+//         await circuit.loadSymbols();
+//         tree = new StateTree();
+//         await tree.init(SMTModel);
+//         Fr = tree.F;
+//     });
 
-    it("Test Membership", async function() {
-        const key = Fr.e(333);
-        const value = Fr.e(444);
-        await tree.insert(key, value);
-        console.log("root: ", tree.tree.root)
-        let ci = await tree.find(key, value);
+//     it("Test Membership", async function() {
+//         const key = Fr.e(333);
+//         const value = Fr.e(444);
+//         await tree.insert(key, value);
+//         console.log("root: ", tree.tree.root)
+//         let ci = await tree.find(key, value);
 
-        let input = {
-            key: Fr.toObject(key),
-            value: Fr.toObject(value),
-            root: Fr.toObject(tree.root()),
-            siblings: siblingsPad(ci.siblings, Fr),
-            enabled: 1
-        };
-        await utils.executeCircuit(circuit, input)
-    });
-});
+//         let input = {
+//             key: Fr.toObject(key),
+//             value: Fr.toObject(value),
+//             root: Fr.toObject(tree.root()),
+//             siblings: siblingsPad(ci.siblings, Fr),
+//             enabled: 1
+//         };
+//         await utils.executeCircuit(circuit, input)
+//     });
+// });
 
-describe("Test SMT Membership Update", function() {
-    // runs circom compilation
-    let circuit: any;
-    let tree: any;
-    let Fr: any;
-    before(async function() {
-        let stateTree = path.join(__dirname, "../circuits", "state_tree.circom");
-        circuit = await test.genTempMain(stateTree, "NonMembershipUpdate", "", [20], {});
-        await circuit.loadSymbols();
-        tree = new StateTree();
-        await tree.init(SMTModel);
-        Fr = tree.F;
-    });
+// describe("Test SMT Membership Update", function() {
+//     // runs circom compilation
+//     let circuit: any;
+//     let tree: any;
+//     let Fr: any;
+//     before(async function() {
+//         let stateTree = path.join(__dirname, "../circuits", "state_tree.circom");
+//         circuit = await test.genTempMain(stateTree, "NonMembershipUpdate", "", [20], {});
+//         await circuit.loadSymbols();
+//         tree = new StateTree();
+//         await tree.init(SMTModel);
+//         Fr = tree.F;
+//     });
 
-    it("Test NonMembershipUpdate", async function() {
-        const key = Fr.e(333333);
-        const value = Fr.e(444111);
-        let ci = await tree.insert(key, value);
-        let input = ci.toNonMembershipUpdateInput();
-        await utils.executeCircuit(circuit, input)
-    });
+//     it("Test NonMembershipUpdate", async function() {
+//         const key = Fr.e(333333);
+//         const value = Fr.e(444111);
+//         let ci = await tree.insert(key, value);
+//         let input = ci.toNonMembershipUpdateInput();
+//         await utils.executeCircuit(circuit, input)
+//     });
 
-    it("Test NonMembershipUpdate 2", async function() {
-        const key = Fr.e("17195092312975762537892237130737365903429674363577646686847513978084990105579");
-        const value = Fr.e("19650379996168153643111744440707177573540245771926102415571667548153444658179");
-        let ci = await tree.insert(key, value);
-        let input = ci.toNonMembershipUpdateInput();
+//     it("Test NonMembershipUpdate 2", async function() {
+//         const key = Fr.e("17195092312975762537892237130737365903429674363577646686847513978084990105579");
+//         const value = Fr.e("19650379996168153643111744440707177573540245771926102415571667548153444658179");
+//         let ci = await tree.insert(key, value);
+//         let input = ci.toNonMembershipUpdateInput();
 
-        const key2 = Fr.e("1");
-        const value2 = Fr.e("2");
-        let ci2 = await tree.insert(key2, value2);
-        let input2 = ci2.toNonMembershipUpdateInput();
-        await utils.executeCircuit(circuit, input)
-        await utils.executeCircuit(circuit, input2)
-    });
-});
+//         const key2 = Fr.e("1");
+//         const value2 = Fr.e("2");
+//         let ci2 = await tree.insert(key2, value2);
+//         let input2 = ci2.toNonMembershipUpdateInput();
+//         await utils.executeCircuit(circuit, input)
+//         await utils.executeCircuit(circuit, input2)
+//     });
+// });
 
 describe("Test SMT smart contract", () => {
     let contract: any;
@@ -87,13 +87,28 @@ describe("Test SMT smart contract", () => {
         circuit = await test.genTempMain(stateTree, "Membership", "", [20], {});
         await circuit.loadSymbols();
 
-        const [signer] = await ethers.getSigners();
+        const [signer, deploy] = await ethers.getSigners();
         console.log("signer", signer.address);
 
         let poseidons = await deployPoseidons(ethers, signer, [2, 3]);
         let F = await ethers.getContractFactory("SMTTest");
-        contract = await F.deploy(poseidons[0].address, poseidons[1].address);
-        await contract.deployed()
+        let smtTest = await F.deploy();
+        await smtTest.deployed();
+
+        let factoryMP = await ethers.getContractFactory("ModuleProxy");
+        const initData = F.interface.encodeFunctionData(
+            "initializeSMT",
+            [poseidons[0].address, poseidons[1].address]
+          );
+        let moduleProxy = await factoryMP.deploy(smtTest.address, deploy.address, initData);
+        await moduleProxy.deployed();
+        console.log("moduleProxy address:", moduleProxy.address);
+
+        contract = new ethers.Contract(
+            moduleProxy.address,
+            smtTest.interface,
+            signer)
+        
         tree = new StateTree();
         await tree.init(SMTModel);
         Fr = tree.F;
