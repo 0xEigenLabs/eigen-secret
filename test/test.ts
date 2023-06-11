@@ -44,3 +44,13 @@ include "${include_path}";
 component ${main} = ${template_name} (${params_string});
     `);
 }
+
+export async function executeCircuit(
+  circuit: any,
+  inputs: any
+) {
+  const witness = await circuit.calculateWitness(inputs, true)
+  await circuit.checkConstraints(witness)
+  await circuit.loadSymbols()
+  return witness
+}

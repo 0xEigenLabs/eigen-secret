@@ -3,6 +3,7 @@ import { BigNumberish } from "ethers";
 import { ethers } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
+// import { hashPersonalMessage, ecsign } from "@ethereumjs/util";
 
 export const rawMessage = "Sign this message as a credential to interact with Eigen Secret L2 nodes. " +
 "IMPORTANT: Sign this message if you trust the application.";
@@ -72,16 +73,6 @@ export function bits2Bignum(bits: [number], nWidth: number) {
     result.push(bits2NumBE(end - i * nWidth, tmpbits));
   }
   return result;
-}
-
-export async function executeCircuit(
-  circuit: any,
-  inputs: any
-) {
-  const witness = await circuit.calculateWitness(inputs, true)
-  await circuit.checkConstraints(witness)
-  await circuit.loadSymbols()
-  return witness
 }
 
 export function bigint2Tuple(x: bigint) {

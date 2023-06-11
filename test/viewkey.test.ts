@@ -1,5 +1,4 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
 const createBlakeHash = require("blake-hash");
 import { assert, expect } from "chai";
 import { ethers } from "ethers";
@@ -41,7 +40,7 @@ describe("Test View Key", function() {
             M: F.toObject(msg)
         };
 
-        await utils.executeCircuit(circuit, input);
+        await test.executeCircuit(circuit, input);
     })
 
     it("SigningKey Sign test", async () => {
@@ -59,7 +58,7 @@ describe("Test View Key", function() {
             S: signature.S,
             M: F.toObject(msg)
         };
-        await utils.executeCircuit(circuit, input);
+        await test.executeCircuit(circuit, input);
     })
 
     it("Serialize and deserialize key", () => {
@@ -105,7 +104,7 @@ describe("Test Proof knowledge of Private Key", function() {
         let input = {
             in: prvKey
         };
-        let wtns = await utils.executeCircuit(circuit, input);
+        let wtns = await test.executeCircuit(circuit, input);
         await circuit.assertOut(wtns, { Ax: F.toObject(pubKey[0]), Ay: F.toObject(pubKey[1]) });
     })
 });
