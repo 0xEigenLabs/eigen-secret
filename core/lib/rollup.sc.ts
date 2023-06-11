@@ -16,7 +16,6 @@ export class RollupSC {
     moduleProxy: any;
     tokenRegistry: any;
     spongePoseidon: any;
-    SMT: any;
     eddsa: any;
 
     alias: string;
@@ -27,9 +26,7 @@ export class RollupSC {
     poseidon2Address: string;
     poseidon3Address: string;
     poseidon6Address: string;
-    rollupAddress: string;
-    moduleProxyAddress: string;
-    smtVerifierAddress: string;
+    rollupProxyAddress: string;
 
     tokenERC20ABI: any;
 
@@ -42,9 +39,7 @@ export class RollupSC {
         poseidon2Address: string,
         poseidon3Address: string,
         poseidon6Address: string,
-        rollupAddress: string,
-        moduleProxyAddress: string,
-        smtVerifierAddress: string = ""
+        rollupProxyAddress: string
     ) {
         this.eddsa = eddsa;
         this.alias = alias;
@@ -52,7 +47,6 @@ export class RollupSC {
         this.rollup = undefined;
         this.tokenRegistry = undefined;
         this.spongePoseidon = undefined;
-        this.SMT = undefined;
         this.aliasHash = undefined;
 
         this.spongePoseidonAddress = spongePoseidonAddress;
@@ -60,9 +54,7 @@ export class RollupSC {
         this.poseidon2Address = poseidon2Address;
         this.poseidon3Address = poseidon2Address;
         this.poseidon6Address = poseidon2Address;
-        this.rollupAddress = rollupAddress;
-        this.moduleProxyAddress = moduleProxyAddress;
-        this.smtVerifierAddress = smtVerifierAddress;
+        this.rollupProxyAddress = rollupProxyAddress;
         this.tokenERC20ABI = undefined;
     }
 
@@ -86,15 +78,11 @@ export class RollupSC {
             this.tokenRegistryAddress, tokenRegistryContractABI, this.userAccount
         );
         this.moduleProxy = new ethers.Contract(
-            this.moduleProxyAddress, moduleProxyABI, this.userAccount
+            this.rollupProxyAddress, moduleProxyABI, this.userAccount
         )
-        // this.rollup =Rollup__factory.connect(this.moduleProxyAddress, this.userAccount);
         this.rollup = new ethers.Contract(
-            this.moduleProxyAddress, rollupContractABI, this.userAccount
+            this.rollupProxyAddress, rollupContractABI, this.userAccount
         )
-        if (this.smtVerifierAddress != "") {
-            this.SMT = new ethers.Contract(this.smtVerifierAddress, smtVerifierContractABI, this.userAccount);
-        }
     }
 
     async setRollupNC() {

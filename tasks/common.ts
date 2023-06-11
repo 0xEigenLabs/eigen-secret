@@ -3,7 +3,6 @@ import tokenRegistryContract from "../artifacts/contracts/TokenRegistry.sol/Toke
 import rollupContract from "../artifacts/contracts/Rollup.sol/Rollup.json";
 import moduleProxy from "../artifacts/contracts/ModuleProxy.sol/ModuleProxy.json";
 import testTokenContract from "../artifacts/contracts/TestToken.sol/TestToken.json";
-import SMT from "../artifacts/contracts/SMT.sol/SMT.json";
 import path from "path";
 
 export const defaultContractFile = path.join(__dirname, "../.contract.json");
@@ -16,8 +15,7 @@ export const defaultContractABI = {
     tokenRegistryContractABI: tokenRegistryContract.abi,
     rollupContractABI: rollupContract.abi,
     moduleProxyABI: moduleProxy.abi,
-    testTokenContractABI: testTokenContract.abi,
-    smtVerifierContractABI: SMT.abi
+    testTokenContractABI: testTokenContract.abi
 };
 
 export const accountFile = (alias: string) => {

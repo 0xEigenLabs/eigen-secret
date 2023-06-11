@@ -86,7 +86,7 @@ export class RollupHelper {
             this.poseidonContracts[1].address,
             this.tokenRegistry.address]
           );
-        let moduleProxy = await factoryMP.deploy(rollup.address, this.userAccounts[1].address, initData);
+        let moduleProxy = await factoryMP.deploy(rollup.address, this.userAccounts[2].address, initData);
         await moduleProxy.deployed();
         console.log("moduleProxy address:", moduleProxy.address);
 
@@ -141,8 +141,8 @@ export class RollupHelper {
         let setrollup = await this.tokenRegistry.connect(this.userAccounts[0]).setRollupNC(this.rollup.address);
         assert(setrollup, "setRollupNC failed")
 
-        let registerToken = await this.rollup.connect(this.userAccounts[2])
-        .registerToken(this.testToken.address, { from: this.userAccounts[2].address })
+        let registerToken = await this.rollup.connect(this.userAccounts[1])
+        .registerToken(this.testToken.address, { from: this.userAccounts[1].address })
         assert(registerToken, "token registration failed");
 
         let approveToken = await this.rollup.connect(this.userAccounts[0])

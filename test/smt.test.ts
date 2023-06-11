@@ -91,22 +91,22 @@ describe("Test SMT smart contract", () => {
         console.log("signer", signer.address);
 
         let poseidons = await deployPoseidons(ethers, signer, [2, 3]);
-        let F = await ethers.getContractFactory("SMTTest");
-        let smtTest = await F.deploy();
-        await smtTest.deployed();
+        let F = await ethers.getContractFactory("SMTMock");
+        let smtMock = await F.deploy();
+        await smtMock.deployed();
 
         let factoryMP = await ethers.getContractFactory("ModuleProxy");
         const initData = F.interface.encodeFunctionData(
             "initializeSMT",
             [poseidons[0].address, poseidons[1].address]
           );
-        let moduleProxy = await factoryMP.deploy(smtTest.address, deploy.address, initData);
+        let moduleProxy = await factoryMP.deploy(smtMock.address, deploy.address, initData);
         await moduleProxy.deployed();
         console.log("moduleProxy address:", moduleProxy.address);
 
         contract = new ethers.Contract(
             moduleProxy.address,
-            smtTest.interface,
+            smtMock.interface,
             signer)
         
         tree = new StateTree();
