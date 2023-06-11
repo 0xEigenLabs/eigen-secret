@@ -1,4 +1,4 @@
-const { buildPoseidon } = require("circomlibjs");
+import { getPoseidon } from "./digest";
 const createBlakeHash = require("blake-hash");
 import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
@@ -139,7 +139,7 @@ export class JoinSplitCircuit {
     static readonly PROOF_ID_TYPE_SEND: number = 3;
 
     static async hashMsg(nc1: any, nc2: any, outputNote1: any, outputNote2: any, publicOwner: any, publicValue: any) {
-        let poseidon = await buildPoseidon();
+        let poseidon = await getPoseidon();
         let res = poseidon([
             nc1, nc2, outputNote1, outputNote2, publicOwner, publicValue
         ]);
@@ -380,7 +380,7 @@ export class JoinSplitCircuit {
         accountKey: SigningKey,
         nf1: bigint, nf2: bigint, outputNc1: bigint,
         outputNc2: bigint, publicOwner: bigint, publicValue: bigint) {
-        let poseidon = await buildPoseidon();
+        let poseidon = await getPoseidon();
         let msghash = poseidon([
             nf1,
             nf2,
@@ -394,7 +394,7 @@ export class JoinSplitCircuit {
     }
 
     static async calculateNullifier(eddsa: any, nc: bigint, inputNoteInUse: bigint, nk: SigningKey) {
-        let poseidon = await buildPoseidon();
+        let poseidon = await getPoseidon();
         const pvk = eddsa.pruneBuffer(createBlakeHash("blake512").update(nk.prvKey).digest().slice(0, 32));
         const ak = Scalar.shr(utils.leBuff2int(pvk), 3);
 

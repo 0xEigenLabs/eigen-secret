@@ -30,6 +30,7 @@ export class UpdateStatusInput {
     // tmp
     accountNC: bigint;
     newAccountNC: bigint;
+    enabled_account_circuit: bigint;
 
     public constructor(
         proofId: number,
@@ -55,7 +56,8 @@ export class UpdateStatusInput {
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
         accountNC: bigint,
-        newAccountNC: bigint
+        newAccountNC: bigint,
+        enabledAccountCircuit: bigint
     ) {
         this.accountNC = accountNC;
         this.newAccountNC = newAccountNC;
@@ -81,10 +83,11 @@ export class UpdateStatusInput {
         this.signatureR8 = signatureR8;
         this.signatureS = signatureS;
         this.accountRequired = accountRequired;
+        this.enabled_account_circuit = enabledAccountCircuit;
     }
 
     // nomalize the input
-    toCircuitInput(babyJub: any, proof: any) {
+    toCircuitInput(babyJub: any, proof: any, bAlias: bigint, effECDSAInput: any) {
         let inputJson = {
             proof_id: this.proofId,
             public_value: this.publicValue,
@@ -97,7 +100,12 @@ export class UpdateStatusInput {
             siblings_ac: proof.siblingsAC,
             asset_id: this.assetId,
             public_asset_id: this.publicAssetId,
-            alias_hash: this.aliasHash,
+            alias: bAlias,
+            s: effECDSAInput.s,
+            pubKey: effECDSAInput.pubKey,
+            T: effECDSAInput.T,
+            U: effECDSAInput.U,
+            enabled_account_circuit: this.enabled_account_circuit,
             input_note_val: new Array<bigint>(2),
             input_note_secret: new Array<bigint>(2),
             input_note_asset_id: new Array<bigint>(2),
@@ -155,7 +163,6 @@ export class UpdateStatusInput {
             }
         }
 
-        /*
         // console.log(inputJson)
         const fs = require("fs");
         fs.writeFileSync("./circuits/main_update_state.input.json",
@@ -165,7 +172,6 @@ export class UpdateStatusInput {
                                  value.toString() :
                                  value // return everything else unchanged
                          ));
-        */
         return inputJson;
     }
 }
@@ -212,7 +218,8 @@ export class UpdateStatusCircuit {
             newSigningPubKey1,
             newSigningPubKey2,
             accountInput.accountNC,
-            accountInput.newAccountNC
+            accountInput.newAccountNC,
+            1n
         );
     }
 
@@ -269,7 +276,7 @@ export class UpdateStatusCircuit {
                 joinSplitInput[i].accountRequired,
                 [F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
                 joinSplitInput[i].signatureS,
-                [0n, 0n], [0n, 0n], [0n, 0n], 0n, 0n
+                [0n, 0n], [0n, 0n], [0n, 0n], 0n, 0n, 0n
             );
             inputList.push(input);
         }

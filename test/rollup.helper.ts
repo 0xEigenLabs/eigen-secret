@@ -2,9 +2,9 @@ import { ethers } from "hardhat";
 import { expect, assert } from "chai";
 const { buildEddsa } = require("circomlibjs");
 const path = require("path");
-import { uint8Array2Bigint, parseProof } from "@eigen-secret/core/dist-node/utils";
+import { parseProof } from "@eigen-secret/core/dist-node/utils";
 import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
-import { SigningKey } from "@eigen-secret/core/dist-node/account";
+import { SigningKey, calcAliasHash } from "@eigen-secret/core/dist-node/account";
 const createBlakeHash = require("blake-hash");
 
 /*
@@ -29,7 +29,6 @@ export class RollupHelper {
 
     circuitPath: string = path.join(__dirname, "../circuits/");
     alias: string = "contract.eigen.eth"
-    aliasHash: any;
     createAccountFunc: any;
     depositFunc: any;
     sendFunc: any;
@@ -43,20 +42,13 @@ export class RollupHelper {
         this.testToken = undefined;
         this.spongePoseidon = undefined;
         this.eddsa = undefined;
-        this.aliasHash = undefined;
         this.createAccountFunc = undefined;
         this.depositFunc = undefined;
         this.sendFunc = undefined;
     }
 
-    async initialize() {
-        this.eddsa = await buildEddsa();
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512")
-        .update(this.alias)
-        .digest()
-        .slice(0, 32));
-        this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
-
+    async initialize(eddsa: any) {
+        this.eddsa = eddsa;
         this.poseidonContracts = await deployPoseidons(
             ethers,
             this.userAccounts[0],

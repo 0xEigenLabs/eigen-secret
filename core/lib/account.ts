@@ -1,12 +1,12 @@
 import { ethers } from "ethers";
-const { buildPoseidon } = require("circomlibjs");
 const { Scalar, utils } = require("ffjavascript-browser");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { Aes256gcm } from "./aes_gcm";
 import { Note } from "./note";
-import { __DEFAULT_ALIAS__ } from "./utils";
+import { __DEFAULT_ALIAS__, uint8Array2Bigint } from "./utils";
 const consola = require("consola");
+import { getPoseidon } from "./digest";
 
 type UnpackFunc = (babyJub: any) => [any, any];
 interface Address {
@@ -115,7 +115,7 @@ export async function rawCompress(
     npk: bigint[],
     spk: bigint[],
     aliasHash: bigint) {
-    let poseidon = await buildPoseidon();
+    let poseidon = await getPoseidon();
     let input: bigint[] = [];
     input.push(npk[0]);
     input.push(npk[1]);
@@ -134,7 +134,7 @@ async function accountDigest(
     nullifier1: bigint,
     nullifier2: bigint
 ) {
-    let poseidon = await buildPoseidon();
+    let poseidon = await getPoseidon();
     return poseidon([
         aliasHash,
         accountPubKeyX,
@@ -146,16 +146,34 @@ async function accountDigest(
     ]);
 }
 
+export async function calcAliasHash(eddsa: any, alias: string, pubKey: bigint[]) {
+    // hash alias to field element
+    let poseidon = await getPoseidon();
+    const aliasHashBuffer = eddsa.pruneBuffer(
+        createBlakeHash("blake512")
+        .update(alias).digest().slice(0, 32)
+    );
+    const aliasHash = uint8Array2Bigint(aliasHashBuffer);
+    // poseidon
+    return poseidon.F.toObject(poseidon([
+        aliasHash,
+        pubKey[0],
+        pubKey[1]
+    ]));
+}
+
+/*
 async function aliasHashDigest(aliasHash: bigint) {
-    let poseidon = await buildPoseidon();
+    let poseidon = await getPoseidon();
     let result = poseidon([
         aliasHash
     ]);
     return poseidon.F.toObject(result);
 }
+*/
 
 async function newAccountDigest(newAccountPubKey: bigint[]) {
-    let poseidon = await buildPoseidon();
+    let poseidon = await getPoseidon();
     let result = poseidon([
         newAccountPubKey[0],
         newAccountPubKey[1]
@@ -336,7 +354,7 @@ export class AccountCircuit {
         let outputNC1 = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
         let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
 
-        let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? (await aliasHashDigest(aliasHash)): 0;
+        let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? aliasHash : 0n;
         let nullifier2 = (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE ||
             proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) ?
             (await newAccountDigest(newAccountPubKey)): 0;
