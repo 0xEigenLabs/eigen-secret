@@ -50,13 +50,21 @@ template NullifierFunction() {
     signal output out;
 
     component hash = Poseidon(3);
-    //log("NullifierFunction");
-    //log(nc);
-    //log(input_note_in_use);
-    //log(nk);
     hash.inputs[0] <== nc;
     hash.inputs[1] <== input_note_in_use;
     hash.inputs[2] <== nk;
 
+    hash.out ==> out;
+}
+
+template AliasHash() {
+    signal input alias;
+    signal input pubKey[2];
+    signal output out;
+
+    component hash = Poseidon(3);
+    hash.inputs[0] <== alias;
+    hash.inputs[1] <== pubKey[0];
+    hash.inputs[2] <== pubKey[1];
     hash.out ==> out;
 }

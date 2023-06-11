@@ -34,7 +34,7 @@ describe("Test JoinSplit Circuit", function() {
         circuit = await test.genTempMain("circuits/update_state.circom",
             "UpdateState",
             "proof_id, public_value, public_owner,"+
-            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id",
+            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id, T, U, pubKey",
             "20",
             { include: third });
         accountKey = new SigningKey(eddsa);
@@ -197,7 +197,6 @@ describe("Test JoinSplit Circuit", function() {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            console.log(input.toCircuitInput(babyJub, proof));
             await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
     })

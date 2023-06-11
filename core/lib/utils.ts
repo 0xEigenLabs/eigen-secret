@@ -1,8 +1,11 @@
 import { Buffer } from "buffer";
-import { BigNumberish } from "ethers";
+import { BigNumberish, utils } from "ethers";
 import { ethers } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
+const createBlakeHash = require("blake-hash");
+let EC = require("elliptic").ec;
+const ec = new EC("secp256k1");
 // import { hashPersonalMessage, ecsign } from "@ethereumjs/util";
 
 export const rawMessage = "Sign this message as a credential to interact with Eigen Secret L2 nodes. " +
@@ -162,10 +165,30 @@ export function verifyEOASignature(
 ) {
     let rawMessageAll = rawMessage + ethAddress + timestamp;
     let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
-    let message = ethers.utils.toUtf8Bytes(strRawMessage);
-    let messageHash = ethers.utils.hashMessage(message);
-    let address = ethers.utils.recoverAddress(ethers.utils.arrayify(messageHash), hexSignature);
+    let message = utils.toUtf8Bytes(strRawMessage);
+    let messageHash = utils.hashMessage(message);
+    let address = utils.recoverAddress(utils.arrayify(messageHash), hexSignature);
     return address == ethAddress;
+}
+
+export function calcPubKeyPoint(
+    rawMessage: string,
+    hexSignature: string,
+    ethAddress: string,
+    timestamp: string
+): bigint[] {
+    let rawMessageAll = rawMessage + ethAddress + timestamp;
+    let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
+    let message = utils.toUtf8Bytes(strRawMessage);
+    let messageHash = utils.hashMessage(message);
+
+    const sig = utils.splitSignature(hexSignature);
+    const rs = { r: utils.arrayify(sig.r), s: utils.arrayify(sig.s) };
+    let pubKeyP = ec.recoverPubKey(utils.arrayify(messageHash), rs, sig.recoveryParam);
+
+    //return "0x" + getCurve().recoverPubKey(arrayify(messageHash), rs, sig.recoveryParam).encode("hex", false);
+    //let pubKey = ethers.utils.recoverPublicKey(ethers.utils.arrayify(messageHash), hexSignature);
+    return [BigInt(pubKeyP.x.toString()), BigInt(pubKeyP.y.toString())];
 }
 
 export async function signEOASignature(

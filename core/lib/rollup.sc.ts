@@ -1,6 +1,7 @@
 import { ethers } from "ethers"
 import { assert } from "chai";
-import { parseProof, uint8Array2Bigint } from "./utils";
+import { parseProof } from "./utils";
+import { calcAliasHash } from "./account";
 import { errResp, succResp, ErrCode } from "./error";
 const createBlakeHash = require("blake-hash");
 
@@ -58,6 +59,7 @@ export class RollupSC {
     }
 
     async initialize(
+        pubKey: bigint[],
         spongePoseidonContractABI: any,
         tokenRegistryContractABI: any,
         rollupContractABI: any,
@@ -65,10 +67,7 @@ export class RollupSC {
         tokenContractABI: any
     ) {
         this.tokenERC20ABI = tokenContractABI;
-        const aliasHashBuffer = this.eddsa.pruneBuffer(
-            createBlakeHash("blake512").update(this.alias).digest().slice(0, 32)
-        );
-        this.aliasHash = uint8Array2Bigint(aliasHashBuffer);
+        this.aliasHash = await calcAliasHash(this.eddsa, this.alias, pubKey);
         this.spongePoseidon = new ethers.Contract(
             this.spongePoseidonAddress, spongePoseidonContractABI, this.userAccount
         );
