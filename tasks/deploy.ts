@@ -41,7 +41,7 @@ task("deploy", "Deploy all smart contract")
 
     let factoryMP = await ethers.getContractFactory("ModuleProxy");
     const initData = factoryR.interface.encodeFunctionData(
-        'initialize(address,address,address)',
+        "initialize(address,address,address)",
         [poseidonContracts[0].address,
         poseidonContracts[1].address,
         tokenRegistry.address]
@@ -50,7 +50,7 @@ task("deploy", "Deploy all smart contract")
     await moduleProxy.deployed();
     contractJson.set("moduleProxy", moduleProxy.address);
     console.log(
-        'The proxy of rollup is set with ',
+        "The proxy of rollup is set with ",
         rollup.address
     )
     // console.log('ModuleProxy admin is: ', await moduleProxy.admin());

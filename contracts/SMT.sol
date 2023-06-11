@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.16;
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 /**
  * @dev Interface poseidon hash function with 2 inputs
  */
@@ -18,7 +17,7 @@ contract Poseidon3Unit {
 /**
  * @dev Rollup helper functions
  */
-contract SMT is Initializable {
+contract SMT {
 
   Poseidon2Unit insPoseidon2Unit;
   Poseidon3Unit insPoseidon3Unit;
@@ -28,13 +27,13 @@ contract SMT is Initializable {
    * @param _poseidon2InputsContractAddr poseidon contract with 2 inputs address
    * @param _poseidon3InputsContractAddr poseidon contract with 3 inputs address
    */
-  function initialize(
+  constructor(
         address _poseidon2InputsContractAddr,
         address _poseidon3InputsContractAddr
-    ) public onlyInitializing {
+    ) public {
         insPoseidon2Unit = Poseidon2Unit(_poseidon2InputsContractAddr);
         insPoseidon3Unit = Poseidon3Unit(_poseidon3InputsContractAddr);
-    }
+  }
 
   /**
    * @dev hash poseidon for sparse merkle tree nodes

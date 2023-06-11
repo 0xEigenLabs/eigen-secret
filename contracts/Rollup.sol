@@ -4,6 +4,7 @@ import "./UpdateStateVerifier.sol";
 import "./WithdrawVerifier.sol";
 import "./SMT.sol";
 import "./libs/Poseidon.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 //import "hardhat/console.sol";
 
 contract ITokenRegistry {
@@ -35,7 +36,7 @@ contract IPoseidon3 {
   function poseidon(uint256[3] memory) public pure returns(uint256) {}
 }
 
-contract Rollup is SMT {
+contract Rollup is Initializable {
     uint8 public constant PROOF_ID_TYPE_INVALID = 0;
     uint8 public constant PROOF_ID_TYPE_DEPOSIT = 1;
     uint8 public constant PROOF_ID_TYPE_WITHDRAW = 2;
@@ -64,6 +65,7 @@ contract Rollup is SMT {
 
     UpdateStateVerifier updateStateVerifier;
     WithdrawVerifier withdrawVerifier;
+    SMT smt;
 
     struct TxInfo {
         uint publicValue;
@@ -83,17 +85,12 @@ contract Rollup is SMT {
     event UpdatedState(uint, uint, uint); //newRoot, txRoot, oldRoot
     event Withdraw(TxInfo, address);
 
-    event RollupInitialized(address initializer);
-    
-    constructor(){}
-
     function initialize(
         address _poseidon2ContractAddr,
         address _poseidon3ContractAddr,
         address _tokenRegistryAddr
-    ) public initializer{
-        emit RollupInitialized(msg.sender); 
-        SMT.initialize(_poseidon2ContractAddr, _poseidon3ContractAddr); 
+    ) public initializer {
+        smt = new SMT(_poseidon2ContractAddr, _poseidon3ContractAddr); 
         insPoseidon2 = IPoseidon2(_poseidon2ContractAddr);
         insPoseidon3 = IPoseidon3(_poseidon3ContractAddr);
         tokenRegistry = ITokenRegistry(_tokenRegistryAddr);
@@ -172,7 +169,7 @@ contract Rollup is SMT {
         for (uint i = 0; i < keys.length; i ++) {
             Deposit memory deposit = pendingDeposits[0];
             // ensure the leaf is empty
-            newRoot = smtVerifier(siblings[i], keys[i], values[i], 0, 0, false, false, 20);
+            newRoot = smt.smtVerifier(siblings[i], keys[i], values[i], 0, 0, false, false, 20);
             require(
                 nullifierRoots[newRoot] != true,
                 "Invalid nullifierRoot"
@@ -253,7 +250,7 @@ contract Rollup is SMT {
             for (uint j = 0; j < 2; j ++) {
                 require(nullifierRoots[txInfo.roots[i]], "Invalid data tree root");
                 require(
-                    txInfo.roots[i] == smtVerifier(txInfo.siblings[2*i+j], txInfo.keys[2*i+j], txInfo.values[2*i+j], 0, 0, false, false, 20),
+                    txInfo.roots[i] == smt.smtVerifier(txInfo.siblings[2*i+j], txInfo.keys[2*i+j], txInfo.values[2*i+j], 0, 0, false, false, 20),
                     "invalid merkle proof"
                 );
             }
