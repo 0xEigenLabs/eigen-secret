@@ -1,5 +1,4 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
 import { SigningKey, AccountCircuit } from "@eigen-secret/core/dist-node/account";
 import { WorldState } from "../server/dist/state_tree";
 
@@ -55,7 +54,7 @@ describe("Account circuit test", function() {
 
         // FIXME: nullifier hardcoded to 1
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = new SigningKey(eddsa);
@@ -77,7 +76,7 @@ describe("Account circuit test", function() {
         );
 
         proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
 
@@ -96,6 +95,6 @@ describe("Account circuit test", function() {
         );
 
         proof = await WorldState.updateStateTree(0n, 0n, 0n, 0n, input.accountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(proof));
     })
 });

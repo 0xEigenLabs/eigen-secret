@@ -1,5 +1,4 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
 import { Note } from "@eigen-secret/core/dist-node/note";
 import { assert } from "chai";
 import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist-node/account";
@@ -67,7 +66,7 @@ describe("Test JoinSplit Circuit", function() {
             aliasHash
         );
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = new SigningKey(eddsa);
@@ -89,7 +88,7 @@ describe("Test JoinSplit Circuit", function() {
         );
 
         proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
     })
 
     it("JoinSplit deposit and send update_state test", async () => {
@@ -126,7 +125,7 @@ describe("Test JoinSplit Circuit", function() {
                 acStateKey
             );
             console.log(input.toCircuitInput(babyJub, proof));
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
@@ -162,7 +161,7 @@ describe("Test JoinSplit Circuit", function() {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
 
         // create a withdraw proof
@@ -199,7 +198,7 @@ describe("Test JoinSplit Circuit", function() {
                 acStateKey
             );
             console.log(input.toCircuitInput(babyJub, proof));
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
     })
 

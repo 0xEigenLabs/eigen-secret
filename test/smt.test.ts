@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import path = require("path");
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
 import { siblingsPad, StateTree } from "@eigen-secret/core/dist-node/state_tree";
 const { ethers } = require("hardhat");
 import { SMTModel } from "../server/dist/state_tree";
@@ -35,7 +34,7 @@ describe("Test SMT Membership Query", function() {
             siblings: siblingsPad(ci.siblings, Fr),
             enabled: 1
         };
-        await utils.executeCircuit(circuit, input)
+        await test.executeCircuit(circuit, input)
     });
 });
 
@@ -58,7 +57,7 @@ describe("Test SMT Membership Update", function() {
         const value = Fr.e(444111);
         let ci = await tree.insert(key, value);
         let input = ci.toNonMembershipUpdateInput();
-        await utils.executeCircuit(circuit, input)
+        await test.executeCircuit(circuit, input)
     });
 
     it("Test NonMembershipUpdate 2", async function() {
@@ -71,8 +70,8 @@ describe("Test SMT Membership Update", function() {
         const value2 = Fr.e("2");
         let ci2 = await tree.insert(key2, value2);
         let input2 = ci2.toNonMembershipUpdateInput();
-        await utils.executeCircuit(circuit, input)
-        await utils.executeCircuit(circuit, input2)
+        await test.executeCircuit(circuit, input)
+        await test.executeCircuit(circuit, input2)
     });
 });
 
@@ -127,7 +126,7 @@ describe("Test SMT smart contract", () => {
                 siblings: siblingsPad(ci.siblings, Fr),
                 enabled: 1
             };
-            await utils.executeCircuit(circuit, input)
+            await test.executeCircuit(circuit, input)
 
             const result = await contract.smtVerifier(
                 siblingsContract, Fr.toObject(key),
@@ -157,7 +156,7 @@ describe("Test SMT smart contract", () => {
             siblings: siblingsPad(ci1.siblings, Fr),
             enabled: 1
         };
-        await utils.executeCircuit(circuit, input1)
+        await test.executeCircuit(circuit, input1)
 
         const result1 = await contract.smtVerifier(
             siblingsContract1, Fr.toObject(key1).toString(),
