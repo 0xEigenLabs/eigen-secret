@@ -40,7 +40,7 @@ describe("POST /transactions", function() {
         userAccounts = await hre.ethers.getSigners()
 
         let poseidons = await deployPoseidons(hre.ethers, userAccounts[0], [2, 3]);
-        let factorySMT = await hre.ethers.getContractFactory("SMT");
+        let factorySMT = await hre.ethers.getContractFactory("SMTTest");
         smtVerifierContract = await factorySMT.deploy(poseidons[0].address, poseidons[1].address);
         await smtVerifierContract.deployed()
 

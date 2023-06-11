@@ -76,14 +76,25 @@ export class RollupHelper {
                 }
             }
         );
-        this.rollup = await factoryR.deploy(
-            this.poseidonContracts[0].address,
+        let rollup = await factoryR.deploy();
+        await rollup.deployed();
+        console.log("rollup address:", rollup.address);
+        let factoryMP = await ethers.getContractFactory("ModuleProxy");
+        const initData = factoryR.interface.encodeFunctionData(
+            "initialize(address,address,address)",
+            [this.poseidonContracts[0].address,
             this.poseidonContracts[1].address,
-            this.tokenRegistry.address
-        );
-        await this.rollup.deployed();
-        console.log("rollup address:", this.rollup.address);
+            this.tokenRegistry.address]
+          );
+        let moduleProxy = await factoryMP.deploy(rollup.address, this.userAccounts[1].address, initData);
+        await moduleProxy.deployed();
+        console.log("moduleProxy address:", moduleProxy.address);
 
+        this.rollup = new ethers.Contract(
+            moduleProxy.address,
+            rollup.interface,
+            this.userAccounts[0])
+        
         let factoryTT = await ethers.getContractFactory("TestToken");
         this.testToken = await factoryTT.connect(this.userAccounts[3]).deploy();
         await this.testToken.deployed();
@@ -130,8 +141,8 @@ export class RollupHelper {
         let setrollup = await this.tokenRegistry.connect(this.userAccounts[0]).setRollupNC(this.rollup.address);
         assert(setrollup, "setRollupNC failed")
 
-        let registerToken = await this.rollup.connect(this.userAccounts[1])
-        .registerToken(this.testToken.address, { from: this.userAccounts[1].address })
+        let registerToken = await this.rollup.connect(this.userAccounts[2])
+        .registerToken(this.testToken.address, { from: this.userAccounts[2].address })
         assert(registerToken, "token registration failed");
 
         let approveToken = await this.rollup.connect(this.userAccounts[0])

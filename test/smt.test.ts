@@ -91,7 +91,7 @@ describe("Test SMT smart contract", () => {
         console.log("signer", signer.address);
 
         let poseidons = await deployPoseidons(ethers, signer, [2, 3]);
-        let F = await ethers.getContractFactory("SMT");
+        let F = await ethers.getContractFactory("SMTTest");
         contract = await F.deploy(poseidons[0].address, poseidons[1].address);
         await contract.deployed()
         tree = new StateTree();
