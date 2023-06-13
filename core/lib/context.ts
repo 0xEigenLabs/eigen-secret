@@ -65,34 +65,25 @@ export class Context {
 
     toCircuitInput() {
         // TODO: refactor
-        let strRawMessage = formatMessage(this.ethAddress, this.timestamp);
         const sig = utils.splitSignature(this.signature);
         const r = BigInt(sig.r);
         const v = BigInt(sig.v);
 
-        let message = utils.toUtf8Bytes(strRawMessage);
-        let messageHash = utils.hashMessage(message);
+        let strRawMessage = formatMessage(this.ethAddress, this.timestamp);
+        let messageHash = utils.hashMessage(strRawMessage);
         let msgHash = Buffer.from(utils.arrayify(messageHash))
         const circuitPubInput = computeEffEcdsaPubInput(r, v, msgHash);
 
         const pubKey = calcPubKeyPoint(this.signature, this.ethAddress, this.timestamp);
-        console.log("ccccccccccccccccccc", this.check());
+        if (pubKey[0] != this.pubKey[0] || pubKey[1] != this.pubKey[1]) {
+            throw new Error(this.signature)
+        }
         const input = {
             s: BigInt(sig.s),
             T: [circuitPubInput.Tx, circuitPubInput.Ty],
             U: [circuitPubInput.Ux, circuitPubInput.Uy],
-            pubKey: [this.pubKey[0], this.pubKey[1]]
+            pubKey: [pubKey[0], pubKey[1]]
         };
-        console.log("innnn", JSON.stringify(prepareJson({
-            enabled: 1n,
-            s: BigInt(sig.s),
-            Tx: circuitPubInput.Tx,
-            Ty: circuitPubInput.Ty,
-            Ux: circuitPubInput.Ux,
-            Uy: circuitPubInput.Uy,
-            pubKeyX: pubKey[0],
-            pubKeyY: pubKey[1]
-        })))
         return input;
     };
 }

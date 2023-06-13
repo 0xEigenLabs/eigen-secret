@@ -37,6 +37,7 @@ describe("POST /transactions", function() {
 
     let smtVerifierContract: any;
     let timestamp = Math.floor(Date.now()/1000).toString();
+    let signature;
 
     before("end2end deposit", async () => {
         userAccounts = await hre.ethers.getSigners()
@@ -61,7 +62,7 @@ describe("POST /transactions", function() {
         )
 
         newEOAAccount = await ethers.Wallet.createRandom();
-        const signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
 
         let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         eddsa = await buildEddsa();
@@ -297,7 +298,6 @@ describe("POST /transactions", function() {
     })
 
     it("end2end send", async () => {
-        const signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
         let accountKey = rollupHelper.eigenAccountKey[0];
         let accountRequired = false;
@@ -439,7 +439,6 @@ describe("POST /transactions", function() {
     })
 
     it("should accept valid withdrawals", async () => {
-        const signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
         let signingKey = rollupHelper.eigenSigningKeys[0][0];
         let accountKey = rollupHelper.eigenAccountKey[0];
 
