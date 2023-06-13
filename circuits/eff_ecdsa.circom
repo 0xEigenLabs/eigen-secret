@@ -1,42 +1,44 @@
-// modified from https://github.com/personaelabs/spartan-ecdsa/blob/main/packages/circuits/eff_ecdsa_membership/eff_ecdsa.circom
+// modified from https://github.com/personaelabs/efficient-zk-ecdsa/blob/main/circuits/ecdsa_verify.circom
 pragma circom 2.0.2;
+include "./secp256k1_scalar_mult_cached_windowed.circom";
 
-include "./secp256k1/mul.circom";
-include "../node_modules/circomlib/circuits/bitify.circom";
+template EfficientECDSA(n, k) {
+    signal input s[k];
+    signal input T[32][256][2][4]; // T = r^-1 * R
+    signal input U[2][k]; // -(m * r^-1 * G)
+    signal output pubKey[2][k];
 
-/**
- *  EfficientECDSA
- *  ====================
- *  
- *  Converts inputted efficient ECDSA signature to an public key. There is no
- *  public key validation included.
- */
-template EfficientECDSA() {
-    var bits = 256;
-    signal input enabled;
-    signal input Tx; // T = r^-1 * R
-    signal input Ty;
-    signal input Ux; // U = -(m * r^-1 * G)
-    signal input Uy;
+    // s * T
+    // or, s * r^-1 * R
+    component sMultT = Secp256K1ScalarMultCachedWindowed(n, k);
+    var stride = 8;
+    var num_strides = div_ceil(n * k, stride);
 
-    // private
-    signal input s;
-    signal input pubKeyX;
-    signal input pubKeyY;
+    for (var i = 0; i < num_strides; i++) {
+        for (var j = 0; j < 2 ** stride; j++) {
+            for (var l = 0; l < k; l++) {
+                sMultT.pointPreComputes[i][j][0][l] <== T[i][j][0][l];
+                sMultT.pointPreComputes[i][j][1][l] <== T[i][j][1][l];
+            }
+        }
+    }
 
-    // sMultT = s * T
-    component sMultT = Secp256k1Mul();
-    sMultT.scalar <== s;
-    sMultT.xP <== Tx;
-    sMultT.yP <== Ty;
+    for (var i = 0; i < k; i++) {
+        sMultT.scalar[i] <== s[i];
+    }
 
-    // pubKey = sMultT + U
-    component pubKey = Secp256k1AddComplete();
-    pubKey.xP <== sMultT.outX;
-    pubKey.yP <== sMultT.outY;
-    pubKey.xQ <== Ux;
-    pubKey.yQ <== Uy;
+    // s * T + U
+    // or, s * r^-1 * R + -(m * r^-1 * G)
+    component pointAdder = Secp256k1AddUnequal(n, k);
+    for (var i = 0; i < k; i++) {
+        pointAdder.a[0][i] <== sMultT.out[0][i];
+        pointAdder.a[1][i] <== sMultT.out[1][i];
+        pointAdder.b[0][i] <== U[0][i];
+        pointAdder.b[1][i] <== U[1][i];
+    }
 
-    (pubKeyX - pubKey.outX) * enabled === 0;
-    (pubKeyY - pubKey.outY) * enabled === 0;
+    for (var i = 0; i < k; i++) {
+        pubKey[0][i] <== pointAdder.out[0][i];
+        pubKey[1][i] <== pointAdder.out[1][i];
+    }
 }
