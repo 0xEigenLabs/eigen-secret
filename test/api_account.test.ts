@@ -33,13 +33,12 @@ describe("POST /accounts", function() {
 
         signature = await utils.signEOASignature(
             newEOAAccount,
-            utils.rawMessage,
             newEOAAccount.address,
             timestamp
         );
 
         key = createBlakeHash("blake256").update(Buffer.from(password)).digest();
-        let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, signature);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         const response = await request(app)
         .post("/accounts/create")
         .send({
@@ -56,7 +55,7 @@ describe("POST /accounts", function() {
     });
 
     it("responds with json", async () => {
-        let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, signature);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         const response = await request(app)
         .post("/accounts/get")
         .send({
@@ -83,11 +82,10 @@ describe("POST /accounts", function() {
         let newEOAAccount2 = await ethers.Wallet.createRandom();
         const newSig = await utils.signEOASignature(
             newEOAAccount2,
-            utils.rawMessage,
             newEOAAccount2.address,
             timestamp
         );
-        let ctx = new Context(alias, newEOAAccount2.address, utils.rawMessage, timestamp, newSig);
+        let ctx = new Context(alias, newEOAAccount2.address, timestamp, newSig);
         const response = await request(app)
         .post("/accounts/create")
         .send({
@@ -102,11 +100,10 @@ describe("POST /accounts", function() {
     it("get account by eth address only", async () => {
         const newSig = await utils.signEOASignature(
             newEOAAccount,
-            utils.rawMessage,
             newEOAAccount.address,
             timestamp
         );
-        let ctx = new Context(utils.__DEFAULT_ALIAS__, newEOAAccount.address, utils.rawMessage, timestamp, newSig);
+        let ctx = new Context(utils.__DEFAULT_ALIAS__, newEOAAccount.address, timestamp, newSig);
         const response = await request(app)
         .post("/accounts/get")
         .send({
@@ -129,7 +126,7 @@ describe("POST /accounts", function() {
     });
 
     it("update account", async () => {
-        let ctx = new Context(alias, newEOAAccount.address, utils.rawMessage, timestamp, signature);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         const response = await request(app)
         .post("/accounts/update")
         .send({
