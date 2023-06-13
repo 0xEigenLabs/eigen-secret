@@ -1,13 +1,12 @@
-import { prepareJson, normalizeAlias, verifyEOASignature, hasValue, SESSION_DURATION, calcPubKeyPoint } from "./utils";
+import { formatMessage, prepareJson, normalizeAlias, verifyEOASignature, hasValue, SESSION_DURATION, calcPubKeyPoint } from "./utils";
 import { ErrCode } from "./error";
 import { BigNumberish, utils } from "ethers";
-import { computeEffEcdsaPubInput } from "@personaelabs/spartan-ecdsa";
+import { computeEffEcdsaPubInput, verifyEffEcdsaPubInput } from "@personaelabs/spartan-ecdsa";
 import { hashPersonalMessage } from "@ethereumjs/util";
 
 export class Context {
     alias: string;
     ethAddress: string;
-    rawMessage: string;
     timestamp: string;
     signature: string;
     pubKey: bigint[];
@@ -15,16 +14,14 @@ export class Context {
     constructor(
         alias: string,
         ethAddress: string,
-        rawMessage: string,
         timestamp: string,
         signature: string
     ) {
         this.alias = alias;
         this.ethAddress = ethAddress;
-        this.rawMessage = rawMessage;
         this.timestamp = timestamp;
         this.signature = signature;
-        this.pubKey = calcPubKeyPoint(rawMessage, signature, ethAddress, timestamp);
+        this.pubKey = calcPubKeyPoint(signature, ethAddress, timestamp);
     }
 
     static deserialize(serialized: string) {
@@ -32,7 +29,6 @@ export class Context {
         return new Context(
             obj.alias,
             obj.ethAddress,
-            obj.rawMessage,
             obj.timestamp,
             obj.signature
         );
@@ -47,14 +43,12 @@ export class Context {
             !hasValue(this.alias) ||
             !normalizeAlias(this.alias) ||
             !hasValue(this.signature) ||
-            !hasValue(this.rawMessage) ||
             !hasValue(this.timestamp) ||
             !hasValue(this.ethAddress)) {
             return ErrCode.InvalidInput;
         }
 
         let validAdddr = verifyEOASignature(
-            this.rawMessage,
             this.signature,
             this.ethAddress,
             this.timestamp
@@ -71,9 +65,7 @@ export class Context {
 
     toCircuitInput() {
         // TODO: refactor
-        let rawMessageAll = this.rawMessage + this.ethAddress + this.timestamp;
-        let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
-        console.log("strRawMessage", strRawMessage)
+        let strRawMessage = formatMessage(this.ethAddress, this.timestamp);
         const sig = utils.splitSignature(this.signature);
         const r = BigInt(sig.r);
         const v = BigInt(sig.v);
@@ -83,12 +75,24 @@ export class Context {
         let msgHash = Buffer.from(utils.arrayify(messageHash))
         const circuitPubInput = computeEffEcdsaPubInput(r, v, msgHash);
 
+        const pubKey = calcPubKeyPoint(this.signature, this.ethAddress, this.timestamp);
+        console.log("ccccccccccccccccccc", this.check());
         const input = {
             s: BigInt(sig.s),
             T: [circuitPubInput.Tx, circuitPubInput.Ty],
             U: [circuitPubInput.Ux, circuitPubInput.Uy],
             pubKey: [this.pubKey[0], this.pubKey[1]]
         };
+        console.log("innnn", JSON.stringify(prepareJson({
+            enabled: 1n,
+            s: BigInt(sig.s),
+            Tx: circuitPubInput.Tx,
+            Ty: circuitPubInput.Ty,
+            Ux: circuitPubInput.Ux,
+            Uy: circuitPubInput.Uy,
+            pubKeyX: pubKey[0],
+            pubKeyY: pubKey[1]
+        })))
         return input;
     };
 }

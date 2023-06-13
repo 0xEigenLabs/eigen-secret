@@ -3,7 +3,7 @@ const consola = require("consola");
 import app from "../server/dist/service";
 import { EigenAddress } from "@eigen-secret/core/dist-node/account";
 import { ethers } from "ethers";
-import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { signEOASignature } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { TxData } from "@eigen-secret/core/dist-node/transaction";
@@ -13,8 +13,8 @@ describe("POST /transactions", () => {
     before(async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
-        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
+        const signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         // try get
         let response = await request(app)
         .post("/transactions/get")
@@ -62,8 +62,8 @@ describe("POST /transactions", () => {
     it("Get tx", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
-        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
+        const signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         const response = await request(app)
         .post("/transactions/get")
         .send({
@@ -81,8 +81,8 @@ describe("POST /transactions", () => {
         let timestamp = Math.floor(Date.now()/1000).toString();
         const page = 1;
         const pageSize = 1;
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
-        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
+        const signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         const response = await request(app)
         .post("/transactions/get")
         .send({
@@ -102,8 +102,8 @@ describe("POST /transactions", () => {
     it("Update smt", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
         let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
-        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
+        const signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         const response = await request(app)
         .post("/statetree")
         .send({

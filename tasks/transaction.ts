@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { signEOASignature, rawMessage, __DEFAULT_ALIAS__ } from "@eigen-secret/core/dist-node/utils";
+import { signEOASignature, __DEFAULT_ALIAS__ } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { SecretSDK } from "@eigen-secret/core/dist-node/sdk";
 require("dotenv").config()
@@ -19,11 +19,10 @@ task("deposit", "Deposit asset from L1 to L2")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
+    const signature = await signEOASignature(user, user.address, timestamp);
     const ctx = new Context(
       alias,
       user.address,
-      rawMessage,
       timestamp,
       signature
     );
@@ -72,11 +71,10 @@ task("send", "Send asset to receiver in L2")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
+    const signature = await signEOASignature(user, user.address, timestamp);
     const ctx = new Context(
       alias,
       user.address,
-      rawMessage,
       timestamp,
       signature
     );
@@ -112,11 +110,10 @@ task("withdraw", "Withdraw asset from L2 to L1")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
+    const signature = await signEOASignature(user, user.address, timestamp);
     const ctx = new Context(
       alias,
       user.address,
-      rawMessage,
       timestamp,
       signature
     );
@@ -149,11 +146,10 @@ task("get-balance", "Get user's both L1 and L2 balance")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
+    const signature = await signEOASignature(user, user.address, timestamp);
     const ctx = new Context(
       alias,
       user.address,
-      rawMessage,
       timestamp,
       signature
     );
@@ -199,11 +195,10 @@ task("get-transactions", "Get user's transactions")
     let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
+    const signature = await signEOASignature(user, user.address, timestamp);
     const ctx = new Context(
       alias,
       user.address,
-      rawMessage,
       timestamp,
       signature
     );
