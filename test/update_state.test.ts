@@ -6,10 +6,14 @@ import { WorldState } from "../server/dist/state_tree";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist-node/join_split";
 import { AccountCircuit } from "@eigen-secret/core/dist-node/account";
 import { UpdateStatusCircuit } from "@eigen-secret/core/dist-node/update_state";
+import { alias2Bigint } from "@eigen-secret/core/dist-node/digest";
+import { Context } from "@eigen-secret/core/dist-node/context";
+import { signEOASignature } from "@eigen-secret/core/dist-node/utils";
 import { Prover } from "@eigen-secret/core/dist-node/prover";
 const path = require("path");
 const { readFileSync } = require("fs");
 const snarkjs = require("snarkjs");
+import { ethers } from "ethers";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 /* globals describe, before, it */
@@ -25,6 +29,10 @@ describe("Test JoinSplit Circuit", function() {
     let assetId: number = 1;
     let signer: any;
     let accountRequired: boolean = false;
+    let newEOAAccount: any;
+    let signature: any;
+    let timestamp = Math.floor(Date.now()/1000).toString();
+    const alias = "eigen.eth";
 
     before(async () => {
         eddsa = await buildEddsa();
@@ -39,6 +47,8 @@ describe("Test JoinSplit Circuit", function() {
             { include: third });
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
+        newEOAAccount = await ethers.Wallet.createRandom();
+        signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
     })
 
     it("Account create update_state test", async () => {
@@ -65,8 +75,10 @@ describe("Test JoinSplit Circuit", function() {
             newSigningPubKey2,
             aliasHash
         );
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        let bAlias = alias2Bigint(eddsa, alias);
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
-        await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = new SigningKey(eddsa);
@@ -88,7 +100,7 @@ describe("Test JoinSplit Circuit", function() {
         );
 
         proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
-        await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
     })
 
     it("JoinSplit deposit and send update_state test", async () => {
@@ -98,6 +110,8 @@ describe("Test JoinSplit Circuit", function() {
         // let state = await WorldState.getInstance();
         // await state.insert(F.e(acStateKey), 1n);
         // await WorldState.updateStateTree(acStateKey, 1n, 0n, 0n, acStateKey);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        let bAlias = alias2Bigint(eddsa, alias);
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
@@ -124,8 +138,7 @@ describe("Test JoinSplit Circuit", function() {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            console.log(input.toCircuitInput(babyJub, proof));
-            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
         }
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
@@ -161,7 +174,7 @@ describe("Test JoinSplit Circuit", function() {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
         }
 
         // create a withdraw proof
@@ -197,11 +210,13 @@ describe("Test JoinSplit Circuit", function() {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
         }
     })
 
     it("update_state verify proof test", async () => {
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        let bAlias = alias2Bigint(eddsa, alias);
         let inputJson = path.join(__dirname, "..", "circuits/main_update_state.input.json");
         const input = JSON.parse(readFileSync(inputJson));
         let circuitPath = path.join(__dirname, "..", "circuits");
