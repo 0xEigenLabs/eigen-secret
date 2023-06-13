@@ -17,7 +17,7 @@ export class WorldState {
             WorldState.instance = new StateTree();
             await WorldState.instance.init(SMTModel);
         }
-        consola.log("resuing ", WorldState.instance);
+        consola.log("resuing");
         return WorldState.instance;
     }
 

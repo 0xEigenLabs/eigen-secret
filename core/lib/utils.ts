@@ -8,11 +8,16 @@ let EC = require("elliptic").ec;
 const ec = new EC("secp256k1");
 // import { hashPersonalMessage, ecsign } from "@ethereumjs/util";
 
-export const rawMessage = "Sign this message as a credential to interact with Eigen Secret L2 nodes. " +
+export const rawMessage = "Sign this message as a credential to interact with Eigen Secret L2. " +
 "IMPORTANT: Sign this message if you trust the application.";
 
 export function index() {
     return BigInt("0x" + _randomBytes(31).toString("hex"))
+}
+
+// FIXME
+export const formatMessage = (ethAddress: string, timestamp: string) => {
+    return rawMessage;
 }
 
 export function arrayChunk(array: Array<number>, chunkSize: number): any {
@@ -158,29 +163,23 @@ export function parseProof(proof: any): Proof {
 
 // example: https://github.com/ethers-io/ethers.js/issues/447
 export function verifyEOASignature(
-    rawMessage: string,
     hexSignature: string,
     ethAddress: string,
     timestamp: string
 ) {
-    let rawMessageAll = rawMessage + ethAddress + timestamp;
-    let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
-    let message = utils.toUtf8Bytes(strRawMessage);
-    let messageHash = utils.hashMessage(message);
+    let strRawMessage = formatMessage(ethAddress, timestamp)
+    let messageHash = utils.hashMessage(strRawMessage);
     let address = utils.recoverAddress(utils.arrayify(messageHash), hexSignature);
     return address == ethAddress;
 }
 
 export function calcPubKeyPoint(
-    rawMessage: string,
     hexSignature: string,
     ethAddress: string,
     timestamp: string
 ): bigint[] {
-    let rawMessageAll = rawMessage + ethAddress + timestamp;
-    let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
-    let message = utils.toUtf8Bytes(strRawMessage);
-    let messageHash = utils.hashMessage(message);
+    let strRawMessage = formatMessage(ethAddress, timestamp);
+    let messageHash = utils.hashMessage(strRawMessage);
 
     const sig = utils.splitSignature(hexSignature);
     const rs = { r: utils.arrayify(sig.r), s: utils.arrayify(sig.s) };
@@ -193,12 +192,10 @@ export function calcPubKeyPoint(
 
 export async function signEOASignature(
     EOAAccount: any,
-    rawMessage: string,
     ethAddress: string,
     timestamp: string
 ) {
-    let rawMessageAll = rawMessage + ethAddress + timestamp;
-    let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
+    let strRawMessage = formatMessage(ethAddress, timestamp);
     return await EOAAccount.signMessage(strRawMessage)
 }
 

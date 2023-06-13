@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { signEOASignature } from "@eigen-secret/core/dist-node/utils";
 const fs = require("fs");
 import { Context } from "@eigen-secret/core/dist-node/context";
 import {
@@ -15,8 +15,8 @@ task("setup-rollup", "Setup rollup coordinator")
 .setAction(async ({ alias, password }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [admin] = await ethers.getSigners();
-    const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);
-    const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
+    const signature = await signEOASignature(admin, admin.address, timestamp);
+    const ctx = new Context(alias, admin.address, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
@@ -36,8 +36,8 @@ task("register-token", "Register token to Rollup")
 .setAction(async ({ alias, token, password }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [admin] = await ethers.getSigners();
-    const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);
-    const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
+    const signature = await signEOASignature(admin, admin.address, timestamp);
+    const ctx = new Context(alias, admin.address, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDKResult = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
@@ -63,8 +63,8 @@ task("send-l1", "Send asset from L1 to L1")
     let timestamp = Math.floor(Date.now()/1000).toString();
     assetId = Number(assetId);
     let [admin] = await ethers.getSigners();
-    const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);
-    const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
+    const signature = await signEOASignature(admin, admin.address, timestamp);
+    const ctx = new Context(alias, admin.address, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
@@ -108,8 +108,8 @@ task("update-assets", "Update asset price")
 .setAction(async ({ alias, password }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     let [admin] = await ethers.getSigners();
-    const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);
-    const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
+    const signature = await signEOASignature(admin, admin.address, timestamp);
+    const ctx = new Context(alias, admin.address, timestamp, signature);
     const contractJson = require(defaultContractFile);
     let secretSDK = await SecretSDK.initSDKFromAccount(
         ctx, defaultServerEndpoint, password, admin, contractJson, defaultCircuitPath, defaultContractABI
