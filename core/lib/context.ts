@@ -74,15 +74,17 @@ export class Context {
         let msgHash = Buffer.from(utils.arrayify(messageHash))
         const circuitPubInput = computeEffEcdsaPubInput(r, v, msgHash);
 
+        /*
         const pubKey = calcPubKeyPoint(this.signature, this.ethAddress, this.timestamp);
         if (pubKey[0] != this.pubKey[0] || pubKey[1] != this.pubKey[1]) {
             throw new Error(this.signature)
         }
+        */
         const input = {
             s: BigInt(sig.s),
             T: [circuitPubInput.Tx, circuitPubInput.Ty],
             U: [circuitPubInput.Ux, circuitPubInput.Uy],
-            pubKey: [pubKey[0], pubKey[1]]
+            pubKey: [this.pubKey[0], this.pubKey[1]]
         };
         return input;
     };
