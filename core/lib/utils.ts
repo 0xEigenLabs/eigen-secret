@@ -16,7 +16,7 @@ export function index() {
 }
 
 // FIXME
-export const formatMessage = (ethAddress: string, timestamp: string) => {
+export const formatMessage = (_ethAddress: string, _timestamp: string) => {
     return rawMessage;
 }
 

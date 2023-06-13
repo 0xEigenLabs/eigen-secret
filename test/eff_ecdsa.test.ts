@@ -6,18 +6,11 @@ import { computeEffEcdsaPubInput } from "@personaelabs/spartan-ecdsa";
 import { BigNumberish, utils, Wallet } from "ethers";
 import { formatMessage, calcPubKeyPoint, signEOASignature } from "@eigen-secret/core/dist-node/utils";
 
-export const getEffEcdsaCircuitInput = async (privKey: Buffer) => {
-  //const pubKey = ec.keyFromPrivate(privKey.toString("hex")).getPublic();
-  //const msgHash = hashPersonalMessage(msg);
-  //const { v, r: _r, s } = ecsign(msgHash, privKey);
-  //const r = BigInt("0x" + _r.toString("hex"));
-
+export const getEffEcdsaCircuitInput = async () => {
   // sign
   let EOAAccount = Wallet.createRandom()
   let ethAddress = EOAAccount.address;
-  let timestamp = "123";
-  let strRawMessage = formatMessage(ethAddress, timestamp)
-  console.log(strRawMessage);
+  let timestamp = Math.floor(Date.now()/1000).toString();
 
   let strSig = await signEOASignature(EOAAccount, ethAddress, timestamp)
 
@@ -26,11 +19,12 @@ export const getEffEcdsaCircuitInput = async (privKey: Buffer) => {
   const v = BigInt(sig.v);
 
   // recover public key
+  let strRawMessage = formatMessage(ethAddress, timestamp)
   let messageHash = utils.hashMessage(strRawMessage);
   let msgHash = Buffer.from(utils.arrayify(messageHash))
   const circuitPubInput = computeEffEcdsaPubInput(r, v, msgHash);
 
-  const pubKey = calcPubKeyPoint(strSig, "", "");
+  const pubKey = calcPubKeyPoint(strSig, ethAddress, timestamp);
   const input = {
     enabled: 1n,
     s: BigInt(sig.s),
@@ -57,11 +51,7 @@ describe("ecdsa", async () => {
         }
     );
 
-    const privKey = Buffer.from(
-      "f5b552f608f5b552f608f5b552f6082ff5b552f608f5b552f608f5b552f6082f",
-      "hex"
-    );
-    const circuitInput = await getEffEcdsaCircuitInput(privKey);
+    const circuitInput = await getEffEcdsaCircuitInput();
     await test.executeCircuit(circuit, circuitInput);
   });
 
