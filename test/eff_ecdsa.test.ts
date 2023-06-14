@@ -18,8 +18,8 @@ export const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
 
   const msgHash = hashPersonalMessage(Buffer.from("hello world"));
   const pubKey = ec.keyFromPrivate(privKey.toString(16)).getPublic();
-  const sig = ecsign(msgHash, privKey);
-  const strSig = utils.joinSignature(sig);
+  const sig  = ecsign(msgHash, privKey);
+    console.log(sig);
 
   //const r = BigInt(sig.r);
   //const v = BigInt(sig.v);
@@ -29,7 +29,7 @@ export const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
   //let messageHash = utils.hashMessage(strRawMessage);
   //let msgHash = Buffer.from(utils.arrayify(messageHash))
 
-  const input = calculateEffECDSACircuitInput(strSig, msgHash);
+  const input = calculateEffECDSACircuitInput(sig, msgHash);
   return input;
 };
 
