@@ -1,5 +1,4 @@
 const request = require("supertest");
-const createBlakeHash = require("blake-hash");
 import app from "../server/dist/service";
 import { ethers } from "ethers";
 import { signEOASignature, prepareJson } from "@eigen-secret/core/dist-node/utils";
@@ -37,7 +36,7 @@ describe("POST /transactions", function() {
 
     let smtVerifierContract: any;
     let timestamp = Math.floor(Date.now()/1000).toString();
-    let signature;
+    let signature: any;
 
     before("end2end deposit", async () => {
         userAccounts = await hre.ethers.getSigners()

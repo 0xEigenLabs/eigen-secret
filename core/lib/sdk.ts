@@ -382,6 +382,7 @@ export class SecretSDK {
     /**
      * Connect the rollup contracts.
      * @param {Object} contractABI the contracts ABI directory
+     * @param {Array<bigint>} pubKey
      */
     async initialize(
         contractABI: any,

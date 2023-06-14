@@ -1,5 +1,6 @@
 const elliptic = require("elliptic");
 const ec = new elliptic.ec("secp256k1");
+/* eslint new-cap: ["error", { "newIsCap": false }]*/
 const BN = require("bn.js");
 import { utils } from "ethers";
 

@@ -42,7 +42,7 @@ describe("Test JoinSplit Circuit", function() {
         circuit = await test.genTempMain("circuits/update_state.circom",
             "UpdateState",
             "proof_id, public_value, public_owner,"+
-            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id, T, U, pubKey",
+            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id, U, pubKey",
             "20, 64, 4",
             { include: third });
         accountKey = new SigningKey(eddsa);
@@ -215,12 +215,10 @@ describe("Test JoinSplit Circuit", function() {
     })
 
     it("update_state verify proof test", async () => {
-        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
-        let bAlias = alias2Bigint(eddsa, alias);
         let inputJson = path.join(__dirname, "..", "circuits/main_update_state.input.json");
         const input = JSON.parse(readFileSync(inputJson));
         let circuitPath = path.join(__dirname, "..", "circuits");
-        let proofAndPublicSignals = await Prover.updateState(circuitPath, input, bAlias, ctx.toCircuitInput());
+        let proofAndPublicSignals = await Prover.updateState(circuitPath, input);
 
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
