@@ -2,7 +2,6 @@ import { Buffer } from "buffer";
 import { BigNumberish, utils } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
-const createBlakeHash = require("blake-hash");
 let EC = require("elliptic").ec;
 const ec = new EC("secp256k1");
 // import { hashPersonalMessage, ecsign } from "@ethereumjs/util";

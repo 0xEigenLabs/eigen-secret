@@ -1,11 +1,9 @@
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
-const { buildEddsa } = require("circomlibjs");
 const path = require("path");
 import { parseProof } from "@eigen-secret/core/dist-node/utils";
 import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
 import { SigningKey } from "@eigen-secret/core/dist-node/account";
-const createBlakeHash = require("blake-hash");
 
 /*
     Here we want to test the smart contract's deposit functionality.

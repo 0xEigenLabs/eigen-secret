@@ -3,7 +3,6 @@ import { assert } from "chai";
 import { parseProof } from "./utils";
 import { calcAliasHash } from "./account";
 import { errResp, succResp, ErrCode } from "./error";
-const createBlakeHash = require("blake-hash");
 
 
 /*

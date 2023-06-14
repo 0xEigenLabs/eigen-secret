@@ -1,6 +1,6 @@
 import * as test from "./test";
-let EC = require("elliptic").ec;
-const ec = new EC("secp256k1");
+// let EC = require("elliptic").ec;
+// const ec = new EC("secp256k1");
 import { utils, Wallet } from "ethers";
 import { formatMessage, calcPubKeyPoint, signEOASignature } from "@eigen-secret/core/dist-node/utils";
 import { splitToRegisters, calculateEffECDSACircuitInput, registersToHex } from "@eigen-secret/core/dist-node/secp256k1_utils";
@@ -13,7 +13,7 @@ const privKey = BigInt(
 );
  */
 let timestamp = Math.floor(Date.now()/1000).toString();
-export const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
+const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
     // sign
     // const privKey = BigInt(EOAAccount.privateKey)
     let ethAddress = EOAAccount.address;
@@ -37,12 +37,13 @@ export const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
     return input;
 };
 
+/* eslint-disable no-undef */
 describe("ecdsa", async () => {
     it("should verify valid message", async () => {
         const circuit = await test.genTempMain(
             "circuits/eff_ecdsa.circom",
             "EfficientECDSA",
-            "T, U",
+            "U",
             "64, 4",
             {}
         );
@@ -68,11 +69,12 @@ describe("ecdsa", async () => {
         const outputPubKeyX = registersToHex(wtns.slice(1, 5).reverse());
         const outputPubKeyY = registersToHex(wtns.slice(5, 9).reverse());
         const outputPubKey = `${outputPubKeyX}${outputPubKeyY}`;
-        console.log(pubKeyPoint, pubKeyOutputY.toString(), pubKeyOutputY.toString(), outputPubKeyX, outputPubKeyY);
+        console.log(pubKeyPoint, pubKeyOutputX.toString(), pubKeyOutputY.toString(), outputPubKeyX, outputPubKeyY);
 
         assert(`0x04${outputPubKey}` === pubKey);
 
         console.log(pubKeyPoint[0].toString(16), outputPubKeyX);
+        console.log(pubKeyPoint[1].toString(16), outputPubKeyY);
         assert(pubKeyPoint[0].toString(16) === outputPubKeyX);
         assert(pubKeyPoint[1].toString(16) === outputPubKeyY);
     });
