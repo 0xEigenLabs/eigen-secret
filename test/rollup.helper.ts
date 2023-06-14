@@ -1,11 +1,9 @@
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
-const { buildEddsa } = require("circomlibjs");
 const path = require("path");
 import { parseProof } from "@eigen-secret/core/dist-node/utils";
 import { deploySpongePoseidon, deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
-import { SigningKey, calcAliasHash } from "@eigen-secret/core/dist-node/account";
-const createBlakeHash = require("blake-hash");
+import { SigningKey } from "@eigen-secret/core/dist-node/account";
 
 /*
     Here we want to test the smart contract's deposit functionality.
@@ -68,13 +66,24 @@ export class RollupHelper {
                 }
             }
         );
-        this.rollup = await factoryR.deploy(
-            this.poseidonContracts[0].address,
+        let rollup = await factoryR.deploy();
+        await rollup.deployed();
+        console.log("rollup address:", rollup.address);
+        let factoryMP = await ethers.getContractFactory("ModuleProxy");
+        const initData = factoryR.interface.encodeFunctionData(
+            "initialize(address,address,address)",
+            [this.poseidonContracts[0].address,
             this.poseidonContracts[1].address,
-            this.tokenRegistry.address
-        );
-        await this.rollup.deployed();
-        console.log("rollup address:", this.rollup.address);
+            this.tokenRegistry.address]
+          );
+        let moduleProxy = await factoryMP.deploy(rollup.address, this.userAccounts[2].address, initData);
+        await moduleProxy.deployed();
+        console.log("moduleProxy address:", moduleProxy.address);
+
+        this.rollup = new ethers.Contract(
+            moduleProxy.address,
+            rollup.interface,
+            this.userAccounts[0])
 
         let factoryTT = await ethers.getContractFactory("TestToken");
         this.testToken = await factoryTT.connect(this.userAccounts[3]).deploy();

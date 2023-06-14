@@ -4,7 +4,7 @@ import { uint8Array2Bigint } from "./utils";
 
 let poseidon: any;
 
-export async function getPoseidon (){
+export async function getPoseidon() {
     if (poseidon == undefined) {
         poseidon = await buildPoseidon();
     }

@@ -1,8 +1,7 @@
 import { formatMessage, prepareJson, normalizeAlias, verifyEOASignature, hasValue, SESSION_DURATION, calcPubKeyPoint } from "./utils";
 import { ErrCode } from "./error";
-import { BigNumberish, utils } from "ethers";
-import { computeEffEcdsaPubInput, verifyEffEcdsaPubInput } from "@personaelabs/spartan-ecdsa";
-import { hashPersonalMessage } from "@ethereumjs/util";
+import { utils } from "ethers";
+import { splitToRegisters, calculateEffECDSACircuitInput } from "./secp256k1_utils";
 
 export class Context {
     alias: string;
@@ -64,28 +63,20 @@ export class Context {
     }
 
     toCircuitInput() {
-        // TODO: refactor
-        const sig = utils.splitSignature(this.signature);
-        const r = BigInt(sig.r);
-        const v = BigInt(sig.v);
-
         let strRawMessage = formatMessage(this.ethAddress, this.timestamp);
         let messageHash = utils.hashMessage(strRawMessage);
         let msgHash = Buffer.from(utils.arrayify(messageHash))
-        const circuitPubInput = computeEffEcdsaPubInput(r, v, msgHash);
+        const ecdsaInput = calculateEffECDSACircuitInput(this.signature, msgHash);
 
-        /*
-        const pubKey = calcPubKeyPoint(this.signature, this.ethAddress, this.timestamp);
-        if (pubKey[0] != this.pubKey[0] || pubKey[1] != this.pubKey[1]) {
-            throw new Error(this.signature)
-        }
-        */
         const input = {
-            s: BigInt(sig.s),
-            T: [circuitPubInput.Tx, circuitPubInput.Ty],
-            U: [circuitPubInput.Ux, circuitPubInput.Uy],
-            pubKey: [this.pubKey[0], this.pubKey[1]]
+            s: ecdsaInput.s,
+            T: ecdsaInput.T,
+            U: ecdsaInput.U,
+            pubKey: [
+                splitToRegisters(this.pubKey[0].toString(16)),
+                splitToRegisters(this.pubKey[1].toString(16))
+            ]
         };
         return input;
-    };
+    }
 }

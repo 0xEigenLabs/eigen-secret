@@ -1,9 +1,7 @@
 import { Buffer } from "buffer";
 import { BigNumberish, utils } from "ethers";
-import { ethers } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
-const createBlakeHash = require("blake-hash");
 let EC = require("elliptic").ec;
 const ec = new EC("secp256k1");
 // import { hashPersonalMessage, ecsign } from "@ethereumjs/util";
@@ -185,8 +183,8 @@ export function calcPubKeyPoint(
     const rs = { r: utils.arrayify(sig.r), s: utils.arrayify(sig.s) };
     let pubKeyP = ec.recoverPubKey(utils.arrayify(messageHash), rs, sig.recoveryParam);
 
-    //return "0x" + getCurve().recoverPubKey(arrayify(messageHash), rs, sig.recoveryParam).encode("hex", false);
-    //let pubKey = ethers.utils.recoverPublicKey(ethers.utils.arrayify(messageHash), hexSignature);
+    // return "0x" + getCurve().recoverPubKey(arrayify(messageHash), rs, sig.recoveryParam).encode("hex", false);
+    // let pubKey = ethers.utils.recoverPublicKey(ethers.utils.arrayify(messageHash), hexSignature);
     return [BigInt(pubKeyP.x.toString()), BigInt(pubKeyP.y.toString())];
 }
 
