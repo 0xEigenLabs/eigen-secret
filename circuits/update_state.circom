@@ -4,7 +4,7 @@ include "account.circom";
 include "eff_ecdsa.circom";
 include "digest.circom";
 
-template UpdateState(nLevel) {
+template UpdateState(nLevel, n, k) {
     // public input
     signal input proof_id;
     signal input public_value;
@@ -48,27 +48,23 @@ template UpdateState(nLevel) {
     signal input enabled_account_circuit;
 
     // ecdsa signature
-    signal input s;
-    signal input pubKey[2];  // ecdsa pub key
+    signal input s[k];
+    signal input pubKey[2][k];  // ecdsa pub key
 
     // public signal
-    signal input T[2];
-    signal input U[2];
+    signal input T[32][256][2][4];
+    signal input U[2][k];
 
-    component alias_hash = AliasHash();
+    component alias_hash = AliasHash(k);
     alias_hash.alias <== alias;
     alias_hash.pubKey <== pubKey;
 
     // check signature
-    component sig_verifier = EfficientECDSA();
-    sig_verifier.enabled <== 1;
+    component sig_verifier = EfficientECDSA(n, k);
     sig_verifier.s <== s;
-    sig_verifier.Tx <== T[0];
-    sig_verifier.Ty <== T[1];
-    sig_verifier.Ux <== U[0];
-    sig_verifier.Uy <== U[1];
-    sig_verifier.pubKeyX <== pubKey[0];
-    sig_verifier.pubKeyY <== pubKey[1];
+    sig_verifier.T <== T;
+    sig_verifier.U <== U;
+    sig_verifier.pubKey === pubKey;
 
     component account_circuit = Account(nLevel);
     account_circuit.enabled <== enabled_account_circuit;

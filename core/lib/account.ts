@@ -7,6 +7,7 @@ import { Note } from "./note";
 import { __DEFAULT_ALIAS__, uint8Array2Bigint } from "./utils";
 const consola = require("consola");
 import { getPoseidon } from "./digest";
+import { REGISTERS, splitToRegisters } from "./secp256k1_utils";
 
 type UnpackFunc = (babyJub: any) => [any, any];
 interface Address {
@@ -154,12 +155,13 @@ export async function calcAliasHash(eddsa: any, alias: string, pubKey: bigint[])
         .update(alias).digest().slice(0, 32)
     );
     const aliasHash = uint8Array2Bigint(aliasHashBuffer);
+    let pubKeyX = splitToRegisters(pubKey[0].toString(16));
+    let inputs: Array<string> = [aliasHash.toString()];
+    for (let i = 0; i < REGISTERS; i ++) {
+        inputs.push(pubKeyX[i].toString());
+    }
     // poseidon
-    return poseidon.F.toObject(poseidon([
-        aliasHash,
-        pubKey[0],
-        pubKey[1]
-    ]));
+    return poseidon.F.toObject(poseidon(inputs));
 }
 
 /*

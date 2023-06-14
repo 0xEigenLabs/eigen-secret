@@ -10,7 +10,7 @@ const SECP256K1_N = new BN(
 
 const STRIDE = 8n;
 const NUM_STRIDES = 256n / STRIDE; // = 32
-const REGISTERS = 4n;
+export const REGISTERS = 4n;
 const addHexPrefix = (str: string) => {
     if (str.startsWith("0x")) {
         return str;
@@ -32,7 +32,7 @@ export const splitToRegisters = (value: any) => {
     registers.unshift(BigInt(addHexPrefix(val)));
   }
 
-  return registers.map(el => el.toString());
+  return registers.map((el) => el.toString());
 };
 
 const getPointPreComputes = (point: any) => {
@@ -62,9 +62,12 @@ const getPointPreComputes = (point: any) => {
 };
 
 
-export const calculateEffECDSACircuitInput = (sig: any, msgHash: Buffer) => {
-    const r = (sig.r);
-    const v = (sig.v);
+export const calculateEffECDSACircuitInput = (strSig: any, msgHash: Buffer) => {
+    let sig = utils.splitSignature(strSig)
+    console.log(sig, strSig);
+    const r = BigInt(sig.r);
+    const v = BigInt(sig.v);
+    const s = sig.s.slice(2); // remove 0x
     // Get the group element: -(m * r^−1 * G)
     const rInv = new BN(r).invm(SECP256K1_N);
     // w = -(r^-1 * msg)
@@ -88,7 +91,7 @@ export const calculateEffECDSACircuitInput = (sig: any, msgHash: Buffer) => {
     return {
         T: TPreComputes,
         U: [splitToRegisters(U.x), splitToRegisters(U.y)],
-        s: [splitToRegisters(sig.s.toString("hex"))]
+        s: [splitToRegisters(s)]
     };
 }
 

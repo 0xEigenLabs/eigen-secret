@@ -57,14 +57,15 @@ template NullifierFunction() {
     hash.out ==> out;
 }
 
-template AliasHash() {
+template AliasHash(k) {
     signal input alias;
-    signal input pubKey[2];
+    signal input pubKey[2][k];
     signal output out;
 
-    component hash = Poseidon(3);
+    component hash = Poseidon(1 + k);
     hash.inputs[0] <== alias;
-    hash.inputs[1] <== pubKey[0];
-    hash.inputs[2] <== pubKey[1];
+    for (var i = 0; i < k; i ++) {
+        hash.inputs[1+i] <== pubKey[0][i];
+    }
     hash.out ==> out;
 }
