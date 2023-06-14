@@ -5,21 +5,29 @@ import { BigNumberish, utils, Wallet } from "ethers";
 import { formatMessage, calcPubKeyPoint, signEOASignature } from "@eigen-secret/core/dist-node/utils";
 import { splitToRegisters, calculateEffECDSACircuitInput, registersToHex } from "./secp256k1_utils";
 import { assert } from "chai";
+const { hashPersonalMessage, ecsign } = require("@ethereumjs/util");
 
+const privKey = BigInt(
+  "0xf5b552f608f5b552f608f5b552f6082ff5b552f608f5b552f608f5b552f6082f"
+);
 export const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
   // sign
-  let ethAddress = EOAAccount.address;
-  let timestamp = Math.floor(Date.now()/1000).toString();
-  let strSig = await signEOASignature(EOAAccount, ethAddress, timestamp)
+  //let ethAddress = EOAAccount.address;
+  //let timestamp = Math.floor(Date.now()/1000).toString();
+  //let strSig = await signEOASignature(EOAAccount, ethAddress, timestamp)
 
-  const sig = utils.splitSignature(strSig);
-  const r = BigInt(sig.r);
-  const v = BigInt(sig.v);
+  const msgHash = hashPersonalMessage(Buffer.from("hello world"));
+  const pubKey = ec.keyFromPrivate(privKey.toString(16)).getPublic();
+  const sig = ecsign(msgHash, privKey);
+  const strSig = utils.joinSignature(sig);
+
+  //const r = BigInt(sig.r);
+  //const v = BigInt(sig.v);
 
   // recover public key
-  let strRawMessage = formatMessage(ethAddress, timestamp)
-  let messageHash = utils.hashMessage(strRawMessage);
-  let msgHash = Buffer.from(utils.arrayify(messageHash))
+  //let strRawMessage = formatMessage(ethAddress, timestamp)
+  //let messageHash = utils.hashMessage(strRawMessage);
+  //let msgHash = Buffer.from(utils.arrayify(messageHash))
 
   const input = calculateEffECDSACircuitInput(strSig, msgHash);
   return input;
@@ -36,22 +44,22 @@ describe("ecdsa", async () => {
     );
 
     let EOAAccount = Wallet.createRandom()
-    const pubKey = EOAAccount.publicKey;
-    const pubKeyPoint = ec.keyFromPublic(pubKey.slice(2), "hex");
-    console.log(pubKeyPoint, pubKeyPoint.pub)
+    //const pubKey = EOAAccount.publicKey;
+    //console.log(pubKeyPoint, pubKeyPoint.pub)
+
+    const pubKey = ec.keyFromPrivate(privKey.toString(16)).getPublic();
 
     const circuitInput = await getEffEcdsaCircuitInput(EOAAccount);
     const wtns = await test.executeCircuit(circuit, circuitInput);
 
-    let pubkeyOutputX = splitToRegisters(pubKeyPoint.pub.x.toString("hex"))
-    let pubkeyOutputY = splitToRegisters(pubKeyPoint.pub.y.toString("hex"))
+    //let pubkeyOutputX = splitToRegisters(pubKeyPoint.pub.x.toString("hex"))
+    //let pubkeyOutputY = splitToRegisters(pubKeyPoint.pub.y.toString("hex"))
 
     const outputPubkeyX = registersToHex(wtns.slice(1, 5).reverse());
     const outputPubkeyY = registersToHex(wtns.slice(5, 9).reverse());
     const outputPubKey = `${outputPubkeyX}${outputPubkeyY}`;
 
-    console.log(wtns, outputPubKey, pubKey, pubkeyOutputX, pubkeyOutputY);
-    assert(outputPubKey === pubKey.slice(4));
+    assert(`04${outputPubKey}` === pubKey.encode("hex"));
   });
   // TODO - add more tests
 });
