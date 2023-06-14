@@ -4,6 +4,7 @@ const ec = new EC("secp256k1");
 import { BigNumberish, utils, Wallet } from "ethers";
 import { formatMessage, calcPubKeyPoint, signEOASignature } from "@eigen-secret/core/dist-node/utils";
 import { splitToRegisters, calculateEffECDSACircuitInput, registersToHex } from "./secp256k1_utils";
+import { assert } from "chai";
 
 export const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
   // sign
@@ -50,6 +51,7 @@ describe("ecdsa", async () => {
     const outputPubKey = `${outputPubkeyX}${outputPubkeyY}`;
 
     console.log(wtns, outputPubKey, pubKey, pubkeyOutputX, pubkeyOutputY);
+    assert(outputPubKey === pubKey.slice(4));
   });
   // TODO - add more tests
 });
