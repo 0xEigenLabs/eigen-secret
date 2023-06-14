@@ -215,8 +215,6 @@ describe("Test JoinSplit Circuit", function() {
     })
 
     it("update_state verify proof test", async () => {
-        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
-        let bAlias = alias2Bigint(eddsa, alias);
         let inputJson = path.join(__dirname, "..", "circuits/main_update_state.input.json");
         const input = JSON.parse(readFileSync(inputJson));
         let circuitPath = path.join(__dirname, "..", "circuits");

@@ -185,7 +185,7 @@ contract Rollup is SMT {
         uint[2] memory a,
         uint[2][2] memory b,
         uint[2] memory c,
-        uint[8] memory input
+        uint[24] memory input
     ) public payable {
         uint256 proofId = input[0];
         uint256 publicValue = input[1];

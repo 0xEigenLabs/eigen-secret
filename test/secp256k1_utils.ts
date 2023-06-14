@@ -1,5 +1,6 @@
 const elliptic = require("elliptic");
 const ec = new elliptic.ec("secp256k1");
+/* eslint new-cap: ["error", { "newIsCap": false }]*/
 const BN = require("bn.js");
 import { utils } from "ethers";
 
@@ -32,7 +33,7 @@ export const splitToRegisters = (value: any) => {
     registers.unshift(BigInt(addHexPrefix(val)));
   }
 
-  return registers.map(el => el.toString());
+  return registers.map((el) => el.toString());
 };
 
 const getPointPreComputes = (point: any) => {
