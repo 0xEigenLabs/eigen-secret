@@ -3,7 +3,7 @@ let EC = require("elliptic").ec;
 const ec = new EC("secp256k1");
 import { BigNumberish, utils, Wallet } from "ethers";
 import { formatMessage, calcPubKeyPoint, signEOASignature } from "@eigen-secret/core/dist-node/utils";
-import { calculateEffECDSACircuitInput } from "./secp256k1_utils";
+import { splitToRegisters, calculateEffECDSACircuitInput, registersToHex } from "./secp256k1_utils";
 
 export const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
   // sign
@@ -20,8 +20,8 @@ export const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
   let messageHash = utils.hashMessage(strRawMessage);
   let msgHash = Buffer.from(utils.arrayify(messageHash))
 
-  const circuitPubInput = calculateEffECDSACircuitInput(strSig, msgHash);
-  return circuitInput;
+  const input = calculateEffECDSACircuitInput(strSig, msgHash);
+  return input;
 };
 
 describe("ecdsa", async () => {
@@ -35,11 +35,21 @@ describe("ecdsa", async () => {
     );
 
     let EOAAccount = Wallet.createRandom()
-    let pubkey = EOAAccount.publicKey;
+    const pubKey = EOAAccount.publicKey;
+    const pubKeyPoint = ec.keyFromPublic(pubKey.slice(2), "hex");
+    console.log(pubKeyPoint, pubKeyPoint.pub)
 
     const circuitInput = await getEffEcdsaCircuitInput(EOAAccount);
     const wtns = await test.executeCircuit(circuit, circuitInput);
-    console.log(wtns, pubkey);
+
+    let pubkeyOutputX = splitToRegisters(pubKeyPoint.pub.x.toString("hex"))
+    let pubkeyOutputY = splitToRegisters(pubKeyPoint.pub.y.toString("hex"))
+
+    const outputPubkeyX = registersToHex(wtns.slice(1, 5).reverse());
+    const outputPubkeyY = registersToHex(wtns.slice(5, 9).reverse());
+    const outputPubKey = `${outputPubkeyX}${outputPubkeyY}`;
+
+    console.log(wtns, outputPubKey, pubKey, pubkeyOutputX, pubkeyOutputY);
   });
   // TODO - add more tests
 });

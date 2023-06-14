@@ -17,7 +17,7 @@ const addHexPrefix = (str: string) => {
     }
     return `0x${str}`;
 }
-const splitToRegisters = (value: any) => {
+export const splitToRegisters = (value: any) => {
   const registers = [];
 
   if (!value) {
@@ -92,3 +92,10 @@ export const calculateEffECDSACircuitInput = (strSig: string, msgHash: Buffer) =
         s: [splitToRegisters(sig.s)]
     };
 }
+
+
+export const registersToHex = (registers: any) => {
+  return registers
+    .map((el: any) => BigInt(el).toString(16).padStart(16, "0"))
+    .join("");
+};
