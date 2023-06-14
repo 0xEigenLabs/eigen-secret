@@ -62,10 +62,9 @@ const getPointPreComputes = (point: any) => {
 };
 
 
-export const calculateEffECDSACircuitInput = (strSig: string, msgHash: Buffer) => {
-    const sig = utils.splitSignature(strSig);
-    const r = BigInt(sig.r);
-    const v = BigInt(sig.v);
+export const calculateEffECDSACircuitInput = (sig: any, msgHash: Buffer) => {
+    const r = (sig.r);
+    const v = (sig.v);
     // Get the group element: -(m * r^−1 * G)
     const rInv = new BN(r).invm(SECP256K1_N);
     // w = -(r^-1 * msg)
@@ -89,7 +88,7 @@ export const calculateEffECDSACircuitInput = (strSig: string, msgHash: Buffer) =
     return {
         T: TPreComputes,
         U: [splitToRegisters(U.x), splitToRegisters(U.y)],
-        s: [splitToRegisters(sig.s)]
+        s: [splitToRegisters(sig.s.toString("hex"))]
     };
 }
 
