@@ -6,7 +6,7 @@ circuits/main_withdraw.input.json
 dist/
 dist-node/
 dist-browser/
-.secret
+.asset.json
 yarn-error.log
 package-lock.json
 yarn.lock
