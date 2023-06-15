@@ -2,6 +2,7 @@ import * as test from "./test";
 import { calcAliasHash, SigningKey, AccountCircuit } from "@eigen-secret/core/dist-node/account";
 import { WorldState } from "../server/dist/state_tree";
 import { signEOASignature } from "@eigen-secret/core/dist-node/utils";
+import { Context } from "@eigen-secret/core/dist-node/context";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 /* globals describe, before, it */
