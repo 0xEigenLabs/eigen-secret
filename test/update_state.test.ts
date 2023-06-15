@@ -4,7 +4,7 @@ import { assert } from "chai";
 import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist-node/account";
 import { WorldState } from "../server/dist/state_tree";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist-node/join_split";
-import { AccountCircuit } from "@eigen-secret/core/dist-node/account";
+import { calcAliasHash, AccountCircuit } from "@eigen-secret/core/dist-node/account";
 import { UpdateStatusCircuit } from "@eigen-secret/core/dist-node/update_state";
 import { alias2Bigint } from "@eigen-secret/core/dist-node/digest";
 import { Context } from "@eigen-secret/core/dist-node/context";
@@ -24,7 +24,7 @@ describe("Test JoinSplit Circuit", function() {
     let F: any;
     let accountKey: SigningKey;
     let signingKey: SigningKey;
-    let aliasHash: bigint = 123n;
+    let aliasHash: any;
     let acStateKey: any;
     let assetId: number = 1;
     let signer: any;
@@ -49,6 +49,8 @@ describe("Test JoinSplit Circuit", function() {
         signingKey = new SigningKey(eddsa);
         newEOAAccount = await ethers.Wallet.createRandom();
         signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        aliasHash = await calcAliasHash(eddsa, alias, ctx.pubKey);
     })
 
     it("Account create update_state test", async () => {

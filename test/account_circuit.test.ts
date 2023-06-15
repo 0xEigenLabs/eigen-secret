@@ -1,6 +1,9 @@
 import * as test from "./test";
-import { SigningKey, AccountCircuit } from "@eigen-secret/core/dist-node/account";
+import { calcAliasHash, SigningKey, AccountCircuit } from "@eigen-secret/core/dist-node/account";
+import { signEOASignature } from "@eigen-secret/core/dist-node/utils";
+import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "../server/dist/state_tree";
+import { ethers } from "ethers";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 /* globals describe, before, it */
@@ -11,7 +14,11 @@ describe("Account circuit test", function() {
     let F: any;
     let accountKey: SigningKey;
     let signingKey: SigningKey;
-    let aliasHash: bigint = 123n;
+    let aliasHash: any;
+    let alias = "abc.eth";
+    let newEOAAccount: any;
+    let timestamp = Math.floor(Date.now()/1000).toString();
+    let signature: any;
 
     before(async () => {
         eddsa = await buildEddsa();
@@ -25,6 +32,12 @@ describe("Account circuit test", function() {
             {});
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
+
+        newEOAAccount = await ethers.Wallet.createRandom();
+        signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        aliasHash = await calcAliasHash(eddsa, alias, ctx.pubKey);
     })
 
     it("Account create test", async () => {
