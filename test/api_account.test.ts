@@ -11,7 +11,7 @@ const { buildEddsa } = require("circomlibjs");
 
 /* globals describe, before, it */
 describe("POST /accounts", function() {
-    let alias = "eigen.eth";
+    let alias = "abc.eigen.eth";
     let newEOAAccount: any;
     let secretAccount: any;
     let signature: any;

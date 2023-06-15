@@ -20,7 +20,13 @@ export async function createAccount(req: any, res: any) {
         return res.json(errResp(ErrCode.DBCreateError, `${utils.__DEFAULT_ALIAS__} is reserved by Eigen Secret`));
     }
     const ethAddress = ctx.ethAddress;
-    let found: AppResp = await getAccountInternal(alias, ethAddress);
+    let found: AppResp;
+    try {
+        found = await getAccountInternal(alias, ethAddress);
+    } catch (err: any) {
+        consola.log(err)
+        return res.json(errResp(ErrCode.DBCreateError, `${alias} is not found`));
+    }
     if (found.errno !== ErrCode.RecordNotExist) {
         return res.json(found);
     }

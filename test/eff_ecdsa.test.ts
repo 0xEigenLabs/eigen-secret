@@ -38,7 +38,7 @@ const getEffEcdsaCircuitInput = async (EOAAccount: any) => {
 };
 
 /* eslint-disable no-undef */
-describe("ecdsa", async () => {
+describe("Efficient ECDSA Test", async () => {
     it("should verify valid message", async () => {
         const circuit = await test.genTempMain(
             "circuits/eff_ecdsa.circom",
