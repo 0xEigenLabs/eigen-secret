@@ -24,7 +24,7 @@ describe("Test JoinSplit Circuit", function() {
     let F: any;
     let accountKey: SigningKey;
     let signingKey: SigningKey;
-    let aliasHash: bigint = 123n;
+    let aliasHash: any;
     let acStateKey: any;
     let assetId: number = 1;
     let signer: any;
@@ -49,6 +49,8 @@ describe("Test JoinSplit Circuit", function() {
         signingKey = new SigningKey(eddsa);
         newEOAAccount = await ethers.Wallet.createRandom();
         signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        aliasHash = await calcAliasHash(eddsa, alias, ctx.pubKey);
     })
 
     it("Account create update_state test", async () => {
