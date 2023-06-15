@@ -12,6 +12,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
+import "./Pairing.sol";
 contract UpdateStateVerifier {
     using Pairing for *;
     struct VerifyingKey {
