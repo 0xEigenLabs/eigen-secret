@@ -1,7 +1,7 @@
 import * as test from "./test";
 import { Note } from "@eigen-secret/core/dist-node/note";
 import { assert } from "chai";
-import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist-node/account";
+import { calcAliasHash, compress as accountCompress, SigningKey } from "@eigen-secret/core/dist-node/account";
 import { WorldState } from "../server/dist/state_tree";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist-node/join_split";
 import { AccountCircuit } from "@eigen-secret/core/dist-node/account";
@@ -225,7 +225,7 @@ describe("Test JoinSplit Circuit", function() {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
-        let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey.16");
+        let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey.18");
         const vKey = await snarkjs.zKey.exportVerificationKey(zkey);
         const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
         assert.equal(res, true)
