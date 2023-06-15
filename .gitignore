@@ -3,6 +3,7 @@ docker-compose.yml
 server/data
 docs
 circuits/main_withdraw.input.json
+circuits/main_update_state.input.json
 dist/
 dist-node/
 dist-browser/
