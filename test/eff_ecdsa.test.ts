@@ -58,6 +58,8 @@ describe("Efficient ECDSA Test", async () => {
          */
 
         const circuitInput = await getEffEcdsaCircuitInput(EOAAccount);
+        const fs = require("fs");
+        fs.writeFileSync("circuits/main_eff_ecdsa.input.json", JSON.stringify(circuitInput))
         const wtns = await test.executeCircuit(circuit, circuitInput);
 
         const ethAddress = await EOAAccount.getAddress();

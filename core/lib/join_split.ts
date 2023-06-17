@@ -26,8 +26,8 @@ export class JoinSplitInput {
     accountPubKey: bigint[];
     accountRequired: boolean;
     signingPubKey: bigint[];
-    signatureR8: bigint[];
-    signatureS: bigint;
+    //signatureR8: bigint[];
+    //signatureS: bigint;
     enabled: bigint;
 
     public constructor(
@@ -48,7 +48,6 @@ export class JoinSplitInput {
         accountPubKey: bigint[],
         signingPubKey: bigint[],
         accountRequired: boolean,
-        sig: any,
         enabled: bigint = 1n
     ) {
         this.proofId = proofId;
@@ -67,8 +66,8 @@ export class JoinSplitInput {
         this.accountPubKey = accountPubKey;
         this.accountPrvKey = accountPrvKey;
         this.signingPubKey = signingPubKey;
-        this.signatureR8 = sig.R8;
-        this.signatureS = sig.S;
+        //this.signatureR8 = sig.R8;
+        //this.signatureS = sig.S;
         this.accountRequired = accountRequired;
         this.enabled = enabled;
     }
@@ -105,8 +104,8 @@ export class JoinSplitInput {
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
             siblings_ac: proof.siblingsAC,
-            signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
-            signatureS: this.signatureS,
+            //signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
+            //signatureS: this.signatureS,
             enabled: this.enabled
         };
 
@@ -244,8 +243,8 @@ export class JoinSplitCircuit {
                 firstNote.val + note.val, secret, owner, assetId, nullifier2, false, index());
             let outputNc2 = await outputNote2.compress(babyJub);
 
-            let sig = await JoinSplitCircuit.calculateSignature(
-                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, 0n, 0n);
+            //let sig = await JoinSplitCircuit.calculateSignature(
+            //    accountKey, nullifier1, nullifier2, outputNc1, outputNc2, 0n, 0n);
 
             /*
             let state = await WorldState.getInstance();
@@ -271,8 +270,7 @@ export class JoinSplitCircuit {
                 ak[1][0],
                 ak[0],
                 (await signingKey.toCircuitInput())[0],
-                accountRequired,
-                sig
+                accountRequired
             );
             inputList.push(input);
             firstNote = outputNote2;
@@ -346,8 +344,8 @@ export class JoinSplitCircuit {
             let outputNc2 = await outputNote2.compress(babyJub);
             outputNCs.push(outputNc2);
 
-            let sig = await JoinSplitCircuit.calculateSignature(
-                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
+            //let sig = await JoinSplitCircuit.calculateSignature(
+            //    accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
             /*
             let state = await WorldState.getInstance();
             await state.insert(outputNc1, nullifier1);
@@ -368,8 +366,7 @@ export class JoinSplitCircuit {
                 ak[1][0],
                 ak[0],
                 (signingKey.toCircuitInput())[0],
-                accountRequired,
-                sig
+                accountRequired
             );
             inputList.push(input);
         }

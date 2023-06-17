@@ -126,6 +126,7 @@ export async function rawCompress(
     return poseidon.F.toObject(poseidon(input));
 }
 
+/*
 async function accountDigest(
     aliasHash: bigint,
     accountPubKeyX: bigint,
@@ -146,6 +147,7 @@ async function accountDigest(
         nullifier2
     ]);
 }
+*/
 
 export async function calcAliasHash(eddsa: any, alias: string, pubKey: bigint[]) {
     // hash alias to field element
@@ -291,8 +293,10 @@ export class AccountCircuit {
     newSigningPubKey1: bigint[];
     newSigningPubKey2: bigint[];
 
+    /*
     signatureR8: bigint[];
     signatureS: bigint;
+    */
     enabled: bigint;
 
     // aux
@@ -310,8 +314,8 @@ export class AccountCircuit {
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
-        signatureR8: bigint[],
-        signatureS: bigint,
+        //signatureR8: bigint[],
+        //signatureS: bigint,
         accountNC: bigint,
         newAccountNC: bigint,
         enabled: bigint = 1n
@@ -326,8 +330,8 @@ export class AccountCircuit {
         this.newAccountPubKey = newAccountPubKey;
         this.newSigningPubKey1 = newSigningPubKey1;
         this.newSigningPubKey2 = newSigningPubKey2;
-        this.signatureR8 = signatureR8;
-        this.signatureS = signatureS;
+        //this.signatureR8 = signatureR8;
+        //this.signatureS = signatureS;
         this.accountNC = accountNC;
         this.newAccountNC = newAccountNC;
         this.enabled = enabled;
@@ -361,6 +365,7 @@ export class AccountCircuit {
             proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) ?
             (await newAccountDigest(newAccountPubKey)): 0;
 
+        /*
         let msghash = await accountDigest(
             aliasHash,
             accountPubKey[0],
@@ -370,6 +375,7 @@ export class AccountCircuit {
             nullifier1,
             nullifier2
         );
+        */
 
         /*
         let state = await WorldState.getInstance();
@@ -388,7 +394,7 @@ export class AccountCircuit {
         }
         */
 
-        let sig = await signingKey.sign(msghash);
+        //let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
             [outputNC1, outputNC2],
@@ -400,8 +406,8 @@ export class AccountCircuit {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
-            sig.S,
+            //[F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
+            //sig.S,
             accountNC,
             newAccountNC
         );
@@ -424,8 +430,8 @@ export class AccountCircuit {
             new_account_note_npk: this.newAccountPubKey,
             new_account_note_spk1: this.newSigningPubKey1,
             new_account_note_spk2: this.newSigningPubKey2,
-            signatureR8: this.signatureR8,
-            signatureS: this.signatureS,
+            //signatureR8: this.signatureR8,
+            //signatureS: this.signatureS,
             enabled: this.enabled
         }
         // console.log(result);

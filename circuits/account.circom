@@ -49,8 +49,8 @@ template Account(nLevel) {
     signal input new_account_note_npk[2]; // (npk=account public key)
     signal input new_account_note_spk1[2]; // (spk=signing public key)
     signal input new_account_note_spk2[2]; // (spk=signing public key)
-    signal input signatureR8[2];
-    signal input signatureS;
+    //signal input signatureR8[2];
+    //signal input signatureS;
     signal input siblings_ac[nLevel];
 
     enabled * public_owner === 0;
@@ -139,23 +139,23 @@ template Account(nLevel) {
     enabled * aux4 === 0;
 
     // check signature
-    component msghash = AccountDigest();
-    msghash.alias_hash <== alias_hash;
-    msghash.account_note_npk_x <== account_note_npk[0];
-    msghash.new_account_note_npk_x <== new_account_note_npk[0];
-    msghash.new_account_note_spk1_x <== new_account_note_spk1[0];
-    msghash.new_account_note_spk2_x <== new_account_note_spk2[0];
-    msghash.nullifier1 <== alias_hash * is_create;
-    msghash.nullifier2 <== nullifier2;
+    //component msghash = AccountDigest();
+    //msghash.alias_hash <== alias_hash;
+    //msghash.account_note_npk_x <== account_note_npk[0];
+    //msghash.new_account_note_npk_x <== new_account_note_npk[0];
+    //msghash.new_account_note_spk1_x <== new_account_note_spk1[0];
+    //msghash.new_account_note_spk2_x <== new_account_note_spk2[0];
+    //msghash.nullifier1 <== alias_hash * is_create;
+    //msghash.nullifier2 <== nullifier2;
 
-    component sig_verifier = EdDSAPoseidonVerifier();
-    sig_verifier.enabled <== enabled;
-    sig_verifier.R8x <== signatureR8[0];
-    sig_verifier.R8y <== signatureR8[1];
-    sig_verifier.S <== signatureS;
-    sig_verifier.M <== msghash.out;
-    sig_verifier.Ax <== account_note_spk[0];
-    sig_verifier.Ay <== account_note_spk[1];
+    //component sig_verifier = EdDSAPoseidonVerifier();
+    //sig_verifier.enabled <== enabled;
+    //sig_verifier.R8x <== signatureR8[0];
+    //sig_verifier.R8y <== signatureR8[1];
+    //sig_verifier.S <== signatureS;
+    //sig_verifier.M <== msghash.out;
+    //sig_verifier.Ax <== account_note_spk[0];
+    //sig_verifier.Ay <== account_note_spk[1];
 
     //if (is_create == 0) { require(membership_check(account_note_data, account_note_index, account_note_path, data_tree_root) == true) }
     // FIXME: the key is the merkle path, and the value is is commitment

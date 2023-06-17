@@ -22,8 +22,8 @@ template UpdateState(nLevel, n, k) {
     signal input new_account_note_npk[2]; // (npk=account public key)
     signal input new_account_note_spk1[2]; // (spk=signing public key)
     signal input new_account_note_spk2[2]; // (spk=signing public key)
-    signal input signatureR8[2];
-    signal input signatureS;
+    //signal input signatureR8[2];
+    //signal input signatureS;
     signal input siblings_ac[nLevel];
 
     /// join split
@@ -82,8 +82,8 @@ template UpdateState(nLevel, n, k) {
     account_circuit.new_account_note_npk  <== new_account_note_npk;
     account_circuit.new_account_note_spk1  <== new_account_note_spk1;
     account_circuit.new_account_note_spk2  <== new_account_note_spk2;
-    account_circuit.signatureR8  <== signatureR8;
-    account_circuit.signatureS  <== signatureS;
+    //account_circuit.signatureR8  <== signatureR8;
+    //account_circuit.signatureS  <== signatureS;
     account_circuit.siblings_ac  <== siblings_ac;
 
     component join_split_circuit = JoinSplit(nLevel);
@@ -115,7 +115,7 @@ template UpdateState(nLevel, n, k) {
     join_split_circuit.account_note_nk    <== account_note_nk; // (nk = account private key)
     join_split_circuit.account_note_spk    <== account_note_spk; // (spk=signing public key)
     join_split_circuit.siblings_ac    <== siblings_ac;
-    join_split_circuit.signatureR8    <== signatureR8;
-    join_split_circuit.signatureS    <== signatureS; // eddsa signature
+    //join_split_circuit.signatureR8    <== signatureR8;
+    //join_split_circuit.signatureS    <== signatureS; // eddsa signature
     join_split_circuit.account_required    <== account_required;
 }

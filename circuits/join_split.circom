@@ -54,8 +54,8 @@ template JoinSplit(nLevel) {
     signal input account_note_nk; // (nk = account private key)
     signal input account_note_spk[2]; // (spk=signing public key)
     signal input siblings_ac[nLevel];
-    signal input signatureR8[2]; // eddsa signature
-    signal input signatureS; // eddsa signature
+    //signal input signatureR8[2]; // eddsa signature
+    //signal input signatureS; // eddsa signature
     signal input account_required;
 
     // TODO check: xx_note_account_required in [0, 1];
@@ -228,22 +228,22 @@ template JoinSplit(nLevel) {
     enabled * (account_note_npk[1] - input_note_owner[1][1]) === 0;
 
     // check signature
-    component msghash = JoinSplitDigest();
-    msghash.nc_1 <== nf[0].out;
-    msghash.nc_2 <== nf[1].out;
-    msghash.output_note_nc_1 <== output_nc_1;
-    msghash.output_note_nc_2 <== output_nc_2;
-    msghash.public_value <== public_value;
-    msghash.public_owner <== public_owner;
+    //component msghash = JoinSplitDigest();
+    //msghash.nc_1 <== nf[0].out;
+    //msghash.nc_2 <== nf[1].out;
+    //msghash.output_note_nc_1 <== output_nc_1;
+    //msghash.output_note_nc_2 <== output_nc_2;
+    //msghash.public_value <== public_value;
+    //msghash.public_owner <== public_owner;
 
-    component sig_verifier = EdDSAPoseidonVerifier();
-    sig_verifier.enabled <== enabled;
-    sig_verifier.R8x <== signatureR8[0];
-    sig_verifier.R8y <== signatureR8[1];
-    sig_verifier.S <== signatureS;
-    sig_verifier.M <== msghash.out;
-    sig_verifier.Ax <== account_note_npk[0];
-    sig_verifier.Ay <== account_note_npk[1];
+    //component sig_verifier = EdDSAPoseidonVerifier();
+    //sig_verifier.enabled <== enabled;
+    //sig_verifier.R8x <== signatureR8[0];
+    //sig_verifier.R8y <== signatureR8[1];
+    //sig_verifier.S <== signatureS;
+    //sig_verifier.M <== msghash.out;
+    //sig_verifier.Ax <== account_note_npk[0];
+    //sig_verifier.Ay <== account_note_npk[1];
 
     // transfer balance check
     var total_in_value = public_input_ + input_note_val[0] + input_note_val[1];

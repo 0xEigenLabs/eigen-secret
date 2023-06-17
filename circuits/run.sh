@@ -6,7 +6,7 @@ circuit_name=$1
 # withdraw
 #POWER=14
 # update state
-POWER=18
+POWER=17
 
 CUR_DIR=$(cd $(dirname $0);pwd)
 base_dir=${CUR_DIR}/${circuit_name}_js

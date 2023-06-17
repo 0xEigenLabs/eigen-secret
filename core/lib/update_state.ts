@@ -21,8 +21,8 @@ export class UpdateStatusInput {
     accountPubKey: bigint[];
     accountRequired: boolean;
     signingPubKey: bigint[];
-    signatureR8: bigint[];
-    signatureS: bigint;
+    //signatureR8: bigint[];
+    //signatureS: bigint;
     newAccountPubKey: bigint[];
     newSigningPubKey1: bigint[];
     newSigningPubKey2: bigint[];
@@ -50,8 +50,8 @@ export class UpdateStatusInput {
         accountPubKey: bigint[],
         signingPubKey: bigint[],
         accountRequired: boolean,
-        signatureR8: bigint[],
-        signatureS: bigint,
+        //signatureR8: bigint[],
+        //signatureS: bigint,
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
@@ -80,8 +80,8 @@ export class UpdateStatusInput {
         this.newAccountPubKey = newAccountPubKey;
         this.newSigningPubKey1 = newSigningPubKey1;
         this.newSigningPubKey2 = newSigningPubKey2;
-        this.signatureR8 = signatureR8;
-        this.signatureS = signatureS;
+        //this.signatureR8 = signatureR8;
+        //this.signatureS = signatureS;
         this.accountRequired = accountRequired;
         this.enabled_account_circuit = enabledAccountCircuit;
     }
@@ -122,8 +122,8 @@ export class UpdateStatusInput {
             account_note_nk: this.accountPrvKey,
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
-            signatureR8: this.signatureR8,
-            signatureS: this.signatureS,
+            //signatureR8: this.signatureR8,
+            //signatureS: this.signatureS,
             new_account_note_npk: this.newAccountPubKey,
             new_account_note_spk1: this.newSigningPubKey1,
             new_account_note_spk2: this.newSigningPubKey2
@@ -164,6 +164,7 @@ export class UpdateStatusInput {
         }
 
         // console.log(inputJson)
+        /*
         const fs = require("fs");
         fs.writeFileSync("./circuits/main_update_state.input.json",
                          JSON.stringify(
@@ -172,6 +173,7 @@ export class UpdateStatusInput {
                                  value.toString() :
                                  value // return everything else unchanged
                          ));
+        */
         return inputJson;
     }
 }
@@ -212,8 +214,8 @@ export class UpdateStatusCircuit {
             accountInput.accountPubKey,
             accountInput.signingPubKey,
             false,
-            accountInput.signatureR8,
-            accountInput.signatureS,
+            //accountInput.signatureR8,
+            //accountInput.signatureS,
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
@@ -274,8 +276,8 @@ export class UpdateStatusCircuit {
                 joinSplitInput[i].accountPubKey,
                 joinSplitInput[i].signingPubKey,
                 joinSplitInput[i].accountRequired,
-                [F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
-                joinSplitInput[i].signatureS,
+                //[F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
+                //joinSplitInput[i].signatureS,
                 [0n, 0n], [0n, 0n], [0n, 0n], 0n, 0n, 0n
             );
             inputList.push(input);

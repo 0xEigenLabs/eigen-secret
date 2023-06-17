@@ -21,6 +21,7 @@ template JoinSplitDigest() {
     out <== hash.out;
 }
 
+/*
 template AccountDigest() {
     signal input alias_hash;
     signal input account_note_npk_x;
@@ -42,6 +43,7 @@ template AccountDigest() {
 
     out <== hash.out;
 }
+*/
 
 template NullifierFunction() {
     signal input nc;
