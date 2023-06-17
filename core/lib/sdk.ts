@@ -346,6 +346,8 @@ export class SecretSDK {
                     symbol: ti.symbol,
                     assetId: txData.assetId,
                     to: txData.to,
+                    proof: tx.proof,
+                    publicInput: tx.publicInput,
                     status: TransactionModelStatus[tx.status],
                     txhash: createBlakeHash("blake256").update(tx.proof).update(tx.publicInput).digest().toString("hex").slice(12),
                     timestamp: tx.updatedAt
