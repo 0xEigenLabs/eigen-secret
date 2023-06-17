@@ -1,12 +1,13 @@
 import { ethers } from "ethers";
-const { buildPoseidon } = require("circomlibjs");
 const { Scalar, utils } = require("ffjavascript-browser");
 const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { Aes256gcm } from "./aes_gcm";
 import { Note } from "./note";
-import { __DEFAULT_ALIAS__ } from "./utils";
+import { __DEFAULT_ALIAS__, uint8Array2Bigint } from "./utils";
 const consola = require("consola");
+import { getPoseidon } from "./digest";
+import { REGISTERS, splitToRegisters } from "./secp256k1_utils";
 
 type UnpackFunc = (babyJub: any) => [any, any];
 interface Address {
@@ -48,9 +49,9 @@ export interface IKey {
 // eddsa
 export class SigningKey implements IKey {
     prvKey: string;
-    pubKey: EigenAddress = new EigenAddress("");
+    pubKey: EigenAddress;
     eddsa: any;
-    constructor(eddsa: any, _rawkeyHex: string | undefined = undefined) {
+    constructor(eddsa: any, _rawkeyHex?: string) {
         this.eddsa = eddsa;
         let rawpvk: string = _rawkeyHex === undefined?
             Buffer.from(ethers.utils.randomBytes(31)).toString("hex") : _rawkeyHex;
@@ -115,7 +116,7 @@ export async function rawCompress(
     npk: bigint[],
     spk: bigint[],
     aliasHash: bigint) {
-    let poseidon = await buildPoseidon();
+    let poseidon = await getPoseidon();
     let input: bigint[] = [];
     input.push(npk[0]);
     input.push(npk[1]);
@@ -125,6 +126,7 @@ export async function rawCompress(
     return poseidon.F.toObject(poseidon(input));
 }
 
+/*
 async function accountDigest(
     aliasHash: bigint,
     accountPubKeyX: bigint,
@@ -134,7 +136,7 @@ async function accountDigest(
     nullifier1: bigint,
     nullifier2: bigint
 ) {
-    let poseidon = await buildPoseidon();
+    let poseidon = await getPoseidon();
     return poseidon([
         aliasHash,
         accountPubKeyX,
@@ -145,17 +147,37 @@ async function accountDigest(
         nullifier2
     ]);
 }
+*/
 
+export async function calcAliasHash(eddsa: any, alias: string, pubKey: bigint[]) {
+    // hash alias to field element
+    let poseidon = await getPoseidon();
+    const aliasHashBuffer = eddsa.pruneBuffer(
+        createBlakeHash("blake512")
+        .update(alias).digest().slice(0, 32)
+    );
+    const aliasHash = uint8Array2Bigint(aliasHashBuffer);
+    let pubKeyX = splitToRegisters(pubKey[0].toString(16));
+    let inputs: Array<string> = [aliasHash.toString()];
+    for (let i = 0; i < REGISTERS; i ++) {
+        inputs.push(pubKeyX[i].toString());
+    }
+    // poseidon
+    return poseidon.F.toObject(poseidon(inputs));
+}
+
+/*
 async function aliasHashDigest(aliasHash: bigint) {
-    let poseidon = await buildPoseidon();
+    let poseidon = await getPoseidon();
     let result = poseidon([
         aliasHash
     ]);
     return poseidon.F.toObject(result);
 }
+*/
 
 async function newAccountDigest(newAccountPubKey: bigint[]) {
-    let poseidon = await buildPoseidon();
+    let poseidon = await getPoseidon();
     let result = poseidon([
         newAccountPubKey[0],
         newAccountPubKey[1]
@@ -271,8 +293,10 @@ export class AccountCircuit {
     newSigningPubKey1: bigint[];
     newSigningPubKey2: bigint[];
 
+    /*
     signatureR8: bigint[];
     signatureS: bigint;
+    */
     enabled: bigint;
 
     // aux
@@ -290,8 +314,8 @@ export class AccountCircuit {
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
-        signatureR8: bigint[],
-        signatureS: bigint,
+        //signatureR8: bigint[],
+        //signatureS: bigint,
         accountNC: bigint,
         newAccountNC: bigint,
         enabled: bigint = 1n
@@ -306,8 +330,8 @@ export class AccountCircuit {
         this.newAccountPubKey = newAccountPubKey;
         this.newSigningPubKey1 = newSigningPubKey1;
         this.newSigningPubKey2 = newSigningPubKey2;
-        this.signatureR8 = signatureR8;
-        this.signatureS = signatureS;
+        //this.signatureR8 = signatureR8;
+        //this.signatureS = signatureS;
         this.accountNC = accountNC;
         this.newAccountNC = newAccountNC;
         this.enabled = enabled;
@@ -336,11 +360,12 @@ export class AccountCircuit {
         let outputNC1 = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
         let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
 
-        let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? (await aliasHashDigest(aliasHash)): 0;
+        let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? aliasHash : 0n;
         let nullifier2 = (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE ||
             proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) ?
             (await newAccountDigest(newAccountPubKey)): 0;
 
+        /*
         let msghash = await accountDigest(
             aliasHash,
             accountPubKey[0],
@@ -350,6 +375,7 @@ export class AccountCircuit {
             nullifier1,
             nullifier2
         );
+        */
 
         /*
         let state = await WorldState.getInstance();
@@ -368,7 +394,7 @@ export class AccountCircuit {
         }
         */
 
-        let sig = await signingKey.sign(msghash);
+        //let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
             [outputNC1, outputNC2],
@@ -380,8 +406,8 @@ export class AccountCircuit {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
-            sig.S,
+            //[F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
+            //sig.S,
             accountNC,
             newAccountNC
         );
@@ -404,8 +430,8 @@ export class AccountCircuit {
             new_account_note_npk: this.newAccountPubKey,
             new_account_note_spk1: this.newSigningPubKey1,
             new_account_note_spk2: this.newSigningPubKey2,
-            signatureR8: this.signatureR8,
-            signatureS: this.signatureS,
+            //signatureR8: this.signatureR8,
+            //signatureS: this.signatureS,
             enabled: this.enabled
         }
         // console.log(result);

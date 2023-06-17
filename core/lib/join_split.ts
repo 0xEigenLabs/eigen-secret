@@ -1,4 +1,4 @@
-const { buildPoseidon } = require("circomlibjs");
+import { getPoseidon } from "./digest";
 const createBlakeHash = require("blake-hash");
 import { Note } from "./note";
 import { SigningKey, EigenAddress } from "./account";
@@ -26,8 +26,8 @@ export class JoinSplitInput {
     accountPubKey: bigint[];
     accountRequired: boolean;
     signingPubKey: bigint[];
-    signatureR8: bigint[];
-    signatureS: bigint;
+    //signatureR8: bigint[];
+    //signatureS: bigint;
     enabled: bigint;
 
     public constructor(
@@ -48,7 +48,6 @@ export class JoinSplitInput {
         accountPubKey: bigint[],
         signingPubKey: bigint[],
         accountRequired: boolean,
-        sig: any,
         enabled: bigint = 1n
     ) {
         this.proofId = proofId;
@@ -67,8 +66,8 @@ export class JoinSplitInput {
         this.accountPubKey = accountPubKey;
         this.accountPrvKey = accountPrvKey;
         this.signingPubKey = signingPubKey;
-        this.signatureR8 = sig.R8;
-        this.signatureS = sig.S;
+        //this.signatureR8 = sig.R8;
+        //this.signatureS = sig.S;
         this.accountRequired = accountRequired;
         this.enabled = enabled;
     }
@@ -105,8 +104,8 @@ export class JoinSplitInput {
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
             siblings_ac: proof.siblingsAC,
-            signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
-            signatureS: this.signatureS,
+            //signatureR8: [F.toObject(this.signatureR8[0]), F.toObject(this.signatureR8[1])],
+            //signatureS: this.signatureS,
             enabled: this.enabled
         };
 
@@ -139,7 +138,7 @@ export class JoinSplitCircuit {
     static readonly PROOF_ID_TYPE_SEND: number = 3;
 
     static async hashMsg(nc1: any, nc2: any, outputNote1: any, outputNote2: any, publicOwner: any, publicValue: any) {
-        let poseidon = await buildPoseidon();
+        let poseidon = await getPoseidon();
         let res = poseidon([
             nc1, nc2, outputNote1, outputNote2, publicOwner, publicValue
         ]);
@@ -244,8 +243,8 @@ export class JoinSplitCircuit {
                 firstNote.val + note.val, secret, owner, assetId, nullifier2, false, index());
             let outputNc2 = await outputNote2.compress(babyJub);
 
-            let sig = await JoinSplitCircuit.calculateSignature(
-                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, 0n, 0n);
+            //let sig = await JoinSplitCircuit.calculateSignature(
+            //    accountKey, nullifier1, nullifier2, outputNc1, outputNc2, 0n, 0n);
 
             /*
             let state = await WorldState.getInstance();
@@ -271,8 +270,7 @@ export class JoinSplitCircuit {
                 ak[1][0],
                 ak[0],
                 (await signingKey.toCircuitInput())[0],
-                accountRequired,
-                sig
+                accountRequired
             );
             inputList.push(input);
             firstNote = outputNote2;
@@ -346,8 +344,8 @@ export class JoinSplitCircuit {
             let outputNc2 = await outputNote2.compress(babyJub);
             outputNCs.push(outputNc2);
 
-            let sig = await JoinSplitCircuit.calculateSignature(
-                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
+            //let sig = await JoinSplitCircuit.calculateSignature(
+            //    accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
             /*
             let state = await WorldState.getInstance();
             await state.insert(outputNc1, nullifier1);
@@ -368,8 +366,7 @@ export class JoinSplitCircuit {
                 ak[1][0],
                 ak[0],
                 (signingKey.toCircuitInput())[0],
-                accountRequired,
-                sig
+                accountRequired
             );
             inputList.push(input);
         }
@@ -380,7 +377,7 @@ export class JoinSplitCircuit {
         accountKey: SigningKey,
         nf1: bigint, nf2: bigint, outputNc1: bigint,
         outputNc2: bigint, publicOwner: bigint, publicValue: bigint) {
-        let poseidon = await buildPoseidon();
+        let poseidon = await getPoseidon();
         let msghash = poseidon([
             nf1,
             nf2,
@@ -394,7 +391,7 @@ export class JoinSplitCircuit {
     }
 
     static async calculateNullifier(eddsa: any, nc: bigint, inputNoteInUse: bigint, nk: SigningKey) {
-        let poseidon = await buildPoseidon();
+        let poseidon = await getPoseidon();
         const pvk = eddsa.pruneBuffer(createBlakeHash("blake512").update(nk.prvKey).digest().slice(0, 32));
         const ak = Scalar.shr(utils.leBuff2int(pvk), 3);
 

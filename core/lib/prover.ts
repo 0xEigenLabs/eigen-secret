@@ -102,7 +102,7 @@ export class Prover {
 
     static async updateStateForClient(input: any) {
         let wasmUrl = `${Prover.serverAddr}/public/main_update_state_js/main_update_state.wasm`;
-        let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.16`;
+        let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.18`;
 
         const wasmBuffer = await Prover.fetchRemoteFile(wasmUrl);
         const witnessCalculator = await Prover.witnessCalculator(wasmBuffer);
@@ -121,7 +121,7 @@ export class Prover {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
-        let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.16`;
+        let zkeyUrl = `${Prover.serverAddr}/public/circuit_final.zkey.18`;
 
         const vKey = await snarkjs.zKey.exportVerificationKey(zkeyUrl);
         const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
@@ -160,7 +160,7 @@ export class Prover {
 
     static async updateStateForBackend(circuitPath: string, input: any) {
         let wasm = pathJoin([circuitPath, "main_update_state_js", "main_update_state.wasm"]);
-        let zkey = pathJoin([circuitPath, "circuit_final.zkey.16"]);
+        let zkey = pathJoin([circuitPath, "circuit_final.zkey.18"]);
         const wc = require(`${circuitPath}/main_update_state_js/witness_calculator`);
         const buffer = fs.readFileSync(wasm);
         const witnessCalculator = await wc(buffer);
@@ -184,7 +184,7 @@ export class Prover {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
-        let zkey = pathJoin([circuitPath, "circuit_final.zkey.16"]);
+        let zkey = pathJoin([circuitPath, "circuit_final.zkey.18"]);
         const vKey = await snarkjs.zKey.exportVerificationKey(zkey);
         const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
         return res;

@@ -21,6 +21,7 @@ template JoinSplitDigest() {
     out <== hash.out;
 }
 
+/*
 template AccountDigest() {
     signal input alias_hash;
     signal input account_note_npk_x;
@@ -42,6 +43,7 @@ template AccountDigest() {
 
     out <== hash.out;
 }
+*/
 
 template NullifierFunction() {
     signal input nc;
@@ -50,13 +52,22 @@ template NullifierFunction() {
     signal output out;
 
     component hash = Poseidon(3);
-    //log("NullifierFunction");
-    //log(nc);
-    //log(input_note_in_use);
-    //log(nk);
     hash.inputs[0] <== nc;
     hash.inputs[1] <== input_note_in_use;
     hash.inputs[2] <== nk;
 
+    hash.out ==> out;
+}
+
+template AliasHash(k) {
+    signal input alias;
+    signal input pubKey[2][k];
+    signal output out;
+
+    component hash = Poseidon(1 + k);
+    hash.inputs[0] <== alias;
+    for (var i = 0; i < k; i ++) {
+        hash.inputs[1+i] <== pubKey[0][i];
+    }
     hash.out ==> out;
 }

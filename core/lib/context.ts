@@ -1,24 +1,26 @@
-import { normalizeAlias, verifyEOASignature, hasValue, SESSION_DURATION } from "./utils";
+import { formatMessage, prepareJson, normalizeAlias, verifyEOASignature, hasValue, SESSION_DURATION, calcPubKeyPoint } from "./utils";
 import { ErrCode } from "./error";
+import { utils } from "ethers";
+import { splitToRegisters, calculateEffECDSACircuitInput } from "./secp256k1_utils";
+
 export class Context {
     alias: string;
     ethAddress: string;
-    rawMessage: string;
     timestamp: string;
     signature: string;
+    pubKey: bigint[];
 
     constructor(
         alias: string,
         ethAddress: string,
-        rawMessage: string,
         timestamp: string,
         signature: string
     ) {
         this.alias = alias;
         this.ethAddress = ethAddress;
-        this.rawMessage = rawMessage;
         this.timestamp = timestamp;
         this.signature = signature;
+        this.pubKey = calcPubKeyPoint(signature, ethAddress, timestamp);
     }
 
     static deserialize(serialized: string) {
@@ -26,14 +28,13 @@ export class Context {
         return new Context(
             obj.alias,
             obj.ethAddress,
-            obj.rawMessage,
             obj.timestamp,
             obj.signature
         );
     }
 
     serialize() {
-        return JSON.stringify(this)
+        return JSON.stringify(prepareJson(this))
     }
 
     check() {
@@ -41,14 +42,12 @@ export class Context {
             !hasValue(this.alias) ||
             !normalizeAlias(this.alias) ||
             !hasValue(this.signature) ||
-            !hasValue(this.rawMessage) ||
             !hasValue(this.timestamp) ||
             !hasValue(this.ethAddress)) {
             return ErrCode.InvalidInput;
         }
 
         let validAdddr = verifyEOASignature(
-            this.rawMessage,
             this.signature,
             this.ethAddress,
             this.timestamp
@@ -61,5 +60,23 @@ export class Context {
             return ErrCode.InvalidAuth;
         }
         return ErrCode.Success;
+    }
+
+    toCircuitInput() {
+        let strRawMessage = formatMessage(this.ethAddress, this.timestamp);
+        let messageHash = utils.hashMessage(strRawMessage);
+        let msgHash = Buffer.from(utils.arrayify(messageHash))
+        const ecdsaInput = calculateEffECDSACircuitInput(this.signature, msgHash);
+
+        const input = {
+            s: ecdsaInput.s,
+            T: ecdsaInput.T,
+            U: ecdsaInput.U,
+            pubKey: [
+                splitToRegisters(this.pubKey[0].toString(16)),
+                splitToRegisters(this.pubKey[1].toString(16))
+            ]
+        };
+        return input;
     }
 }

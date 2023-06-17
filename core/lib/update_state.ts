@@ -21,8 +21,8 @@ export class UpdateStatusInput {
     accountPubKey: bigint[];
     accountRequired: boolean;
     signingPubKey: bigint[];
-    signatureR8: bigint[];
-    signatureS: bigint;
+    //signatureR8: bigint[];
+    //signatureS: bigint;
     newAccountPubKey: bigint[];
     newSigningPubKey1: bigint[];
     newSigningPubKey2: bigint[];
@@ -30,6 +30,7 @@ export class UpdateStatusInput {
     // tmp
     accountNC: bigint;
     newAccountNC: bigint;
+    enabled_account_circuit: bigint;
 
     public constructor(
         proofId: number,
@@ -49,13 +50,14 @@ export class UpdateStatusInput {
         accountPubKey: bigint[],
         signingPubKey: bigint[],
         accountRequired: boolean,
-        signatureR8: bigint[],
-        signatureS: bigint,
+        //signatureR8: bigint[],
+        //signatureS: bigint,
         newAccountPubKey: bigint[],
         newSigningPubKey1: bigint[],
         newSigningPubKey2: bigint[],
         accountNC: bigint,
-        newAccountNC: bigint
+        newAccountNC: bigint,
+        enabledAccountCircuit: bigint
     ) {
         this.accountNC = accountNC;
         this.newAccountNC = newAccountNC;
@@ -78,13 +80,14 @@ export class UpdateStatusInput {
         this.newAccountPubKey = newAccountPubKey;
         this.newSigningPubKey1 = newSigningPubKey1;
         this.newSigningPubKey2 = newSigningPubKey2;
-        this.signatureR8 = signatureR8;
-        this.signatureS = signatureS;
+        //this.signatureR8 = signatureR8;
+        //this.signatureS = signatureS;
         this.accountRequired = accountRequired;
+        this.enabled_account_circuit = enabledAccountCircuit;
     }
 
     // nomalize the input
-    toCircuitInput(babyJub: any, proof: any) {
+    toCircuitInput(babyJub: any, proof: any, bAlias: bigint, effECDSAInput: any) {
         let inputJson = {
             proof_id: this.proofId,
             public_value: this.publicValue,
@@ -97,7 +100,12 @@ export class UpdateStatusInput {
             siblings_ac: proof.siblingsAC,
             asset_id: this.assetId,
             public_asset_id: this.publicAssetId,
-            alias_hash: this.aliasHash,
+            alias: bAlias,
+            s: effECDSAInput.s,
+            pubKey: effECDSAInput.pubKey,
+            T: effECDSAInput.T,
+            U: effECDSAInput.U,
+            enabled_account_circuit: this.enabled_account_circuit,
             input_note_val: new Array<bigint>(2),
             input_note_secret: new Array<bigint>(2),
             input_note_asset_id: new Array<bigint>(2),
@@ -114,8 +122,8 @@ export class UpdateStatusInput {
             account_note_nk: this.accountPrvKey,
             account_note_npk: this.accountPubKey,
             account_note_spk: this.signingPubKey,
-            signatureR8: this.signatureR8,
-            signatureS: this.signatureS,
+            //signatureR8: this.signatureR8,
+            //signatureS: this.signatureS,
             new_account_note_npk: this.newAccountPubKey,
             new_account_note_spk1: this.newSigningPubKey1,
             new_account_note_spk2: this.newSigningPubKey2
@@ -155,8 +163,8 @@ export class UpdateStatusInput {
             }
         }
 
-        /*
         // console.log(inputJson)
+        /*
         const fs = require("fs");
         fs.writeFileSync("./circuits/main_update_state.input.json",
                          JSON.stringify(
@@ -206,13 +214,14 @@ export class UpdateStatusCircuit {
             accountInput.accountPubKey,
             accountInput.signingPubKey,
             false,
-            accountInput.signatureR8,
-            accountInput.signatureS,
+            //accountInput.signatureR8,
+            //accountInput.signatureS,
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
             accountInput.accountNC,
-            accountInput.newAccountNC
+            accountInput.newAccountNC,
+            1n
         );
     }
 
@@ -267,9 +276,9 @@ export class UpdateStatusCircuit {
                 joinSplitInput[i].accountPubKey,
                 joinSplitInput[i].signingPubKey,
                 joinSplitInput[i].accountRequired,
-                [F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
-                joinSplitInput[i].signatureS,
-                [0n, 0n], [0n, 0n], [0n, 0n], 0n, 0n
+                //[F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
+                //joinSplitInput[i].signatureS,
+                [0n, 0n], [0n, 0n], [0n, 0n], 0n, 0n, 0n
             );
             inputList.push(input);
         }

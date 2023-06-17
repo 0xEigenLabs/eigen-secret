@@ -1,17 +1,17 @@
 const request = require("supertest");
 import app from "../server/dist/service";
 import { ethers } from "ethers";
-import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { signEOASignature } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect } from "chai";
 /* globals describe, before, it */
 describe("POST /assets", () => {
     const alias = "api.eigen.eth";
+    let timestamp = Math.floor(Date.now()/1000).toString();
     before(async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
-        let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
-        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
+        const signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         // create asset
         const response = await request(app)
         .post("/assets/create")
@@ -32,9 +32,8 @@ describe("POST /assets", () => {
 
     it("Get token price", async () => {
         let newEOAAccount = await ethers.Wallet.createRandom();
-        let timestamp = Math.floor(Date.now()/1000).toString();
-        const signature = await signEOASignature(newEOAAccount, rawMessage, newEOAAccount.address, timestamp);
-        let ctx = new Context(alias, newEOAAccount.address, rawMessage, timestamp, signature);
+        const signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         const responseGet = await request(app)
         .post("/assets/get")
         .send({

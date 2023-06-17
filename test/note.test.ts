@@ -1,5 +1,4 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
 import { Note } from "@eigen-secret/core/dist-node/note";
 import { index } from "@eigen-secret/core/dist-node/utils";
 
@@ -21,7 +20,7 @@ describe("Test NoteCompressor", function() {
     it("Note compress test", async () => {
         let key = new SigningKey(eddsa);
         let note = new Note(1n, 2n, key.pubKey, 4, 5n, true, index());
-        let wtns = await utils.executeCircuit(circuit, note.toCircuitInput(babyJub));
+        let wtns = await test.executeCircuit(circuit, note.toCircuitInput(babyJub));
         await circuit.assertOut(wtns, { out: await note.compress(babyJub) });
     })
 });

@@ -1,5 +1,4 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
 import { Note } from "@eigen-secret/core/dist-node/note";
 import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist-node/account";
 import { WorldState } from "../server/dist/state_tree";
@@ -64,7 +63,7 @@ describe("Test JoinSplit Circuit", function() {
                 acStateKey
             );
             console.log(proof);
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
@@ -100,7 +99,7 @@ describe("Test JoinSplit Circuit", function() {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
         }
     })
 });

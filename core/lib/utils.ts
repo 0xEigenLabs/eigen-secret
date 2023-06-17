@@ -1,14 +1,21 @@
 import { Buffer } from "buffer";
-import { BigNumberish } from "ethers";
-import { ethers } from "ethers";
+import { BigNumberish, utils } from "ethers";
 import consola from "consola";
 import { randomBytes as _randomBytes } from "crypto";
+let EC = require("elliptic").ec;
+const ec = new EC("secp256k1");
+// import { hashPersonalMessage, ecsign } from "@ethereumjs/util";
 
-export const rawMessage = "Sign this message as a credential to interact with Eigen Secret L2 nodes. " +
+export const rawMessage = "Sign this message as a credential to interact with Eigen Secret L2. " +
 "IMPORTANT: Sign this message if you trust the application.";
 
 export function index() {
     return BigInt("0x" + _randomBytes(31).toString("hex"))
+}
+
+// FIXME
+export const formatMessage = (_ethAddress: string, _timestamp: string) => {
+    return rawMessage;
 }
 
 export function arrayChunk(array: Array<number>, chunkSize: number): any {
@@ -72,16 +79,6 @@ export function bits2Bignum(bits: [number], nWidth: number) {
     result.push(bits2NumBE(end - i * nWidth, tmpbits));
   }
   return result;
-}
-
-export async function executeCircuit(
-  circuit: any,
-  inputs: any
-) {
-  const witness = await circuit.calculateWitness(inputs, true)
-  await circuit.checkConstraints(witness)
-  await circuit.loadSymbols()
-  return witness
 }
 
 export function bigint2Tuple(x: bigint) {
@@ -164,27 +161,39 @@ export function parseProof(proof: any): Proof {
 
 // example: https://github.com/ethers-io/ethers.js/issues/447
 export function verifyEOASignature(
-    rawMessage: string,
     hexSignature: string,
     ethAddress: string,
     timestamp: string
 ) {
-    let rawMessageAll = rawMessage + ethAddress + timestamp;
-    let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
-    let message = ethers.utils.toUtf8Bytes(strRawMessage);
-    let messageHash = ethers.utils.hashMessage(message);
-    let address = ethers.utils.recoverAddress(ethers.utils.arrayify(messageHash), hexSignature);
+    let strRawMessage = formatMessage(ethAddress, timestamp)
+    let messageHash = utils.hashMessage(strRawMessage);
+    let address = utils.recoverAddress(utils.arrayify(messageHash), hexSignature);
     return address == ethAddress;
+}
+
+export function calcPubKeyPoint(
+    hexSignature: string,
+    ethAddress: string,
+    timestamp: string
+): bigint[] {
+    let strRawMessage = formatMessage(ethAddress, timestamp);
+    let messageHash = utils.hashMessage(strRawMessage);
+
+    const sig = utils.splitSignature(hexSignature);
+    const rs = { r: utils.arrayify(sig.r), s: utils.arrayify(sig.s) };
+    let pubKeyP = ec.recoverPubKey(utils.arrayify(messageHash), rs, sig.recoveryParam);
+
+    // return "0x" + getCurve().recoverPubKey(arrayify(messageHash), rs, sig.recoveryParam).encode("hex", false);
+    // let pubKey = ethers.utils.recoverPublicKey(ethers.utils.arrayify(messageHash), hexSignature);
+    return [BigInt(pubKeyP.x.toString()), BigInt(pubKeyP.y.toString())];
 }
 
 export async function signEOASignature(
     EOAAccount: any,
-    rawMessage: string,
     ethAddress: string,
     timestamp: string
 ) {
-    let rawMessageAll = rawMessage + ethAddress + timestamp;
-    let strRawMessage = "\x19Ethereum Signed Message:\n" + rawMessageAll.length + rawMessageAll;
+    let strRawMessage = formatMessage(ethAddress, timestamp);
     return await EOAAccount.signMessage(strRawMessage)
 }
 

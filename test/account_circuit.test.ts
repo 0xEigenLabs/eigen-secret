@@ -1,7 +1,9 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
-import { SigningKey, AccountCircuit } from "@eigen-secret/core/dist-node/account";
+import { calcAliasHash, SigningKey, AccountCircuit } from "@eigen-secret/core/dist-node/account";
 import { WorldState } from "../server/dist/state_tree";
+import { signEOASignature } from "@eigen-secret/core/dist-node/utils";
+import { Context } from "@eigen-secret/core/dist-node/context";
+import { ethers } from "ethers";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 /* globals describe, before, it */
@@ -12,7 +14,11 @@ describe("Account circuit test", function() {
     let F: any;
     let accountKey: SigningKey;
     let signingKey: SigningKey;
-    let aliasHash: bigint = 123n;
+    let aliasHash: any;
+    let newEOAAccount: any;
+    let signature: any;
+    let timestamp = Math.floor(Date.now()/1000).toString();
+    const alias = "eigen.eth";
 
     before(async () => {
         eddsa = await buildEddsa();
@@ -26,6 +32,10 @@ describe("Account circuit test", function() {
             {});
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
+        newEOAAccount = await ethers.Wallet.createRandom();
+        signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        aliasHash = await calcAliasHash(eddsa, alias, ctx.pubKey);
     })
 
     it("Account create test", async () => {
@@ -55,7 +65,7 @@ describe("Account circuit test", function() {
 
         // FIXME: nullifier hardcoded to 1
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = new SigningKey(eddsa);
@@ -77,7 +87,7 @@ describe("Account circuit test", function() {
         );
 
         proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_UPDATE;
 
@@ -96,6 +106,6 @@ describe("Account circuit test", function() {
         );
 
         proof = await WorldState.updateStateTree(0n, 0n, 0n, 0n, input.accountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(proof));
     })
 });

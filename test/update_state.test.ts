@@ -1,16 +1,19 @@
 import * as test from "./test";
-import * as utils from "@eigen-secret/core/dist-node/utils";
 import { Note } from "@eigen-secret/core/dist-node/note";
 import { assert } from "chai";
-import { compress as accountCompress, SigningKey } from "@eigen-secret/core/dist-node/account";
+import { calcAliasHash, compress as accountCompress, SigningKey } from "@eigen-secret/core/dist-node/account";
 import { WorldState } from "../server/dist/state_tree";
 import { JoinSplitCircuit } from "@eigen-secret/core/dist-node/join_split";
 import { AccountCircuit } from "@eigen-secret/core/dist-node/account";
 import { UpdateStatusCircuit } from "@eigen-secret/core/dist-node/update_state";
+import { alias2Bigint } from "@eigen-secret/core/dist-node/digest";
+import { Context } from "@eigen-secret/core/dist-node/context";
+import { signEOASignature } from "@eigen-secret/core/dist-node/utils";
 import { Prover } from "@eigen-secret/core/dist-node/prover";
 const path = require("path");
 const { readFileSync } = require("fs");
 const snarkjs = require("snarkjs");
+import { ethers } from "ethers";
 
 const { buildEddsa, buildBabyjub } = require("circomlibjs");
 /* globals describe, before, it */
@@ -21,11 +24,15 @@ describe("Test JoinSplit Circuit", function() {
     let F: any;
     let accountKey: SigningKey;
     let signingKey: SigningKey;
-    let aliasHash: bigint = 123n;
+    let aliasHash: any;
     let acStateKey: any;
     let assetId: number = 1;
     let signer: any;
     let accountRequired: boolean = false;
+    let newEOAAccount: any;
+    let signature: any;
+    let timestamp = Math.floor(Date.now()/1000).toString();
+    const alias = "eigen.eth";
 
     before(async () => {
         eddsa = await buildEddsa();
@@ -35,11 +42,15 @@ describe("Test JoinSplit Circuit", function() {
         circuit = await test.genTempMain("circuits/update_state.circom",
             "UpdateState",
             "proof_id, public_value, public_owner,"+
-            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id",
-            "20",
+            "num_input_notes, output_nc_1, output_nc_2, data_tree_root, public_asset_id, U, pubKey",
+            "20, 64, 4",
             { include: third });
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
+        newEOAAccount = await ethers.Wallet.createRandom();
+        signature = await signEOASignature(newEOAAccount, newEOAAccount.address, timestamp);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        aliasHash = await calcAliasHash(eddsa, alias, ctx.pubKey);
     })
 
     it("Account create update_state test", async () => {
@@ -66,8 +77,10 @@ describe("Test JoinSplit Circuit", function() {
             newSigningPubKey2,
             aliasHash
         );
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        let bAlias = alias2Bigint(eddsa, alias);
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
         newAccountKey = new SigningKey(eddsa);
@@ -89,7 +102,7 @@ describe("Test JoinSplit Circuit", function() {
         );
 
         proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
-        await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+        await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
     })
 
     it("JoinSplit deposit and send update_state test", async () => {
@@ -99,6 +112,8 @@ describe("Test JoinSplit Circuit", function() {
         // let state = await WorldState.getInstance();
         // await state.insert(F.e(acStateKey), 1n);
         // await WorldState.updateStateTree(acStateKey, 1n, 0n, 0n, acStateKey);
+        let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
+        let bAlias = alias2Bigint(eddsa, alias);
 
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
@@ -125,8 +140,7 @@ describe("Test JoinSplit Circuit", function() {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            console.log(input.toCircuitInput(babyJub, proof));
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
         }
         let confirmedNote: Note[] = [];
         for (const inp of inputs) {
@@ -162,7 +176,7 @@ describe("Test JoinSplit Circuit", function() {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
         }
 
         // create a withdraw proof
@@ -198,8 +212,7 @@ describe("Test JoinSplit Circuit", function() {
                 input.outputNotes[1].inputNullifier,
                 acStateKey
             );
-            console.log(input.toCircuitInput(babyJub, proof));
-            await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
+            await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
         }
     })
 
@@ -212,7 +225,7 @@ describe("Test JoinSplit Circuit", function() {
         const proof = proofAndPublicSignals.proof;
         const publicSignals = proofAndPublicSignals.publicSignals;
 
-        let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey.16");
+        let zkey = path.join(__dirname, "..", "circuits/circuit_final.zkey.18");
         const vKey = await snarkjs.zKey.exportVerificationKey(zkey);
         const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
         assert.equal(res, true)

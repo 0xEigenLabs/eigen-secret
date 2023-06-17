@@ -1,7 +1,8 @@
 const {
     // newMemEmptyTrie
-    SMT, buildPoseidon
+    SMT
 } = require("circomlibjs");
+import { getPoseidon } from "./digest";
 const { getCurveFromName } = require("ffjavascript-browser");
 const consola = require("consola");
 
@@ -59,7 +60,7 @@ export class StateTreeCircuitInput {
 
 export async function getHashes() {
     const bn128 = await getCurveFromName("bn128", true);
-    const poseidon = await buildPoseidon();
+    const poseidon = await getPoseidon();
     return {
         hash0: function(left: any, right: any) {
             return poseidon([left, right]);
