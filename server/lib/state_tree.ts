@@ -8,7 +8,7 @@ const _smtmodel = require("../models/smtmodel");
 export const SMTModel = _smtmodel(sequelize, DataTypes);
 
 export class WorldState {
-    static instance: StateTree|undefined;
+    static instance: StateTree;
     private constructor() {}
 
     public static async getInstance(): Promise<StateTree> {
@@ -19,13 +19,6 @@ export class WorldState {
         }
         consola.log("resuing");
         return WorldState.instance;
-    }
-
-    static async resetInstance() {
-        if (WorldState.instance) {
-            await WorldState.instance.reset();
-            WorldState.instance = undefined;
-        }
     }
 
     public static async updateStateTree(
