@@ -40,6 +40,7 @@ describe("Test JoinSplit Circuit", function() {
             { include: third });
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
+        await WorldState.resetInstance();
     })
 
     it("Account create update_state test", async () => {
@@ -66,7 +67,6 @@ describe("Test JoinSplit Circuit", function() {
             newSigningPubKey2,
             aliasHash
         );
-        await WorldState.resetInstance();
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
 
@@ -155,7 +155,6 @@ describe("Test JoinSplit Circuit", function() {
             confirmedNote,
             accountRequired
         );
-        await WorldState.resetInstance();
         for (const input of inputs2) {
             const proof = await WorldState.updateStateTree(
                 input.outputNCs[0],
