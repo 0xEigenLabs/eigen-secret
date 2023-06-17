@@ -79,6 +79,7 @@ describe("Test JoinSplit Circuit", function() {
         );
         let ctx = new Context(alias, newEOAAccount.address, timestamp, signature);
         let bAlias = alias2Bigint(eddsa, alias);
+        await WorldState.resetInstance();
         let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
         await test.executeCircuit(circuit, input.toCircuitInput(babyJub, proof, bAlias, ctx.toCircuitInput()));
 
@@ -132,6 +133,7 @@ describe("Test JoinSplit Circuit", function() {
             [],
             accountRequired
         );
+        await WorldState.resetInstance();
         for (const input of inputs) {
             const proof = await WorldState.updateStateTree(
                 input.outputNCs[0],
