@@ -223,4 +223,9 @@ export class StateTree {
         const siblings = siblingsPad(res.siblings, this.tree.F);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
     }
+
+    reset() {
+        this.tree = null;
+        this.F = null;
+    }
 }

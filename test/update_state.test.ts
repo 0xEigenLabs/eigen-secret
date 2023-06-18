@@ -40,6 +40,7 @@ describe("Test JoinSplit Circuit", function() {
             { include: third });
         accountKey = new SigningKey(eddsa);
         signingKey = new SigningKey(eddsa);
+        await WorldState.resetInstance();
     })
 
     it("Account create update_state test", async () => {

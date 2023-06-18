@@ -8,7 +8,7 @@ import path from "path";
 export const defaultContractFile = path.join(__dirname, "../.contract.json");
 export const defaultAccountFile = path.join(__dirname, "../.account.json")
 export const defaultCircuitPath = path.join(__dirname, "../circuits/");
-export const defaultServerEndpoint = "http://127.0.0.1:3000";
+export const defaultServerEndpoint = process.env.ENDPOINT || "http://127.0.0.1:3000";
 
 export const defaultContractABI = {
     spongePoseidonContractABI: spongePoseidonContract.abi,
