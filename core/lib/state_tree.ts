@@ -1,7 +1,5 @@
-const {
-    // newMemEmptyTrie
-    SMT, buildPoseidon
-} = require("circomlibjs");
+const { buildPoseidon } = require("circomlibjs");
+import { SMT } from "./smt";
 const { getCurveFromName } = require("ffjavascript-browser");
 const consola = require("consola");
 
