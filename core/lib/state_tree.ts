@@ -181,12 +181,8 @@ export class StateTree {
         if (maxIdRecord != null) {
             rt = F.e(maxIdRecord.key);
         }
-        consola.log("root: ", rt)
         this.tree = new SMT(db, rt, hash0, hash1, F);
-        consola.log("success")
         this.F = F;
-        // const rt = await db.getRoot();
-        // this.tree = await newMemEmptyTrie();
     }
 
     root(): any {
@@ -194,31 +190,31 @@ export class StateTree {
     }
 
     async find(_key: bigint) {
-        let key = this.tree.F.e(_key);
+        let key = this.F.e(_key);
         let res = await this.tree.find(key);
         return res;
     }
 
     async insert(_key: bigint, _value: bigint): Promise<StateTreeCircuitInput> {
-        const key = this.tree.F.e(_key);
-        const value = this.tree.F.e(_value)
+        const key = this.F.e(_key);
+        const value = this.F.e(_value)
         const res = await this.tree.insert(key, value);
-        const siblings = siblingsPad(res.siblings, this.tree.F);
+        const siblings = siblingsPad(res.siblings, this.F);
         return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
     }
 
     async delete(_key: bigint): Promise<StateTreeCircuitInput> {
-        const key = this.tree.F.e(_key);
+        const key = this.F.e(_key);
         const res = await this.tree.delete(key);
-        const siblings = siblingsPad(res.siblings, this.tree.F);
+        const siblings = siblingsPad(res.siblings, this.F);
         return new StateTreeCircuitInput(this.tree, [1, 1], res, siblings, res.delKey, res.delValue);
     }
 
     async update(_key: bigint, _newValue: bigint): Promise<StateTreeCircuitInput> {
-        const key = this.tree.F.e(_key);
-        const newValue = this.tree.F.e(_newValue);
+        const key = this.F.e(_key);
+        const newValue = this.F.e(_newValue);
         const res = await this.tree.update(key, newValue);
-        const siblings = siblingsPad(res.siblings, this.tree.F);
+        const siblings = siblingsPad(res.siblings, this.F);
         return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
     }
 
