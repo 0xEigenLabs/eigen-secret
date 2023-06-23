@@ -1,5 +1,5 @@
 import { SMT, TNode } from "./smt";
-const getHashes = require("./smt_hashes_poseidon");
+import getHashes from "./smt_hashes_poseidon";
 const consola = require("consola");
 
 export function siblingsPad(siblings: any, F: any, padding: boolean = true) {
