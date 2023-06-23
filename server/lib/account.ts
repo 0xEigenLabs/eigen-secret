@@ -54,7 +54,7 @@ async function getAccountInternal(alias: string, ethAddress: string) {
     let found = await Account.findOne({ where: { alias } });
     if (found) {
         if (found.ethAddress !== ethAddress) {
-            return errResp(ErrCode.DuplicatedRecordError, "ETH Address not match");
+            return errResp(ErrCode.DuplicatedRecordError, "AccountID exists");
         } else {
             return succResp(found);
         }
