@@ -2,8 +2,7 @@ const { Scalar } = require("ffjavascript-browser");
 import getHashes from "./smt_hashes_poseidon";
 
 export async function buildSMT(db: any, root: any) {
-
-    const {hash0, hash1,F} = await getHashes();
+    const { hash0, hash1, F } = await getHashes();
 
     return new SMT(db, root, hash0, hash1, F);
 }
@@ -47,7 +46,7 @@ export class SMT {
         return res;
     }
 
-    async update(_key: any, _newValue: any) {
+    async update(_key: bigint, _newValue: bigint) {
         const F = this.F;
         const key = F.e(_key);
         const newValue = F.e(_newValue);
@@ -66,12 +65,12 @@ export class SMT {
 
         let rtOld = this.hash1(key, resFind.foundValue);
         let rtNew = this.hash1(key, newValue);
-        ins.push([rtNew, [1, key, newValue ]]);
+        ins.push([rtNew, [1, key, newValue]]);
         dels.push(rtOld);
 
         const keyBits = this._splitBits(key);
         for (let level = resFind.siblings.length-1; level >=0; level--) {
-            let oldNode, newNode;
+            let oldNode; let newNode;
             const sibling = resFind.siblings[level];
             if (keyBits[level]) {
                 oldNode = [sibling, rtOld];
@@ -96,7 +95,7 @@ export class SMT {
         return res;
     }
 
-    async delete(_key: any) {
+    async delete(_key: bigint) {
         const F = this.F;
         const key = F.e(_key);
 
@@ -182,7 +181,7 @@ export class SMT {
         return res;
     }
 
-    async insert(_key: any, _value: any) {
+    async insert(_key: bigint, _value: bigint) {
         const F = this.F;
         const key = F.e(_key);
         const value = F.e(_value);
@@ -218,7 +217,7 @@ export class SMT {
         const dels = [];
 
         let rt = this.hash1(key, value);
-        inserts.push([rt,[1, key, value]] );
+        inserts.push([rt, [1, key, value]] );
 
         for (let i=res.siblings.length-1; i>=0; i--) {
             if ((i<res.siblings.length-1)&&(!F.isZero(res.siblings[i]))) {
@@ -238,10 +237,10 @@ export class SMT {
             let newRt;
             if (newKeyBits[i]) {
                 newRt = this.hash0(res.siblings[i], rt);
-                inserts.push([newRt,[res.siblings[i], rt]] );
+                inserts.push([newRt, [res.siblings[i], rt]] );
             } else {
                 newRt = this.hash0(rt, res.siblings[i]);
-                inserts.push([newRt,[rt, res.siblings[i]]] );
+                inserts.push([newRt, [rt, res.siblings[i]]] );
             }
             rt = newRt;
         }
@@ -264,7 +263,7 @@ export class SMT {
         return res;
     }
 
-    async find(_key: any) {
+    async find(_key: bigint) {
         const key = this.F.e(_key);
         const keyBits = this._splitBits(key);
         return await this._find(key, keyBits, this.root, 0);
@@ -288,8 +287,8 @@ export class SMT {
 
         const record = await this.db.get(root);
 
-        if ((record.length==3)&&(F.eq(record[0],F.one))) {
-            if (F.eq(record[1],key)) {
+        if ((record.length==3)&&(F.eq(record[0], F.one))) {
+            if (F.eq(record[1], key)) {
                 res = {
                     found: true,
                     siblings: [],

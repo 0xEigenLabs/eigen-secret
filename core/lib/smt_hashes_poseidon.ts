@@ -5,7 +5,7 @@ export default async function getHashes() {
     const bn128 = await getCurveFromName("bn128", true);
     const poseidon = await buildPoseidon();
     return {
-        hash0: function (left: any, right: any) {
+        hash0: function(left: any, right: any) {
             return poseidon([left, right]);
         },
         hash1: function(key: any, value: any) {

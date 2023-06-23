@@ -43,34 +43,32 @@ describe("Test SMT Membership Update", function() {
     // runs circom compilation
     let circuit: any;
     let tree: any;
-    let Fr: any;
     before(async function() {
         let stateTree = path.join(__dirname, "../circuits", "state_tree.circom");
         circuit = await test.genTempMain(stateTree, "NonMembershipUpdate", "", [20], {});
         await circuit.loadSymbols();
         tree = new StateTree();
         await tree.init(SMTModel);
-        Fr = tree.F;
     });
 
     it("Test NonMembershipUpdate", async function() {
-        const key = Fr.e(333333);
-        const value = Fr.e(444111);
+        const key = 333333n;
+        const value = 444111n;
         let ci = await tree.insert(key, value);
-        let input = ci.toNonMembershipUpdateInput();
+        let input = ci.toNonMembershipUpdateInput(tree);
         await utils.executeCircuit(circuit, input)
     });
 
     it("Test NonMembershipUpdate 2", async function() {
-        const key = Fr.e("17195092312975762537892237130737365903429674363577646686847513978084990105579");
-        const value = Fr.e("19650379996168153643111744440707177573540245771926102415571667548153444658179");
+        const key = 17195092312975762537892237130737365903429674363577646686847513978084990105579n;
+        const value = 19650379996168153643111744440707177573540245771926102415571667548153444658179n;
         let ci = await tree.insert(key, value);
-        let input = ci.toNonMembershipUpdateInput();
+        let input = ci.toNonMembershipUpdateInput(tree);
 
-        const key2 = Fr.e("1");
-        const value2 = Fr.e("2");
+        const key2 = 1n;
+        const value2 = 2n;
         let ci2 = await tree.insert(key2, value2);
-        let input2 = ci2.toNonMembershipUpdateInput();
+        let input2 = ci2.toNonMembershipUpdateInput(tree);
         await utils.executeCircuit(circuit, input)
         await utils.executeCircuit(circuit, input2)
     });

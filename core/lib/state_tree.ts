@@ -1,6 +1,5 @@
-const { buildPoseidon } = require("circomlibjs");
-import { SMT } from "./smt";
-const { getCurveFromName } = require("ffjavascript-browser");
+import { SMT, TNode } from "./smt";
+const getHashes = require("./smt_hashes_poseidon");
 const consola = require("consola");
 
 export function siblingsPad(siblings: any, F: any, padding: boolean = true) {
@@ -20,52 +19,33 @@ export function pad(_sib: any) {
 export const N_LEVEL = 20;
 export class StateTreeCircuitInput {
     fnc: number[] = new Array(2);
-    oldRoot: any;
-    newRoot: any;
-    siblings: any[] = new Array(N_LEVEL);
-    oldKey: any;
-    oldValue: any;
-    isOld0: number = 0;
-    newKey: any;
-    newValue: any;
+    node: TNode;
+    newKey: bigint;
+    newValue: bigint;
 
-    public constructor(tree: any, fnc: number[], res: any, siblings: any[], key: any, value: any) {
+    public constructor(fnc: number[], node: TNode, key: bigint, value: bigint) {
         this.fnc = fnc;
-        this.oldRoot = tree.F.toObject(res.oldRoot);
-        this.newRoot = tree.F.toObject(tree.root);
-        this.siblings = siblings;
-        this.oldKey = res.isOld0 ? 0 : tree.F.toObject(res.oldKey);
-        this.oldValue = res.isOld0 ? 0 : tree.F.toObject(res.oldValue);
-        this.isOld0 = res.isOld0 ? 1 : 0;
-        this.newKey = tree.F.toObject(key);
-        this.newValue = tree.F.toObject(value);
+        this.node = node;
+        this.newKey = key;
+        this.newValue = value;
     }
 
-    toNonMembershipUpdateInput(): any {
-        return {
-            oldRoot: this.oldRoot,
-            newRoot: this.newRoot,
-            siblings: this.siblings,
-            oldKey: this.oldKey,
-            oldValue: this.oldValue,
-            isOld0: this.isOld0,
+    toNonMembershipUpdateInput(tree: any): any {
+        const F = tree.F;
+        const node = this.node;
+        const siblings = siblingsPad(node.siblings, F);
+        const res = {
+            oldRoot: F.toObject(node.oldRoot),
+            newRoot: F.toObject(node.newRoot),
+            siblings: siblings,
+            oldKey: node.isOld0? 0: F.toObject(node.oldKey),
+            oldValue: node.isOld0? 0: F.toObject(node.oldValue),
+            isOld0: node.isOld0? 1: 0,
             newKey: this.newKey,
             newValue: this.newValue
         };
-    }
-}
-
-export async function getHashes() {
-    const bn128 = await getCurveFromName("bn128", true);
-    const poseidon = await buildPoseidon();
-    return {
-        hash0: function(left: any, right: any) {
-            return poseidon([left, right]);
-        },
-        hash1: function(key: any, value: any) {
-            return poseidon([key, value, bn128.Fr.one]);
-        },
-        F: bn128.Fr
+        console.log(res);
+        return res;
     }
 }
 
@@ -195,27 +175,21 @@ export class StateTree {
         return res;
     }
 
-    async insert(_key: bigint, _value: bigint): Promise<StateTreeCircuitInput> {
-        const key = this.F.e(_key);
-        const value = this.F.e(_value)
+    async insert(key: bigint, value: bigint): Promise<StateTreeCircuitInput> {
         const res = await this.tree.insert(key, value);
-        const siblings = siblingsPad(res.siblings, this.F);
-        return new StateTreeCircuitInput(this.tree, [1, 0], res, siblings, key, value);
+        return new StateTreeCircuitInput([1, 0], res, key, value);
     }
 
-    async delete(_key: bigint): Promise<StateTreeCircuitInput> {
-        const key = this.F.e(_key);
+    async delete(key: bigint): Promise<StateTreeCircuitInput> {
         const res = await this.tree.delete(key);
-        const siblings = siblingsPad(res.siblings, this.F);
-        return new StateTreeCircuitInput(this.tree, [1, 1], res, siblings, res.delKey, res.delValue);
+        const F = this.tree.F;
+        return new StateTreeCircuitInput([1, 1], res, F.toObject(res.delKey), F.toObject(res.delValue));
     }
 
-    async update(_key: bigint, _newValue: bigint): Promise<StateTreeCircuitInput> {
-        const key = this.F.e(_key);
-        const newValue = this.F.e(_newValue);
+    async update(key: bigint, newValue: bigint): Promise<StateTreeCircuitInput> {
         const res = await this.tree.update(key, newValue);
-        const siblings = siblingsPad(res.siblings, this.F);
-        return new StateTreeCircuitInput(this.tree, [0, 1], res, siblings, res.newKey, res.newValue);
+        const F = this.tree.F;
+        return new StateTreeCircuitInput([0, 1], res, F.toObject(res.newKey), F.toObject(res.newValue));
     }
 
     reset() {
