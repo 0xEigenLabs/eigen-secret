@@ -164,7 +164,7 @@ export class RollupSC {
         return allowance.toBigInt();
     }
 
-    async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: bigint, nonce: number) {
+    async deposit(pubkeyEigenAccountKey: bigint[], assetId: number, value: bigint, nonce: number, keysFound: bigint[], valuesFound: bigint[], siblings: bigint[][]) {
         let userAccount = this.userAccount;
         assert(this.rollup);
         let receipt: any;
@@ -175,6 +175,9 @@ export class RollupSC {
                 assetId,
                 value,
                 nonce,
+                keysFound,
+                valuesFound,
+                siblings,
                 { from: userAccount.address, value: etherValue }
             )
             receipt = await deposit0.wait()
@@ -186,28 +189,6 @@ export class RollupSC {
             return errResp(ErrCode.CallContractError, JSON.stringify(error))
         }
 
-        return succResp(receipt, true);
-    }
-
-    async processDeposits(userAccount: any, keysFound: any, valuesFound: any, siblings: any) {
-        assert(this.rollup);
-        let processDeposit: any;
-        let receipt: any;
-        try {
-            processDeposit = await this.rollup.connect(userAccount).processDeposits(
-                keysFound,
-                valuesFound,
-                siblings,
-                { from: userAccount.address }
-            )
-            receipt = await processDeposit.wait()
-            if (receipt.status !== 1) {
-                throw new Error(`receipt: ${JSON.stringify(receipt)}`)
-            }
-        } catch (error: any) {
-            console.log("processDeposits revert reason", error)
-            return errResp(ErrCode.CallContractError, JSON.stringify(error))
-        }
         return succResp(receipt, true);
     }
 

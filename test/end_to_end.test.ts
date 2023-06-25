@@ -20,7 +20,7 @@ const hre = require("hardhat")
 import { poseidonSponge } from "@eigen-secret/core/dist-node/sponge_poseidon";
 import { deployPoseidons } from "@eigen-secret/core/dist-node/deploy_poseidons.util";
 /* globals describe, before, it */
-describe("POST /transactions", function() {
+describe("End2end Test", function() {
     const alias = "eigen.eth";
     let eddsa: any;
     let babyJub: any;
@@ -160,7 +160,6 @@ describe("POST /transactions", function() {
 
         // console.log("note: ", notes);
         let nonce = 0; // get nonce from metamask
-        await rollupHelper.deposit(0, assetId, value, nonce);
         // create notes
         proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let inputs = await UpdateStatusCircuit.createJoinSplitInput(
@@ -288,9 +287,8 @@ describe("POST /transactions", function() {
             console.log(responseSt.body.data);
             expect(responseSt.status).to.eq(200);
             expect(responseSt.body.errno).to.eq(0);
+            await rollupHelper.deposit(0, assetId, value, nonce, keysFound, valuesFound, siblings);
         }
-
-        await rollupHelper.processDeposits(0, keysFound, valuesFound, siblings);
     })
 
     it("end2end send", async () => {

@@ -27,7 +27,6 @@ const issueOptions = {
   origin: true,
   credentials: true
 };
-// TODO: api versioning
 app.use(cors(issueOptions));
 
 app.post("/accounts/create", createAccount);

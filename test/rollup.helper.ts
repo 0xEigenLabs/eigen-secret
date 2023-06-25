@@ -166,7 +166,7 @@ export class RollupHelper {
         return await this.tokenRegistry.numTokens();
     }
 
-    async deposit(index: number, assetId: number, value: bigint, nonce: number) {
+    async deposit(index: number, assetId: number, value: bigint, nonce: number, keysFound: bigint[], valuesFound: bigint[], siblings: bigint[][]) {
         let approveToken = await this.testToken.connect(this.userAccounts[index]).approve(
             this.rollup.address, value,
             { from: this.userAccounts[index].address }
@@ -177,26 +177,13 @@ export class RollupHelper {
             assetId,
             value,
             nonce,
+            keysFound,
+            valuesFound,
+            siblings,
             { from: this.userAccounts[index].address }
         )
         assert(deposit0, "deposit0 failed");
         return deposit0;
-    }
-
-    async processDeposits(i: number, keysFound: any, valuesFound: any, siblings: any) {
-        let processDeposit1: any;
-        try {
-            processDeposit1 = await this.rollup.connect(this.userAccounts[i]).processDeposits(
-                keysFound,
-                valuesFound,
-                siblings,
-                { from: this.userAccounts[i].address }
-            )
-        } catch (error) {
-            console.log("processDeposits revert reason", error)
-        }
-        assert(processDeposit1, "processDeposit1 failed")
-        await this.rollup.dataTreeRoot().then(console.log)
     }
 
     async update(i: number, proofAndPublicSignal: any) {
