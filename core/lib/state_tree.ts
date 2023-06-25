@@ -1,6 +1,5 @@
-import { SMT, TNode } from "./smt";
-import getHashes from "./smt_hashes_poseidon";
-const consola = require("consola");
+import { buildSMT, TNode } from "./smt";
+const { getCurveFromName } = require("ffjavascript-browser");
 
 export function siblingsPad(siblings: any, F: any, padding: boolean = true) {
   for (let i = 0; i < siblings.length; i++) siblings[i] = F.toObject(siblings[i]);
@@ -44,19 +43,16 @@ export class StateTreeCircuitInput {
             newKey: this.newKey,
             newValue: this.newValue
         };
-        console.log(res);
         return res;
     }
 }
 
 // NOTE: we never guarantee the atomic
-export default class SMTDB {
-    // nodes: any;
+export class SMTDB {
     root: any;
     F: any;
     model: any;
     constructor(F: any, model: any) {
-        // this.nodes = {};
         this.root = F.zero;
         this.F = F;
         this.model = model;
@@ -123,7 +119,6 @@ export default class SMTDB {
             }
             await this.model.bulkCreate(bulks);
         } catch (err: any) {
-            consola.log(err);
             throw new Error(err)
         }
     }
@@ -140,7 +135,6 @@ export default class SMTDB {
                 await this.model.destroy({ where: { key: keys } });
             }
         } catch (err: any) {
-            consola.log(err);
             throw new Error(err)
         }
     }
@@ -152,7 +146,8 @@ export class StateTree {
 
     constructor() { }
     async init(model: any) {
-        const { hash0, hash1, F } = await getHashes();
+        const bn128 = await getCurveFromName("bn128", true);
+        const F = bn128.Fr;
         const db = new SMTDB(F, model);
         let rt = F.zero;
         let maxIdRecord = await db.model.findOne({
@@ -161,7 +156,7 @@ export class StateTree {
         if (maxIdRecord != null) {
             rt = F.e(maxIdRecord.key);
         }
-        this.tree = new SMT(db, rt, hash0, hash1, F);
+        this.tree = await buildSMT(db, rt);
         this.F = F;
     }
 
@@ -169,8 +164,7 @@ export class StateTree {
         return this.tree.root;
     }
 
-    async find(_key: bigint) {
-        let key = this.F.e(_key);
+    async find(key: bigint) {
         let res = await this.tree.find(key);
         return res;
     }

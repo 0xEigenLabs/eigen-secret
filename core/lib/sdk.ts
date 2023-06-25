@@ -1,7 +1,9 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
 import { utils, ethers } from "ethers";
-import { prepareJson, uint8Array2Bigint, ETH } from "./utils";
+import { prepareJson, ETH } from "./utils";
+import { calcAliasHash } from "./digest";
+
 import { JoinSplitCircuit } from "./join_split";
 import { UpdateStatusCircuit } from "./update_state";
 import { Prover } from "./prover";
@@ -616,13 +618,13 @@ export class SecretSDK {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT;
         let tmpP = this.account.accountKey.pubKey.unpack(this.eddsa.babyJub);
         let tmpPub = [this.eddsa.F.toObject(tmpP[0]), this.eddsa.F.toObject(tmpP[1])];
+
         let keysFound = [];
         let valuesFound = [];
         let siblings = [];
 
         let accountRequired = false;
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
+        const aliasHash = await calcAliasHash(this.eddsa, this.alias);
 
         const signer = accountRequired ? this.account.accountKey: this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
@@ -651,6 +653,7 @@ export class SecretSDK {
         this.txBuff = [];
         this.noteBuff = [];
         for (const input of inputs) {
+            // TODO: db
             const proof = await this.updateStateTree(
                 ctx,
                 input.outputNCs[0],
@@ -681,10 +684,11 @@ export class SecretSDK {
             let transaction = new Transaction(input, this.eddsa);
             let txNotes = await transaction.encryptNote();
 
-            // batch create tx
+            // db: batch create tx
             this.createTx(
                 transaction.encryptTx(this.account.signingKey, value), proofAndPublicSignals, "deposit"
             );
+            // TODO: verify the proof and aggregate the proof at backend size
             let receipt = await this.rollupSC.update(proofAndPublicSignals);
             if (!receipt.ok) {
                 return receipt
@@ -724,14 +728,11 @@ export class SecretSDK {
             }
             this.addNotes(_notes);
         }
-        let receipt = await this.rollupSC.deposit(tmpPub, assetId, value, nonce);
+        let receipt = await this.rollupSC.deposit(tmpPub, assetId, value, nonce, keysFound, valuesFound, siblings);
         if (!receipt.ok) {
             return receipt
         }
-        receipt = await this.rollupSC.processDeposits(this.rollupSC.userAccount, keysFound, valuesFound, siblings);
-        if (!receipt.ok) {
-            return receipt
-        }
+        // db: commit transaction
         let res = await this.commit(ctx);
         if (!res.ok) {
             return res;
@@ -757,8 +758,7 @@ export class SecretSDK {
         assetId: number
     ) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_SEND;
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
+        const aliasHash = await calcAliasHash(this.eddsa, this.alias);
         const accountRequired = false;
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
@@ -860,7 +860,7 @@ export class SecretSDK {
     }
 
     /**
-     * Creates a proof for withdrawing an asset from L2 to L1.
+     * Creates a proof for withdrawing an asset from L2 to L1. Before withdrawl, all the pending deposits should be handled
      * @param {Context} ctx
      * @param {string} receiver, which can be EigenSecret address or EOA
      * @param {bigint} value The amount to be withdrawn.
@@ -870,8 +870,8 @@ export class SecretSDK {
     async withdraw(ctx: Context, receiver: string, value: bigint, assetId: number) {
         let proofId = JoinSplitCircuit.PROOF_ID_TYPE_WITHDRAW;
         let accountRequired = false;
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        const aliasHash = await uint8Array2Bigint(aliasHashBuffer);
+        const aliasHash = await calcAliasHash(this.eddsa, this.alias);
+
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         const acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
         let noteState = [NoteState.PROVED];
@@ -1162,8 +1162,7 @@ export class SecretSDK {
         newSigningPubKey1 = [F.toObject(newSigningPubKey1[0]), F.toObject(newSigningPubKey1[1])];
         let newSigningPubKey2 = this.account.newSigningKey2.pubKey.unpack(this.eddsa.babyJub);
         newSigningPubKey2 = [F.toObject(newSigningPubKey2[0]), F.toObject(newSigningPubKey2[1])];
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        let aliasHash = uint8Array2Bigint(aliasHashBuffer);
+        const aliasHash = await calcAliasHash(this.eddsa, this.alias);
         let input = await UpdateStatusCircuit.createAccountInput(
             this.eddsa,
             proofId,
@@ -1222,8 +1221,7 @@ export class SecretSDK {
         // let newSigningPubKey1 = this.account.newSigningKey1.toCircuitInput();
         let newSigningPubKey2 = this.account.newSigningKey2.toCircuitInput();
         let newSigningPubKey = newSigningKey.toCircuitInput();
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        let aliasHash = uint8Array2Bigint(aliasHashBuffer);
+        const aliasHash = await calcAliasHash(this.eddsa, this.alias);
         let input = await UpdateStatusCircuit.createAccountInput(
             this.eddsa,
             proofId,
@@ -1344,8 +1342,7 @@ export class SecretSDK {
         let newAccountPubKey = newAccountKey.toCircuitInput();
         let newSigningPubKey1 = this.account.newSigningKey1.toCircuitInput();
         let newSigningPubKey2 = this.account.newSigningKey2.toCircuitInput();
-        const aliasHashBuffer = this.eddsa.pruneBuffer(createBlakeHash("blake512").update(this.alias).digest().slice(0, 32));
-        let aliasHash = uint8Array2Bigint(aliasHashBuffer);
+        const aliasHash = await calcAliasHash(this.eddsa, this.alias);
         let input = await UpdateStatusCircuit.createAccountInput(
             this.eddsa,
             proofId,

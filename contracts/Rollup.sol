@@ -54,8 +54,6 @@ contract Rollup is SMT {
         uint publicValue;
         uint nonce;
     }
-    Deposit[] public pendingDeposits;
-    uint public queueNumber;
 
     mapping(uint256 => bool) public nullifierHashs;
     mapping(uint256 => bool) public nullifierRoots;
@@ -79,7 +77,7 @@ contract Rollup is SMT {
     }
 
     event RegisteredToken(uint publicAssetId, address tokenContract);
-    event RequestDeposit(uint[2] pubkey, uint publicValue, uint publicAssetId);
+    event RequestDeposit(uint[2] pubkey, uint publicValue, uint publicAssetId, uint nonce, uint newroot);
     event UpdatedState(uint, uint, uint); //newRoot, txRoot, oldRoot
     event Withdraw(TxInfo, address);
 
@@ -107,8 +105,12 @@ contract Rollup is SMT {
         uint[2] memory pubkey,
         uint256 publicAssetId,
         uint256 publicValue,
-        uint256 nonce
+        uint256 nonce,
+        uint[] memory keys,
+        uint[] memory values,
+        uint[][] memory siblings
     ) public payable {
+        uint newroot = processDeposits(keys, values, siblings);
         if ( publicAssetId == 0 ) {
             require(
                 msg.sender == coordinator,
@@ -132,27 +134,7 @@ contract Rollup is SMT {
                 );
         }
 
-        pendingDeposits.push(Deposit(
-            pubkey,
-            publicAssetId,
-            publicValue,
-            nonce
-        ));
-
-        queueNumber++;
-
-        emit RequestDeposit(pubkey, publicValue, publicAssetId);
-    }
-
-    function removeDeposit(uint index) internal returns(Deposit[] memory) {
-        require(index < pendingDeposits.length, "index is out of bounds");
-
-        for (uint i = index; i<pendingDeposits.length-1; i++){
-            pendingDeposits[i] = pendingDeposits[i+1];
-        }
-        pendingDeposits.pop();
-        queueNumber --;
-        return pendingDeposits;
+        emit RequestDeposit(pubkey, publicValue, publicAssetId, nonce, newroot);
     }
 
     function processDeposits(
@@ -165,7 +147,6 @@ contract Rollup is SMT {
         // TODO keys.length should less than or equal to queueNumber
         uint newRoot = dataTreeRoot;
         for (uint i = 0; i < keys.length; i ++) {
-            Deposit memory deposit = pendingDeposits[0];
             // ensure the leaf is empty
             newRoot = smtVerifier(siblings[i], keys[i], values[i], 0, 0, false, false, 20);
             require(
@@ -187,14 +168,9 @@ contract Rollup is SMT {
         uint[2] memory c,
         uint[8] memory input
     ) public payable {
-        uint256 proofId = input[0];
-        uint256 publicValue = input[1];
-        uint256 publicOwner = input[2];
-        uint256 numInputNotes = input[3];
         uint256 nullifier1 = input[4];
         uint256 nullifier2 = input[5];
         uint256 inDataTreeRoot = input[6];
-        uint256 publicAssetId = input[7];
 
         require(!nullifierRoots[inDataTreeRoot], "Invalid data tree root");
         require(!nullifierHashs[nullifier1], "Invalid nullifier1 when deposit");

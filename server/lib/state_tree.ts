@@ -3,7 +3,6 @@ const consola = require("consola");
 const { DataTypes } = require("sequelize");
 import sequelize from "./db";
 import { StateTree, N_LEVEL, siblingsPad } from "@eigen-secret/core/dist-node/state_tree";
-
 const _smtmodel = require("../models/smtmodel");
 export const SMTModel = _smtmodel(sequelize, DataTypes);
 
@@ -21,6 +20,7 @@ export class WorldState {
         return WorldState.instance;
     }
 
+    // for debug, don't use it in production
     static async resetInstance() {
         if (WorldState.instance) {
             await WorldState.instance.reset();
