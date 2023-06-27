@@ -33,6 +33,8 @@ npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id ${ASSET_ID} --ne
 npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id ${ASSET_ID} --network $NETWORK
 npx hardhat get-balance --alias Bob --index 1 --asset-id ${ASSET_ID} --network $NETWORK
 
+npx hardhat depositall --asset-id ${ASSET_ID} --value 100 --network $NETWORK
+
 npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
 npx hardhat get-balance --alias Bob --index 1 --asset-id ${ASSET_ID} --network $NETWORK
 

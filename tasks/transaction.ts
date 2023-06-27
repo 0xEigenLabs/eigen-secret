@@ -9,16 +9,8 @@ import {
 } from "./common";
 import { ErrCode } from "@eigen-secret/core/dist-node/error";
 
-task("deposit", "Deposit asset from L1 to L2")
-  .addParam("alias", "user alias")
-  .addParam("assetId", "asset id/token id")
-  .addParam("password", "password for key sealing", "<your password>")
-  .addParam("value", "amount of transaction")
-  .addParam("index", "user index for test")
-  .setAction(async ({ alias, assetId, password, value, index }, { ethers }) => {
-    let timestamp = Math.floor(Date.now()/1000).toString();
-    let account = await ethers.getSigners();
-    let user = account[index];
+async function runDepositTask(alias: string, assetId: number, password: string, value: any, user:any) {
+  let timestamp = Math.floor(Date.now()/1000).toString();
     const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
     const ctx = new Context(
       alias,
@@ -57,7 +49,32 @@ task("deposit", "Deposit asset from L1 to L2")
     }
     console.log(proofAndPublicSignals.data);
     await sdk.submitProofs(ctx, proofAndPublicSignals.data);
+}
+
+task("deposit", "Deposit asset from L1 to L2")
+  .addParam("alias", "user alias")
+  .addParam("assetId", "asset id/token id")
+  .addParam("password", "password for key sealing", "<your password>")
+  .addParam("value", "amount of transaction")
+  .addParam("index", "user index for test")
+  .setAction(async ({ alias, assetId, password, value, index }, { ethers }) => {
+    let account = await ethers.getSigners();
+    let user = account[index];
+    await runDepositTask(alias, assetId, password, value, user);
   })
+
+  task("depositall", "Deposit assets from multiple users")
+  .addParam("assetId", "asset id/token id")
+  .addParam("value", "amount of transaction")
+  .setAction(async ({assetId, value},{ ethers }) => {
+    let account = await ethers.getSigners();
+    let user0 = account[0];
+    let user1 = account[1];
+    await Promise.all([
+      runDepositTask('Alice', assetId, '<your password>', value, user0),
+      runDepositTask('Bob', assetId, '<your password>', value, user1)
+    ]);
+  });
 
 task("send", "Send asset to receiver in L2")
   .addParam("alias", "user alias")
@@ -222,3 +239,5 @@ task("get-transactions", "Get user's transactions")
     }
     console.log("transactions", transactions.data);
 });
+
+

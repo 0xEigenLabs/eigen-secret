@@ -164,24 +164,24 @@ export class StateTree {
         return this.tree.root;
     }
 
-    async find(key: bigint) {
-        let res = await this.tree.find(key);
+    async find(key: bigint, transaction:any) {
+        let res = await this.tree.find(key, transaction);
         return res;
     }
 
-    async insert(key: bigint, value: bigint): Promise<StateTreeCircuitInput> {
-        const res = await this.tree.insert(key, value);
+    async insert(key: bigint, value: bigint, transaction:any): Promise<StateTreeCircuitInput> {
+        const res = await this.tree.insert(key, value, transaction);
         return new StateTreeCircuitInput([1, 0], res, key, value);
     }
 
-    async delete(key: bigint): Promise<StateTreeCircuitInput> {
-        const res = await this.tree.delete(key);
+    async delete(key: bigint, transaction:any): Promise<StateTreeCircuitInput> {
+        const res = await this.tree.delete(key, transaction);
         const F = this.tree.F;
         return new StateTreeCircuitInput([1, 1], res, F.toObject(res.delKey), F.toObject(res.delValue));
     }
 
-    async update(key: bigint, newValue: bigint): Promise<StateTreeCircuitInput> {
-        const res = await this.tree.update(key, newValue);
+    async update(key: bigint, newValue: bigint, transaction:any): Promise<StateTreeCircuitInput> {
+        const res = await this.tree.update(key, newValue, transaction);
         const F = this.tree.F;
         return new StateTreeCircuitInput([0, 1], res, F.toObject(res.newKey), F.toObject(res.newValue));
     }

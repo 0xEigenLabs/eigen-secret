@@ -4,7 +4,8 @@ import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
 import { Note, getDBNotes } from "./note";
-import { TransactionModelStatus } from "@eigen-secret/core/dist-node/transaction"
+import { TransactionModelStatus } from "@eigen-secret/core/dist-node/transaction";
+import {Mutex} from 'async-mutex';
 
 const transactionmodel = require("../models/transactionmodel");
 const Transaction = transactionmodel(sequelize, DataTypes);
@@ -81,26 +82,34 @@ export async function getTxByAlias(req: any, res: any) {
     return res.json(succResp(result));
 }
 
-export async function updateStateTree(req: any, res: any) {
-    let ctx = Context.deserialize(req.body.context);
-    let code = ctx.check();
-    const padding: boolean = req.body.padding;
-    if (code !== ErrCode.Success) {
-        return res.json(errResp(code, ErrCode[code]));
-    }
+const mutex = new Mutex();
 
-    // TODO: once updated, must be synchonized with circuits on chain
-    const newState = req.body.newStates;
-    let proof = await WorldState.updateStateTree(
-        BigInt(newState.outputNc1),
-        BigInt(newState.nullifier1),
-        BigInt(newState.outputNc2),
-        BigInt(newState.nullifier2),
-        BigInt(newState.acStateKey),
-        padding
-    );
-    // TODO handle exception
-    return res.json(succResp(proof, true));
+export async function updateStateTree(req: any, res: any) {
+    // Acquire the lock
+    const release = await mutex.acquire();
+    try {
+        let ctx = Context.deserialize(req.body.context);
+        let code = ctx.check();
+        const padding: boolean = req.body.padding;
+        if (code !== ErrCode.Success) {
+            return res.json(errResp(code, ErrCode[code]));
+        }
+
+        // TODO: once updated, must be synchonized with circuits on chain
+        const newState = req.body.newStates;
+        let proof = await WorldState.updateStateTree(
+            BigInt(newState.outputNc1),
+            BigInt(newState.nullifier1),
+            BigInt(newState.outputNc2),
+            BigInt(newState.nullifier2),
+            BigInt(newState.acStateKey),
+            padding
+        );
+        // TODO handle exception
+        return res.json(succResp(proof, true));
+    } finally {
+        release();
+    }
 }
 
 export async function getNotes(req: any, res: any) {
