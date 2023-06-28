@@ -10,6 +10,10 @@ import { Mutex } from "async-mutex";
 const transactionmodel = require("../models/transactionmodel");
 const Transaction = transactionmodel(sequelize, DataTypes);
 
+// all the db transaction should obtain the mutex.
+const txMutex = new Mutex();
+const smtMutex = new Mutex();
+
 export async function createTx(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
     let code = ctx.check();
@@ -46,6 +50,8 @@ export async function createTx(req: any, res: any) {
 
     let result: Array<any> = [];
     let result2: Array<any> = [];
+    const release = await txMutex.acquire();
+    let ret: any;
     try {
         await sequelize.transaction(async (t: any) => {
             if (insertTxs.length > 0) {
@@ -55,11 +61,14 @@ export async function createTx(req: any, res: any) {
                 result2 = await Note.bulkCreate(insertNotes, { transaction: t, updateOnDuplicate: ["state", "alias"] });
             }
         });
+        ret = res.json(succResp([result, result2], true))
     } catch (err: any) {
         console.log(err)
-        return res.json(errResp(ErrCode.DBCreateError, err.toString()));
+        ret = res.json(errResp(ErrCode.DBCreateError, err.toString()));
+    } finally {
+        release();
     }
-    return res.json(succResp([result, result2], true))
+    return ret;
 }
 
 export async function getTxByAlias(req: any, res: any) {
@@ -82,11 +91,10 @@ export async function getTxByAlias(req: any, res: any) {
     return res.json(succResp(result));
 }
 
-const mutex = new Mutex();
-
 export async function updateStateTree(req: any, res: any) {
     // Acquire the lock
-    const release = await mutex.acquire();
+    const release = await smtMutex.acquire();
+    let result: any;
     try {
         let ctx = Context.deserialize(req.body.context);
         let code = ctx.check();
@@ -106,10 +114,13 @@ export async function updateStateTree(req: any, res: any) {
             padding
         );
         // TODO handle exception
-        return res.json(succResp(proof, true));
+        result = res.json(succResp(proof, true));
+    } catch (err: any) {
+        result = res.json(errResp(ErrCode.DBCreateError, err.toString()))
     } finally {
         release();
     }
+    return result;
 }
 
 export async function getNotes(req: any, res: any) {
