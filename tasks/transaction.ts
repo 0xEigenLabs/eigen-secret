@@ -49,6 +49,7 @@ async function runDepositTask(alias: string, assetId: number, password: string, 
     }
     console.log(proofAndPublicSignals.data);
     await sdk.submitProofs(ctx, proofAndPublicSignals.data);
+    return await sdk.getAllBalance(ctx)
 }
 
 async function runSendTask(alias: string, assetId: number, password: string, value: any, user:any, receiver:any, receiverAlias: string) {
@@ -81,6 +82,7 @@ async function runSendTask(alias: string, assetId: number, password: string, val
   }
   console.log(proofAndPublicSignals.data);
   await sdk.submitProofs(ctx, proofAndPublicSignals.data);
+  return await sdk.getAllBalance(ctx)
 }
 
 async function runWithdrawTask(alias: string, assetId: number, password: string, value: any, user:any) {
@@ -243,11 +245,12 @@ task("depositall", "Deposit assets from multiple users")
   let user0 = account[0];
   let user1 = account[1];
   let user2 = account[3];
-  await Promise.all([
+  let result = await Promise.allSettled([
     runDepositTask('Alice', assetId, '<your password>', value, user0),
     runDepositTask('Bob', assetId, '<your password>', value, user1),
     runDepositTask('Charlie', assetId, '<your password>', value, user2),
   ]);
+  console.log(JSON.stringify(result))
 });
 
 task("sendall", "Collaborative asset transfer by multiple users")
@@ -293,7 +296,7 @@ task("sendall", "Collaborative asset transfer by multiple users")
   }
   let accountKeyPubKey2 = secretSDK2.data.account.accountKey.pubKey.pubKey;
 
-  await Promise.allSettled([
+  let result = await Promise.allSettled([
     runSendTask('Alice', assetId, '<your password>', value, user0, accountKeyPubKey1, receiverAlias),
     runSendTask('Bob', assetId, '<your password>', value, user1, accountKeyPubKey2, receiverAlias),
     runSendTask('Charlie', assetId, '<your password>', value, user2, accountKeyPubKey0, receiverAlias),
@@ -301,4 +304,5 @@ task("sendall", "Collaborative asset transfer by multiple users")
     runWithdrawTask('Bob', assetId, '<your password>', value, user1),
     runWithdrawTask('Charlie', assetId, '<your password>', value, user2),
   ]);
+  console.log(JSON.stringify(result))
 });
