@@ -240,15 +240,15 @@ task("get-transactions", "Get user's transactions")
 task("depositall", "Deposit assets from multiple users")
 .addParam("assetId", "asset id/token id")
 .addParam("value", "amount of transaction")
-.setAction(async ({assetId, value},{ ethers }) => {
+.setAction(async ({ assetId, value }, { ethers }) => {
   let account = await ethers.getSigners();
   let user0 = account[0];
   let user1 = account[1];
   let user2 = account[3];
   let result = await Promise.allSettled([
-    runDepositTask('Alice', assetId, '<your password>', value, user0),
-    runDepositTask('Bob', assetId, '<your password>', value, user1),
-    runDepositTask('Charlie', assetId, '<your password>', value, user2),
+    runDepositTask("Alice", assetId, "<your password>", value, user0),
+    runDepositTask("Bob", assetId, "<your password>", value, user1),
+    runDepositTask("Charlie", assetId, "<your password>", value, user2)
   ]);
   console.log(JSON.stringify(result))
 });
@@ -258,7 +258,7 @@ task("sendall", "Collaborative asset transfer by multiple users")
 .addParam("password", "password for key sealing", "<your password>")
 .addParam("value", "amount of transaction")
 .addParam("receiverAlias", "receiver_alias use for test", __DEFAULT_ALIAS__)
-.setAction(async ({assetId, password, value, receiverAlias},{ ethers }) => {
+.setAction(async ({ assetId, password, value, receiverAlias }, { ethers }) => {
   let account = await ethers.getSigners();
   let user0 = account[0];
   let user1 = account[1];
@@ -266,7 +266,7 @@ task("sendall", "Collaborative asset transfer by multiple users")
   // const eddsa = await buildEddsa();
   let timestamp = Math.floor(Date.now()/1000).toString();
   const signature0 = await signEOASignature(user0, rawMessage, user0.address, timestamp);
-  const ctx0 = new Context('Alice', user0.address, rawMessage, timestamp, signature0);
+  const ctx0 = new Context("Alice", user0.address, rawMessage, timestamp, signature0);
   const contractJson = require(defaultContractFile);
   let secretSDK0 = await SecretSDK.initSDKFromAccount(
     ctx0, defaultServerEndpoint, password, user0, contractJson, defaultCircuitPath, defaultContractABI
@@ -277,7 +277,7 @@ task("sendall", "Collaborative asset transfer by multiple users")
   let accountKeyPubKey0 = secretSDK0.data.account.accountKey.pubKey.pubKey;
 
   const signature1 = await signEOASignature(user1, rawMessage, user1.address, timestamp);
-  const ctx1 = new Context('Bob', user1.address, rawMessage, timestamp, signature1);
+  const ctx1 = new Context("Bob", user1.address, rawMessage, timestamp, signature1);
   let secretSDK1 = await SecretSDK.initSDKFromAccount(
     ctx1, defaultServerEndpoint, password, user1, contractJson, defaultCircuitPath, defaultContractABI
   );
@@ -287,7 +287,7 @@ task("sendall", "Collaborative asset transfer by multiple users")
   let accountKeyPubKey1 = secretSDK1.data.account.accountKey.pubKey.pubKey;
 
   const signature2 = await signEOASignature(user2, rawMessage, user2.address, timestamp);
-  const ctx2 = new Context('Charlie', user2.address, rawMessage, timestamp, signature2);
+  const ctx2 = new Context("Charlie", user2.address, rawMessage, timestamp, signature2);
   let secretSDK2 = await SecretSDK.initSDKFromAccount(
     ctx2, defaultServerEndpoint, password, user2, contractJson, defaultCircuitPath, defaultContractABI
   );
@@ -297,12 +297,12 @@ task("sendall", "Collaborative asset transfer by multiple users")
   let accountKeyPubKey2 = secretSDK2.data.account.accountKey.pubKey.pubKey;
 
   let result = await Promise.allSettled([
-    runSendTask('Alice', assetId, '<your password>', value, user0, accountKeyPubKey1, receiverAlias),
-    runSendTask('Bob', assetId, '<your password>', value, user1, accountKeyPubKey2, receiverAlias),
-    runSendTask('Charlie', assetId, '<your password>', value, user2, accountKeyPubKey0, receiverAlias),
-    runWithdrawTask('Alice', assetId, '<your password>', value, user0),
-    runWithdrawTask('Bob', assetId, '<your password>', value, user1),
-    runWithdrawTask('Charlie', assetId, '<your password>', value, user2),
+    runSendTask("Alice", assetId, "<your password>", value, user0, accountKeyPubKey1, receiverAlias),
+    runSendTask("Bob", assetId, "<your password>", value, user1, accountKeyPubKey2, receiverAlias),
+    runSendTask("Charlie", assetId, "<your password>", value, user2, accountKeyPubKey0, receiverAlias),
+    runWithdrawTask("Alice", assetId, "<your password>", value, user0),
+    runWithdrawTask("Bob", assetId, "<your password>", value, user1),
+    runWithdrawTask("Charlie", assetId, "<your password>", value, user2)
   ]);
   console.log(JSON.stringify(result))
 });

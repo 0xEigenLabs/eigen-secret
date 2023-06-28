@@ -41,30 +41,30 @@ export class WorldState {
         const F = eddsa.F;
 
         let transaction = await sequelize.transaction();
-    
+
         try {
             let siblings = [];
             // insert all first, then find
             if (outputNc1 > 0n) {
-                let result = await instance.insert(outputNc1, nullifier1, {transaction});
+                let result = await instance.insert(outputNc1, nullifier1, { transaction });
                 consola.log(result);
             }
-    
+
             if (outputNc2 > 0n) {
-                let result = await instance.insert(outputNc2, nullifier2, {transaction});
+                let result = await instance.insert(outputNc2, nullifier2, { transaction });
                 consola.log(result);
             }
-    
+
             // NOTE: DO NOT PAD here, cause the smart contract does not accept padding
             if (outputNc1 > 0n) {
-                let sib = await instance.find(outputNc1, {transaction})
+                let sib = await instance.find(outputNc1, { transaction })
                 siblings.push(siblingsPad(sib.siblings, F, padding));
             }
             if (outputNc2 > 0n) {
-                let sib = await instance.find(outputNc2, {transaction})
+                let sib = await instance.find(outputNc2, { transaction })
                 siblings.push(siblingsPad(sib.siblings, F, padding));
             }
-    
+
             // pad siblings
             if (siblings.length < 2) {
                 for (let i = siblings.length; i < 2; i ++) {
@@ -73,18 +73,17 @@ export class WorldState {
                     );
                 }
             }
-    
-            let ac = await instance.find(acStateKey, {transaction});
-            
+
+            let ac = await instance.find(acStateKey, { transaction });
+
             // If everything executes correctly, we commit the transaction.
             await transaction.commit();
-    
+
             return {
                 dataTreeRoot: F.toObject(instance.root()),
                 siblings: siblings,
                 siblingsAC: siblingsPad(ac.siblings, F, padding)
             };
-    
         } catch (error) {
             await transaction.rollback();
             throw error;

@@ -5,7 +5,7 @@ import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
 import { Note, getDBNotes } from "./note";
 import { TransactionModelStatus } from "@eigen-secret/core/dist-node/transaction";
-import {Mutex} from 'async-mutex';
+import { Mutex } from "async-mutex";
 
 const transactionmodel = require("../models/transactionmodel");
 const Transaction = transactionmodel(sequelize, DataTypes);
