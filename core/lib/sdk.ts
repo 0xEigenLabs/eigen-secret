@@ -1101,7 +1101,14 @@ export class SecretSDK {
     }
 
     async getTokenInfo(token: string) {
-        return await this.rollupSC.getTokenInfo(token)
+        if (token !== ETH) {
+            return await this.rollupSC.getTokenInfo(token)
+        }
+        return Promise.resolve({
+            "symbol": "ETH",
+            "name": "ETH",
+            "decimals": 18
+        })
     }
 
     async createAsset(ctx: Context, token: string, assetId: any) {

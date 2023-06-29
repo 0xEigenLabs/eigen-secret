@@ -75,17 +75,17 @@ task("send-l1", "Send asset from L1 to L1")
     let sdk: SecretSDK = secretSDK.data;
     // get token address
     let address = await sdk.getRegisteredToken(assetId);
-    let tokenIns = new ethers.Contract(
-        address,
-        defaultContractABI.testTokenContractABI,
-        admin
-    );
 
     let tokenInfo = await sdk.getTokenInfo(address)
     value = await sdk.parseValue(ctx, value, Number(tokenInfo.decimals))
-    console.log(value);
+    console.log(value, assetId);
     let tx: any;
     if (assetId > 1) {
+        let tokenIns = new ethers.Contract(
+            address,
+            defaultContractABI.testTokenContractABI,
+            admin
+        );
         tx = await tokenIns.transfer(receiver, BigInt(value));
         await tx.wait();
     } else if (assetId == 1) {

@@ -4,6 +4,7 @@ import consola from "consola";
 import * as utils from "@eigen-secret/core/dist-node/utils";
 import { AppResp, ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
+import mutex from "./mutex";
 
 const accountmodel = require("../models/accountmodel");
 const Account = accountmodel(sequelize, DataTypes);
@@ -36,18 +37,23 @@ export async function createAccount(req: any, res: any) {
     let newItem = { alias, ethAddress, accountKeyPubKey, secretAccount };
 
     let transaction: any;
+    const release = await mutex.acquire();
+    let result: any;
     try {
         transaction = await sequelize.transaction();
         const item = await Account.create(newItem, transaction);
         await transaction.commit();
-        return res.json(succResp(item));
+        result = res.json(succResp(item));
     } catch (err: any) {
         consola.log(err)
         if (transaction) {
             await transaction.rollback();
         }
-        return res.json(errResp(ErrCode.DBCreateError, err.toString()));
+        result = res.json(errResp(ErrCode.DBCreateError, err.toString()));
+    } finally {
+        release();
     }
+    return result;
 }
 
 async function getAccountInternal(alias: string, ethAddress: string) {

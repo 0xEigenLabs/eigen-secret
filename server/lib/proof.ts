@@ -3,7 +3,7 @@ import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import sequelize from "./db";
 import { ProofState } from "@eigen-secret/core/dist-node/prover";
-
+import mutex from "./mutex";
 type ProofStateArray = Array<ProofState>;
 
 const consola = require("consola");
@@ -41,18 +41,22 @@ export async function submitProofs(req: any, res: any) {
     // get the confirmed note list
     let result: any;
     let transaction: any;
+    const release = await mutex.acquire();
     try {
         transaction = await sequelize.transaction();
-        result = await submitDBProof(alias, proofs, transaction);
+        const data = await submitDBProof(alias, proofs, transaction);
+        result = res.json(succResp(data));
         await transaction.commit();
     } catch (err: any) {
         consola.log(err)
         if (transaction) {
             await transaction.rollback();
         }
-        return res.json(errResp(ErrCode.InvalidInput, err.toString()));
+        result = res.json(errResp(ErrCode.InvalidInput, err.toString()));
+    } finally {
+        release();
     }
-    return res.json(succResp(result));
+    return result;
 }
 
 export async function getProofs(req: any, res: any) {
