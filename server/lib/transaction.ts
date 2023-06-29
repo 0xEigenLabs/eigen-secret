@@ -11,8 +11,7 @@ const transactionmodel = require("../models/transactionmodel");
 const Transaction = transactionmodel(sequelize, DataTypes);
 
 // all the db transaction should obtain the mutex.
-const txMutex = new Mutex();
-const smtMutex = new Mutex();
+const mutex = new Mutex();
 
 export async function createTx(req: any, res: any) {
     let ctx = Context.deserialize(req.body.context);
@@ -50,7 +49,7 @@ export async function createTx(req: any, res: any) {
 
     let result: Array<any> = [];
     let result2: Array<any> = [];
-    const release = await txMutex.acquire();
+    const release = await mutex.acquire();
     let ret: any;
     try {
         await sequelize.transaction(async (t: any) => {
@@ -93,7 +92,7 @@ export async function getTxByAlias(req: any, res: any) {
 
 export async function updateStateTree(req: any, res: any) {
     // Acquire the lock
-    const release = await smtMutex.acquire();
+    const release = await mutex.acquire();
     let result: any;
     try {
         let ctx = Context.deserialize(req.body.context);
