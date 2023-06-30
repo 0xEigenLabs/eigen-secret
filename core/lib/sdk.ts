@@ -879,7 +879,10 @@ export class SecretSDK {
         if (!notes.ok) {
             return notes;
         }
-        assert(notes.data.length > 0, "Invalid notes");
+        if (notes.data.length <= 0) {
+            return errResp(ErrCode.InvalidInput, "Balance not enough")
+        }
+
         let resp = await this.getAccount(ctx, receiver);
         if (!resp.ok) {
             return resp;

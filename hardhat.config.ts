@@ -57,6 +57,7 @@ module.exports = {
     },
     dev: {
       url: "http://127.0.0.1:8545/",
+      timeout: 1_000_000,
       chainId: 1337
     },
     goerli: {
