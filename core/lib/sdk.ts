@@ -22,7 +22,6 @@ import {
 import { RollupSC } from "./rollup.sc";
 import { pad } from "./state_tree";
 import { poseidonSponge } from "./sponge_poseidon";
-import { assert } from "chai";
 
 const axios = require("axios").default;
 

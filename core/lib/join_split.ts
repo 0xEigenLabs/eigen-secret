@@ -239,10 +239,10 @@ export class JoinSplitCircuit {
             let secret = F.toObject(F.random());
             let outputNote1: Note = new Note(
                 0n, secret, owner, assetId, nullifier1, false, index());
-            //let outputNc1 = await outputNote1.compress(babyJub);
+            // let outputNc1 = await outputNote1.compress(babyJub);
             let outputNote2: Note = new Note(
                 firstNote.val + note.val, secret, owner, assetId, nullifier2, false, index());
-            //let outputNc2 = await outputNote2.compress(babyJub);
+            // let outputNc2 = await outputNote2.compress(babyJub);
 
             let sig = await JoinSplitCircuit.calculateSignature(
                 accountKey, nullifier1, nullifier2, 0n, 0n);
@@ -307,7 +307,7 @@ export class JoinSplitCircuit {
                 false,
                 index()
             );
-            //let outputNc1 = await outputNote1.compress(babyJub);
+            // let outputNc1 = await outputNote1.compress(babyJub);
 
             let outputNotes = [outputNote1];
             let outputNCs = [nullifier1];
@@ -343,7 +343,7 @@ export class JoinSplitCircuit {
                 index()
             );
             outputNotes.push(outputNote2);
-            //let outputNc2 = await outputNote2.compress(babyJub);
+            // let outputNc2 = await outputNote2.compress(babyJub);
             outputNCs.push(nullifier2);
 
             let sig = await JoinSplitCircuit.calculateSignature(

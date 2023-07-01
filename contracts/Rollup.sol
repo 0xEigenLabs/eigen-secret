@@ -4,7 +4,7 @@ import "./UpdateStateVerifier.sol";
 import "./WithdrawVerifier.sol";
 import "./SMT.sol";
 import "./libs/Poseidon.sol";
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 contract ITokenRegistry {
     address public coordinator;
