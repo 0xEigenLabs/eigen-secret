@@ -10,10 +10,11 @@ npx hardhat setup-rollup --network $NETWORK
 npx hardhat register-token --token $TOKEN --network $NETWORK
 npx hardhat update-assets --network $NETWORK
 ASSET_ID=$(cat .asset.json | jq -r .assetId)
-ACCOUNT_NUM=5
+ACCOUNT_NUM=3
 
 npx hardhat create-accounts --account-num ${ACCOUNT_NUM} --network $NETWORK
 npx hardhat send-l1 --alias Alice --asset-id ${ASSET_ID} --account-num ${ACCOUNT_NUM} --value 100 --network $NETWORK
+npx hardhat get-balances-multi --account-num ${ACCOUNT_NUM} --asset-id 2 --network $NETWORK
 
 npx hardhat deposit-multi --account-num ${ACCOUNT_NUM} --asset-id ${ASSET_ID} --value 50 --network $NETWORK
 npx hardhat get-balances-multi --account-num ${ACCOUNT_NUM} --asset-id 2 --network $NETWORK
