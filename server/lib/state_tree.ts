@@ -41,6 +41,11 @@ export class WorldState {
         const F = eddsa.F;
 
         let transaction = await sequelize.transaction();
+        console.log(
+            "updateStateTree",
+            outputNc1, nullifier1,
+            outputNc2, nullifier2
+        );
 
         try {
             let siblings = [];

@@ -151,23 +151,13 @@ template JoinSplit(nLevel) {
 
     //note validity check
     component inc[2]; //note commitment input
-    component onc[2];
     component nf[2];
     component ms[2];
-    component forceNullifierEql[2];
     signal aux3[2];
     for(var i = 0;  i < 2; i ++) {
-        onc[i] = NoteCompressor();
-        onc[i].val <== output_note_val[i];
-        onc[i].asset_id <== output_note_asset_id[i];
-        onc[i].owner <== output_note_owner[i];
-        onc[i].secret <== output_note_secret[i];
-        onc[i].input_nullifier <== output_note_nullifier[i];
-        onc[i].account_required <== output_note_account_required[i];
-
         // FIXME: the key is the merkle path, and the value is is commitment
         ms[i] = Membership(nLevel);
-        ms[i].key <== onc[i].out;
+        ms[i].key <== output_note_nullifier[i];
         ms[i].value <== output_note_nullifier[i];
         ms[i].root <== data_tree_root;
         ms[i].enabled <== input_note_in_use[i].out * enabled;
@@ -193,12 +183,13 @@ template JoinSplit(nLevel) {
         aux3[i] <== input_note_in_use[i].out * (nf[i].out - output_note_nullifier[i]);
         enabled * aux3[i] === 0;
     }
+    // check nf[i] === output_nc_i
+    signal nc_eq[2];
+    nc_eq[0] <== input_note_in_use[0].out * (output_note_nullifier[0] - output_nc_1);
+    enabled * nc_eq[0] === 0;
 
-    // onc[0].out != onc[1].out
-    component nc_not_same = IsEqual();
-    nc_not_same.in[0] <== onc[0].out;
-    nc_not_same.in[1] <== onc[1].out;
-    enabled * nc_not_same.out === 0;
+    nc_eq[1] <== input_note_in_use[1].out * (output_note_nullifier[1] - output_nc_2);
+    enabled * nc_eq[1] === 0;
 
     component ac = AccountNoteCompressor();
     ac.npk <== account_note_npk;
@@ -231,8 +222,6 @@ template JoinSplit(nLevel) {
     component msghash = JoinSplitDigest();
     msghash.nc_1 <== nf[0].out;
     msghash.nc_2 <== nf[1].out;
-    msghash.output_note_nc_1 <== output_nc_1;
-    msghash.output_note_nc_2 <== output_nc_2;
     msghash.public_value <== public_value;
     msghash.public_owner <== public_owner;
 

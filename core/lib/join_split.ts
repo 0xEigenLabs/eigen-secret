@@ -239,13 +239,13 @@ export class JoinSplitCircuit {
             let secret = F.toObject(F.random());
             let outputNote1: Note = new Note(
                 0n, secret, owner, assetId, nullifier1, false, index());
-            let outputNc1 = await outputNote1.compress(babyJub);
+            //let outputNc1 = await outputNote1.compress(babyJub);
             let outputNote2: Note = new Note(
                 firstNote.val + note.val, secret, owner, assetId, nullifier2, false, index());
-            let outputNc2 = await outputNote2.compress(babyJub);
+            //let outputNc2 = await outputNote2.compress(babyJub);
 
             let sig = await JoinSplitCircuit.calculateSignature(
-                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, 0n, 0n);
+                accountKey, nullifier1, nullifier2, 0n, 0n);
 
             /*
             let state = await WorldState.getInstance();
@@ -264,7 +264,7 @@ export class JoinSplitCircuit {
                 numInputNote,
                 [firstNote, note],
                 [outputNote1, outputNote2],
-                [outputNc1, outputNc2],
+                [nullifier1, nullifier2],
                 // F.toObject(state.root()),
                 // [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
                 // siblingsPad(ac.siblings, F),
@@ -307,10 +307,10 @@ export class JoinSplitCircuit {
                 false,
                 index()
             );
-            let outputNc1 = await outputNote1.compress(babyJub);
+            //let outputNc1 = await outputNote1.compress(babyJub);
 
             let outputNotes = [outputNote1];
-            let outputNCs = [outputNc1];
+            let outputNCs = [nullifier1];
             let totalInputNoteValue = inputNotes.reduce((sum, n) => sum + n.val, 0n);
             consola.log(`init: totalIn ${totalInputNoteValue}, publicValue: ${publicValue}, recipientPrivateOutput: ${recipientPrivateOutput}`);
             if (proofId != JoinSplitCircuit.PROOF_ID_TYPE_DEPOSIT) {
@@ -343,11 +343,11 @@ export class JoinSplitCircuit {
                 index()
             );
             outputNotes.push(outputNote2);
-            let outputNc2 = await outputNote2.compress(babyJub);
-            outputNCs.push(outputNc2);
+            //let outputNc2 = await outputNote2.compress(babyJub);
+            outputNCs.push(nullifier2);
 
             let sig = await JoinSplitCircuit.calculateSignature(
-                accountKey, nullifier1, nullifier2, outputNc1, outputNc2, publicOwnerX, publicValue);
+                accountKey, nullifier1, nullifier2, publicOwnerX, publicValue);
             /*
             let state = await WorldState.getInstance();
             await state.insert(outputNc1, nullifier1);
@@ -378,14 +378,11 @@ export class JoinSplitCircuit {
 
     static async calculateSignature(
         accountKey: SigningKey,
-        nf1: bigint, nf2: bigint, outputNc1: bigint,
-        outputNc2: bigint, publicOwner: bigint, publicValue: bigint) {
+        nf1: bigint, nf2: bigint, publicOwner: bigint, publicValue: bigint) {
         let poseidon = await buildPoseidon();
         let msghash = poseidon([
             nf1,
             nf2,
-            outputNc1,
-            outputNc2,
             publicOwner,
             publicValue
         ]);

@@ -108,7 +108,6 @@ export async function updateStateTree(req: any, res: any) {
             BigInt(newState.acStateKey),
             padding
         );
-        // TODO handle exception
         result = res.json(succResp(proof, true));
     } catch (err: any) {
         result = res.json(errResp(ErrCode.DBCreateError, err.toString()))

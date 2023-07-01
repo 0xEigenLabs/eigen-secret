@@ -98,21 +98,11 @@ template Account(nLevel) {
     account_note_commitment.spk <== account_note_spk;
     account_note_commitment.alias_hash <== alias_hash;
 
-    component output_note_commitment1 = AccountNoteCompressor();
-    output_note_commitment1.npk <== new_account_note_npk;
-    output_note_commitment1.spk <== new_account_note_spk1;
-    output_note_commitment1.alias_hash <== alias_hash;
-    enabled * (output_note_commitment1.out - output_nc_1) === 0;
-
-    component output_note_commitment2 = AccountNoteCompressor();
-    output_note_commitment2.npk <== new_account_note_npk;
-    output_note_commitment2.spk <== new_account_note_spk2;
-    output_note_commitment2.alias_hash <== alias_hash;
-    enabled * (output_note_commitment2.out - output_nc_2) === 0;
-
     component alias_hash_c = Poseidon(1);
     alias_hash_c.inputs[0] <== alias_hash;
-    var nullifier1 = is_create * alias_hash_c.out;
+    signal nullifier1;
+    nullifier1 <== is_create * alias_hash_c.out;
+    enabled * (nullifier1 - output_nc_1) === 0;
 
     component new_account_c = Poseidon(2);
     new_account_c.inputs[0] <== new_account_note_npk[0];
@@ -121,7 +111,9 @@ template Account(nLevel) {
     component create_or_migrate = OR();
     create_or_migrate.a <== is_create;
     create_or_migrate.b <== is_migrate;
-    var nullifier2 = create_or_migrate.out * new_account_c.out;
+    signal nullifier2;
+    nullifier2 <== create_or_migrate.out * new_account_c.out;
+    enabled * (nullifier2 - output_nc_2) === 0;
 
     // (new_account_public_key != spending_public_key_1) &&
     // (new_account_public_key != spending_public_key_2)

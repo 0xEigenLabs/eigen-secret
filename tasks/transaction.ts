@@ -300,9 +300,12 @@ task("sendall", "Collaborative asset transfer by multiple users")
     runSendTask("Alice", assetId, "<your password>", value, user0, accountKeyPubKey1, receiverAlias),
     runSendTask("Bob", assetId, "<your password>", value, user1, accountKeyPubKey2, receiverAlias),
     runSendTask("Charlie", assetId, "<your password>", value, user2, accountKeyPubKey0, receiverAlias),
-    runWithdrawTask("Alice", assetId, "<your password>", value, user0),
-    runWithdrawTask("Bob", assetId, "<your password>", value, user1),
-    runWithdrawTask("Charlie", assetId, "<your password>", value, user2)
+    runSendTask("Alice", assetId, "<your password>", value, user0, accountKeyPubKey1, receiverAlias),
+    runSendTask("Bob", assetId, "<your password>", value, user1, accountKeyPubKey2, receiverAlias),
+    runSendTask("Charlie", assetId, "<your password>", value, user2, accountKeyPubKey0, receiverAlias),
+    //runWithdrawTask("Alice", assetId, "<your password>", value, user0),
+    //runWithdrawTask("Bob", assetId, "<your password>", value, user1),
+    //runWithdrawTask("Charlie", assetId, "<your password>", value, user2)
   ]);
   console.log(JSON.stringify(result))
 });

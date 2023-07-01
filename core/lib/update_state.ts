@@ -155,7 +155,6 @@ export class UpdateStatusInput {
             }
         }
 
-        /*
         // console.log(inputJson)
         const fs = require("fs");
         fs.writeFileSync("./circuits/main_update_state.input.json",
@@ -165,7 +164,6 @@ export class UpdateStatusInput {
                                  value.toString() :
                                  value // return everything else unchanged
                          ));
-        */
         return inputJson;
     }
 }
@@ -272,6 +270,10 @@ export class UpdateStatusCircuit {
                 [0n, 0n], [0n, 0n], [0n, 0n], 0n, 0n
             );
             inputList.push(input);
+            if (input.outputNotes[0].inputNullifier !== input.outputNCs[0]
+                || input.outputNotes[1].inputNullifier !== input.outputNCs[1]) {
+                throw new Error(`${input.outputNotes} != ${input.outputNCs}`)
+            }
         }
         return Promise.resolve(inputList);
     }
