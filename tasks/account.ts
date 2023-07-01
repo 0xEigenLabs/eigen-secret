@@ -13,31 +13,50 @@ import { ErrCode } from "@eigen-secret/core/dist-node/error";
 require("dotenv").config()
 const { buildEddsa } = require("circomlibjs");
 
+async function createAccountForUser(user:any, alias:string, password:any) {
+  let timestamp = Math.floor(Date.now()/1000).toString();
+  console.log("ETH address", user.address);
+  const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
+  const contractJson = require(defaultContractFile);
+  const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
+  let secretSDK = await SecretSDK.initSDKFromAccount(
+      ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, true
+  );
+  if (secretSDK.errno != ErrCode.Success) {
+    console.log("initSDKFromAccount failed: ", secretSDK);
+  }
+  let sdk: SecretSDK = secretSDK.data;
+  let proofAndPublicSignals = await sdk.createAccount(ctx, password);
+  if (proofAndPublicSignals.errno != ErrCode.Success) {
+    console.log("createAccount failed: ", proofAndPublicSignals);
+  }
+  console.log("create account", proofAndPublicSignals.data);
+}
+
 task("create-account", "Create secret account")
   .addParam("alias", "user alias")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("index", "user index for test")
   .setAction(async ({ alias, password, index }, { ethers }) => {
-    let timestamp = Math.floor(Date.now()/1000).toString();
     let account = await ethers.getSigners();
     let user = account[index];
-    console.log("ETH address", user.address);
+    await createAccountForUser(user, alias, password);
+  })
 
-    const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
-    const contractJson = require(defaultContractFile);
-    const ctx = new Context(alias, user.address, rawMessage, timestamp, signature);
-    let secretSDK = await SecretSDK.initSDKFromAccount(
-        ctx, defaultServerEndpoint, password, user, contractJson, defaultCircuitPath, defaultContractABI, true
-    );
-    if (secretSDK.errno != ErrCode.Success) {
-      console.log("initSDKFromAccount failed: ", secretSDK);
-    }
-    let sdk: SecretSDK = secretSDK.data;
-    let proofAndPublicSignals = await sdk.createAccount(ctx, password);
-    if (proofAndPublicSignals.errno != ErrCode.Success) {
-      console.log("createAccount failed: ", proofAndPublicSignals);
-    }
-    console.log("create account", proofAndPublicSignals.data);
+task("create-accounts", "Create multiple secret accounts")
+  .addParam("accountNum", "number of accounts to use")
+  .addParam("password", "password for key sealing", "<your password>")
+  .setAction(async ({ accountNum, password }, { ethers }) => {
+    let accounts = await ethers.getSigners();
+    accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
+    accounts.shift();
+    accounts = accounts.slice(0, accountNum-1);
+    let userAliases = ["Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
+    let createAccountPromises = accounts.map((account, i) => {
+      let userName = userAliases[i];
+      return createAccountForUser(account, userName, password);
+    });
+    await Promise.all(createAccountPromises);
   })
 
 task("migrate-account", "Migrate account to another ETH address")

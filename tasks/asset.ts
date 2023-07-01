@@ -56,13 +56,18 @@ task("register-token", "Register token to Rollup")
 task("send-l1", "Send asset from L1 to L1")
 .addParam("alias", "user name", "Alice")
 .addParam("value", "transaction amount")
-.addParam("receiver", "receiver ETH address")
+.addParam("accountNum", "select the number of test users from 3-10")
 .addParam("assetId", "asset id")
 .addParam("password", "password for key sealing", "<your password>")
-.setAction(async ({ alias, value, receiver, assetId, password }, { ethers }) => {
+.setAction(async ({ alias, value, accountNum, assetId, password }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     assetId = Number(assetId);
-    let [admin] = await ethers.getSigners();
+    let accounts = await ethers.getSigners();
+    let admin = accounts[0];
+    accounts.splice(2, 1);
+    accounts.shift();
+    accounts = accounts.slice(0, accountNum);
+
     const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);
     const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
     const contractJson = require(defaultContractFile);
@@ -79,23 +84,26 @@ task("send-l1", "Send asset from L1 to L1")
     let tokenInfo = await sdk.getTokenInfo(address)
     value = await sdk.parseValue(ctx, value, Number(tokenInfo.decimals))
     console.log(value, assetId);
-    let tx: any;
-    if (assetId > 1) {
-        let tokenIns = new ethers.Contract(
-            address,
-            defaultContractABI.testTokenContractABI,
-            admin
-        );
-        tx = await tokenIns.transfer(receiver, BigInt(value));
-        await tx.wait();
-    } else if (assetId == 1) {
-        console.log(admin.address, receiver, value);
-        tx = await admin.sendTransaction({
-            from: admin.address,
-            to: receiver,
-            value: value
-        })
-        await tx.wait();
+    for (let i=0; i < accounts.length; i++) {
+        let receiver = accounts[i].address;
+        let tx: any;
+        if (assetId > 1) {
+            let tokenIns = new ethers.Contract(
+                address,
+                defaultContractABI.testTokenContractABI,
+                admin
+            );
+            tx = await tokenIns.transfer(receiver, BigInt(value));
+            await tx.wait();
+        } else if (assetId == 1) {
+            console.log(admin.address, receiver, value);
+            tx = await admin.sendTransaction({
+                from: admin.address,
+                to: receiver,
+                value: value
+            })
+            await tx.wait();
+        }
     }
 
     let balance = await sdk.getL1Balance(ctx, address, admin, Number(tokenInfo.decimals));

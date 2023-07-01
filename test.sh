@@ -10,6 +10,23 @@ npx hardhat setup-rollup --network $NETWORK
 npx hardhat register-token --token $TOKEN --network $NETWORK
 npx hardhat update-assets --network $NETWORK
 ASSET_ID=$(cat .asset.json | jq -r .assetId)
+ACCOUNT_NUM=3
+
+npx hardhat create-accounts --account-num ${ACCOUNT_NUM} --network $NETWORK
+npx hardhat send-l1 --alias Alice --asset-id ${ASSET_ID} --account-num ${ACCOUNT_NUM} --value 100 --network $NETWORK
+npx hardhat get-balances-multi --account-num ${ACCOUNT_NUM} --asset-id 2 --network $NETWORK
+
+npx hardhat deposit-multi --account-num ${ACCOUNT_NUM} --asset-id ${ASSET_ID} --value 50 --network $NETWORK
+npx hardhat get-balances-multi --account-num ${ACCOUNT_NUM} --asset-id 2 --network $NETWORK
+
+npx hardhat deposit-multi --account-num ${ACCOUNT_NUM} --asset-id ${ASSET_ID} --value 50 --network $NETWORK
+npx hardhat get-balances-multi --account-num ${ACCOUNT_NUM} --asset-id 2 --network $NETWORK
+
+npx hardhat send-multi --account-num ${ACCOUNT_NUM} --asset-id ${ASSET_ID} --value 10 --network $NETWORK
+npx hardhat get-balances-multi --account-num ${ACCOUNT_NUM} --asset-id 2 --network $NETWORK
+
+npx hardhat withdraw-multi --account-num ${ACCOUNT_NUM} --asset-id ${ASSET_ID} --value 20 --network $NETWORK
+npx hardhat get-balances-multi --account-num ${ACCOUNT_NUM} --asset-id 2 --network $NETWORK
 
 # npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
 # npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id ${ASSET_ID} --network $NETWORK
@@ -19,29 +36,10 @@ ASSET_ID=$(cat .asset.json | jq -r .assetId)
 # npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id ${ASSET_ID} --network $NETWORK
 # npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
 
-npx hardhat create-account --alias Bob --index 1 --network $NETWORK
-npx hardhat create-account --alias Charlie --index 3 --network $NETWORK
-npx hardhat send-l1 --alias Alice --asset-id ${ASSET_ID} --receiver 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --value 100 --network $NETWORK
-npx hardhat send-l1 --alias Alice --asset-id ${ASSET_ID} --receiver 0x90F79bf6EB2c4f870365E785982E1f101E93b906 --value 100 --network $NETWORK
-
 # npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id ${ASSET_ID} --network $NETWORK
 # npx hardhat deposit --alias Bob --index 1 --value 10 --asset-id ${ASSET_ID} --network $NETWORK
 # npx hardhat get-balance --alias Bob --index 1 --asset-id ${ASSET_ID} --network $NETWORK
 
-npx hardhat depositall --asset-id ${ASSET_ID} --value 50 --network $NETWORK
-npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
-npx hardhat get-balance --alias Bob --index 1 --asset-id ${ASSET_ID} --network $NETWORK
-npx hardhat get-balance --alias Charlie --index 3 --asset-id ${ASSET_ID} --network $NETWORK
-
-npx hardhat depositall --asset-id ${ASSET_ID} --value 50 --network $NETWORK
-npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
-npx hardhat get-balance --alias Bob --index 1 --asset-id ${ASSET_ID} --network $NETWORK
-npx hardhat get-balance --alias Charlie --index 3 --asset-id ${ASSET_ID} --network $NETWORK
-
-npx hardhat sendall --asset-id ${ASSET_ID} --value 10 --network $NETWORK
-npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
-npx hardhat get-balance --alias Bob --index 1 --asset-id ${ASSET_ID} --network $NETWORK
-npx hardhat get-balance --alias Charlie --index 3 --asset-id ${ASSET_ID} --network $NETWORK
 # npx hardhat migrate-account --alias Alice --index 0 --network $NETWORK
 
 # npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
