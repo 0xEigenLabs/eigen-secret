@@ -8,6 +8,7 @@ import {
     defaultCircuitPath, defaultContractABI, defaultContractFile
 } from "./common";
 import { ErrCode } from "@eigen-secret/core/dist-node/error";
+const assert = require("assert");
 
 async function runDepositTask(alias: string, assetId: number, password: string, value: any, user:any) {
     let timestamp = Math.floor(Date.now()/1000).toString();
@@ -116,7 +117,7 @@ async function runWithdrawTask(alias: string, assetId: number, password: string,
   return await sdk.getAllBalance(ctx);
 }
 
-async function getBalanceForUser(ethers: any, user: any, alias: string, password: string, assetId: number) {
+async function getBalanceForUser(ethers: any, user: any, alias: string, password: string, assetId: number, expectedL2Balance: string) {
   let timestamp = Math.floor(Date.now()/1000).toString();
   const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
   const ctx = new Context(
@@ -139,7 +140,9 @@ async function getBalanceForUser(ethers: any, user: any, alias: string, password
     console.log("getAllBalance failed: ", balance);
   }
   console.log("L2 balance for", alias, JSON.stringify(balance.data));
-
+  if (expectedL2Balance !== "") {
+    assert.strictEqual(balance.data.assetInfo[0].balance, expectedL2Balance, `${alias}'s actual L2 balance does not match the expected balance`);
+  }
   assetId = Number(assetId);
   let address = await sdk.getRegisteredToken(assetId);
   console.log("Token Address for", alias, address);
@@ -204,18 +207,27 @@ task("get-balances-multi", "Get multiple users' both L1 and L2 balance")
   .addParam("numAccount", "number of accounts to use")
   .addParam("assetId", "asset id")
   .addParam("password", "password for key sealing", "<your password>")
-  .setAction(async ({ numAccount, assetId, password }, { ethers }) => {
+  .addParam("expectedL1Balance", "Expected L1 balance for each account")
+  .addParam("expectedL2Balance", "Expected L2 balance for each account")
+  .setAction(async ({ numAccount, assetId, password, expectedL1Balance, expectedL2Balance }, { ethers }) => {
     let accounts = await ethers.getSigners();
     accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
     accounts = accounts.slice(0, numAccount); // Use the first 'numAccount' accounts
     let userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
     let balancePromises = accounts.map(async (account, i) => {
       let userName = userAliases[i];
-      let balanceL1 = await getBalanceForUser(ethers, account, userName, password, assetId);
+      let balanceL1 = await getBalanceForUser(ethers, account, userName, password, assetId, expectedL2Balance);
       console.log("L1 balance for", userName, balanceL1.toString());
+      if (userName !== "Alice") {
+        assert.strictEqual(balanceL1.toString(), expectedL1Balance, `${userName}'s actual L1 balance does not match the expected balance`);
+      }
     });
-
-    await Promise.all(balancePromises);
+    let results = await Promise.allSettled(balancePromises);
+    results.forEach((result, i) => {
+      if (result.status === "rejected") {
+        console.error(`Error getting balance for ${userAliases[i]}:`, result.reason);
+      }
+    });
   });
 
 task("get-balance", "Get user's both L1 and L2 balance")
@@ -223,10 +235,11 @@ task("get-balance", "Get user's both L1 and L2 balance")
   .addParam("assetId", "asset id")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("index", "user index for test")
-  .setAction(async ({ alias, assetId, password, index }, { ethers }) => {
+  .addParam("expectedL2Balance", "Expected L2 balance user")
+  .setAction(async ({ alias, assetId, password, index, expectedL2Balance }, { ethers }) => {
     let account = await ethers.getSigners();
     let user = account[index];
-    let balanceL1 = await getBalanceForUser(ethers, user, alias, password, assetId);
+    let balanceL1 = await getBalanceForUser(ethers, user, alias, password, assetId, expectedL2Balance);
     console.log("L1 balance", balanceL1.toString());
 });
 
@@ -339,4 +352,17 @@ task("withdraw-multi", "Withdraw assets from multiple users")
   });
   let result = await Promise.allSettled(taskPromises);
   console.log(JSON.stringify(result))
+});
+
+task("execute-all", "Execute deposit-multi, send-multi, and withdraw-multi simultaneously")
+.addParam("numAccount", "select the number of test users from 3-10")
+.addParam("assetId", "asset id/token id")
+.addParam("password", "password for key sealing", "<your password>")
+.addParam("value", "amount of transaction")
+.addParam("receiverAlias", "receiver_alias use for test", __DEFAULT_ALIAS__)
+.setAction(async ({ numAccount, assetId, password, value, receiverAlias }, { run }) => {
+  let depositPromise = run("deposit-multi", { numAccount, assetId, password, value });
+  let sendPromise = run("send-multi", { numAccount, assetId, password, value, receiverAlias });
+  let withdrawPromise = run("withdraw-multi", { numAccount, assetId, password, value });
+  await Promise.all([depositPromise, sendPromise, withdrawPromise]);
 });
