@@ -50,6 +50,5 @@ npx hardhat deposit --alias Alice --index 0 --value 11 --asset-id ${ASSET_ID} --
 npx hardhat update-account --alias Alice --index 0 --network $NETWORK
 npx hardhat deposit --alias Alice --index 0 --value 12 --asset-id ${ASSET_ID} --network $NETWORK
 
-# TODO: test send
 npx hardhat withdraw --alias Alice --index 0 --value 12 --asset-id ${ASSET_ID} --network $NETWORK
 npx hardhat get-transactions --alias Alice --index 0 --network $NETWORK
