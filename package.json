@@ -34,7 +34,6 @@
     "ethers": "^5.6.8",
     "express-async-errors": "^3.1.1",
     "ffjavascript": "^0.2.55",
-    "node-fetch": "2.6.9",
     "snarkjs": "^0.6.1"
   },
   "devDependencies": {
