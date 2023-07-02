@@ -668,10 +668,10 @@ export class SecretSDK {
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
-            keysFound.push(input.outputNCs[0]);
-            valuesFound.push(input.outputNotes[0].inputNullifier);
-            keysFound.push(input.outputNCs[1]);
-            valuesFound.push(input.outputNotes[1].inputNullifier);
+            valuesFound.push(input.outputNCs[0]);
+            keysFound.push(input.outputNotes[0].inputNullifier);
+            valuesFound.push(input.outputNCs[1]);
+            keysFound.push(input.outputNotes[1].inputNullifier);
             for (const item of proof.data.siblings) {
                 let tmpSiblings = [];
                 for (const sib of item) {
@@ -938,9 +938,9 @@ export class SecretSDK {
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
-            keysFound.push(input.outputNCs[0]);
-            valuesFound.push(input.outputNotes[0].inputNullifier);
-            keysFound.push(input.outputNCs[1]);
+            valuesFound.push(input.outputNCs[0]);
+            keysFound.push(input.outputNotes[0].inputNullifier);
+            valuesFound.push(input.outputNCs[1]);
             valuesFound.push(input.outputNotes[1].inputNullifier);
             dataTreeRootsFound.push(BigInt(proof.data.dataTreeRoot));
             lastDataTreeRoot = BigInt(proof.data.dataTreeRoot);

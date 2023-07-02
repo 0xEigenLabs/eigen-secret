@@ -207,10 +207,10 @@ describe("End2end Test", function() {
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
-            keysFound.push(input.outputNCs[0]);
-            valuesFound.push(input.outputNotes[0].inputNullifier);
-            keysFound.push(input.outputNCs[1]);
-            valuesFound.push(input.outputNotes[1].inputNullifier);
+            valuesFound.push(input.outputNCs[0]);
+            keysFound.push(input.outputNotes[0].inputNullifier);
+            valuesFound.push(input.outputNCs[1]);
+            keysFound.push(input.outputNotes[1].inputNullifier);
             for (const item of singleProof.siblings) {
                 let tmpSiblings = [];
                 for (const sib of item) {
@@ -524,10 +524,10 @@ describe("End2end Test", function() {
             let circuitInput = input.toCircuitInput(babyJub, singleProof);
             let proofAndPublicSignals = await Prover.updateState(circuitPath, circuitInput);
 
-            keysFound.push(input.outputNCs[0]);
-            valuesFound.push(input.outputNotes[0].inputNullifier);
-            keysFound.push(input.outputNCs[1]);
-            valuesFound.push(input.outputNotes[1].inputNullifier);
+            valuesFound.push(input.outputNCs[0]);
+            keysFound.push(input.outputNotes[0].inputNullifier);
+            valuesFound.push(input.outputNCs[1]);
+            keysFound.push(input.outputNotes[1].inputNullifier);
             dataTreeRootsFound.push(BigInt(singleProof.dataTreeRoot));
             lastDataTreeRoot = singleProof.dataTreeRoot;
             lastKeys = input.outputNCs;
