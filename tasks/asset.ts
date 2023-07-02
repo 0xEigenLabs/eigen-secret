@@ -65,7 +65,6 @@ task("send-l1", "Send asset from L1 to L1")
     let accounts = await ethers.getSigners();
     let admin = accounts[0];
     accounts.splice(2, 1);
-    accounts.shift();
     accounts = accounts.slice(0, numAccount);
 
     const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);

@@ -941,7 +941,7 @@ export class SecretSDK {
             valuesFound.push(input.outputNCs[0]);
             keysFound.push(input.outputNotes[0].inputNullifier);
             valuesFound.push(input.outputNCs[1]);
-            valuesFound.push(input.outputNotes[1].inputNullifier);
+            keysFound.push(input.outputNotes[1].inputNullifier);
             dataTreeRootsFound.push(BigInt(proof.data.dataTreeRoot));
             lastDataTreeRoot = BigInt(proof.data.dataTreeRoot);
             lastKeys = input.outputNCs;
