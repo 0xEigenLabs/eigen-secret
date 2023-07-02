@@ -113,9 +113,10 @@ async function runWithdrawTask(alias: string, assetId: number, password: string,
   }
   console.log(proofAndPublicSignals.data);
   await sdk.submitProofs(ctx, proofAndPublicSignals.data);
+  return await sdk.getAllBalance(ctx);
 }
 
-async function getBalanceForUser(user: any, alias: string, password: string, assetId: number) {
+async function getBalanceForUser(ethers: any, user: any, alias: string, password: string, assetId: number) {
   let timestamp = Math.floor(Date.now()/1000).toString();
   const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
   const ctx = new Context(
@@ -142,7 +143,21 @@ async function getBalanceForUser(user: any, alias: string, password: string, ass
   assetId = Number(assetId);
   let address = await sdk.getRegisteredToken(assetId);
   console.log("Token Address for", alias, address);
-  return address;
+  const ti = await sdk.getTokenInfo(address);
+
+  let balanceL1: any;
+  if (assetId !== 1) {
+      let tokenIns = new ethers.Contract(
+          address,
+          defaultContractABI.testTokenContractABI,
+          user
+      );
+      balanceL1 = await tokenIns.balanceOf(user.address);
+  } else {
+      balanceL1 = await user.getBalance();
+  }
+  balanceL1 = sdk.formatValue(ctx, balanceL1, ti.decimals);
+  return balanceL1;
 }
 
 
@@ -186,28 +201,17 @@ task("withdraw", "Withdraw asset from L2 to L1")
   })
 
 task("get-balances-multi", "Get multiple users' both L1 and L2 balance")
-  .addParam("accountNum", "number of accounts to use")
+  .addParam("numAccount", "number of accounts to use")
   .addParam("assetId", "asset id")
   .addParam("password", "password for key sealing", "<your password>")
-  .setAction(async ({ accountNum, assetId, password }, { ethers }) => {
+  .setAction(async ({ numAccount, assetId, password }, { ethers }) => {
     let accounts = await ethers.getSigners();
     accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
-    accounts = accounts.slice(0, accountNum); // Use the first 'accountNum' accounts
+    accounts = accounts.slice(0, numAccount); // Use the first 'numAccount' accounts
     let userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
     let balancePromises = accounts.map(async (account, i) => {
       let userName = userAliases[i];
-      let address = await getBalanceForUser(account, userName, password, assetId);
-      let balanceL1: any;
-      if (assetId !== 1) {
-          let tokenIns = new ethers.Contract(
-              address,
-              defaultContractABI.testTokenContractABI,
-              account
-          );
-          balanceL1 = await tokenIns.balanceOf(account.address);
-      } else {
-          balanceL1 = await account.getBalance();
-      }
+      let balanceL1 = await getBalanceForUser(ethers, account, userName, password, assetId);
       console.log("L1 balance for", userName, balanceL1.toString());
     });
 
@@ -222,18 +226,7 @@ task("get-balance", "Get user's both L1 and L2 balance")
   .setAction(async ({ alias, assetId, password, index }, { ethers }) => {
     let account = await ethers.getSigners();
     let user = account[index];
-    let address = await getBalanceForUser(user, alias, password, assetId);
-    let balanceL1: any;
-    if (assetId !== 1) {
-        let tokenIns = new ethers.Contract(
-            address,
-            defaultContractABI.testTokenContractABI,
-            user
-        );
-        balanceL1 = await tokenIns.balanceOf(user.address);
-    } else {
-        balanceL1 = await user.getBalance();
-    }
+    let balanceL1 = await getBalanceForUser(ethers, user, alias, password, assetId);
     console.log("L1 balance", balanceL1.toString());
 });
 
@@ -272,14 +265,14 @@ task("get-transactions", "Get user's transactions")
 });
 
 task("deposit-multi", "Deposit assets from multiple users")
-.addParam("accountNum", "select the number of test users from 3-10")
+.addParam("numAccount", "select the number of test users from 3-10")
 .addParam("assetId", "asset id/token id")
 .addParam("password", "password for key sealing", "<your password>")
 .addParam("value", "amount of transaction")
-.setAction(async ({ accountNum, assetId, password, value }, { ethers }) => {
+.setAction(async ({ numAccount, assetId, password, value }, { ethers }) => {
   let accounts = await ethers.getSigners();
   accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
-  accounts = accounts.slice(0, accountNum);
+  accounts = accounts.slice(0, numAccount);
   let userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
   let taskPromises = accounts.map((account, i) => {
     let userName = userAliases[i];
@@ -290,15 +283,15 @@ task("deposit-multi", "Deposit assets from multiple users")
 });
 
 task("send-multi", "Collaborative asset transfer by multiple users")
-.addParam("accountNum", "select the number of test users from 3-10")
+.addParam("numAccount", "select the number of test users from 3-10")
 .addParam("assetId", "asset id/token id")
 .addParam("password", "password for key sealing", "<your password>")
 .addParam("value", "amount of transaction")
 .addParam("receiverAlias", "receiver_alias use for test", __DEFAULT_ALIAS__)
-.setAction(async ({ accountNum, assetId, password, value, receiverAlias }, { ethers }) => {
+.setAction(async ({ numAccount, assetId, password, value, receiverAlias }, { ethers }) => {
   let accounts = await ethers.getSigners();
   accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
-  accounts = accounts.slice(0, accountNum);
+  accounts = accounts.slice(0, numAccount);
   let userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
   async function setupUser(user: any, userName: string) {
     let timestamp = Math.floor(Date.now()/1000).toString();
@@ -331,14 +324,14 @@ task("send-multi", "Collaborative asset transfer by multiple users")
 });
 
 task("withdraw-multi", "Withdraw assets from multiple users")
-.addParam("accountNum", "select the number of test users from 3-10")
+.addParam("numAccount", "select the number of test users from 3-10")
 .addParam("assetId", "asset id/token id")
 .addParam("password", "password for key sealing", "<your password>")
 .addParam("value", "amount of transaction")
-.setAction(async ({ accountNum, assetId, password, value }, { ethers }) => {
+.setAction(async ({ numAccount, assetId, password, value }, { ethers }) => {
   let accounts = await ethers.getSigners();
   accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
-  accounts = accounts.slice(0, accountNum);
+  accounts = accounts.slice(0, numAccount);
   let userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
   let taskPromises = accounts.map((account, i) => {
     let userName = userAliases[i];

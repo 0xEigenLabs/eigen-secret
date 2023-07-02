@@ -44,13 +44,13 @@ task("create-account", "Create secret account")
   })
 
 task("create-accounts", "Create multiple secret accounts")
-  .addParam("accountNum", "number of accounts to use")
+  .addParam("numAccount", "number of accounts to use")
   .addParam("password", "password for key sealing", "<your password>")
-  .setAction(async ({ accountNum, password }, { ethers }) => {
+  .setAction(async ({ numAccount, password }, { ethers }) => {
     let accounts = await ethers.getSigners();
     accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
     accounts.shift();
-    accounts = accounts.slice(0, accountNum-1);
+    accounts = accounts.slice(0, numAccount-1);
     let userAliases = ["Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
     let createAccountPromises = accounts.map((account, i) => {
       let userName = userAliases[i];

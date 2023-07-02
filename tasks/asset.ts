@@ -56,17 +56,17 @@ task("register-token", "Register token to Rollup")
 task("send-l1", "Send asset from L1 to L1")
 .addParam("alias", "user name", "Alice")
 .addParam("value", "transaction amount")
-.addParam("accountNum", "select the number of test users from 3-10")
+.addParam("numAccount", "select the number of test users from 3-10")
 .addParam("assetId", "asset id")
 .addParam("password", "password for key sealing", "<your password>")
-.setAction(async ({ alias, value, accountNum, assetId, password }, { ethers }) => {
+.setAction(async ({ alias, value, numAccount, assetId, password }, { ethers }) => {
     let timestamp = Math.floor(Date.now()/1000).toString();
     assetId = Number(assetId);
     let accounts = await ethers.getSigners();
     let admin = accounts[0];
     accounts.splice(2, 1);
     accounts.shift();
-    accounts = accounts.slice(0, accountNum);
+    accounts = accounts.slice(0, numAccount);
 
     const signature = await signEOASignature(admin, rawMessage, admin.address, timestamp);
     const ctx = new Context(alias, admin.address, rawMessage, timestamp, signature);
@@ -127,5 +127,4 @@ task("update-assets", "Update asset price")
     }
     let sdk: SecretSDK = secretSDK.data;
     await sdk.updateAssets(ctx);
-    console.log("The task to update the assets price is running")
 })
