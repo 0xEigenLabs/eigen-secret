@@ -1188,7 +1188,7 @@ export class SecretSDK {
         let accountRequired = false;
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         let acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
-        let smtProof = await this.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
+        let smtProof = await this.updateStateTree(ctx, 1n, acStateKey, 0n, 0n, acStateKey);
         if (!smtProof.ok) {
             return smtProof;
         }
@@ -1241,7 +1241,7 @@ export class SecretSDK {
             newSigningPubKey[0],
             aliasHash
         );
-        let smtProof = await this.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
+        let smtProof = await this.updateStateTree(ctx, 1n, input.newAccountNC, 0n, 0n, input.newAccountNC);
         if (!smtProof.ok) {
             return smtProof;
         }
@@ -1363,7 +1363,7 @@ export class SecretSDK {
             aliasHash
         );
         // insert the new account key
-        let smtProof = await this.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
+        let smtProof = await this.updateStateTree(ctx, 1n, input.newAccountNC, 0n, 0n, input.newAccountNC);
         if (!smtProof.ok) {
             return smtProof;
         }

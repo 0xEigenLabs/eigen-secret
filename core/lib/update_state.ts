@@ -4,83 +4,37 @@ import { JoinSplitCircuit } from "./join_split";
 const { buildBabyjub } = require("circomlibjs");
 
 export class UpdateStatusInput {
-    proofId: number;
-    publicValue: bigint;
-    publicOwner: bigint;
-    assetId: number;
-    publicAssetId: number;
-    aliasHash: bigint;
-    numInputNote: number;
-    inputNotes: Note[];
-    outputNotes: Note[];
-    outputNCs: bigint[];
+    proofId: number = 0;
+    publicValue: bigint = 0n;
+    publicOwner: bigint = 0n;
+    assetId: number = 0;
+    publicAssetId: number = 0;
+    aliasHash: bigint = 0n;
+    numInputNote: number = 0;
+    inputNotes: Note[] = [];
+    outputNotes: Note[] = [];
+    outputNCs: bigint[] = [];
     // dataTreeRoot: bigint;
     // siblings: bigint[][];
     // siblingsAC: bigint[];
-    accountPrvKey: bigint;
-    accountPubKey: bigint[];
-    accountRequired: boolean;
-    signingPubKey: bigint[];
-    signatureR8: bigint[];
-    signatureS: bigint;
-    newAccountPubKey: bigint[];
-    newSigningPubKey1: bigint[];
-    newSigningPubKey2: bigint[];
+    accountPrvKey: bigint = 0n;
+    accountPubKey: bigint[] = [];
+    accountRequired: boolean = false;
+    signingPubKey: bigint[] = [];
+    signatureR8: bigint[] = [];
+    signatureS: bigint = 0n;
+    newAccountPubKey: bigint[] = [];
+    newSigningPubKey1: bigint[] = [];
+    newSigningPubKey2: bigint[] = [];
 
     // tmp
-    accountNC: bigint;
-    newAccountNC: bigint;
+    accountNC: bigint = 0n;
+    newAccountNC: bigint = 0n;
 
     public constructor(
-        proofId: number,
-        publicValue: bigint,
-        publicOwner: bigint,
-        assetId: number,
-        publicAssetId: number,
-        aliasHash: bigint,
-        numInputNote: number,
-        inputNotes: Note[],
-        outputNotes: Note[],
-        outputNCs: bigint[],
-        // dataTreeRoot: bigint,
-        // siblings: bigint[][],
-        // siblingsAC: bigint[],
-        accountPrvKey: bigint,
-        accountPubKey: bigint[],
-        signingPubKey: bigint[],
-        accountRequired: boolean,
-        signatureR8: bigint[],
-        signatureS: bigint,
-        newAccountPubKey: bigint[],
-        newSigningPubKey1: bigint[],
-        newSigningPubKey2: bigint[],
-        accountNC: bigint,
-        newAccountNC: bigint
+        usi: Partial<UpdateStatusInput>
     ) {
-        this.accountNC = accountNC;
-        this.newAccountNC = newAccountNC;
-        this.proofId = proofId;
-        this.publicOwner = publicOwner;
-        this.publicValue = publicValue;
-        this.assetId = assetId;
-        this.publicAssetId = publicAssetId;
-        this.aliasHash = aliasHash;
-        this.numInputNote = numInputNote;
-        this.inputNotes = inputNotes;
-        this.outputNotes = outputNotes;
-        this.outputNCs = outputNCs;
-        // this.dataTreeRoot = dataTreeRoot;
-        // this.siblings = siblings;
-        // this.siblingsAC = siblingsAC;
-        this.accountPubKey = accountPubKey;
-        this.accountPrvKey = accountPrvKey;
-        this.signingPubKey = signingPubKey;
-        this.newAccountPubKey = newAccountPubKey;
-        this.newSigningPubKey1 = newSigningPubKey1;
-        this.newSigningPubKey2 = newSigningPubKey2;
-        this.signatureR8 = signatureR8;
-        this.signatureS = signatureS;
-        this.accountRequired = accountRequired;
+        Object.assign(this, usi);
     }
 
     // nomalize the input
@@ -190,27 +144,29 @@ export class UpdateStatusCircuit {
             aliasHash
         );
         return new UpdateStatusInput(
-            accountInput.proofId,
-            0n,
-            0n,
-            0,
-            0,
-            accountInput.aliasHash,
-            0,
-            [],
-            [],
-            accountInput.outputNCs,
-            0n,
-            accountInput.accountPubKey,
-            accountInput.signingPubKey,
-            false,
-            accountInput.signatureR8,
-            accountInput.signatureS,
-            newAccountPubKey,
-            newSigningPubKey1,
-            newSigningPubKey2,
-            accountInput.accountNC,
-            accountInput.newAccountNC
+            {
+                proofId: accountInput.proofId,
+                publicValue: 0n,
+                publicOwner: 0n,
+                assetId: 0,
+                publicAssetId: 0,
+                aliasHash: accountInput.aliasHash,
+                numInputNote: 0,
+                inputNotes: [],
+                outputNotes: [],
+                outputNCs: accountInput.outputNCs,
+                accountPrvKey: 0n, // FIXME
+                accountPubKey: accountInput.accountPubKey,
+                signingPubKey: accountInput.signingPubKey,
+                accountRequired: false,
+                signatureR8: accountInput.signatureR8,
+                signatureS: accountInput.signatureS,
+                newAccountPubKey,
+                newSigningPubKey1,
+                newSigningPubKey2,
+                accountNC: accountInput.accountNC,
+                newAccountNC: accountInput.newAccountNC
+            }
         );
     }
 
@@ -250,30 +206,30 @@ export class UpdateStatusCircuit {
         const F = babyJub.F;
         let inputList = new Array<UpdateStatusInput>(0);
         for (let i=0; i<joinSplitInput.length; i++) {
-            let input = new UpdateStatusInput(
-                joinSplitInput[i].proofId,
-                joinSplitInput[i].publicValue,
-                joinSplitInput[i].publicOwner,
-                joinSplitInput[i].assetId,
-                joinSplitInput[i].publicAssetId,
-                joinSplitInput[i].aliasHash,
-                joinSplitInput[i].numInputNote,
-                joinSplitInput[i].inputNotes,
-                joinSplitInput[i].outputNotes,
-                joinSplitInput[i].outputNCs,
-                joinSplitInput[i].accountPrvKey,
-                joinSplitInput[i].accountPubKey,
-                joinSplitInput[i].signingPubKey,
-                joinSplitInput[i].accountRequired,
-                [F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
-                joinSplitInput[i].signatureS,
-                [0n, 0n], [0n, 0n], [0n, 0n], 0n, 0n
-            );
+            let input = new UpdateStatusInput({
+                proofId: joinSplitInput[i].proofId,
+                publicValue: joinSplitInput[i].publicValue,
+                publicOwner: joinSplitInput[i].publicOwner,
+                assetId: joinSplitInput[i].assetId,
+                publicAssetId: joinSplitInput[i].publicAssetId,
+                aliasHash: joinSplitInput[i].aliasHash,
+                numInputNote: joinSplitInput[i].numInputNote,
+                inputNotes: joinSplitInput[i].inputNotes,
+                outputNotes: joinSplitInput[i].outputNotes,
+                outputNCs: joinSplitInput[i].outputNCs,
+                accountPrvKey: joinSplitInput[i].accountPrvKey,
+                accountPubKey: joinSplitInput[i].accountPubKey,
+                signingPubKey: joinSplitInput[i].signingPubKey,
+                accountRequired: joinSplitInput[i].accountRequired,
+                signatureR8: [F.toObject(joinSplitInput[i].signatureR8[0]), F.toObject(joinSplitInput[i].signatureR8[1])],
+                signatureS: joinSplitInput[i].signatureS,
+                newAccountPubKey: [0n, 0n],
+                newSigningPubKey1: [0n, 0n],
+                newSigningPubKey2: [0n, 0n],
+                accountNC: 0n,
+                newAccountNC: 0n
+            });
             inputList.push(input);
-            if (input.outputNotes[0].inputNullifier !== input.outputNCs[0] ||
-                input.outputNotes[1].inputNullifier !== input.outputNCs[1]) {
-                throw new Error(`${input.outputNotes} != ${input.outputNCs}`)
-            }
         }
         return Promise.resolve(inputList);
     }

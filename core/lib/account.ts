@@ -333,13 +333,14 @@ export class AccountCircuit {
 
         let accountNC = await rawCompress(accountPubKey, signingPubKey, aliasHash);
         let newAccountNC = await rawCompress(newAccountPubKey, signingPubKey, aliasHash);
-        // let outputNC1 = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
-        // let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
 
         let nullifier1 = proofId == AccountCircuit.PROOF_ID_TYPE_CREATE? (await aliasHashDigest(aliasHash)): 0;
         let nullifier2 = (proofId == AccountCircuit.PROOF_ID_TYPE_CREATE ||
             proofId == AccountCircuit.PROOF_ID_TYPE_MIGRATE) ?
             (await newAccountDigest(newAccountPubKey)): 0;
+
+        let outputNC1 = await rawCompress(newAccountPubKey, newSigningPubKey1, aliasHash);
+        let outputNC2 = await rawCompress(newAccountPubKey, newSigningPubKey2, aliasHash);
 
         let msghash = await accountDigest(
             aliasHash,
@@ -371,7 +372,7 @@ export class AccountCircuit {
         let sig = await signingKey.sign(msghash);
         return new AccountCircuit(
             proofId,
-            [nullifier1, nullifier2],
+            [outputNC1, outputNC2],
             // F.toObject(state.root()),
             // siblingsPad(leaf.siblings, F),
             aliasHash,

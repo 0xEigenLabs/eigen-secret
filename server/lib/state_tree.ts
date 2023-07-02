@@ -41,32 +41,26 @@ export class WorldState {
         const F = eddsa.F;
 
         let transaction = await sequelize.transaction();
-        console.log(
-            "updateStateTree",
-            outputNc1, nullifier1,
-            outputNc2, nullifier2
-        );
-
         try {
             let siblings = [];
             // insert all first, then find
-            if (outputNc1 > 0n) {
-                let result = await instance.insert(outputNc1, nullifier1, { transaction });
+            if (nullifier1 > 0n) {
+                let result = await instance.insert(nullifier1, outputNc1, { transaction });
                 consola.log(result);
             }
 
-            if (outputNc2 > 0n) {
-                let result = await instance.insert(outputNc2, nullifier2, { transaction });
+            if (nullifier2 > 0n) {
+                let result = await instance.insert(nullifier2, outputNc2, { transaction });
                 consola.log(result);
             }
 
             // NOTE: DO NOT PAD here, cause the smart contract does not accept padding
-            if (outputNc1 > 0n) {
-                let sib = await instance.find(outputNc1, { transaction })
+            if (nullifier1 > 0n) {
+                let sib = await instance.find(nullifier1, { transaction })
                 siblings.push(siblingsPad(sib.siblings, F, padding));
             }
-            if (outputNc2 > 0n) {
-                let sib = await instance.find(outputNc2, { transaction })
+            if (nullifier2 > 0n) {
+                let sib = await instance.find(nullifier2, { transaction })
                 siblings.push(siblingsPad(sib.siblings, F, padding));
             }
 
