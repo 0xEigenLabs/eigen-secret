@@ -9,6 +9,7 @@ import {
 } from "./common";
 import { ErrCode } from "@eigen-secret/core/dist-node/error";
 const assert = require("assert");
+const userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
 
 async function runDepositTask(alias: string, assetId: number, password: string, value: any, user:any) {
     let timestamp = Math.floor(Date.now()/1000).toString();
@@ -140,7 +141,7 @@ async function getBalanceForUser(ethers: any, user: any, alias: string, password
     console.log("getAllBalance failed: ", balance);
   }
   console.log("L2 balance for", alias, JSON.stringify(balance.data));
-  if (expectedL2Balance !== "") {
+  if (expectedL2Balance.length > 0) {
     assert.strictEqual(balance.data.assetInfo[0].balance, expectedL2Balance, `${alias}'s actual L2 balance does not match the expected balance`);
   }
   assetId = Number(assetId);
@@ -207,18 +208,17 @@ task("get-balances-multi", "Get multiple users' both L1 and L2 balance")
   .addParam("numAccount", "number of accounts to use")
   .addParam("assetId", "asset id")
   .addParam("password", "password for key sealing", "<your password>")
-  .addParam("expectedL1Balance", "Expected L1 balance for each account")
-  .addParam("expectedL2Balance", "Expected L2 balance for each account")
+  .addParam("expectedL1Balance", "Expected L1 balance for each account", "")
+  .addParam("expectedL2Balance", "Expected L2 balance for each account", "")
   .setAction(async ({ numAccount, assetId, password, expectedL1Balance, expectedL2Balance }, { ethers }) => {
     let accounts = await ethers.getSigners();
     accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
     accounts = accounts.slice(0, numAccount); // Use the first 'numAccount' accounts
-    let userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
     let balancePromises = accounts.map(async (account, i) => {
       let userName = userAliases[i];
       let balanceL1 = await getBalanceForUser(ethers, account, userName, password, assetId, expectedL2Balance);
       console.log("L1 balance for", userName, balanceL1.toString());
-      if (userName !== "Alice") {
+      if (userName !== "Alice" && expectedL1Balance.length > 0) {
         assert.strictEqual(balanceL1.toString(), expectedL1Balance, `${userName}'s actual L1 balance does not match the expected balance`);
       }
     });
@@ -235,7 +235,7 @@ task("get-balance", "Get user's both L1 and L2 balance")
   .addParam("assetId", "asset id")
   .addParam("password", "password for key sealing", "<your password>")
   .addParam("index", "user index for test")
-  .addParam("expectedL2Balance", "Expected L2 balance user")
+  .addParam("expectedL2Balance", "Expected L2 balance user", "")
   .setAction(async ({ alias, assetId, password, index, expectedL2Balance }, { ethers }) => {
     let account = await ethers.getSigners();
     let user = account[index];
@@ -286,7 +286,6 @@ task("deposit-multi", "Deposit assets from multiple users")
   let accounts = await ethers.getSigners();
   accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
   accounts = accounts.slice(0, numAccount);
-  let userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
   let taskPromises = accounts.map((account, i) => {
     let userName = userAliases[i];
     return runDepositTask(userName, assetId, password, value, account);
@@ -305,7 +304,6 @@ task("send-multi", "Collaborative asset transfer by multiple users")
   let accounts = await ethers.getSigners();
   accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
   accounts = accounts.slice(0, numAccount);
-  let userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
   async function setupUser(user: any, userName: string) {
     let timestamp = Math.floor(Date.now()/1000).toString();
     const signature = await signEOASignature(user, rawMessage, user.address, timestamp);
@@ -345,7 +343,6 @@ task("withdraw-multi", "Withdraw assets from multiple users")
   let accounts = await ethers.getSigners();
   accounts.splice(2, 1); // remove the third user (index 2) since the proxy contract is deployed using this account
   accounts = accounts.slice(0, numAccount);
-  let userAliases = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "George", "Hannah", "Ivy", "Jack"];
   let taskPromises = accounts.map((account, i) => {
     let userName = userAliases[i];
     return runWithdrawTask(userName, assetId, password, value, account);
@@ -364,5 +361,6 @@ task("execute-all", "Execute deposit-multi, send-multi, and withdraw-multi simul
   let depositPromise = run("deposit-multi", { numAccount, assetId, password, value });
   let sendPromise = run("send-multi", { numAccount, assetId, password, value, receiverAlias });
   let withdrawPromise = run("withdraw-multi", { numAccount, assetId, password, value });
-  await Promise.all([depositPromise, sendPromise, withdrawPromise]);
+  let result = await Promise.all([depositPromise, sendPromise, withdrawPromise]);
+  console.log(JSON.stringify(result));
 });
