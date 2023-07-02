@@ -109,10 +109,10 @@ describe("POST /transactions", () => {
         .send({
             context: ctx.serialize(),
             newStates: {
-                outputNc1: "1233",
-                nullifier1: "1",
-                outputNc2: "111",
-                nullifier2: "456",
+                outputNc1: "1",
+                nullifier1: "1233",
+                outputNc2: "456",
+                nullifier2: "1111",
                 acStateKey: "111"
             }
         })

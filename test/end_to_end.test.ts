@@ -111,8 +111,8 @@ describe("End2end Test", function() {
             context: ctx.serialize(),
             padding: true,
             newStates: {
-                outputNc1: acStateKey,
-                nullifier1: 1n,
+                outputNc1: 1n,
+                nullifier1: acStateKey,
                 outputNc2: 0n,
                 nullifier2: 0n,
                 acStateKey: acStateKey
