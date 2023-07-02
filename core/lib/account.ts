@@ -257,60 +257,32 @@ export class AccountCircuit {
     static readonly PROOF_ID_TYPE_MIGRATE: number = 12;
     static readonly PROOF_ID_TYPE_UPDATE: number = 13;
 
-    proofId: number;
-    outputNCs: bigint[];
+    proofId: number = 0;
+    outputNCs: bigint[] = [];
 
     // dataTreeRoot: bigint;
     // siblingsAC: bigint[];
 
-    aliasHash: bigint;
-    accountPubKey: bigint[];
-    signingPubKey: bigint[];
+    aliasHash: bigint = 0n;
+    accountPubKey: bigint[] = [];
+    signingPubKey: bigint[] = [];
 
-    newAccountPubKey: bigint[];
-    newSigningPubKey1: bigint[];
-    newSigningPubKey2: bigint[];
+    newAccountPubKey: bigint[] = [];
+    newSigningPubKey1: bigint[] = [];
+    newSigningPubKey2: bigint[] = [];
 
-    signatureR8: bigint[];
-    signatureS: bigint;
-    enabled: bigint;
+    signatureR8: bigint[] = [];
+    signatureS: bigint = 0n;
+    enabled: bigint = 1n;
 
     // aux
-    accountNC: bigint;
-    newAccountNC: bigint;
+    accountNC: bigint = 0n;
+    newAccountNC: bigint = 0n;
 
     constructor(
-        proofId: number,
-        outputNCs: bigint[],
-        // dataTreeRoot: bigint,
-        // siblingsAC: bigint[],
-        aliasHash: bigint,
-        accountPubKey: bigint[],
-        signingPubKey: bigint[],
-        newAccountPubKey: bigint[],
-        newSigningPubKey1: bigint[],
-        newSigningPubKey2: bigint[],
-        signatureR8: bigint[],
-        signatureS: bigint,
-        accountNC: bigint,
-        newAccountNC: bigint,
-        enabled: bigint = 1n
+        ac: Partial<AccountCircuit>
     ) {
-        // this.dataTreeRoot = dataTreeRoot;
-        // this.siblingsAC = siblingsAC;
-        this.proofId = proofId;
-        this.outputNCs = outputNCs;
-        this.aliasHash = aliasHash;
-        this.accountPubKey = accountPubKey;
-        this.signingPubKey = signingPubKey;
-        this.newAccountPubKey = newAccountPubKey;
-        this.newSigningPubKey1 = newSigningPubKey1;
-        this.newSigningPubKey2 = newSigningPubKey2;
-        this.signatureR8 = signatureR8;
-        this.signatureS = signatureS;
-        this.accountNC = accountNC;
-        this.newAccountNC = newAccountNC;
-        this.enabled = enabled;
+        Object.assign(this, ac);
     }
 
     static async createProofInput(
@@ -370,9 +342,9 @@ export class AccountCircuit {
         */
 
         let sig = await signingKey.sign(msghash);
-        return new AccountCircuit(
+        return new AccountCircuit({
             proofId,
-            [outputNC1, outputNC2],
+            outputNCs: [outputNC1, outputNC2],
             // F.toObject(state.root()),
             // siblingsPad(leaf.siblings, F),
             aliasHash,
@@ -381,11 +353,11 @@ export class AccountCircuit {
             newAccountPubKey,
             newSigningPubKey1,
             newSigningPubKey2,
-            [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
-            sig.S,
+            signatureR8: [F.toObject(sig.R8[0]), F.toObject(sig.R8[1])],
+            signatureS: sig.S,
             accountNC,
             newAccountNC
-        );
+        });
     }
 
     toCircuitInput(proof: any) {
