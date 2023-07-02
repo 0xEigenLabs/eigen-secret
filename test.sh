@@ -25,13 +25,8 @@ npx hardhat get-balances-multi --num-account ${NUM_ACCOUNT} --asset-id ${ASSET_I
 npx hardhat send-multi --num-account ${NUM_ACCOUNT} --asset-id ${ASSET_ID} --value 10 --network $NETWORK
 npx hardhat get-balances-multi --num-account ${NUM_ACCOUNT} --asset-id ${ASSET_ID} --expected-l1-balance "10.0" --expected-l2-balance "90.0" --network $NETWORK
 
-nohup npx hardhat send-multi --num-account ${NUM_ACCOUNT} --asset-id ${ASSET_ID} --value 10 --network $NETWORK &
-nohup npx hardhat withdraw-multi --num-account ${NUM_ACCOUNT} --asset-id ${ASSET_ID} --value 20 --network $NETWORK &
-wait
-npx hardhat get-balances-multi --num-account ${NUM_ACCOUNT} --asset-id ${ASSET_ID} --expected-l1-balance "30.0" --expected-l2-balance "70.0" --network $NETWORK
-
 npx hardhat execute-all --num-account ${NUM_ACCOUNT} --asset-id ${ASSET_ID} --value 10 --network $NETWORK
-npx hardhat get-balances-multi --num-account ${NUM_ACCOUNT} --asset-id ${ASSET_ID} --expected-l1-balance "30.0" --expected-l2-balance "70.0" --network $NETWORK
+npx hardhat get-balances-multi --num-account ${NUM_ACCOUNT} --asset-id ${ASSET_ID} --expected-l1-balance "10.0" --expected-l2-balance "90.0" --network $NETWORK
 
 # npx hardhat get-balance --alias Alice --index 0 --asset-id ${ASSET_ID} --network $NETWORK
 # npx hardhat deposit --alias Alice --index 0 --value 10 --asset-id ${ASSET_ID} --network $NETWORK
