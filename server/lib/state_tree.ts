@@ -36,46 +36,56 @@ export class WorldState {
         acStateKey: bigint,
         padding: boolean = true
     ) {
-        // consola.log("updateStateTree", outputNc1, nullifier1, outputNc2, nullifier2, acStateKey);
+        let instance = await WorldState.getInstance();
         const eddsa = await buildEddsa();
         const F = eddsa.F;
-        let instance = await WorldState.getInstance();
-        let siblings = [];
-        // insert all first, then find
-        if (outputNc1 > 0n) {
-            let result = await instance.insert(outputNc1, nullifier1);
-            consola.log(result);
-        }
 
-        if (outputNc2 > 0n) {
-            let result = await instance.insert(outputNc2, nullifier2);
-            consola.log(result);
-        }
-
-        // NOTE: DO NOT PAD here, cause the smart contract does not accept padding
-        if (outputNc1 > 0n) {
-            let sib = await instance.find(outputNc1)
-            siblings.push(siblingsPad(sib.siblings, F, padding));
-        }
-        if (outputNc2 > 0n) {
-            let sib = await instance.find(outputNc2)
-            siblings.push(siblingsPad(sib.siblings, F, padding));
-        }
-
-        // pad siblings
-        if (siblings.length < 2) {
-            for (let i = siblings.length; i < 2; i ++) {
-                siblings.push(
-                    new Array(N_LEVEL).fill(0n)
-                );
+        let transaction = await sequelize.transaction();
+        try {
+            let siblings = [];
+            // insert all first, then find
+            if (nullifier1 > 0n) {
+                let result = await instance.insert(nullifier1, outputNc1, { transaction });
+                consola.log(result);
             }
-        }
 
-        let ac = await instance.find(acStateKey);
-        return {
-            dataTreeRoot: F.toObject(instance.root()),
-            siblings: siblings,
-            siblingsAC: siblingsPad(ac.siblings, F, padding)
-        };
+            if (nullifier2 > 0n) {
+                let result = await instance.insert(nullifier2, outputNc2, { transaction });
+                consola.log(result);
+            }
+
+            // NOTE: DO NOT PAD here, cause the smart contract does not accept padding
+            if (nullifier1 > 0n) {
+                let sib = await instance.find(nullifier1, { transaction })
+                siblings.push(siblingsPad(sib.siblings, F, padding));
+            }
+            if (nullifier2 > 0n) {
+                let sib = await instance.find(nullifier2, { transaction })
+                siblings.push(siblingsPad(sib.siblings, F, padding));
+            }
+
+            // pad siblings
+            if (siblings.length < 2) {
+                for (let i = siblings.length; i < 2; i ++) {
+                    siblings.push(
+                        new Array(N_LEVEL).fill(0n)
+                    );
+                }
+            }
+
+            let ac = await instance.find(acStateKey, { transaction });
+
+            // If everything executes correctly, we commit the transaction.
+            await transaction.commit();
+
+            return {
+                dataTreeRoot: F.toObject(instance.root()),
+                siblings: siblings,
+                siblingsAC: siblingsPad(ac.siblings, F, padding)
+            };
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
     }
 }

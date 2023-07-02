@@ -8,69 +8,32 @@ import consola from "consola";
 const { Scalar, utils } = require("ffjavascript-browser");
 
 export class JoinSplitInput {
-    proofId: number;
-    publicValue: bigint;
-    publicOwner: bigint;
-    assetId: number;
-    publicAssetId: number;
-    aliasHash: bigint;
-    numInputNote: number;
-    inputNotes: Note[];
-    outputNotes: Note[];
-    outputNCs: bigint[];
+    proofId: number = 0;
+    publicValue: bigint = 0n;
+    publicOwner: bigint = 0n;
+    assetId: number = 0;
+    publicAssetId: number = 0;
+    aliasHash: bigint = 0n;
+    numInputNote: number = 0;
+    inputNotes: Note[] = [];
+    outputNotes: Note[] = [];
+    outputNCs: bigint[] = [];
     // here we lazly update the SMT
     // dataTreeRoot: bigint;
     // siblings: bigint[][];
     // siblingsAC: bigint[];
-    accountPrvKey: bigint;
-    accountPubKey: bigint[];
-    accountRequired: boolean;
-    signingPubKey: bigint[];
-    signatureR8: bigint[];
-    signatureS: bigint;
-    enabled: bigint;
+    accountPrvKey: bigint = 0n;
+    accountPubKey: bigint[] = [];
+    accountRequired: boolean = false;
+    signingPubKey: bigint[] = [];
+    signatureR8: bigint[] = [];
+    signatureS: bigint = 0n;
+    enabled: bigint = 1n;
 
     public constructor(
-        proofId: number,
-        publicValue: bigint,
-        publicOwner: bigint,
-        assetId: number,
-        publicAssetId: number,
-        aliasHash: bigint,
-        numInputNote: number,
-        inputNotes: Note[],
-        outputNotes: Note[],
-        outputNCs: bigint[],
-        // dataTreeRoot: bigint,
-        // siblings: bigint[][],
-        // siblingsAC: bigint[],
-        accountPrvKey: bigint,
-        accountPubKey: bigint[],
-        signingPubKey: bigint[],
-        accountRequired: boolean,
-        sig: any,
-        enabled: bigint = 1n
+        js: Partial<JoinSplitInput>
     ) {
-        this.proofId = proofId;
-        this.publicOwner = publicOwner;
-        this.publicValue = publicValue;
-        this.assetId = assetId;
-        this.publicAssetId = publicAssetId;
-        this.aliasHash = aliasHash;
-        this.numInputNote = numInputNote;
-        this.inputNotes = inputNotes;
-        this.outputNotes = outputNotes;
-        this.outputNCs = outputNCs;
-        // this.dataTreeRoot = dataTreeRoot;
-        // this.siblings = siblings;
-        // this.siblingsAC = siblingsAC;
-        this.accountPubKey = accountPubKey;
-        this.accountPrvKey = accountPrvKey;
-        this.signingPubKey = signingPubKey;
-        this.signatureR8 = sig.R8;
-        this.signatureS = sig.S;
-        this.accountRequired = accountRequired;
-        this.enabled = enabled;
+        Object.assign(this, js);
     }
 
     // nomalize the input
@@ -259,21 +222,26 @@ export class JoinSplitCircuit {
 
             let ak = await accountKey.toCircuitInput();
 
-            let input = new JoinSplitInput(
-                JoinSplitCircuit.PROOF_ID_TYPE_SEND, 0n, 0n, assetId, 0, aliasHash,
+            let input = new JoinSplitInput({
+                proofId: JoinSplitCircuit.PROOF_ID_TYPE_SEND,
+                publicValue: 0n,
+                publicOwner: 0n,
+                assetId,
+                publicAssetId: 0, aliasHash,
                 numInputNote,
-                [firstNote, note],
-                [outputNote1, outputNote2],
-                [outputNc1, outputNc2],
+                inputNotes: [firstNote, note],
+                outputNotes: [outputNote1, outputNote2],
+                outputNCs: [outputNc1, outputNc2],
                 // F.toObject(state.root()),
                 // [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
                 // siblingsPad(ac.siblings, F),
-                ak[1][0],
-                ak[0],
-                (await signingKey.toCircuitInput())[0],
+                accountPrvKey: ak[1][0],
+                accountPubKey: ak[0],
+                signingPubKey: (await signingKey.toCircuitInput())[0],
                 accountRequired,
-                sig
-            );
+                signatureR8: sig.R8,
+                signatureS: sig.S
+            });
             inputList.push(input);
             firstNote = outputNote2;
         }
@@ -359,18 +327,21 @@ export class JoinSplitCircuit {
              */
 
             let ak = accountKey.toCircuitInput();
-            let input = new JoinSplitInput(
-                proofId, publicValue, publicOwnerX, assetId, publicAssetId, aliasHash,
+            let input = new JoinSplitInput({
+                proofId, publicValue,
+                publicOwner: publicOwnerX,
+                assetId, publicAssetId, aliasHash,
                 numInputNote, inputNotes, outputNotes, outputNCs,
                 // F.toObject(state.root()),
                 // [siblingsPad(noteInput1.siblings, F), siblingsPad(noteInput2.siblings, F)],
                 // siblingsPad(ac.siblings, F),
-                ak[1][0],
-                ak[0],
-                (signingKey.toCircuitInput())[0],
+                accountPrvKey: ak[1][0],
+                accountPubKey: ak[0],
+                signingPubKey: (signingKey.toCircuitInput())[0],
                 accountRequired,
-                sig
-            );
+                signatureR8: sig.R8,
+                signatureS: sig.S
+            });
             inputList.push(input);
         }
         return Promise.resolve(inputList);

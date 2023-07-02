@@ -22,7 +22,6 @@ import {
 import { RollupSC } from "./rollup.sc";
 import { pad } from "./state_tree";
 import { poseidonSponge } from "./sponge_poseidon";
-import { assert } from "chai";
 
 const axios = require("axios").default;
 
@@ -669,10 +668,10 @@ export class SecretSDK {
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
-            keysFound.push(input.outputNCs[0]);
-            valuesFound.push(input.outputNotes[0].inputNullifier);
-            keysFound.push(input.outputNCs[1]);
-            valuesFound.push(input.outputNotes[1].inputNullifier);
+            valuesFound.push(input.outputNCs[0]);
+            keysFound.push(input.outputNotes[0].inputNullifier);
+            valuesFound.push(input.outputNCs[1]);
+            keysFound.push(input.outputNotes[1].inputNullifier);
             for (const item of proof.data.siblings) {
                 let tmpSiblings = [];
                 for (const sib of item) {
@@ -879,7 +878,10 @@ export class SecretSDK {
         if (!notes.ok) {
             return notes;
         }
-        assert(notes.data.length > 0, "Invalid notes");
+        if (notes.data.length <= 0) {
+            return errResp(ErrCode.InvalidInput, "Balance not enough")
+        }
+
         let resp = await this.getAccount(ctx, receiver);
         if (!resp.ok) {
             return resp;
@@ -936,10 +938,10 @@ export class SecretSDK {
             let proofAndPublicSignals = await Prover.updateState(this.circuitPath, circuitInput);
             batchProof.push(Prover.serialize(proofAndPublicSignals));
 
-            keysFound.push(input.outputNCs[0]);
-            valuesFound.push(input.outputNotes[0].inputNullifier);
-            keysFound.push(input.outputNCs[1]);
-            valuesFound.push(input.outputNotes[1].inputNullifier);
+            valuesFound.push(input.outputNCs[0]);
+            keysFound.push(input.outputNotes[0].inputNullifier);
+            valuesFound.push(input.outputNCs[1]);
+            keysFound.push(input.outputNotes[1].inputNullifier);
             dataTreeRootsFound.push(BigInt(proof.data.dataTreeRoot));
             lastDataTreeRoot = BigInt(proof.data.dataTreeRoot);
             lastKeys = input.outputNCs;
@@ -1101,7 +1103,14 @@ export class SecretSDK {
     }
 
     async getTokenInfo(token: string) {
-        return await this.rollupSC.getTokenInfo(token)
+        if (token !== ETH) {
+            return await this.rollupSC.getTokenInfo(token)
+        }
+        return Promise.resolve({
+            "symbol": "ETH",
+            "name": "ETH",
+            "decimals": 18
+        })
     }
 
     async createAsset(ctx: Context, token: string, assetId: any) {
@@ -1179,7 +1188,7 @@ export class SecretSDK {
         let accountRequired = false;
         const signer = accountRequired ? this.account.accountKey : this.account.signingKey;
         let acStateKey = await accountCompress(this.account.accountKey, signer, aliasHash);
-        let smtProof = await this.updateStateTree(ctx, acStateKey, 1n, 0n, 0n, acStateKey);
+        let smtProof = await this.updateStateTree(ctx, 1n, acStateKey, 0n, 0n, acStateKey);
         if (!smtProof.ok) {
             return smtProof;
         }
@@ -1232,7 +1241,7 @@ export class SecretSDK {
             newSigningPubKey[0],
             aliasHash
         );
-        let smtProof = await this.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
+        let smtProof = await this.updateStateTree(ctx, 1n, input.newAccountNC, 0n, 0n, input.newAccountNC);
         if (!smtProof.ok) {
             return smtProof;
         }
@@ -1354,7 +1363,7 @@ export class SecretSDK {
             aliasHash
         );
         // insert the new account key
-        let smtProof = await this.updateStateTree(ctx, input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
+        let smtProof = await this.updateStateTree(ctx, 1n, input.newAccountNC, 0n, 0n, input.newAccountNC);
         if (!smtProof.ok) {
             return smtProof;
         }

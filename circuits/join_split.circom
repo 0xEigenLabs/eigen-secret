@@ -154,7 +154,6 @@ template JoinSplit(nLevel) {
     component onc[2];
     component nf[2];
     component ms[2];
-    component forceNullifierEql[2];
     signal aux3[2];
     for(var i = 0;  i < 2; i ++) {
         onc[i] = NoteCompressor();
@@ -167,8 +166,8 @@ template JoinSplit(nLevel) {
 
         // FIXME: the key is the merkle path, and the value is is commitment
         ms[i] = Membership(nLevel);
-        ms[i].key <== onc[i].out;
-        ms[i].value <== output_note_nullifier[i];
+        ms[i].key <== output_note_nullifier[i];
+        ms[i].value <== onc[i].out;
         ms[i].root <== data_tree_root;
         ms[i].enabled <== input_note_in_use[i].out * enabled;
         for (var j = 0; j < nLevel; j++) {
@@ -205,7 +204,7 @@ template JoinSplit(nLevel) {
     ac.spk <== signer_pk;
     ac.alias_hash <== alias_hash;
 
-    // FIXME: the key is the merkle path, and the value is commitment
+    // the key is the merkle path, and the value is commitment
     component ams = Membership(nLevel);
     ams.enabled <== enabled;
     ams.key <== ac.out;

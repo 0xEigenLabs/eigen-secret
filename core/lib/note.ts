@@ -17,7 +17,6 @@ export class Note {
     inputNullifier: bigint;
     accountRequired: boolean;
     index: bigint;
-    poseidon: any;
     adopted: boolean;
 
     constructor(val: bigint, secret: bigint, owner: EigenAddress, assetId: number,

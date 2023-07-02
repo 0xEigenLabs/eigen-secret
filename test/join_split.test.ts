@@ -34,7 +34,7 @@ describe("Test JoinSplit Circuit", function() {
         signingKey = new SigningKey(eddsa);
         signer = accountRequired? accountKey: signingKey;
         acStateKey = await accountCompress(accountKey, signer, aliasHash);
-        await (await WorldState.getInstance()).insert(acStateKey, 1n);
+        await (await WorldState.getInstance()).insert(acStateKey, 1n, 0);
     })
 
     it("JoinSplit deposit and send test", async () => {

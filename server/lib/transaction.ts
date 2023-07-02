@@ -4,8 +4,8 @@ import { ErrCode, succResp, errResp } from "@eigen-secret/core/dist-node/error";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { WorldState } from "./state_tree";
 import { Note, getDBNotes } from "./note";
-import { TransactionModelStatus } from "@eigen-secret/core/dist-node/transaction"
-
+import { TransactionModelStatus } from "@eigen-secret/core/dist-node/transaction";
+import mutex from "./mutex";
 const transactionmodel = require("../models/transactionmodel");
 const Transaction = transactionmodel(sequelize, DataTypes);
 
@@ -45,6 +45,8 @@ export async function createTx(req: any, res: any) {
 
     let result: Array<any> = [];
     let result2: Array<any> = [];
+    const release = await mutex.acquire();
+    let ret: any;
     try {
         await sequelize.transaction(async (t: any) => {
             if (insertTxs.length > 0) {
@@ -54,11 +56,14 @@ export async function createTx(req: any, res: any) {
                 result2 = await Note.bulkCreate(insertNotes, { transaction: t, updateOnDuplicate: ["state", "alias"] });
             }
         });
+        ret = res.json(succResp([result, result2], true))
     } catch (err: any) {
         console.log(err)
-        return res.json(errResp(ErrCode.DBCreateError, err.toString()));
+        ret = res.json(errResp(ErrCode.DBCreateError, err.toString()));
+    } finally {
+        release();
     }
-    return res.json(succResp([result, result2], true))
+    return ret;
 }
 
 export async function getTxByAlias(req: any, res: any) {
@@ -82,25 +87,34 @@ export async function getTxByAlias(req: any, res: any) {
 }
 
 export async function updateStateTree(req: any, res: any) {
-    let ctx = Context.deserialize(req.body.context);
-    let code = ctx.check();
-    const padding: boolean = req.body.padding;
-    if (code !== ErrCode.Success) {
-        return res.json(errResp(code, ErrCode[code]));
-    }
+    // Acquire the lock
+    const release = await mutex.acquire();
+    let result: any;
+    try {
+        let ctx = Context.deserialize(req.body.context);
+        let code = ctx.check();
+        const padding: boolean = req.body.padding;
+        if (code !== ErrCode.Success) {
+            return res.json(errResp(code, ErrCode[code]));
+        }
 
-    // TODO: once updated, must be synchonized with circuits on chain
-    const newState = req.body.newStates;
-    let proof = await WorldState.updateStateTree(
-        BigInt(newState.outputNc1),
-        BigInt(newState.nullifier1),
-        BigInt(newState.outputNc2),
-        BigInt(newState.nullifier2),
-        BigInt(newState.acStateKey),
-        padding
-    );
-    // TODO handle exception
-    return res.json(succResp(proof, true));
+        // TODO: once updated, must be synchonized with circuits on chain
+        const newState = req.body.newStates;
+        let proof = await WorldState.updateStateTree(
+            BigInt(newState.outputNc1),
+            BigInt(newState.nullifier1),
+            BigInt(newState.outputNc2),
+            BigInt(newState.nullifier2),
+            BigInt(newState.acStateKey),
+            padding
+        );
+        result = res.json(succResp(proof, true));
+    } catch (err: any) {
+        result = res.json(errResp(ErrCode.DBCreateError, err.toString()))
+    } finally {
+        release();
+    }
+    return result;
 }
 
 export async function getNotes(req: any, res: any) {

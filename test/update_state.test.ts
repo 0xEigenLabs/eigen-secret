@@ -67,7 +67,7 @@ describe("Test JoinSplit Circuit", function() {
             newSigningPubKey2,
             aliasHash
         );
-        let proof = await WorldState.updateStateTree(input.accountNC, 1n, 0n, 0n, input.accountNC);
+        let proof = await WorldState.updateStateTree(1n, input.accountNC, 0n, 0n, input.accountNC);
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
 
         proofId = AccountCircuit.PROOF_ID_TYPE_MIGRATE;
@@ -89,7 +89,7 @@ describe("Test JoinSplit Circuit", function() {
             aliasHash
         );
 
-        proof = await WorldState.updateStateTree(input.newAccountNC, 1n, 0n, 0n, input.newAccountNC);
+        proof = await WorldState.updateStateTree(1n, input.newAccountNC, 0n, 0n, input.newAccountNC);
         await utils.executeCircuit(circuit, input.toCircuitInput(babyJub, proof));
     })
 

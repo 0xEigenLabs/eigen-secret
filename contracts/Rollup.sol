@@ -48,14 +48,7 @@ contract Rollup is SMT {
     IERC20 public tokenContract;
     address public coordinator;
 
-    struct Deposit{
-        uint[2] publicOwner;
-        uint publicAssetId;
-        uint publicValue;
-        uint nonce;
-    }
-
-    mapping(uint256 => bool) public nullifierHashs;
+    mapping(uint256 => bool) public nullifierHashes;
     mapping(uint256 => bool) public nullifierRoots;
 
     uint256 public dataTreeRoot;
@@ -144,17 +137,11 @@ contract Rollup is SMT {
     ) public returns (uint) {
         require(keys.length == values.length, "Key and value must have same size");
         require(keys.length == siblings.length, "Key and sibling must have same size");
-        // TODO keys.length should less than or equal to queueNumber
         uint newRoot = dataTreeRoot;
         for (uint i = 0; i < keys.length; i ++) {
-            // ensure the leaf is empty
+            // ensure the inputNullifier is not set
             newRoot = smtVerifier(siblings[i], keys[i], values[i], 0, 0, false, false, 20);
-            require(
-                nullifierRoots[newRoot] != true,
-                "Invalid nullifierRoot"
-            );
-
-            // update data tree root
+            require(!nullifierRoots[newRoot], "Invalid nullifierRoot");
             nullifierRoots[newRoot] = true;
         }
         dataTreeRoot = newRoot;
@@ -170,21 +157,23 @@ contract Rollup is SMT {
     ) public payable {
         uint256 nullifier1 = input[4];
         uint256 nullifier2 = input[5];
+
         uint256 inDataTreeRoot = input[6];
 
         require(!nullifierRoots[inDataTreeRoot], "Invalid data tree root");
-        require(!nullifierHashs[nullifier1], "Invalid nullifier1 when deposit");
-        require(!nullifierHashs[nullifier2], "Invalid nullifier2 when deposit");
+        require(!nullifierHashes[nullifier1], "Invalid nullifier1 when deposit");
+        require(!nullifierHashes[nullifier2], "Invalid nullifier2 when deposit");
 
         require(updateStateVerifier.verifyProof(a, b, c, input),
                 "Invalid deposit proof");
 
         dataTreeRoot = inDataTreeRoot;
         nullifierRoots[inDataTreeRoot] = true;
+        nullifierHashes[nullifier1] = true;
+        nullifierHashes[nullifier2] = true;
         emit UpdatedState(inDataTreeRoot, nullifier1, nullifier2);
     }
 
-    //TODO: fixme double spent
     function withdraw(
         TxInfo memory txInfo,
         address payable recipient, // any address as receiver
@@ -207,8 +196,6 @@ contract Rollup is SMT {
             messages[6+i] = txInfo.roots[i];
         }
         uint msghash = SpongePoseidon.hash(messages);
-        require(!nullifierHashs[txInfo.outputNc1], "Invalid nullifier1 when deposit");
-        require(!nullifierHashs[txInfo.outputNc2], "Invalid nullifier2 when deposit");
 
         //Ax, Ay, M
         uint[3] memory input = [
@@ -244,9 +231,6 @@ contract Rollup is SMT {
                 "Transfer failed"
             );
         }
-        nullifierHashs[txInfo.outputNc1] = true;
-        nullifierHashs[txInfo.outputNc2] = true;
-
         emit Withdraw(txInfo, recipient);
     }
 

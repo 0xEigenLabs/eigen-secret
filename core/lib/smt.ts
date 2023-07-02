@@ -46,12 +46,12 @@ export class SMT {
         return res;
     }
 
-    async update(_key: bigint, _newValue: bigint) {
+    async update(_key: bigint, _newValue: bigint, transaction:any) {
         const F = this.F;
         const key = F.e(_key);
         const newValue = F.e(_newValue);
 
-        const resFind = await this.find(key);
+        const resFind = await this.find(key, transaction);
         let res: TNode = new TNode();
         res.oldRoot = this.root;
         res.oldKey = key;
@@ -95,11 +95,11 @@ export class SMT {
         return res;
     }
 
-    async delete(_key: bigint) {
+    async delete(_key: bigint, transaction:any) {
         const F = this.F;
         const key = F.e(_key);
 
-        const resFind = await this.find(key);
+        const resFind = await this.find(key, transaction);
         if (!resFind.found) throw new Error("Key does not exists");
 
         const res: TNode = new TNode({
@@ -181,7 +181,7 @@ export class SMT {
         return res;
     }
 
-    async insert(_key: bigint, _value: bigint) {
+    async insert(_key: bigint, _value: bigint, transaction: any) {
         const F = this.F;
         const key = F.e(_key);
         const value = F.e(_value);
@@ -192,7 +192,7 @@ export class SMT {
 
         let rtOld;
 
-        const resFind = await this.find(key);
+        const resFind = await this.find(key, transaction);
 
         if (resFind.found) throw new Error("Key already exists");
 
@@ -263,13 +263,13 @@ export class SMT {
         return res;
     }
 
-    async find(_key: bigint) {
+    async find(_key: bigint, transaction: any) {
         const key = this.F.e(_key);
         const keyBits = this._splitBits(key);
-        return await this._find(key, keyBits, this.root, 0);
+        return await this._find(key, keyBits, this.root, 0, transaction);
     }
 
-    async _find(key: any, keyBits: any, root: any, level: any) {
+    async _find(key: any, keyBits: any, root: any, level: any, transaction: any) {
         const F = this.F;
         if (typeof root === "undefined") root = this.root;
 
@@ -306,10 +306,10 @@ export class SMT {
             }
         } else {
             if (keyBits[level] == 0) {
-                res = await this._find(key, keyBits, record[0], level+1);
+                res = await this._find(key, keyBits, record[0], level+1, transaction);
                 res.siblings.unshift(record[1]);
             } else {
-                res = await this._find(key, keyBits, record[1], level+1);
+                res = await this._find(key, keyBits, record[1], level+1, transaction);
                 res.siblings.unshift(record[0]);
             }
         }
