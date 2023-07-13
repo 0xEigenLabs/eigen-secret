@@ -222,4 +222,9 @@ const normalizeAlias = (alias: string) => {
     return /^[A-Za-z][A-Za-z0-9_.]{2,32}$/.test(alias)
 }
 
-export { hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION, normalizeAlias, ETH };
+const getAddressPrefix = () => {
+    let prefix = process.env.ADDRESS_PREFIX || "eig";
+    return `${prefix}:`;
+}
+
+export { hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION, normalizeAlias, ETH, getAddressPrefix };

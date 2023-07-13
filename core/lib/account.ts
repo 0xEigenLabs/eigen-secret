@@ -5,7 +5,7 @@ const createBlakeHash = require("blake-hash");
 const { Buffer } = require("buffer");
 import { Aes256gcm } from "./aes_gcm";
 import { Note } from "./note";
-import { __DEFAULT_ALIAS__ } from "./utils";
+import { __DEFAULT_ALIAS__, getAddressPrefix } from "./utils";
 const consola = require("consola");
 
 type UnpackFunc = (babyJub: any) => [any, any];
@@ -15,10 +15,11 @@ interface Address {
     unpack: UnpackFunc;
 }
 export class EigenAddress implements Address {
-    protocol: string = "eig:";
+    protocol: string;
     pubKey: string;
     constructor(pubKey: string) {
         this.pubKey = pubKey;
+        this.protocol = getAddressPrefix();
     }
     unpack: UnpackFunc = (babyJub: any) => {
         let pubKey = this.pubKey;
@@ -59,7 +60,7 @@ export class SigningKey implements IKey {
         }
         let pubKey = eddsa.prv2pub(rawpvk);
         let pPubKey = eddsa.babyJub.packPoint(pubKey);
-        let hexPubKey = "eig:" + Buffer.from(pPubKey).toString("hex");
+        let hexPubKey = getAddressPrefix() + Buffer.from(pPubKey).toString("hex");
         this.prvKey = rawpvk;
         this.pubKey = new EigenAddress(hexPubKey);
         return this;
