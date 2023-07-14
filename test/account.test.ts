@@ -22,7 +22,7 @@ describe("Test Account Compressor", function() {
         let prvKey = ethers.utils.randomBytes(31);
         let pubKey = eddsa.prv2pub(prvKey);
         let pPubKey = eddsa.babyJub.packPoint(pubKey);
-        let hexPubKey = "eig:" + Buffer.from(pPubKey).toString("hex");
+        let hexPubKey = utils.getAddressPrefix() + Buffer.from(pPubKey).toString("hex");
 
         let pubKey2 = eddsa.babyJub.unpackPoint(pPubKey);
         expect(Buffer.from(pubKey[0]).toString("hex")).to.eq(

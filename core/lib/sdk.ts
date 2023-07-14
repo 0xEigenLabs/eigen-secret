@@ -1,7 +1,7 @@
 const createBlakeHash = require("blake-hash");
 const { buildEddsa } = require("circomlibjs");
 import { utils, ethers } from "ethers";
-import { prepareJson, ETH } from "./utils";
+import { prepareJson, ETH, getAddressPrefix } from "./utils";
 import { calcAliasHash } from "./digest";
 
 import { JoinSplitCircuit } from "./join_split";
@@ -100,7 +100,7 @@ export class SecretSDK {
 
     private async getAccount(ctx: Context, receiver: string) {
         let conds: any;
-        if (receiver.startsWith("eig:")) {
+        if (receiver.startsWith(getAddressPrefix())) {
             conds = { accountKeyPubKey: receiver }
         } else if (receiver.startsWith("0x")) {
             conds = { ethAddress: receiver }
