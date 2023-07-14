@@ -3,7 +3,7 @@ const consola = require("consola");
 import app from "../server/dist/service";
 import { EigenAddress } from "@eigen-secret/core/dist-node/account";
 import { ethers } from "ethers";
-import { signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
+import { getAddressPrefix, signEOASignature, rawMessage } from "@eigen-secret/core/dist-node/utils";
 import { Context } from "@eigen-secret/core/dist-node/context";
 import { expect, assert } from "chai";
 import { TxData } from "@eigen-secret/core/dist-node/transaction";
@@ -47,7 +47,7 @@ describe("POST /transactions", () => {
 
     it("Test TxData", () => {
         let tx = new TxData(
-            new EigenAddress("eig:8f7b33b85594ec857744ac10374122203ec0cb327a2423586cd5f666a0022e1b"),
+            new EigenAddress(getAddressPrefix() + "8f7b33b85594ec857744ac10374122203ec0cb327a2423586cd5f666a0022e1b"),
             "abc,cdf,123"
         );
 
