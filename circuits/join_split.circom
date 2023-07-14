@@ -74,7 +74,15 @@ template JoinSplit(nLevel) {
 
     // range check
     component is_less_than[2][2];
+    component n2b[2][3];
     for(var i = 0;  i < 2; i ++) {
+        n2b[i][0] = Num2Bits(128);
+        n2b[i][0].in <== input_note_val[i];
+        n2b[i][1] = Num2Bits(10);
+        n2b[i][1].in <== input_note_asset_id[i];
+        n2b[i][2] = Num2Bits(128);
+        n2b[i][2].in <== output_note_val[i];
+
         is_less_than[i][0] = LessEqThan(252);
         is_less_than[i][0].in[0] <== input_note_val[i];
         is_less_than[i][0].in[1] <== NOTE_VALUE_BIT_LENGTH;
@@ -115,6 +123,9 @@ template JoinSplit(nLevel) {
     is_public_tx.a <== is_deposit.out;
     is_public_tx.b <== is_withdraw.out;
 
+    component n2b1 = Num2Bits(128);
+    n2b1.in <== public_value;
+    
     var public_input_ = public_value * is_deposit.out;
     var public_output_ = public_value * is_withdraw.out;
 
