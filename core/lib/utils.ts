@@ -223,8 +223,8 @@ const normalizeAlias = (alias: string) => {
 }
 
 const getAddressPrefix = () => {
-    let prefix = process.env.ADDRESS_PREFIX || "eig";
-    return `${prefix}:`;
+    //let prefix = process.env.ADDRESS_PREFIX || "eig";
+    return "";
 }
 
 export { hasValue, requireEnvVariables, prepareJson, pathJoin, __DEFAULT_ALIAS__, SESSION_DURATION, normalizeAlias, ETH, getAddressPrefix };
