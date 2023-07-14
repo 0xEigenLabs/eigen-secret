@@ -9,10 +9,12 @@ import { __DEFAULT_ALIAS__, getAddressPrefix } from "./utils";
 const consola = require("consola");
 
 type UnpackFunc = (babyJub: any) => [any, any];
+type GetAddress = () => string;
 interface Address {
     protocol: string;
     pubKey: string;
     unpack: UnpackFunc;
+    address: GetAddress;
 }
 export class EigenAddress implements Address {
     protocol: string;
@@ -20,6 +22,9 @@ export class EigenAddress implements Address {
     constructor(pubKey: string) {
         this.pubKey = pubKey;
         this.protocol = getAddressPrefix();
+        if (pubKey.startsWith(this.protocol)) {
+            this.pubKey = pubKey.substring(this.protocol.length);
+        }
     }
     unpack: UnpackFunc = (babyJub: any) => {
         let pubKey = this.pubKey;
@@ -30,6 +35,9 @@ export class EigenAddress implements Address {
         let pPubKey = babyJub.unpackPoint(bPubKey);
         return pPubKey;
     };
+    address: GetAddress = () => {
+        return `${this.protocol}${this.pubKey}`;
+    }
 }
 
 type SignFunc = (msghash: Uint8Array) => any;
